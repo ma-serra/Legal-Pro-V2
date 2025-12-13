@@ -6904,8 +6904,8 @@ print("✅ Home dashboard ativo com dados reais")
 # Registrar Legal Design Pro V2
 print("Registrando Legal Design Pro V2...")
 try:
-    from routes_legal_design_pro import register_legal_design_routes
-    register_legal_design_routes(app)
+    from routes_legal_design_pro import legal_design_pro_bp
+    app.register_blueprint(legal_design_pro_bp)
     logger.info("✅ Legal Design Pro V2 registrado")
     print("✅ Legal Design Pro V2 ativado - Fluxos jurídicos disponíveis")
 except Exception as e:
