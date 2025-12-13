@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Consenso - {{ consenso.numero_relatorio }} - Legal Pro{% endblock %}
+
+{% block head %}
+<style>
+    body { 
+        background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%) !important; 
+        color: white !important;
+    }
+    .card {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(10px);
+        color: white !important;
+    }
+    .card-header {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+    .section-card {
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .metric-box {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        height: 100%;
+    }
+    .metric-box h4 {
+        color: #ffc107;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .consenso-header {
+        background: linear-gradient(45deg, #1e3a8a, #3b82f6) !important;
+        border: none !important;
+    }
+    .strategy-urgent { border-left: 4px solid #dc3545; }
+    .strategy-important { border-left: 4px solid #ffc107; }
+    .strategy-suggested { border-left: 4px solid #28a745; }
+    .strategy-short { border-left: 4px solid #dc3545; }
+    .strategy-medium { border-left: 4px solid #ffc107; }
+    .strategy-long { border-left: 4px solid #28a745; }
+    .risk-critical { border-left: 4px solid #dc3545; }
+    .risk-moderate { border-left: 4px solid #ffc107; }
+    .risk-low { border-left: 4px solid #28a745; }
+    .concordancia-bar {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        height: 20px;
+    }
+    .concordancia-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%);
+        transition: width 0.3s ease;
+    }
+    
+    /* FORÇA COR BRANCA EM TODOS OS ELEMENTOS - MÁXIMA PRIORIDADE */
+    * {
+        color: white !important;
+    }
+    
+    /* Sobrescreve TODOS os estilos de texto */
+    p, span, div, li, small, strong, h1, h2, h3, h4, h5, h6, 
+    .card, .card-body, .card-header, .section-card,
+    .lead, .mb-1, .mb-2, .mb-3, .fs-6, 
+    .text-muted, .text-dark, .text-light,
+    ul, ol, dl, dt, dd, blockquote, pre, code {
+        color: white !important;
+    }
+    
+    /* CORES ESPECÍFICAS PARA CARDS - PRIORIDADE MÁXIMA */
+    .risk-critical {
+        background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%) !important;
+        border: none !important;
+    }
+    .risk-moderate {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        border: none !important;
+    }
+    .risk-low {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+        border: none !important;
+    }
+    .strategy-urgent {
+        background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%) !important;
+        border: none !important;
+    }
+    .strategy-important {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        border: none !important;
+    }
+    .strategy-suggested {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+        border: none !important;
+    }
+    .strategy-short {
+        background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%) !important;
+        border: none !important;
+    }
+    .strategy-medium {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        border: none !important;
+    }
+    .strategy-long {
+        background: linear-gradient(135deg, #7b8c93 0%, #6a7a80 100%) !important;
+        border: none !important;
+    }
+    
+    /* HEADERS COM CORES ESPECÍFICAS */
+    .header-riscos {
+        background: linear-gradient(135deg, #dc3545 0%, #a71e2a 100%) !important;
+        border: none !important;
+        color: white !important;
+    }
+    .header-melhorias {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+        border: none !important;
+        color: white !important;
+    }
+    .header-estrategias {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+        border: none !important;
+        color: white !important;
+    }
+    
+    /* Headers específicos */
+    .card-header, .card-header *, .consenso-header, .consenso-header * {
+        color: white !important;
+    }
+    
+    /* Todos os elementos Bootstrap */
+    .badge, .btn, .alert, .list-group-item {
+        color: white !important;
+    }
+    
+    /* Força branco em elementos específicos do template */
+    .container-fluid *, .row *, .col-* * {
+        color: white !important;
+    }
+    
+    /* Estilos para botão de exportação e dropdown */
+    .btn-exportar {
+        background-color: #7b8c93 !important;
+        border-color: #7b8c93 !important;
+        color: white !important;
+    }
+    
+    .btn-exportar:hover {
+        background-color: #6a7a81 !important;
+        border-color: #6a7a81 !important;
+        color: white !important;
+    }
+    
+    .dropdown-menu-exportar {
+        background-color: #7b8c93 !important;
+        border-color: #7b8c93 !important;
+    }
+    
+    .dropdown-menu-exportar .dropdown-item {
+        color: white !important;
+    }
+    
+    .dropdown-menu-exportar .dropdown-item:hover {
+        background-color: #6a7a81 !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card consenso-header">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-handshake me-2"></i>{{ consenso.titulo_relatorio }}
+                            </h2>
+                            <p class="mb-1">
+                                <strong>ID:</strong> {{ consenso.numero_relatorio }} | 
+                                <strong>Análise Base:</strong> {{ consenso.analise_numero_registro }}
+                            </p>
+                            <small>
+                                Gerado em {{ consenso.data_criacao }}
+                                {% if consenso.tempo_processamento %}
+                                    • Processamento: {{ consenso.tempo_processamento|round(1) }}s
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge badge-primary fs-6 me-2">{{ consenso.status|default('Ativo') }}</span>
+                            <br>
+                            <div class="mt-2">
+                                <!-- Botões de Exportação -->
+                                <div class="btn-group me-2" role="group">
+                                    <button type="button" class="btn btn-exportar btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-download me-1"></i>Exportar
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-exportar">
+                                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio_consenso_pdf', relatorio_id=consenso.numero_relatorio) }}">
+                                            <i class="fas fa-file-pdf me-2"></i>PDF
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio_consenso_docx', relatorio_id=consenso.numero_relatorio) }}">
+                                            <i class="fas fa-file-word me-2"></i>Word (DOCX)
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio_consenso_txt', relatorio_id=consenso.numero_relatorio) }}">
+                                            <i class="fas fa-file-alt me-2"></i>Texto (TXT)
+                                        </a></li>
+                                    </ul>
+                                </div>
+                                <a href="{{ url_for('historico_analises_multiagente') }}" class="btn btn-outline-light btn-sm">
+                                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de Consenso -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ consenso.nivel_concordancia|default(0)|round(1) }}%</h4>
+                <small>Nível de Concordância</small>
+                <div class="concordancia-bar mt-2">
+                    <div class="concordancia-fill" style="width: {{ consenso.nivel_concordancia|default(0) }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ consenso.impacto_estimado|default('N/A') }}</h4>
+                <small>Impacto Estimado</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ consenso.viabilidade_implementacao|default('N/A') }}</h4>
+                <small>Viabilidade</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ consenso.versao|default(1) }}</h4>
+                <small>Versão do Relatório</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consenso Geral -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Consenso Geral</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ consenso.consenso_geral|default('Consenso não disponível') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convergências e Divergências -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card section-card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Pontos de Convergência</h6>
+                </div>
+                <div class="card-body">
+                    {% if consenso.pontos_convergencia %}
+                        <ul class="list-unstyled">
+                            {% for ponto in consenso.pontos_convergencia %}
+                                <li class="mb-2"><i class="fas fa-arrow-right text-success me-2"></i>{{ ponto }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-white">Nenhum ponto de convergência identificado</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card section-card">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Pontos de Divergência</h6>
+                </div>
+                <div class="card-body">
+                    {% if consenso.pontos_divergencia %}
+                        <ul class="list-unstyled">
+                            {% for ponto in consenso.pontos_divergencia %}
+                                <li class="mb-2"><i class="fas fa-arrow-right text-warning me-2"></i>{{ ponto }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-white">Nenhum ponto de divergência identificado</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Riscos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header header-riscos">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Análise de Riscos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Riscos Críticos -->
+                        <div class="col-md-4">
+                            <div class="card risk-critical">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Riscos Críticos</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.riscos_criticos %}
+                                        {% for risco in consenso.riscos_criticos %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) if risco is mapping else risco }}</strong>
+                                                {% if risco is mapping %}
+                                                    {% if risco.impacto %}
+                                                        <br><small>Impacto: {{ risco.impacto }}</small>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco crítico identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Riscos Moderados -->
+                        <div class="col-md-4">
+                            <div class="card risk-moderate">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Riscos Moderados</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.riscos_moderados %}
+                                        {% for risco in consenso.riscos_moderados %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) if risco is mapping else risco }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco moderado identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Riscos Baixos -->
+                        <div class="col-md-4">
+                            <div class="card risk-low">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Riscos Baixos</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.riscos_baixos %}
+                                        {% for risco in consenso.riscos_baixos %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) if risco is mapping else risco }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco baixo identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Melhorias -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header header-melhorias">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Melhorias Recomendadas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Urgentes -->
+                        <div class="col-md-4">
+                            <div class="card strategy-urgent">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Urgentes</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.melhorias_urgentes %}
+                                        {% for melhoria in consenso.melhorias_urgentes %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) if melhoria is mapping else melhoria }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria urgente identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Importantes -->
+                        <div class="col-md-4">
+                            <div class="card strategy-important">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-star me-2"></i>Importantes</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.melhorias_importantes %}
+                                        {% for melhoria in consenso.melhorias_importantes %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) if melhoria is mapping else melhoria }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria importante identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Sugeridas -->
+                        <div class="col-md-4">
+                            <div class="card strategy-suggested">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Sugeridas</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.melhorias_sugeridas %}
+                                        {% for melhoria in consenso.melhorias_sugeridas %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) if melhoria is mapping else melhoria }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria sugerida identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estratégias -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header header-estrategias">
+                    <h5 class="mb-0"><i class="fas fa-chess me-2"></i>Estratégias Recomendadas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Curto Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-short">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Curto Prazo (0-3 meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.estrategias_curto_prazo %}
+                                        {% for estrategia in consenso.estrategias_curto_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) if estrategia is mapping else estrategia }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma estratégia de curto prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Médio Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-medium">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Médio Prazo (3-12 meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.estrategias_medio_prazo %}
+                                        {% for estrategia in consenso.estrategias_medio_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) if estrategia is mapping else estrategia }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma estratégia de médio prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Longo Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-long">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-rocket me-2"></i>Longo Prazo (12+ meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if consenso.estrategias_longo_prazo %}
+                                        {% for estrategia in consenso.estrategias_longo_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) if estrategia is mapping else estrategia }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma estratégia de longo prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recursos Necessários -->
+    {% if consenso.recursos_necessarios %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Recursos Necessários</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recurso in consenso.recursos_necessarios %}
+                            <div class="col-md-6 mb-2">
+                                <i class="fas fa-cog text-primary me-2"></i>{{ recurso }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📊 Relatório de Consenso carregado:', '{{ consenso.numero_relatorio }}');
+});
+</script>
+{% endblock %}

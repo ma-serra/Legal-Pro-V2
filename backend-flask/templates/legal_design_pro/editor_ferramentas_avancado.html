@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Design Tools - Editor Avançado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- CSS para Interface Compacta -->
+    <link href="{{ url_for('static', filename='css/compact-interface.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.6.0/fabric.min.css">
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --bg-card: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --system-blue: #3498db;
+            --system-green: #27ae60;
+            --system-orange: #f39c12;
+            --system-red: #e74c3c;
+            --gradient-primary: linear-gradient(135deg, #3498db 0%, #16a085 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Painel de ferramentas expandido */
+        .tools-panel {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .tools-header {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .tools-search {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .tools-tabs {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .tab-btn.active {
+            background: var(--system-blue);
+            color: white;
+            border-color: var(--system-blue);
+        }
+
+        .tools-category {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .category-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .tool-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .tool-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--system-blue);
+            transform: translateY(-2px);
+        }
+
+        .tool-icon {
+            font-size: 1.5rem;
+            color: var(--system-blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .tool-label {
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .tool-preview {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background: var(--system-green);
+            border-radius: 50%;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* Área principal do canvas */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .canvas-toolbar {
+            height: 60px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            gap: 1rem;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-right: 1rem;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        .toolbar-btn:hover, .toolbar-btn.active {
+            background: var(--system-blue);
+            color: white;
+            border-color: var(--system-blue);
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        #fabricCanvas {
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        /* Painel de propriedades avançado */
+        .properties-panel {
+            width: 350px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .properties-header {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .properties-content {
+            padding: 1rem;
+        }
+
+        .property-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .property-section h6 {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .property-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .property-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .property-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .property-input, .property-select {
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+        }
+
+        .color-input {
+            width: 40px;
+            height: 32px;
+            padding: 2px;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+
+        .range-input {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-card);
+            outline: none;
+            border-radius: 3px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--system-blue);
+            border-color: var(--system-blue);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--system-red);
+            border-color: var(--system-red);
+            color: white;
+        }
+
+        /* Layers panel */
+        .layers-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+
+        .layer-item.active {
+            border-color: var(--system-blue);
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .layer-visibility {
+            margin-right: 0.5rem;
+            cursor: pointer;
+        }
+
+        .layer-name {
+            flex: 1;
+            font-size: 0.8rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .tools-panel {
+                width: 250px;
+            }
+            .properties-panel {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .tools-panel, .properties-panel {
+                position: absolute;
+                height: 100%;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .tools-panel.open, .properties-panel.open {
+                transform: translateX(0);
+            }
+        }
+
+        /* Tooltips customizados */
+        .tooltip-custom {
+            position: absolute;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tooltip-custom.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-layout">
+        <!-- Painel de Ferramentas -->
+        <div class="tools-panel" id="toolsPanel">
+            <div class="tools-header">
+                <input type="text" class="tools-search" placeholder="Buscar ferramentas..." id="toolsSearch">
+                <div class="tools-tabs">
+                    <button class="tab-btn active" data-tab="elements">Elementos</button>
+                    <button class="tab-btn" data-tab="templates">Templates</button>
+                    <button class="tab-btn" data-tab="assets">Assets</button>
+                </div>
+            </div>
+
+            <!-- Elementos básicos -->
+            <div class="tab-content" id="elements-tab">
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-type"></i>
+                        Texto e Tipografia
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-tool="text" data-preview="T">
+                            <div class="tool-icon"><i class="bi bi-type"></i></div>
+                            <div class="tool-label">Texto</div>
+                        </div>
+                        <div class="tool-item" data-tool="heading" data-preview="H">
+                            <div class="tool-icon"><i class="bi bi-type-h1"></i></div>
+                            <div class="tool-label">Título</div>
+                        </div>
+                        <div class="tool-item" data-tool="textbox" data-preview="TB">
+                            <div class="tool-icon"><i class="bi bi-textarea-t"></i></div>
+                            <div class="tool-label">Caixa de Texto</div>
+                        </div>
+                        <div class="tool-item" data-tool="bullet-list" data-preview="•">
+                            <div class="tool-icon"><i class="bi bi-list-ul"></i></div>
+                            <div class="tool-label">Lista</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-shapes"></i>
+                        Formas e Desenhos
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-tool="rectangle">
+                            <div class="tool-icon"><i class="bi bi-square"></i></div>
+                            <div class="tool-label">Retângulo</div>
+                        </div>
+                        <div class="tool-item" data-tool="circle">
+                            <div class="tool-icon"><i class="bi bi-circle"></i></div>
+                            <div class="tool-label">Círculo</div>
+                        </div>
+                        <div class="tool-item" data-tool="line">
+                            <div class="tool-icon"><i class="bi bi-slash"></i></div>
+                            <div class="tool-label">Linha</div>
+                        </div>
+                        <div class="tool-item" data-tool="arrow">
+                            <div class="tool-icon"><i class="bi bi-arrow-right"></i></div>
+                            <div class="tool-label">Seta</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-table"></i>
+                        Estruturas
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-tool="table">
+                            <div class="tool-icon"><i class="bi bi-table"></i></div>
+                            <div class="tool-label">Tabela</div>
+                        </div>
+                        <div class="tool-item" data-tool="checkbox">
+                            <div class="tool-icon"><i class="bi bi-check-square"></i></div>
+                            <div class="tool-label">Checkbox</div>
+                        </div>
+                        <div class="tool-item" data-tool="signature">
+                            <div class="tool-icon"><i class="bi bi-pen"></i></div>
+                            <div class="tool-label">Assinatura</div>
+                        </div>
+                        <div class="tool-item" data-tool="date-field">
+                            <div class="tool-icon"><i class="bi bi-calendar-date"></i></div>
+                            <div class="tool-label">Data</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-image"></i>
+                        Mídia e Gráficos
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-tool="image">
+                            <div class="tool-icon"><i class="bi bi-image"></i></div>
+                            <div class="tool-label">Imagem</div>
+                        </div>
+                        <div class="tool-item" data-tool="chart">
+                            <div class="tool-icon"><i class="bi bi-bar-chart"></i></div>
+                            <div class="tool-label">Gráfico</div>
+                        </div>
+                        <div class="tool-item" data-tool="qr-code">
+                            <div class="tool-icon"><i class="bi bi-qr-code"></i></div>
+                            <div class="tool-label">QR Code</div>
+                        </div>
+                        <div class="tool-item" data-tool="logo">
+                            <div class="tool-icon"><i class="bi bi-award"></i></div>
+                            <div class="tool-label">Logo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-layout-text-window-reverse"></i>
+                        Layouts Jurídicos
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-tool="header-juridico">
+                            <div class="tool-icon"><i class="bi bi-layout-text-window"></i></div>
+                            <div class="tool-label">Cabeçalho</div>
+                        </div>
+                        <div class="tool-item" data-tool="footer-juridico">
+                            <div class="tool-icon"><i class="bi bi-layout-text-window-reverse"></i></div>
+                            <div class="tool-label">Rodapé</div>
+                        </div>
+                        <div class="tool-item" data-tool="clausula">
+                            <div class="tool-icon"><i class="bi bi-card-text"></i></div>
+                            <div class="tool-label">Cláusula</div>
+                        </div>
+                        <div class="tool-item" data-tool="artigo">
+                            <div class="tool-icon"><i class="bi bi-justify"></i></div>
+                            <div class="tool-label">Artigo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates predefinidos -->
+            <div class="tab-content" id="templates-tab" style="display: none;">
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Templates Jurídicos
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-template="peticao-inicial">
+                            <div class="tool-icon"><i class="bi bi-file-earmark-plus"></i></div>
+                            <div class="tool-label">Petição Inicial</div>
+                        </div>
+                        <div class="tool-item" data-template="contestacao">
+                            <div class="tool-icon"><i class="bi bi-file-earmark-minus"></i></div>
+                            <div class="tool-label">Contestação</div>
+                        </div>
+                        <div class="tool-item" data-template="contrato">
+                            <div class="tool-icon"><i class="bi bi-file-earmark-check"></i></div>
+                            <div class="tool-label">Contrato</div>
+                        </div>
+                        <div class="tool-item" data-template="memorando">
+                            <div class="tool-icon"><i class="bi bi-file-earmark"></i></div>
+                            <div class="tool-label">Memorando</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assets e recursos -->
+            <div class="tab-content" id="assets-tab" style="display: none;">
+                <div class="tools-category">
+                    <div class="category-title">
+                        <i class="bi bi-collection"></i>
+                        Biblioteca de Assets
+                    </div>
+                    <div class="tool-grid">
+                        <div class="tool-item" data-asset="icons">
+                            <div class="tool-icon"><i class="bi bi-app-indicator"></i></div>
+                            <div class="tool-label">Ícones</div>
+                        </div>
+                        <div class="tool-item" data-asset="symbols">
+                            <div class="tool-icon"><i class="bi bi-symbols"></i></div>
+                            <div class="tool-label">Símbolos</div>
+                        </div>
+                        <div class="tool-item" data-asset="patterns">
+                            <div class="tool-icon"><i class="bi bi-pattern"></i></div>
+                            <div class="tool-label">Padrões</div>
+                        </div>
+                        <div class="tool-item" data-asset="borders">
+                            <div class="tool-icon"><i class="bi bi-border-all"></i></div>
+                            <div class="tool-label">Bordas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área do Canvas -->
+        <div class="canvas-area">
+            <div class="canvas-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="selectTool" title="Selecionar">
+                        <i class="bi bi-cursor"></i>
+                    </button>
+                    <button class="toolbar-btn" id="panTool" title="Mover Canvas">
+                        <i class="bi bi-arrows-move"></i>
+                    </button>
+                    <button class="toolbar-btn" id="zoomTool" title="Zoom">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="undoBtn" title="Desfazer">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                    <button class="toolbar-btn" id="redoBtn" title="Refazer">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="copyBtn" title="Copiar">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                    <button class="toolbar-btn" id="pasteBtn" title="Colar">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                    <button class="toolbar-btn" id="deleteBtn" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="alignLeft" title="Alinhar à Esquerda">
+                        <i class="bi bi-text-left"></i>
+                    </button>
+                    <button class="toolbar-btn" id="alignCenter" title="Centralizar">
+                        <i class="bi bi-text-center"></i>
+                    </button>
+                    <button class="toolbar-btn" id="alignRight" title="Alinhar à Direita">
+                        <i class="bi bi-text-right"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="groupBtn" title="Agrupar">
+                        <i class="bi bi-collection"></i>
+                    </button>
+                    <button class="toolbar-btn" id="ungroupBtn" title="Desagrupar">
+                        <i class="bi bi-collection-fill"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="saveBtn" title="Salvar">
+                        <i class="bi bi-save"></i>
+                        Salvar
+                    </button>
+                    <button class="toolbar-btn" id="exportBtn" title="Exportar">
+                        <i class="bi bi-download"></i>
+                        Exportar
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <span class="toolbar-btn" id="zoomLevel">100%</span>
+                    <button class="toolbar-btn" id="zoomFit" title="Ajustar à Tela">
+                        <i class="bi bi-fullscreen"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="canvas-container" id="canvasContainer">
+                <div class="canvas-wrapper">
+                    <canvas id="fabricCanvas" width="800" height="1000"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Propriedades -->
+        <div class="properties-panel" id="propertiesPanel">
+            <div class="properties-header">
+                <h6 style="margin: 0; color: var(--text-primary);">
+                    <i class="bi bi-sliders"></i>
+                    Propriedades do Objeto
+                </h6>
+            </div>
+
+            <div class="properties-content" id="propertiesContent">
+                <div class="property-section">
+                    <h6>Camadas</h6>
+                    <div class="layers-list" id="layersList">
+                        <div class="layer-item">
+                            <i class="bi bi-eye layer-visibility"></i>
+                            <span class="layer-name">Fundo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section" id="objectProperties" style="display: none;">
+                    <h6>Posição e Tamanho</h6>
+                    
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">X</label>
+                            <input type="number" class="property-input" id="objX" step="1">
+                        </div>
+                        <div class="property-field">
+                            <label class="property-label">Y</label>
+                            <input type="number" class="property-input" id="objY" step="1">
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Largura</label>
+                            <input type="number" class="property-input" id="objWidth" step="1">
+                        </div>
+                        <div class="property-field">
+                            <label class="property-label">Altura</label>
+                            <input type="number" class="property-input" id="objHeight" step="1">
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Rotação (°)</label>
+                            <input type="range" class="range-input" id="objRotation" min="0" max="360" step="1">
+                            <span id="rotationValue">0°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section" id="textProperties" style="display: none;">
+                    <h6>Propriedades de Texto</h6>
+                    
+                    <div class="property-row full">
+                        <div class="property-field">
+                            <label class="property-label">Texto</label>
+                            <textarea class="property-input" id="textContent" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Fonte</label>
+                            <select class="property-select" id="fontFamily">
+                                <option value="Arial">Arial</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Courier New">Courier New</option>
+                            </select>
+                        </div>
+                        <div class="property-field">
+                            <label class="property-label">Tamanho</label>
+                            <input type="number" class="property-input" id="fontSize" min="8" max="200" step="1">
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Cor</label>
+                            <input type="color" class="color-input" id="textColor">
+                        </div>
+                        <div class="property-field">
+                            <label class="property-label">Alinhamento</label>
+                            <select class="property-select" id="textAlign">
+                                <option value="left">Esquerda</option>
+                                <option value="center">Centro</option>
+                                <option value="right">Direita</option>
+                                <option value="justify">Justificado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-sm" id="boldBtn"><i class="bi bi-type-bold"></i></button>
+                        <button class="btn-sm" id="italicBtn"><i class="bi bi-type-italic"></i></button>
+                        <button class="btn-sm" id="underlineBtn"><i class="bi bi-type-underline"></i></button>
+                    </div>
+                </div>
+
+                <div class="property-section" id="shapeProperties" style="display: none;">
+                    <h6>Propriedades de Forma</h6>
+                    
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Cor de Preenchimento</label>
+                            <input type="color" class="color-input" id="fillColor">
+                        </div>
+                        <div class="property-field">
+                            <label class="property-label">Cor da Borda</label>
+                            <input type="color" class="color-input" id="strokeColor">
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Espessura da Borda</label>
+                            <input type="range" class="range-input" id="strokeWidth" min="0" max="20" step="1">
+                            <span id="strokeWidthValue">1px</span>
+                        </div>
+                    </div>
+
+                    <div class="property-row">
+                        <div class="property-field">
+                            <label class="property-label">Opacidade</label>
+                            <input type="range" class="range-input" id="opacity" min="0" max="100" step="1">
+                            <span id="opacityValue">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <h6>Ações</h6>
+                    <div class="button-group">
+                        <button class="btn-sm btn-primary" id="duplicateBtn">
+                            <i class="bi bi-copy"></i> Duplicar
+                        </button>
+                        <button class="btn-sm btn-danger" id="deleteObjectBtn">
+                            <i class="bi bi-trash"></i> Excluir
+                        </button>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-sm" id="sendToBack">
+                            <i class="bi bi-send-dash"></i> Para Trás
+                        </button>
+                        <button class="btn-sm" id="bringToFront">
+                            <i class="bi bi-send-plus"></i> Para Frente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip customizado -->
+    <div class="tooltip-custom" id="customTooltip"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.6.0/fabric.min.js"></script>
+    <script>
+        class LegalDesignEditor {
+            constructor() {
+                this.canvas = null;
+                this.activeObject = null;
+                this.clipboard = null;
+                this.history = [];
+                this.historyIndex = -1;
+                this.maxHistory = 50;
+                
+                this.init();
+            }
+
+            init() {
+                this.initCanvas();
+                this.setupEventListeners();
+                this.setupToolbar();
+                this.setupProperties();
+                this.setupTools();
+                this.saveState();
+            }
+
+            initCanvas() {
+                this.canvas = new fabric.Canvas('fabricCanvas', {
+                    backgroundColor: 'white',
+                    selection: true,
+                    preserveObjectStacking: true
+                });
+
+                this.canvas.on('selection:created', (e) => this.onObjectSelected(e));
+                this.canvas.on('selection:updated', (e) => this.onObjectSelected(e));
+                this.canvas.on('selection:cleared', () => this.onObjectDeselected());
+                this.canvas.on('object:modified', () => this.saveState());
+                this.canvas.on('object:added', () => this.updateLayers());
+                this.canvas.on('object:removed', () => this.updateLayers());
+
+                // Configurar grade
+                this.setupGrid();
+            }
+
+            setupGrid() {
+                const gridSize = 20;
+                const grid = [];
+                
+                for (let i = 0; i < (this.canvas.width / gridSize); i++) {
+                    grid.push(new fabric.Line([i * gridSize, 0, i * gridSize, this.canvas.height], {
+                        stroke: '#e0e0e0',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false
+                    }));
+                }
+                
+                for (let i = 0; i < (this.canvas.height / gridSize); i++) {
+                    grid.push(new fabric.Line([0, i * gridSize, this.canvas.width, i * gridSize], {
+                        stroke: '#e0e0e0',
+                        strokeWidth: 1,
+                        selectable: false,
+                        evented: false
+                    }));
+                }
+
+                const gridGroup = new fabric.Group(grid, {
+                    selectable: false,
+                    evented: false
+                });
+
+                this.canvas.add(gridGroup);
+                this.canvas.sendToBack(gridGroup);
+            }
+
+            setupEventListeners() {
+                // Tabs de ferramentas
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const tab = e.target.dataset.tab;
+                        this.switchTab(tab);
+                    });
+                });
+
+                // Busca de ferramentas
+                document.getElementById('toolsSearch').addEventListener('input', (e) => {
+                    this.filterTools(e.target.value);
+                });
+
+                // Ferramentas
+                document.querySelectorAll('.tool-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const tool = e.currentTarget.dataset.tool;
+                        const template = e.currentTarget.dataset.template;
+                        const asset = e.currentTarget.dataset.asset;
+                        
+                        if (tool) this.useTool(tool);
+                        if (template) this.loadTemplate(template);
+                        if (asset) this.loadAsset(asset);
+                    });
+                });
+
+                // Atalhos de teclado
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch (e.key) {
+                            case 'z':
+                                e.preventDefault();
+                                this.undo();
+                                break;
+                            case 'y':
+                                e.preventDefault();
+                                this.redo();
+                                break;
+                            case 'c':
+                                e.preventDefault();
+                                this.copy();
+                                break;
+                            case 'v':
+                                e.preventDefault();
+                                this.paste();
+                                break;
+                            case 's':
+                                e.preventDefault();
+                                this.save();
+                                break;
+                        }
+                    }
+                    
+                    if (e.key === 'Delete' && this.canvas.getActiveObject()) {
+                        this.deleteSelected();
+                    }
+                });
+            }
+
+            setupToolbar() {
+                document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+                document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+                document.getElementById('copyBtn').addEventListener('click', () => this.copy());
+                document.getElementById('pasteBtn').addEventListener('click', () => this.paste());
+                document.getElementById('deleteBtn').addEventListener('click', () => this.deleteSelected());
+                document.getElementById('saveBtn').addEventListener('click', () => this.save());
+                document.getElementById('exportBtn').addEventListener('click', () => this.export());
+                
+                // Alinhamento
+                document.getElementById('alignLeft').addEventListener('click', () => this.align('left'));
+                document.getElementById('alignCenter').addEventListener('click', () => this.align('center'));
+                document.getElementById('alignRight').addEventListener('click', () => this.align('right'));
+                
+                // Agrupamento
+                document.getElementById('groupBtn').addEventListener('click', () => this.group());
+                document.getElementById('ungroupBtn').addEventListener('click', () => this.ungroup());
+                
+                // Zoom
+                document.getElementById('zoomFit').addEventListener('click', () => this.zoomToFit());
+            }
+
+            setupProperties() {
+                // Propriedades de posição
+                ['objX', 'objY', 'objWidth', 'objHeight'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', () => this.updateObjectProperties());
+                });
+
+                // Rotação
+                document.getElementById('objRotation').addEventListener('input', (e) => {
+                    document.getElementById('rotationValue').textContent = e.target.value + '°';
+                    this.updateObjectProperties();
+                });
+
+                // Propriedades de texto
+                document.getElementById('textContent').addEventListener('input', () => this.updateTextProperties());
+                document.getElementById('fontFamily').addEventListener('change', () => this.updateTextProperties());
+                document.getElementById('fontSize').addEventListener('input', () => this.updateTextProperties());
+                document.getElementById('textColor').addEventListener('input', () => this.updateTextProperties());
+                document.getElementById('textAlign').addEventListener('change', () => this.updateTextProperties());
+
+                // Estilo de texto
+                document.getElementById('boldBtn').addEventListener('click', () => this.toggleTextStyle('bold'));
+                document.getElementById('italicBtn').addEventListener('click', () => this.toggleTextStyle('italic'));
+                document.getElementById('underlineBtn').addEventListener('click', () => this.toggleTextStyle('underline'));
+
+                // Propriedades de forma
+                document.getElementById('fillColor').addEventListener('input', () => this.updateShapeProperties());
+                document.getElementById('strokeColor').addEventListener('input', () => this.updateShapeProperties());
+                
+                document.getElementById('strokeWidth').addEventListener('input', (e) => {
+                    document.getElementById('strokeWidthValue').textContent = e.target.value + 'px';
+                    this.updateShapeProperties();
+                });
+                
+                document.getElementById('opacity').addEventListener('input', (e) => {
+                    document.getElementById('opacityValue').textContent = e.target.value + '%';
+                    this.updateShapeProperties();
+                });
+
+                // Ações
+                document.getElementById('duplicateBtn').addEventListener('click', () => this.duplicate());
+                document.getElementById('deleteObjectBtn').addEventListener('click', () => this.deleteSelected());
+                document.getElementById('sendToBack').addEventListener('click', () => this.sendToBack());
+                document.getElementById('bringToFront').addEventListener('click', () => this.bringToFront());
+            }
+
+            setupTools() {
+                // Configuração inicial dos tooltips
+                this.setupTooltips();
+            }
+
+            setupTooltips() {
+                const tooltip = document.getElementById('customTooltip');
+                
+                document.querySelectorAll('[title]').forEach(element => {
+                    element.addEventListener('mouseenter', (e) => {
+                        tooltip.textContent = e.target.title;
+                        tooltip.classList.add('show');
+                        this.positionTooltip(e, tooltip);
+                    });
+                    
+                    element.addEventListener('mouseleave', () => {
+                        tooltip.classList.remove('show');
+                    });
+                    
+                    element.addEventListener('mousemove', (e) => {
+                        this.positionTooltip(e, tooltip);
+                    });
+                });
+            }
+
+            positionTooltip(e, tooltip) {
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY - 30 + 'px';
+            }
+
+            switchTab(tabName) {
+                // Atualizar botões
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+                // Mostrar conteúdo
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(`${tabName}-tab`).style.display = 'block';
+            }
+
+            filterTools(searchTerm) {
+                const tools = document.querySelectorAll('.tool-item');
+                tools.forEach(tool => {
+                    const label = tool.querySelector('.tool-label').textContent.toLowerCase();
+                    if (label.includes(searchTerm.toLowerCase())) {
+                        tool.style.display = 'block';
+                    } else {
+                        tool.style.display = 'none';
+                    }
+                });
+            }
+
+            useTool(toolType) {
+                switch (toolType) {
+                    case 'text':
+                        this.addText();
+                        break;
+                    case 'heading':
+                        this.addHeading();
+                        break;
+                    case 'textbox':
+                        this.addTextbox();
+                        break;
+                    case 'rectangle':
+                        this.addRectangle();
+                        break;
+                    case 'circle':
+                        this.addCircle();
+                        break;
+                    case 'line':
+                        this.addLine();
+                        break;
+                    case 'arrow':
+                        this.addArrow();
+                        break;
+                    case 'table':
+                        this.addTable();
+                        break;
+                    case 'checkbox':
+                        this.addCheckbox();
+                        break;
+                    case 'signature':
+                        this.addSignature();
+                        break;
+                    case 'date-field':
+                        this.addDateField();
+                        break;
+                    case 'image':
+                        this.addImage();
+                        break;
+                    case 'header-juridico':
+                        this.addLegalHeader();
+                        break;
+                    case 'clausula':
+                        this.addClause();
+                        break;
+                    default:
+                        console.log('Ferramenta não implementada:', toolType);
+                }
+            }
+
+            addText() {
+                const text = new fabric.Text('Digite seu texto aqui', {
+                    left: 100,
+                    top: 100,
+                    fontFamily: 'Arial',
+                    fontSize: 16,
+                    fill: '#333333'
+                });
+                this.canvas.add(text);
+                this.canvas.setActiveObject(text);
+                this.saveState();
+            }
+
+            addHeading() {
+                const heading = new fabric.Text('TÍTULO PRINCIPAL', {
+                    left: 100,
+                    top: 50,
+                    fontFamily: 'Georgia',
+                    fontSize: 24,
+                    fontWeight: 'bold',
+                    fill: '#2c3e50',
+                    textAlign: 'center'
+                });
+                this.canvas.add(heading);
+                this.canvas.setActiveObject(heading);
+                this.saveState();
+            }
+
+            addTextbox() {
+                const textbox = new fabric.Textbox('Este é um texto editável que pode quebrar linhas automaticamente conforme necessário.', {
+                    left: 100,
+                    top: 100,
+                    width: 200,
+                    fontFamily: 'Arial',
+                    fontSize: 14,
+                    fill: '#333333'
+                });
+                this.canvas.add(textbox);
+                this.canvas.setActiveObject(textbox);
+                this.saveState();
+            }
+
+            addRectangle() {
+                const rect = new fabric.Rect({
+                    left: 100,
+                    top: 100,
+                    width: 100,
+                    height: 60,
+                    fill: '#3498db',
+                    stroke: '#2980b9',
+                    strokeWidth: 2
+                });
+                this.canvas.add(rect);
+                this.canvas.setActiveObject(rect);
+                this.saveState();
+            }
+
+            addCircle() {
+                const circle = new fabric.Circle({
+                    left: 100,
+                    top: 100,
+                    radius: 30,
+                    fill: '#27ae60',
+                    stroke: '#229954',
+                    strokeWidth: 2
+                });
+                this.canvas.add(circle);
+                this.canvas.setActiveObject(circle);
+                this.saveState();
+            }
+
+            addLine() {
+                const line = new fabric.Line([50, 100, 200, 100], {
+                    stroke: '#333333',
+                    strokeWidth: 2
+                });
+                this.canvas.add(line);
+                this.canvas.setActiveObject(line);
+                this.saveState();
+            }
+
+            addArrow() {
+                const arrow = new fabric.Path('M 0,0 L 0,20 L 100,10 z', {
+                    left: 100,
+                    top: 100,
+                    fill: '#e74c3c',
+                    stroke: '#c0392b',
+                    strokeWidth: 1
+                });
+                this.canvas.add(arrow);
+                this.canvas.setActiveObject(arrow);
+                this.saveState();
+            }
+
+            addTable() {
+                // Criar uma tabela simples usando linhas e texto
+                const tableGroup = [];
+                const cellWidth = 80;
+                const cellHeight = 30;
+                const rows = 3;
+                const cols = 3;
+
+                // Criar células
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const cell = new fabric.Rect({
+                            left: j * cellWidth,
+                            top: i * cellHeight,
+                            width: cellWidth,
+                            height: cellHeight,
+                            fill: 'transparent',
+                            stroke: '#333333',
+                            strokeWidth: 1
+                        });
+                        tableGroup.push(cell);
+
+                        const cellText = new fabric.Text(i === 0 ? `Col ${j + 1}` : `R${i}C${j + 1}`, {
+                            left: j * cellWidth + cellWidth / 2,
+                            top: i * cellHeight + cellHeight / 2,
+                            fontSize: 12,
+                            textAlign: 'center',
+                            originX: 'center',
+                            originY: 'center'
+                        });
+                        tableGroup.push(cellText);
+                    }
+                }
+
+                const table = new fabric.Group(tableGroup, {
+                    left: 100,
+                    top: 100
+                });
+
+                this.canvas.add(table);
+                this.canvas.setActiveObject(table);
+                this.saveState();
+            }
+
+            addCheckbox() {
+                const checkboxGroup = [];
+                
+                const box = new fabric.Rect({
+                    left: 0,
+                    top: 0,
+                    width: 15,
+                    height: 15,
+                    fill: 'white',
+                    stroke: '#333333',
+                    strokeWidth: 1
+                });
+                checkboxGroup.push(box);
+
+                const label = new fabric.Text('Opção de seleção', {
+                    left: 25,
+                    top: 0,
+                    fontSize: 14,
+                    fill: '#333333'
+                });
+                checkboxGroup.push(label);
+
+                const checkbox = new fabric.Group(checkboxGroup, {
+                    left: 100,
+                    top: 100
+                });
+
+                this.canvas.add(checkbox);
+                this.canvas.setActiveObject(checkbox);
+                this.saveState();
+            }
+
+            addSignature() {
+                const signatureGroup = [];
+                
+                const line = new fabric.Line([0, 20, 200, 20], {
+                    stroke: '#333333',
+                    strokeWidth: 1
+                });
+                signatureGroup.push(line);
+
+                const label = new fabric.Text('Nome e Assinatura', {
+                    left: 100,
+                    top: 25,
+                    fontSize: 12,
+                    textAlign: 'center',
+                    originX: 'center'
+                });
+                signatureGroup.push(label);
+
+                const signature = new fabric.Group(signatureGroup, {
+                    left: 100,
+                    top: 100
+                });
+
+                this.canvas.add(signature);
+                this.canvas.setActiveObject(signature);
+                this.saveState();
+            }
+
+            addDateField() {
+                const dateGroup = [];
+                
+                const label = new fabric.Text('Data: ___/___/_______', {
+                    left: 0,
+                    top: 0,
+                    fontSize: 14,
+                    fill: '#333333'
+                });
+                dateGroup.push(label);
+
+                const dateField = new fabric.Group(dateGroup, {
+                    left: 100,
+                    top: 100
+                });
+
+                this.canvas.add(dateField);
+                this.canvas.setActiveObject(dateField);
+                this.saveState();
+            }
+
+            addImage() {
+                const placeholder = new fabric.Rect({
+                    left: 100,
+                    top: 100,
+                    width: 150,
+                    height: 100,
+                    fill: '#f8f9fa',
+                    stroke: '#dee2e6',
+                    strokeWidth: 2,
+                    strokeDashArray: [5, 5]
+                });
+
+                const text = new fabric.Text('Clique para adicionar imagem', {
+                    left: 175,
+                    top: 150,
+                    fontSize: 12,
+                    fill: '#6c757d',
+                    textAlign: 'center',
+                    originX: 'center',
+                    originY: 'center'
+                });
+
+                const imageGroup = new fabric.Group([placeholder, text], {
+                    left: 100,
+                    top: 100
+                });
+
+                this.canvas.add(imageGroup);
+                this.canvas.setActiveObject(imageGroup);
+                this.saveState();
+            }
+
+            addLegalHeader() {
+                const headerGroup = [];
+                
+                const title = new fabric.Text('EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO', {
+                    left: 0,
+                    top: 0,
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    fill: '#2c3e50'
+                });
+                headerGroup.push(title);
+
+                const subtitle = new fabric.Text('DA ___ VARA CÍVEL DA COMARCA DE ___', {
+                    left: 0,
+                    top: 25,
+                    fontSize: 12,
+                    textAlign: 'center',
+                    fill: '#2c3e50'
+                });
+                headerGroup.push(subtitle);
+
+                const header = new fabric.Group(headerGroup, {
+                    left: 100,
+                    top: 50
+                });
+
+                this.canvas.add(header);
+                this.canvas.setActiveObject(header);
+                this.saveState();
+            }
+
+            addClause() {
+                const clause = new fabric.Textbox('CLÁUSULA ___ª - DO OBJETO\n\nDescreva aqui o conteúdo da cláusula...', {
+                    left: 100,
+                    top: 100,
+                    width: 400,
+                    fontSize: 12,
+                    fill: '#333333',
+                    fontFamily: 'Times New Roman'
+                });
+
+                this.canvas.add(clause);
+                this.canvas.setActiveObject(clause);
+                this.saveState();
+            }
+
+            onObjectSelected(e) {
+                this.activeObject = e.target;
+                this.updatePropertiesPanel();
+            }
+
+            onObjectDeselected() {
+                this.activeObject = null;
+                this.hideAllPropertySections();
+            }
+
+            updatePropertiesPanel() {
+                if (!this.activeObject) return;
+
+                this.hideAllPropertySections();
+                document.getElementById('objectProperties').style.display = 'block';
+
+                // Atualizar propriedades básicas
+                document.getElementById('objX').value = Math.round(this.activeObject.left);
+                document.getElementById('objY').value = Math.round(this.activeObject.top);
+                document.getElementById('objWidth').value = Math.round(this.activeObject.width * this.activeObject.scaleX);
+                document.getElementById('objHeight').value = Math.round(this.activeObject.height * this.activeObject.scaleY);
+                document.getElementById('objRotation').value = this.activeObject.angle;
+                document.getElementById('rotationValue').textContent = this.activeObject.angle + '°';
+
+                // Mostrar propriedades específicas
+                if (this.activeObject.type === 'text' || this.activeObject.type === 'textbox') {
+                    this.showTextProperties();
+                } else if (this.activeObject.type === 'rect' || this.activeObject.type === 'circle') {
+                    this.showShapeProperties();
+                }
+            }
+
+            showTextProperties() {
+                document.getElementById('textProperties').style.display = 'block';
+                
+                document.getElementById('textContent').value = this.activeObject.text;
+                document.getElementById('fontFamily').value = this.activeObject.fontFamily;
+                document.getElementById('fontSize').value = this.activeObject.fontSize;
+                document.getElementById('textColor').value = this.activeObject.fill;
+                document.getElementById('textAlign').value = this.activeObject.textAlign;
+            }
+
+            showShapeProperties() {
+                document.getElementById('shapeProperties').style.display = 'block';
+                
+                document.getElementById('fillColor').value = this.activeObject.fill;
+                document.getElementById('strokeColor').value = this.activeObject.stroke;
+                document.getElementById('strokeWidth').value = this.activeObject.strokeWidth;
+                document.getElementById('strokeWidthValue').textContent = this.activeObject.strokeWidth + 'px';
+                document.getElementById('opacity').value = (this.activeObject.opacity * 100);
+                document.getElementById('opacityValue').textContent = Math.round(this.activeObject.opacity * 100) + '%';
+            }
+
+            hideAllPropertySections() {
+                document.getElementById('objectProperties').style.display = 'none';
+                document.getElementById('textProperties').style.display = 'none';
+                document.getElementById('shapeProperties').style.display = 'none';
+            }
+
+            updateObjectProperties() {
+                if (!this.activeObject) return;
+
+                this.activeObject.set({
+                    left: parseInt(document.getElementById('objX').value),
+                    top: parseInt(document.getElementById('objY').value),
+                    angle: parseInt(document.getElementById('objRotation').value)
+                });
+
+                const newWidth = parseInt(document.getElementById('objWidth').value);
+                const newHeight = parseInt(document.getElementById('objHeight').value);
+                
+                this.activeObject.scaleToWidth(newWidth);
+                this.activeObject.scaleToHeight(newHeight);
+
+                this.canvas.renderAll();
+                this.saveState();
+            }
+
+            updateTextProperties() {
+                if (!this.activeObject || (this.activeObject.type !== 'text' && this.activeObject.type !== 'textbox')) return;
+
+                this.activeObject.set({
+                    text: document.getElementById('textContent').value,
+                    fontFamily: document.getElementById('fontFamily').value,
+                    fontSize: parseInt(document.getElementById('fontSize').value),
+                    fill: document.getElementById('textColor').value,
+                    textAlign: document.getElementById('textAlign').value
+                });
+
+                this.canvas.renderAll();
+                this.saveState();
+            }
+
+            updateShapeProperties() {
+                if (!this.activeObject) return;
+
+                this.activeObject.set({
+                    fill: document.getElementById('fillColor').value,
+                    stroke: document.getElementById('strokeColor').value,
+                    strokeWidth: parseInt(document.getElementById('strokeWidth').value),
+                    opacity: parseInt(document.getElementById('opacity').value) / 100
+                });
+
+                this.canvas.renderAll();
+                this.saveState();
+            }
+
+            toggleTextStyle(style) {
+                if (!this.activeObject || (this.activeObject.type !== 'text' && this.activeObject.type !== 'textbox')) return;
+
+                const currentValue = this.activeObject[style];
+                this.activeObject.set(style, !currentValue);
+                
+                this.canvas.renderAll();
+                this.saveState();
+            }
+
+            align(direction) {
+                const activeObject = this.canvas.getActiveObject();
+                if (!activeObject) return;
+
+                const canvasCenter = this.canvas.width / 2;
+                
+                switch (direction) {
+                    case 'left':
+                        activeObject.set({ left: 0 });
+                        break;
+                    case 'center':
+                        activeObject.set({ left: canvasCenter - (activeObject.width * activeObject.scaleX) / 2 });
+                        break;
+                    case 'right':
+                        activeObject.set({ left: this.canvas.width - (activeObject.width * activeObject.scaleX) });
+                        break;
+                }
+
+                this.canvas.renderAll();
+                this.saveState();
+            }
+
+            group() {
+                const activeSelection = this.canvas.getActiveObject();
+                if (activeSelection && activeSelection.type === 'activeSelection') {
+                    const group = activeSelection.toGroup();
+                    this.canvas.renderAll();
+                    this.saveState();
+                }
+            }
+
+            ungroup() {
+                const activeObject = this.canvas.getActiveObject();
+                if (activeObject && activeObject.type === 'group') {
+                    activeObject.toActiveSelection();
+                    this.canvas.renderAll();
+                    this.saveState();
+                }
+            }
+
+            duplicate() {
+                if (!this.activeObject) return;
+
+                this.activeObject.clone((cloned) => {
+                    cloned.set({
+                        left: cloned.left + 20,
+                        top: cloned.top + 20
+                    });
+                    this.canvas.add(cloned);
+                    this.canvas.setActiveObject(cloned);
+                    this.saveState();
+                });
+            }
+
+            deleteSelected() {
+                const activeObject = this.canvas.getActiveObject();
+                if (activeObject) {
+                    this.canvas.remove(activeObject);
+                    this.saveState();
+                }
+            }
+
+            sendToBack() {
+                const activeObject = this.canvas.getActiveObject();
+                if (activeObject) {
+                    this.canvas.sendToBack(activeObject);
+                    this.canvas.renderAll();
+                    this.saveState();
+                }
+            }
+
+            bringToFront() {
+                const activeObject = this.canvas.getActiveObject();
+                if (activeObject) {
+                    this.canvas.bringToFront(activeObject);
+                    this.canvas.renderAll();
+                    this.saveState();
+                }
+            }
+
+            copy() {
+                const activeObject = this.canvas.getActiveObject();
+                if (activeObject) {
+                    activeObject.clone((cloned) => {
+                        this.clipboard = cloned;
+                    });
+                }
+            }
+
+            paste() {
+                if (this.clipboard) {
+                    this.clipboard.clone((cloned) => {
+                        cloned.set({
+                            left: cloned.left + 20,
+                            top: cloned.top + 20,
+                            evented: true
+                        });
+                        this.canvas.add(cloned);
+                        this.clipboard.top += 20;
+                        this.clipboard.left += 20;
+                        this.canvas.setActiveObject(cloned);
+                        this.saveState();
+                    });
+                }
+            }
+
+            zoomToFit() {
+                this.canvas.setZoom(1);
+                this.canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+                document.getElementById('zoomLevel').textContent = '100%';
+            }
+
+            updateLayers() {
+                const layersList = document.getElementById('layersList');
+                layersList.innerHTML = '';
+
+                const objects = this.canvas.getObjects();
+                objects.forEach((obj, index) => {
+                    const layerItem = document.createElement('div');
+                    layerItem.className = 'layer-item';
+                    layerItem.innerHTML = `
+                        <i class="bi bi-eye layer-visibility"></i>
+                        <span class="layer-name">${obj.type} ${index + 1}</span>
+                    `;
+                    
+                    layerItem.addEventListener('click', () => {
+                        this.canvas.setActiveObject(obj);
+                        this.canvas.renderAll();
+                    });
+
+                    layersList.appendChild(layerItem);
+                });
+            }
+
+            saveState() {
+                const state = JSON.stringify(this.canvas.toJSON());
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                this.history.push(state);
+                this.historyIndex++;
+
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                    this.historyIndex--;
+                }
+            }
+
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.loadState(this.history[this.historyIndex]);
+                }
+            }
+
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.loadState(this.history[this.historyIndex]);
+                }
+            }
+
+            loadState(state) {
+                this.canvas.loadFromJSON(state, () => {
+                    this.canvas.renderAll();
+                    this.updateLayers();
+                });
+            }
+
+            save() {
+                const data = {
+                    canvas: this.canvas.toJSON(),
+                    timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('legalDesignDocument', JSON.stringify(data));
+                
+                // Feedback visual
+                const saveBtn = document.getElementById('saveBtn');
+                const originalHTML = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="bi bi-check"></i> Salvo';
+                
+                setTimeout(() => {
+                    saveBtn.innerHTML = originalHTML;
+                }, 2000);
+            }
+
+            export() {
+                const dataURL = this.canvas.toDataURL({
+                    format: 'png',
+                    quality: 1.0,
+                    multiplier: 2
+                });
+
+                const link = document.createElement('a');
+                link.download = 'legal-design-document.png';
+                link.href = dataURL;
+                link.click();
+            }
+
+            loadTemplate(templateName) {
+                console.log('Carregando template:', templateName);
+                // Implementar carregamento de templates predefinidos
+            }
+
+            loadAsset(assetType) {
+                console.log('Carregando asset:', assetType);
+                // Implementar carregamento de assets
+            }
+        }
+
+        // Inicializar editor quando página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            new LegalDesignEditor();
+        });
+    </script>
+</body>
+</html>

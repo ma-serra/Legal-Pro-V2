@@ -1,0 +1,695 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block styles %}
+<style>
+    /* Estilos para documentos lado a lado */
+    .document-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 250px);
+        min-height: 600px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .document-header {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .document-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .document-options {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .document-controls {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .control-group {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .document-content {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+    
+    .document-side {
+        flex: 1;
+        padding: 0;
+        border-right: 1px solid #dee2e6;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .document-side:last-child {
+        border-right: none;
+    }
+    
+    .side-header {
+        background-color: #f0f4f8;
+        color: #495057;
+        padding: 10px 15px;
+        font-weight: 600;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .side-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+        position: relative;
+    }
+    
+    .editable-document {
+        width: 100%;
+        height: 100%;
+        border: none;
+        padding: 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #333;
+        resize: none;
+        outline: none;
+        background-color: white;
+    }
+    
+    .editable-document:focus {
+        background-color: #fafafa;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    }
+    
+    .diff-deletado {
+        background-color: #ffdddd;
+        color: #a94442;
+        text-decoration: line-through;
+    }
+    
+    .diff-adicionado {
+        background-color: #ddffdd;
+        color: #3c763d;
+    }
+    
+    .edit-badge {
+        position: absolute;
+        top: 70px;
+        right: 15px;
+        background-color: rgba(0,123,255,0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: 12px;
+        z-index: 10;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    
+    .side-content:focus-within .edit-badge {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .metadata-section {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .metadata-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .metadata-item {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .metadata-label {
+        font-weight: 600;
+        width: 140px;
+        color: #6c757d;
+    }
+    
+    .metadata-value {
+        flex: 1;
+    }
+    
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+    
+    .custom-toast {
+        min-width: 250px;
+        background-color: white;
+        color: #333;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+    }
+    
+    .custom-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .toast-header {
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .toast-body {
+        padding: 12px 15px;
+    }
+    
+    .toast-success .toast-header {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .toast-error .toast-header {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .restore-btn {
+        color: #6c757d;
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: color 0.2s;
+    }
+    
+    .restore-btn:hover {
+        color: #007bff;
+    }
+    
+    .restore-btn i {
+        margin-right: 5px;
+        font-size: 12px;
+    }
+    
+    .character-counter {
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        font-size: 12px;
+        color: #6c757d;
+        background-color: rgba(255,255,255,0.8);
+        padding: 2px 8px;
+        border-radius: 4px;
+        pointer-events: none;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0,123,255,0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0,123,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); }
+    }
+    
+    .pulse-effect {
+        animation: pulse 1.5s infinite;
+    }
+    
+    /* Dica flutuante de edição */
+    .editor-tip {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(33, 37, 41, 0.9);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 13px;
+        z-index: 1000;
+        pointer-events: none;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .editor-tip:after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 8px 8px 0;
+        border-style: solid;
+        border-color: rgba(33, 37, 41, 0.9) transparent transparent;
+    }
+    
+    .editor-tip.show {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Título e descrição da página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">{{ title }}</h2>
+            <p class="text-muted mb-0">Edite o conteúdo dos documentos e salve para atualizar a comparação.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('comparacao_documentos.visualizar', id=comparacao.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-eye me-1"></i> Visualizar
+            </a>
+            <button id="btn-save" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Salvar Alterações
+            </button>
+        </div>
+    </div>
+    
+    <!-- Metadata da comparação -->
+    <div class="metadata-section">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="titulo" class="form-label">Título da Comparação</label>
+                    <input type="text" class="form-control" id="titulo" value="{{ comparacao.titulo }}" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="metadata-item">
+                            <div class="metadata-label">Área:</div>
+                            <div class="metadata-value">{{ comparacao.area_processo }} - {{ comparacao.descricao_area }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metadata-item">
+                            <div class="metadata-label">Cliente:</div>
+                            <div class="metadata-value">{{ comparacao.documento_cliente }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metadata-item">
+                            <div class="metadata-label">Data:</div>
+                            <div class="metadata-value">{{ comparacao.data_comparacao.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Container principal dos documentos -->
+    <div class="document-container">
+        <!-- Cabeçalho do container -->
+        <div class="document-header">
+            <div class="document-title">Editor de Documentos</div>
+            <div class="document-options">
+                <button id="btn-toggle-view" class="btn btn-sm btn-light">
+                    <i class="fas fa-exchange-alt me-1"></i> Alternar Visualização
+                </button>
+            </div>
+        </div>
+        
+        <!-- Controles dos documentos -->
+        <div class="document-controls">
+            <div class="control-group">
+                <button id="btn-increase-font" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button id="btn-decrease-font" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+            </div>
+            <div class="control-group">
+                <button id="btn-sync-scroll" class="btn btn-sm btn-outline-primary active">
+                    <i class="fas fa-link me-1"></i> Sincronizar Rolagem
+                </button>
+            </div>
+        </div>
+        
+        <!-- Conteúdo dos documentos -->
+        <div class="document-content">
+            <!-- Lado Esquerdo (Original) -->
+            <div class="document-side">
+                <div class="side-header">
+                    <span>Versão Original</span>
+                    <button class="restore-btn" data-side="a">
+                        <i class="fas fa-undo"></i> Restaurar
+                    </button>
+                </div>
+                <div class="side-content">
+                    <textarea id="editor-a" class="editable-document">{{ comparacao.resultado_editado_a|safe }}</textarea>
+                    <div class="edit-badge">
+                        <i class="fas fa-edit me-1"></i> Editando
+                    </div>
+                    <div class="character-counter" id="counter-a">0 caracteres</div>
+                    <div class="editor-tip" id="tip-a">Use TAB para indentar o texto</div>
+                </div>
+            </div>
+            
+            <!-- Lado Direito (Modificado) -->
+            <div class="document-side">
+                <div class="side-header">
+                    <span>Versão Modificada</span>
+                    <button class="restore-btn" data-side="b">
+                        <i class="fas fa-undo"></i> Restaurar
+                    </button>
+                </div>
+                <div class="side-content">
+                    <textarea id="editor-b" class="editable-document">{{ comparacao.resultado_editado_b|safe }}</textarea>
+                    <div class="edit-badge">
+                        <i class="fas fa-edit me-1"></i> Editando
+                    </div>
+                    <div class="character-counter" id="counter-b">0 caracteres</div>
+                    <div class="editor-tip" id="tip-b">Use TAB para indentar o texto</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações adicionais -->
+    <div class="alert alert-info mb-4">
+        <h5><i class="fas fa-info-circle me-2"></i> Dicas de Edição</h5>
+        <ul class="mb-0 mt-2">
+            <li>Clique em qualquer área do documento para começar a editar.</li>
+            <li>Use o botão "Restaurar" para voltar à versão original caso necessite.</li>
+            <li>As alterações só serão salvas quando você clicar no botão "Salvar Alterações".</li>
+            <li>Você pode desativar a sincronização de rolagem se preferir navegar independentemente.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Container das mensagens toast -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Dados originais ocultos -->
+<input type="hidden" id="original-a" value="{{ comparacao.resultado_html_lado_a|safe }}">
+<input type="hidden" id="original-b" value="{{ comparacao.resultado_html_lado_b|safe }}">
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Referências aos elementos da UI
+        const btnSave = document.getElementById('btn-save');
+        const btnToggleView = document.getElementById('btn-toggle-view');
+        const btnSyncScroll = document.getElementById('btn-sync-scroll');
+        const btnIncreaseFont = document.getElementById('btn-increase-font');
+        const btnDecreaseFont = document.getElementById('btn-decrease-font');
+        const editorA = document.getElementById('editor-a');
+        const editorB = document.getElementById('editor-b');
+        const counterA = document.getElementById('counter-a');
+        const counterB = document.getElementById('counter-b');
+        const tipA = document.getElementById('tip-a');
+        const tipB = document.getElementById('tip-b');
+        const tituloInput = document.getElementById('titulo');
+        const originalA = document.getElementById('original-a');
+        const originalB = document.getElementById('original-b');
+        const documentContent = document.querySelector('.document-content');
+        
+        // Estado da aplicação
+        let currentFontSize = 14;
+        let syncScrollEnabled = true;
+        let verticalView = false;
+        
+        // Inicializar contadores
+        updateCharacterCount(editorA, counterA);
+        updateCharacterCount(editorB, counterB);
+        
+        // Adicionar eventos aos editores
+        function setupEditor(editor, tip, counter) {
+            // Mostrar dica ao focar
+            editor.addEventListener('focus', function() {
+                tip.classList.add('show');
+                setTimeout(() => {
+                    tip.classList.remove('show');
+                }, 3000);
+            });
+            
+            // Atualizar contador ao digitar
+            editor.addEventListener('input', function() {
+                updateCharacterCount(editor, counter);
+            });
+            
+            // Permitir tab dentro do textarea
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    
+                    // Adicionar tab
+                    this.value = this.value.substring(0, start) + 
+                        "\t" + this.value.substring(end);
+                    
+                    // Reposicionar cursor
+                    this.selectionStart = this.selectionEnd = start + 1;
+                }
+            });
+        }
+        
+        // Configurar editores
+        setupEditor(editorA, tipA, counterA);
+        setupEditor(editorB, tipB, counterB);
+        
+        // Sincronizar rolagem quando ativado
+        function setupScrollSync() {
+            editorA.addEventListener('scroll', function() {
+                if (syncScrollEnabled) {
+                    editorB.scrollTop = this.scrollTop;
+                }
+            });
+            
+            editorB.addEventListener('scroll', function() {
+                if (syncScrollEnabled) {
+                    editorA.scrollTop = this.scrollTop;
+                }
+            });
+        }
+        
+        // Inicializar sincronização
+        setupScrollSync();
+        
+        // Atualizar contagem de caracteres
+        function updateCharacterCount(editor, counter) {
+            const count = editor.value.length;
+            counter.textContent = `${count.toLocaleString()} caracteres`;
+        }
+        
+        // Mostrar toast de notificação
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${type}`;
+            
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <strong>${type === 'success' ? 'Sucesso!' : 'Erro!'}</strong>
+                    <button type="button" class="btn-close"></button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Mostrar com animação
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Configurar botão de fechar
+            const closeBtn = toast.querySelector('.btn-close');
+            closeBtn.addEventListener('click', () => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            });
+            
+            // Remover automaticamente após 5 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode === toastContainer) {
+                        toastContainer.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Alternar visualização (horizontal/vertical)
+        btnToggleView.addEventListener('click', function() {
+            verticalView = !verticalView;
+            
+            if (verticalView) {
+                documentContent.style.flexDirection = 'column';
+                this.querySelector('i').className = 'fas fa-grip-horizontal me-1';
+            } else {
+                documentContent.style.flexDirection = 'row';
+                this.querySelector('i').className = 'fas fa-exchange-alt me-1';
+            }
+        });
+        
+        // Ativar/desativar sincronização de rolagem
+        btnSyncScroll.addEventListener('click', function() {
+            syncScrollEnabled = !syncScrollEnabled;
+            
+            if (syncScrollEnabled) {
+                this.classList.add('active');
+                this.querySelector('i').className = 'fas fa-link me-1';
+            } else {
+                this.classList.remove('active');
+                this.querySelector('i').className = 'fas fa-unlink me-1';
+            }
+        });
+        
+        // Aumentar tamanho da fonte
+        btnIncreaseFont.addEventListener('click', function() {
+            if (currentFontSize < 24) {
+                currentFontSize += 2;
+                updateFontSize();
+            }
+        });
+        
+        // Diminuir tamanho da fonte
+        btnDecreaseFont.addEventListener('click', function() {
+            if (currentFontSize > 10) {
+                currentFontSize -= 2;
+                updateFontSize();
+            }
+        });
+        
+        // Atualizar tamanho da fonte nos editores
+        function updateFontSize() {
+            editorA.style.fontSize = `${currentFontSize}px`;
+            editorB.style.fontSize = `${currentFontSize}px`;
+        }
+        
+        // Restaurar versão original
+        document.querySelectorAll('.restore-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const side = this.getAttribute('data-side');
+                const editor = document.getElementById(`editor-${side}`);
+                const original = document.getElementById(`original-${side}`).value;
+                
+                if (confirm('Tem certeza que deseja restaurar à versão original? Todas as edições serão perdidas.')) {
+                    editor.value = original;
+                    showToast('Versão original restaurada. Clique em "Salvar Alterações" para confirmar.', 'success');
+                    
+                    // Atualizar contador
+                    const counter = document.getElementById(`counter-${side}`);
+                    updateCharacterCount(editor, counter);
+                    
+                    // Adicionar efeito visual
+                    editor.classList.add('pulse-effect');
+                    setTimeout(() => {
+                        editor.classList.remove('pulse-effect');
+                    }, 2000);
+                }
+            });
+        });
+        
+        // Salvar alterações
+        btnSave.addEventListener('click', async function() {
+            // Mostrar indicador de carregamento
+            const originalBtnContent = btnSave.innerHTML;
+            btnSave.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Salvando...';
+            btnSave.disabled = true;
+            
+            try {
+                // Preparar dados para envio
+                const data = {
+                    titulo: tituloInput.value.trim(),
+                    lado_a: editorA.value,
+                    lado_b: editorB.value
+                };
+                
+                // Validar título
+                if (!data.titulo) {
+                    throw new Error('O título da comparação não pode estar vazio.');
+                }
+                
+                // Enviar requisição
+                const response = await fetch('/documentos/comparacao/api/salvar-edicao/{{ comparacao.id }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    // Sucesso
+                    btnSave.innerHTML = '<i class="fas fa-check me-1"></i> Salvo!';
+                    setTimeout(() => {
+                        btnSave.innerHTML = originalBtnContent;
+                        btnSave.disabled = false;
+                    }, 2000);
+                    
+                    showToast('Alterações salvas com sucesso!', 'success');
+                } else {
+                    // Erro
+                    throw new Error(result.message || 'Erro ao salvar alterações.');
+                }
+            } catch (error) {
+                // Tratamento de erro
+                btnSave.innerHTML = originalBtnContent;
+                btnSave.disabled = false;
+                showToast(error.message, 'error');
+            }
+        });
+    });
+</script>
+{% endblock %}

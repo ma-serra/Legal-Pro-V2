@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ agente.nome }} - Detalhes do Agente</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Sistema de Logos por Área Jurídica -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/agent-logos.css') }}">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #1f1f1f;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #333;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .agent-detail-header {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-detail-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--agent-color, #dc2626), transparent);
+        }
+
+        .agent-main-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .agent-large-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            margin-right: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-large-logo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 20px;
+        }
+
+        .agent-title-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .agent-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .agent-badges {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .badge-custom {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .badge-area {
+            background: linear-gradient(135deg, var(--agent-color, #dc2626), rgba(var(--agent-color-rgb, 220, 38, 38), 0.8));
+            color: white;
+        }
+
+        .badge-level {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .badge-model {
+            background: rgba(0, 191, 255, 0.2);
+            color: #00bfff;
+            border: 1px solid rgba(0, 191, 255, 0.3);
+        }
+
+        .detail-section {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--agent-color, #dc2626);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .detail-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-right: 12px;
+            color: var(--agent-color, #dc2626);
+            font-size: 1.2rem;
+        }
+
+        .capability-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .capability-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid var(--agent-color, #dc2626);
+            transition: all 0.3s ease;
+        }
+
+        .capability-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .capability-item i {
+            color: var(--agent-color, #dc2626);
+            margin-right: 10px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .config-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .config-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--agent-color, #dc2626);
+            margin-bottom: 5px;
+        }
+
+        .config-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--agent-color, #dc2626), rgba(var(--agent-color-rgb, 220, 38, 38), 0.8));
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        .btn-secondary-custom {
+            background: transparent;
+            border: 2px solid var(--agent-color, #dc2626);
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--agent-color, #dc2626);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary-custom:hover {
+            background: #a1bacb;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .prompt-preview {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid var(--agent-color, #dc2626);
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: #a1bacb;
+            color: var(--text-primary);
+            transform: translateX(-5px);
+        }
+
+        /* Cores específicas por área */
+        .area-criminal { --agent-color: #dc2626; --agent-color-rgb: 220, 38, 38; }
+        .area-trabalhista { --agent-color: #059669; --agent-color-rgb: 5, 150, 105; }
+        .area-empresarial { --agent-color: #2563eb; --agent-color-rgb: 37, 99, 235; }
+        .area-bancario { --agent-color: #7c3aed; --agent-color-rgb: 124, 58, 237; }
+        .area-tributario { --agent-color: #ea580c; --agent-color-rgb: 234, 88, 12; }
+        .area-imobiliario { --agent-color: #0891b2; --agent-color-rgb: 8, 145, 178; }
+        .area-consumidor { --agent-color: #db2777; --agent-color-rgb: 219, 39, 119; }
+        .area-recuperacao { --agent-color: #65a30d; --agent-color-rgb: 101, 163, 13; }
+        .area-agrario { --agent-color: #16a34a; --agent-color-rgb: 22, 163, 74; }
+        .area-ambiental { --agent-color: #10b981; --agent-color-rgb: 16, 185, 129; }
+        .area-securitario { --agent-color: #8b5cf6; --agent-color-rgb: 139, 92, 246; }
+        .area-previdenciario { --agent-color: #06b6d4; --agent-color-rgb: 6, 182, 212; }
+        .area-digital { --agent-color: #3b82f6; --agent-color-rgb: 59, 130, 246; }
+        .area-negociacao { --agent-color: #f59e0b; --agent-color-rgb: 245, 158, 11; }
+        .area-riscos { --agent-color: #ef4444; --agent-color-rgb: 239, 68, 68; }
+
+        @media (max-width: 768px) {
+            .agent-main-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .agent-large-logo {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <a href="/validacao-multi-agente-expandida" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+
+        <!-- Header Principal do Agente -->
+        <div class="agent-detail-header area-{{ agente.categoria.nome.lower().replace(' ', '-') if agente.categoria else 'geral' }}">
+            <div class="agent-main-info">
+                <div class="agent-large-logo logo-{{ agente.classe|replace('_', '-') }}">
+                    <i class="{{ agente.icone or 'fas fa-user-tie' }}"></i>
+                </div>
+                <div class="agent-title-section">
+                    <h1>{{ agente.nome }}</h1>
+                    <p class="agent-subtitle">{{ agente.descricao }}</p>
+                    <div class="agent-badges">
+                        <span class="badge-custom badge-area">{{ agente.categoria.nome if agente.categoria else 'Área Geral' }}</span>
+
+                        <span class="badge-custom badge-model">{{ agente.modelo_ai }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Capacidades e Especialidades -->
+                <div class="detail-section area-{{ agente.categoria.nome.lower().replace(' ', '-') if agente.categoria else 'geral' }}">
+                    <h3 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        Capacidades e Especialidades
+                    </h3>
+                    <div class="capability-grid">
+                        {% if agente.capacidades %}
+                            {% for capacidade in agente.capacidades %}
+                            <div class="capability-item">
+                                <i class="fas fa-check-circle"></i>
+                                {{ capacidade }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            {% set capacidades_default = [
+                                "Análise jurídica especializada",
+                                "Interpretação de legislação",
+                                "Elaboração de pareceres",
+                                "Pesquisa jurisprudencial",
+                                "Redação de petições",
+                                "Consultoria estratégica"
+                            ] %}
+                            {% for capacidade in capacidades_default %}
+                            <div class="capability-item">
+                                <i class="fas fa-check-circle"></i>
+                                {{ capacidade }}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Template de Prompt -->
+                <div class="detail-section area-{{ agente.categoria.nome.lower().replace(' ', '-') if agente.categoria else 'geral' }}">
+                    <h3 class="section-title">
+                        <i class="fas fa-code"></i>
+                        Template de Prompt
+                    </h3>
+                    <div class="prompt-preview">
+                        {{ agente.template_prompt or "Template de prompt personalizado para " + agente.nome }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Configurações Técnicas -->
+                <div class="detail-section area-{{ agente.categoria.nome.lower().replace(' ', '-') if agente.categoria else 'geral' }}">
+                    <h3 class="section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        Configurações
+                    </h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <div class="config-value">{{ agente.temperatura }}</div>
+                            <div class="config-label">Temperatura</div>
+                        </div>
+                        <div class="config-item">
+                            <div class="config-value">{{ agente.top_p }}</div>
+                            <div class="config-label">Top P</div>
+                        </div>
+                        <div class="config-item">
+                            <div class="config-value">{{ agente.max_tokens }}</div>
+                            <div class="config-label">Max Tokens</div>
+                        </div>
+                        <div class="config-item">
+                            <div class="config-value">{{ agente.top_k }}</div>
+                            <div class="config-label">Top K</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações do Sistema -->
+                <div class="detail-section area-{{ agente.categoria.nome.lower().replace(' ', '-') if agente.categoria else 'geral' }}">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informações
+                    </h3>
+                    <div class="info-list">
+                        <div class="info-item mb-3">
+                            <strong>Criado em:</strong><br>
+                            <span class="text-secondary">{{ agente.created_at.strftime('%d/%m/%Y às %H:%M') if agente.created_at else 'N/A' }}</span>
+                        </div>
+                        <div class="info-item mb-3">
+                            <strong>Última atualização:</strong><br>
+                            <span class="text-secondary">{{ agente.updated_at.strftime('%d/%m/%Y às %H:%M') if agente.updated_at else 'N/A' }}</span>
+                        </div>
+                        <div class="info-item mb-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge bg-success">{{ 'Ativo' if agente.ativo else 'Inativo' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="action-buttons">
+            <a href="/agentes/{{ agente.id }}/utilizar" class="btn-primary-custom">
+                <i class="fas fa-play"></i>
+                Utilizar Agente
+            </a>
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <a href="/admin/agentes/{{ agente.id }}/editar" class="btn-secondary-custom">
+                <i class="fas fa-edit"></i>
+                Editar Configurações
+            </a>
+            {% endif %}
+            <a href="{{ url_for('juridico_especialistas_init_app') }}" class="btn-secondary-custom">
+                <i class="fas fa-list"></i>
+                Ver Todos os Agentes
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

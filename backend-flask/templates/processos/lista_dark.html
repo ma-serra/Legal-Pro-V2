@@ -1,0 +1,1088 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Processos Jurídicos - Legal Pro{% endblock %}
+
+{% block head %}
+<div class="homepage-container" style="display:none;">
+  <!-- Elemento invisível para ativar o estilo da página inicial -->
+</div>
+<style>
+  /* Cor de fundo específica para a página /processos/lista */
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .agent-card {
+    transition: all 0.3s ease;
+    border: 2px solid #6c757d !important;
+    border-radius: 8px;
+    height: 100%;
+  }
+  
+  .agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .agent-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+  }
+  
+  .main-heading {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem;
+  }
+  
+
+  
+  .btn-action-icon {
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+  }
+  
+  .table-history th {
+    font-weight: 600;
+  }
+
+  /* Fundo da área dos processos */
+  .processos-area {
+    background-color: #21333d !important;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Cor dos checkboxes dos cards de processos */
+  .processos-area .form-check-input {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    border-width: 2px !important;
+  }
+  
+  .processos-area .form-check-input:checked {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23585b5c' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
+  }
+  
+  .processos-area .form-check-input:focus {
+    border-color: #585b5c !important;
+    box-shadow: 0 0 0 0.2rem rgba(88, 91, 92, 0.25) !important;
+  }
+
+  /* Cor dos card-body */
+  .card-body {
+    background-color: #575b5c !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cores dos textos dos cards */
+  .card-text {
+    color: #768082 !important;
+  }
+  
+  .text-muted {
+    color: #ffffff !important;
+  }
+  
+  .card-title {
+    color: #fcfffb !important;
+  }
+  
+  /* Cores dos botões e elementos */
+  .btn-sm {
+    background-color: #355d6c !important;
+    border-color: #355d6c !important;
+  }
+  
+  .agent-icon {
+    color: #355d6c !important;
+  }
+  
+  .form-group {
+    background-color: #575b5c !important;
+  }
+  
+  .form-label {
+    color: #575b5c !important;
+  }
+  
+  /* Cor dos elementos d-flex */
+  .d-flex {
+    color: #355d6c !important;
+  }
+  
+  /* Cor dos card-header */
+  .card-header {
+    background-color: #355d6c !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cor dos agent-icon */
+  .agent-icon {
+    color: #40aba0 !important;
+  }
+  
+  /* Cor dos form-text */
+  .form-text {
+    color: #40aba0 !important;
+  }
+  
+  /* Cor dos file-upload e btn-sm */
+  .file-upload, .btn-sm {
+    background-color: #40aba0 !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cor dos form-check-label */
+  .form-check-label {
+    color: #40a9a3 !important;
+  }
+  
+  /* Cor dos form-check-input checked */
+  .form-check-input:checked {
+    background-color: #40a9a3 !important;
+    border-color: #40a9a3 !important;
+  }
+
+  /* Cards de estatísticas */
+  .stats-card {
+    background: rgba(87, 91, 92, 0.9) !important;
+    border: 1px solid #40aba0;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 8px;
+    color: #ffffff;
+    transition: transform 0.3s ease;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(64, 171, 160, 0.3);
+  }
+  
+  .stats-number {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #40aba0 !important;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .stats-label {
+    font-size: 0.9rem;
+    color: #ffffff !important;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  /* Botões de ação */
+  .btn-primary {
+    background-color: #40aba0 !important;
+    border-color: #40aba0 !important;
+  }
+
+  .btn-primary:hover {
+    background-color: #355d6c !important;
+    border-color: #355d6c !important;
+  }
+
+  /* Tabela de processos */
+  .table-dark {
+    background-color: #575b5c !important;
+  }
+
+  .table-dark th {
+    background-color: #355d6c !important;
+    color: #ffffff !important;
+    border-color: #40aba0 !important;
+  }
+
+  .table-dark td {
+    background-color: #575b5c !important;
+    color: #ffffff !important;
+    border-color: #40aba0 !important;
+  }
+
+  /* Badge de área jurídica */
+  .badge {
+    background-color: #40aba0 !important;
+    color: #ffffff !important;
+  }
+
+  /* Badges de Risco Profissionais */
+  .badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    animation: pulse-danger 2s infinite;
+  }
+
+  .badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    box-shadow: 0 3px 8px rgba(255, 193, 7, 0.3);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%) !important;
+    box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.bg-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+    box-shadow: 0 3px 8px rgba(108, 117, 125, 0.3);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  @keyframes pulse-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Status indicators */
+  .text-success {
+    color: #40aba0 !important;
+  }
+
+  .text-warning {
+    color: #ffc107 !important;
+  }
+
+  .text-danger {
+    color: #dc3545 !important;
+  }
+
+  /* Filtros e pesquisa */
+  .form-control {
+    background-color: #575b5c !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+  }
+
+  .form-control:focus {
+    background-color: #575b5c !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(64, 171, 160, 0.25) !important;
+  }
+
+  .form-select {
+    background-color: #575b5c !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+  }
+
+  .form-select:focus {
+    background-color: #575b5c !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.2rem rgba(64, 171, 160, 0.25) !important;
+  }
+
+  /* Container principal */
+  .container-fluid {
+    padding: 2rem;
+  }
+
+  /* Cor dos placeholders em branco */
+  .form-control::placeholder {
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  .form-control::-webkit-input-placeholder {
+    color: #ffffff !important;
+  }
+
+  .form-control::-moz-placeholder {
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  .form-control:-ms-input-placeholder {
+    color: #ffffff !important;
+  }
+
+  /* Garantir scroll horizontal responsivo na tabela */
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+
+  #processosTable {
+    white-space: nowrap;
+    width: auto;
+    min-width: 100%;
+  }
+
+  #processosTable th,
+  #processosTable td {
+    white-space: nowrap;
+    padding: 12px 15px;
+  }
+
+  /* Larguras mínimas fixas para cada coluna */
+  #processosTable th:nth-child(1),
+  #processosTable td:nth-child(1) { min-width: 180px; } /* Número CNJ */
+  #processosTable th:nth-child(2),
+  #processosTable td:nth-child(2) { min-width: 140px; } /* Área Jurídica */
+  #processosTable th:nth-child(3),
+  #processosTable td:nth-child(3) { min-width: 160px; } /* Cliente */
+  #processosTable th:nth-child(4),
+  #processosTable td:nth-child(4) { min-width: 160px; } /* Autor */
+  #processosTable th:nth-child(5),
+  #processosTable td:nth-child(5) { min-width: 80px; } /* Polo */
+  #processosTable th:nth-child(6),
+  #processosTable td:nth-child(6) { min-width: 110px; } /* Situação */
+  #processosTable th:nth-child(7),
+  #processosTable td:nth-child(7) { min-width: 140px; } /* Estado/Comarca */
+  #processosTable th:nth-child(8),
+  #processosTable td:nth-child(8) { min-width: 130px; } /* Valor da Causa */
+  #processosTable th:nth-child(9),
+  #processosTable td:nth-child(9) { min-width: 130px; } /* Provisão */
+  #processosTable th:nth-child(10),
+  #processosTable td:nth-child(10) { min-width: 100px; } /* Risco */
+  #processosTable th:nth-child(11),
+  #processosTable td:nth-child(11) { min-width: 140px; } /* Fase */
+  #processosTable th:nth-child(12),
+  #processosTable td:nth-child(12) { min-width: 120px; } /* Ações */
+
+  /* Indicador visual de scroll horizontal */
+  .table-responsive::after {
+    content: "← Arraste para ver mais colunas →";
+    display: block;
+    text-align: center;
+    color: #40aba0;
+    font-size: 0.85rem;
+    padding: 8px;
+    background: rgba(64, 171, 160, 0.1);
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+
+  @media (min-width: 1400px) {
+    .table-responsive::after {
+      display: none; /* Ocultar aviso em telas grandes */
+    }
+  }
+
+  /* Scroll horizontal superior FIXO no topo */
+  .scroll-top-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(64, 171, 160, 0.15);
+    border-radius: 4px;
+    padding: 8px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+  }
+
+  .scroll-top-content {
+    height: 1px;
+    /* Largura será definida dinamicamente via JavaScript */
+  }
+
+  /* Wrapper para tornar o scroll inferior também fixo */
+  .table-scroll-wrapper {
+    position: relative;
+  }
+
+  /* Manter scroll superior visível em todas as telas */
+  .scroll-top-wrapper {
+    display: block !important;
+  }
+
+  /* ========================================================================== */
+  /* SISTEMA DE AJUSTES AUTOMÁTICOS POR RESOLUÇÃO DE TELA                      */
+  /* ========================================================================== */
+
+  /* 1366x768 (HD) - 16:9 - 1.049.088 pixels */
+  /* Notebooks básicos e tablets landscape */
+  @media (min-width: 1366px) and (max-width: 1439px) {
+    body {
+      font-size: 14px;
+    }
+
+    .container-fluid {
+      padding: 1.5rem !important;
+    }
+
+    .main-heading {
+      font-size: 1.8rem !important;
+    }
+
+    .stats-card {
+      height: 120px !important;
+      padding: 12px !important;
+    }
+
+    .stats-number {
+      font-size: 1.3rem !important;
+    }
+
+    .stats-label {
+      font-size: 0.85rem !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 10px 12px !important;
+      font-size: 0.9rem !important;
+    }
+  }
+
+  /* 1440x900 (WXGA+) - 16:10 - 1.296.000 pixels */
+  /* Monitores wide 16:10 */
+  @media (min-width: 1440px) and (max-width: 1599px) {
+    body {
+      font-size: 15px;
+    }
+
+    .container-fluid {
+      padding: 1.75rem !important;
+    }
+
+    .main-heading {
+      font-size: 2rem !important;
+    }
+
+    .stats-card {
+      height: 130px !important;
+      padding: 14px !important;
+    }
+
+    .stats-number {
+      font-size: 1.5rem !important;
+    }
+
+    .stats-label {
+      font-size: 0.9rem !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 11px 14px !important;
+      font-size: 0.95rem !important;
+    }
+  }
+
+  /* 1600x900 (HD+) - 16:9 - 1.440.000 pixels */
+  /* Monitores HD+ padrão */
+  @media (min-width: 1600px) and (max-width: 1919px) {
+    body {
+      font-size: 15px;
+    }
+
+    .container-fluid {
+      padding: 2rem !important;
+      max-width: 1540px;
+      margin: 0 auto;
+    }
+
+    .main-heading {
+      font-size: 2.2rem !important;
+    }
+
+    .stats-card {
+      height: 140px !important;
+      padding: 15px !important;
+    }
+
+    .stats-number {
+      font-size: 1.6rem !important;
+    }
+
+    .stats-label {
+      font-size: 0.95rem !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 12px 15px !important;
+      font-size: 1rem !important;
+    }
+  }
+
+  /* 1920x1080 (Full HD) - 16:9 - 2.073.600 pixels */
+  /* Monitores Full HD padrão */
+  @media (min-width: 1920px) and (max-width: 2559px) {
+    body {
+      font-size: 16px;
+    }
+
+    .container-fluid {
+      padding: 2.5rem !important;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .main-heading {
+      font-size: 2.5rem !important;
+      letter-spacing: -0.8px;
+    }
+
+    .stats-card {
+      height: 160px !important;
+      padding: 18px !important;
+      margin: 10px !important;
+    }
+
+    .stats-number {
+      font-size: 1.8rem !important;
+      margin-bottom: 12px !important;
+    }
+
+    .stats-label {
+      font-size: 1rem !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 14px 18px !important;
+      font-size: 1.05rem !important;
+    }
+
+    .form-group,
+    .form-select {
+      font-size: 1rem !important;
+    }
+
+    .row.mb-4 {
+      margin-bottom: 2rem !important;
+    }
+  }
+
+  /* 2560x1440 (QHD/2K) - 16:9 - 3.686.400 pixels */
+  /* Monitores 2K de alta resolução */
+  @media (min-width: 2560px) and (max-width: 3839px) {
+    body {
+      font-size: 18px;
+    }
+
+    .container-fluid {
+      padding: 3rem !important;
+      max-width: 2400px;
+      margin: 0 auto;
+    }
+
+    .main-heading {
+      font-size: 3rem !important;
+      letter-spacing: -1px;
+    }
+
+    .stats-card {
+      height: 180px !important;
+      padding: 22px !important;
+      margin: 12px !important;
+      border-radius: 12px !important;
+    }
+
+    .stats-number {
+      font-size: 2.2rem !important;
+      margin-bottom: 14px !important;
+    }
+
+    .stats-label {
+      font-size: 1.1rem !important;
+      font-weight: 600 !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 16px 20px !important;
+      font-size: 1.15rem !important;
+    }
+
+    #processosTable th {
+      font-size: 1.2rem !important;
+      font-weight: 700 !important;
+    }
+
+    .btn {
+      font-size: 1.1rem !important;
+      padding: 0.6rem 1.4rem !important;
+    }
+
+    .btn-sm {
+      font-size: 1rem !important;
+      padding: 0.5rem 1.2rem !important;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: 1.1rem !important;
+      padding: 0.7rem 1rem !important;
+      height: auto !important;
+    }
+
+    .row.mb-4 {
+      margin-bottom: 2.5rem !important;
+    }
+  }
+
+  /* 3840x2160 (4K/UHD) - 16:9 - 8.294.400 pixels */
+  /* Monitores 4K/Ultra HD */
+  @media (min-width: 3840px) {
+    body {
+      font-size: 20px;
+    }
+
+    .container-fluid {
+      padding: 4rem !important;
+      max-width: 3600px;
+      margin: 0 auto;
+    }
+
+    .main-heading {
+      font-size: 3.5rem !important;
+      letter-spacing: -1.2px;
+      margin-bottom: 2.5rem !important;
+    }
+
+    .stats-card {
+      height: 220px !important;
+      padding: 28px !important;
+      margin: 15px !important;
+      border-radius: 14px !important;
+      border-width: 2px !important;
+    }
+
+    .stats-number {
+      font-size: 2.6rem !important;
+      margin-bottom: 16px !important;
+      font-weight: 700 !important;
+    }
+
+    .stats-label {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+    }
+
+    #processosTable th,
+    #processosTable td {
+      padding: 20px 24px !important;
+      font-size: 1.3rem !important;
+    }
+
+    #processosTable th {
+      font-size: 1.4rem !important;
+      font-weight: 700 !important;
+    }
+
+    .btn {
+      font-size: 1.3rem !important;
+      padding: 0.8rem 1.8rem !important;
+      border-radius: 8px !important;
+    }
+
+    .btn-sm {
+      font-size: 1.15rem !important;
+      padding: 0.6rem 1.4rem !important;
+    }
+
+    .btn-action-icon {
+      width: 48px !important;
+      height: 48px !important;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: 1.3rem !important;
+      padding: 0.9rem 1.3rem !important;
+      height: auto !important;
+      border-radius: 8px !important;
+    }
+
+    .agent-icon {
+      font-size: 3.5rem !important;
+    }
+
+    i.fas,
+    i.far {
+      font-size: 1.3em !important;
+    }
+
+    .row.mb-4 {
+      margin-bottom: 3rem !important;
+    }
+
+    .badge {
+      font-size: 1.1rem !important;
+      padding: 0.6rem 1.2rem !important;
+    }
+
+    .alert {
+      font-size: 1.2rem !important;
+      padding: 1.5rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Header com título e estatísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="main-heading text-white">
+                <i class="fas fa-balance-scale me-3" style="color: #40aba0;"></i>
+                Gestão de Processos Jurídicos
+            </h1>
+        </div>
+    </div>
+
+    <!-- Cards de estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ estatisticas.total or 0 }}</div>
+                <div class="stats-label">Total de Processos</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ estatisticas.areas_count or 0 }}</div>
+                <div class="stats-label">Áreas Jurídicas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">R$ {{ "{:,.2f}".format(estatisticas.valor_total or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</div>
+                <div class="stats-label">Valor Total das Causas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="d-flex justify-content-around w-100 mb-2">
+                    <div class="text-center">
+                        <div class="stats-number" style="font-size: 1.2rem; color: #28a745 !important;">{{ estatisticas.por_risco.Baixo or 0 }}</div>
+                        <small style="color: #28a745;">Baixo</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="stats-number" style="font-size: 1.2rem; color: #ffc107 !important;">{{ estatisticas.por_risco.Médio or 0 }}</div>
+                        <small style="color: #ffc107;">Médio</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="stats-number" style="font-size: 1.2rem; color: #dc3545 !important;">{{ estatisticas.por_risco.Alto or 0 }}</div>
+                        <small style="color: #dc3545;">Alto</small>
+                    </div>
+                </div>
+                <div class="stats-label">Distribuição de Riscos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e ações -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="form-group">
+                <input type="text" class="form-control" id="searchInput" placeholder="Pesquisar processos...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="areaFilter">
+                <option value="">Todas as áreas</option>
+                {% for area in areas_juridicas %}
+                <option value="{{ area }}">{{ area }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="poloFilter">
+                <option value="">Todos os polos</option>
+                <option value="Ativo">Polo Ativo</option>
+                <option value="Passivo">Polo Passivo</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="situacaoFilter">
+                <option value="">Todas as situações</option>
+                {% for situacao in situacoes %}
+                <option value="{{ situacao.nome }}">{{ situacao.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="riscoFilter">
+                <option value="">Todos os riscos</option>
+                <option value="Remoto">Remoto</option>
+                <option value="Possível">Possível</option>
+                <option value="Provável">Provável</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <div class="form-group">
+                <input type="text" class="form-control" id="advogadoFilter" placeholder="Advogado...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('processo_cadastro') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Novo Processo
+                </a>
+                <a href="/processos/estatisticas-detalhadas" class="btn btn-outline-warning">
+                    <i class="fas fa-chart-bar me-2"></i>Estatísticas
+                </a>
+                <a href="/processos-juridicos/historico-analises" class="btn btn-outline-info">
+                    <i class="fas fa-history me-2"></i>Histórico Geral
+                </a>
+                <a href="/processos/judit" class="btn" style="background: #3b576f; color: white; border: 1px solid #3b576f;">
+                    <i class="fas fa-search me-2"></i>Plataforma Judit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de processos -->
+    <div class="row">
+        <div class="col-12 table-scroll-wrapper">
+            <!-- Scroll horizontal superior FIXO -->
+            <div class="scroll-top-wrapper" id="scrollTopWrapper">
+                <div class="scroll-top-content"></div>
+            </div>
+            
+            <div class="table-responsive" id="tableResponsive">
+                <table class="table table-dark table-striped" id="processosTable">
+                    <thead>
+                        <tr>
+                            <th>Número CNJ</th>
+                            <th>Área Jurídica</th>
+                            <th>Cliente</th>
+                            <th>Autor</th>
+                            <th>Polo</th>
+                            <th>Situação</th>
+                            <th>Estado/Comarca</th>
+                            <th>Valor da Causa</th>
+                            <th>Provisão</th>
+                            <th>Risco</th>
+                            <th>Fase</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for processo in processos %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" 
+                                   class="text-decoration-none" style="color: #40aba0;">
+                                    {{ processo.numero_processo_cnj or 'N/A' }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge">{{ processo.area_juridica or 'Não informado' }}</span>
+                            </td>
+                            <td>{{ processo.cliente or 'Não informado' }}</td>
+                            <td>{{ processo.autor or 'Não informado' }}</td>
+                            <td>
+                                {% if processo.polo == 'Passivo' %}
+                                    <span class="badge bg-warning text-dark">PASSIVO</span>
+                                {% elif processo.polo == 'Ativo' %}
+                                    <span class="badge bg-success">ATIVO</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ processo.situacao_nome or 'Sem Situação' }}</span>
+                            </td>
+                            <td>{{ processo.estado or 'N/A' }}/{{ processo.comarca or 'N/A' }}</td>
+                            <td>
+                                {% if processo.valor_da_causa %}
+                                    R$ {{ "{:,.2f}".format(processo.valor_da_causa).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </td>
+                            <td style="color: #f6ad55;">
+                                {% if processo.provisao %}
+                                    R$ {{ "{:,.2f}".format(processo.provisao).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if processo.risco and processo.risco == 'Provável' %}
+                                    <span class="badge bg-danger" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Provável
+                                    </span>
+                                {% elif processo.risco and processo.risco == 'Possível' %}
+                                    <span class="badge bg-warning text-dark" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <i class="fas fa-exclamation-circle me-1"></i>Possível
+                                    </span>
+                                {% elif processo.risco and processo.risco == 'Remoto' %}
+                                    <span class="badge bg-success" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <i class="fas fa-check-circle me-1"></i>Remoto
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary" style="padding: 8px 12px; font-size: 0.85rem;">
+                                        <i class="fas fa-question-circle me-1"></i>N/A
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ processo.fase_processual or 'Inicial' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('processo_editar', processo_id=processo.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/processos-juridicos/historico-analises/{{ processo.id }}/visualizar" 
+                                       class="btn btn-sm btn-outline-info" title="Histórico IA">
+                                        <i class="fas fa-robot"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="11" class="text-center text-muted">
+                                <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                                Nenhum processo encontrado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sincronizar scroll superior fixo com scroll nativo da tabela
+document.addEventListener('DOMContentLoaded', function() {
+    const scrollTopWrapper = document.getElementById('scrollTopWrapper');
+    const scrollTopContent = document.querySelector('.scroll-top-content');
+    const tableResponsive = document.getElementById('tableResponsive');
+    const table = document.getElementById('processosTable');
+
+    if (scrollTopWrapper && scrollTopContent && tableResponsive && table) {
+        // Definir a largura do scroll superior igual à largura REAL da tabela
+        function updateScrollWidth() {
+            const tableWidth = table.offsetWidth;
+            scrollTopContent.style.width = tableWidth + 'px';
+        }
+
+        // Atualizar largura no carregamento
+        updateScrollWidth();
+
+        // Atualizar largura quando a janela redimensionar
+        window.addEventListener('resize', updateScrollWidth);
+
+        // Sincronizar scroll superior -> tabela nativa
+        scrollTopWrapper.addEventListener('scroll', function() {
+            tableResponsive.scrollLeft = scrollTopWrapper.scrollLeft;
+        });
+
+        // Sincronizar tabela nativa -> scroll superior
+        tableResponsive.addEventListener('scroll', function() {
+            scrollTopWrapper.scrollLeft = tableResponsive.scrollLeft;
+        });
+    }
+});
+
+// Filtros de pesquisa
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const areaFilter = document.getElementById('areaFilter');
+    const poloFilter = document.getElementById('poloFilter');
+    const situacaoFilter = document.getElementById('situacaoFilter');
+    const riscoFilter = document.getElementById('riscoFilter');
+    const advogadoFilter = document.getElementById('advogadoFilter');
+    const table = document.getElementById('processosTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedArea = areaFilter.value;
+        const selectedPolo = poloFilter.value;
+        const selectedSituacao = situacaoFilter.value;
+        const selectedRisco = riscoFilter.value;
+        const advogadoTerm = advogadoFilter.value.toLowerCase();
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 2) return; // Skip empty rows
+
+            const numeroProcesso = cells[0].textContent.toLowerCase();
+            const area = cells[1].textContent;
+            const cliente = cells[2].textContent.toLowerCase();
+            const polo = cells[4] ? cells[4].textContent.trim() : ''; // Polo está na 5ª coluna (índice 4)
+            const situacao = cells[5].textContent; // Situação está na 6ª coluna (índice 5)
+            const riscoCell = cells[8]; // Risco está na 9ª coluna (índice 8)
+            const risco = riscoCell ? riscoCell.textContent.trim() : '';
+            
+            // Procurar por advogado no cliente ou em outras informações
+            const textoCompleto = row.textContent.toLowerCase();
+
+            const matchesSearch = numeroProcesso.includes(searchTerm) || 
+                                cliente.includes(searchTerm);
+            const matchesArea = !selectedArea || area.includes(selectedArea);
+            const matchesPolo = !selectedPolo || polo.toLowerCase().includes(selectedPolo.toLowerCase());
+            const matchesSituacao = !selectedSituacao || situacao.includes(selectedSituacao);
+            const matchesRisco = !selectedRisco || risco === selectedRisco || risco.includes(selectedRisco);
+            const matchesAdvogado = !advogadoTerm || textoCompleto.includes(advogadoTerm);
+
+            if (matchesSearch && matchesArea && matchesPolo && matchesSituacao && matchesRisco && matchesAdvogado) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    areaFilter.addEventListener('change', filterTable);
+    poloFilter.addEventListener('change', filterTable);
+    situacaoFilter.addEventListener('change', filterTable);
+    riscoFilter.addEventListener('change', filterTable);
+    advogadoFilter.addEventListener('input', filterTable);
+});
+
+
+</script>
+{% endblock %}

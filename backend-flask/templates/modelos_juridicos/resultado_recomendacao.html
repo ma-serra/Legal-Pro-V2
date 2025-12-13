@@ -1,0 +1,245 @@
+{% extends "modelos_juridicos/base.html" %}
+
+{% block title %}Resultado da Recomendação{% endblock %}
+
+{% block extra_head %}
+<style>
+    .result-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-badge {
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .strategy-item {
+        background: var(--card-bg);
+        border-left: 4px solid #4a90e2;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .risk-high { border-left-color: #e74c3c; }
+    .risk-medium { border-left-color: #f39c12; }
+    .risk-low { border-left-color: #27ae60; }
+    
+    .percentage-bar {
+        background: var(--border-color);
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    
+    .percentage-fill {
+        background: linear-gradient(90deg, #4a90e2, #357abd);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-gavel me-2"></i>Resultado da Análise</h2>
+                <a href="{{ url_for('modelos_juridicos.recomendar_defesa') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>Nova Análise
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações do Caso -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="result-card">
+                <h4><i class="fas fa-file-alt me-2"></i>Informações do Caso</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID do Caso:</strong> {{ caso.id }}</p>
+                        <p><strong>Foro:</strong> {{ caso.foro }}</p>
+                        <p><strong>Área Jurídica:</strong> {{ caso.area }}</p>
+                        <p><strong>Valor da Causa:</strong> 
+                        {% if caso.valor_causa %}
+                            R$ {{ "{:,.2f}".format(caso.valor_causa).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                        {% else %}
+                            Não informado
+                        {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Ano:</strong> {{ caso.ano }}</p>
+                        <p><strong>Juiz:</strong> {{ caso.juiz }}</p>
+                        <p><strong>Complexidade:</strong> 
+                            {% if caso.prescricao or caso.nulidade_prova or caso.ilegitimidade %}Alta
+                            {% else %}Média{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de Análise -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="result-card">
+                <h4><i class="fas fa-chart-line me-2"></i>Métricas Estatísticas</h4>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="metric-badge">
+                            Probabilidade de Sucesso: {{ "%.2f"|format(recomendacao.probabilidade_sucesso * 100) }}%
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-badge">
+                            Risco Estimado: {{ recomendacao.nivel_risco }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-badge">
+                            Confiança: {{ "%.1f"|format(recomendacao.confianca * 100) }}%
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-badge">
+                            Prazo Estimado: {{ recomendacao.prazo_estimado }} meses
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estratégias Recomendadas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="result-card">
+                <h4><i class="fas fa-lightbulb me-2"></i>Estratégias Recomendadas</h4>
+                {% for estrategia in recomendacao.estrategias %}
+                <div class="strategy-item risk-{{ estrategia.risco|lower }}">
+                    <h5><i class="fas fa-{{ estrategia.icone }} me-2"></i>{{ estrategia.nome }}</h5>
+                    <p>{{ estrategia.descricao }}</p>
+                    <div class="percentage-bar">
+                        <div class="percentage-fill" style="width: {{ estrategia.probabilidade_sucesso }}%"></div>
+                    </div>
+                    <small class="d-block">Probabilidade de Sucesso: {{ "%.1f"|format(estrategia.probabilidade_sucesso) }}%</small>
+                    {% if estrategia.casos_historicos %}
+                    <small class="text-muted">📊 Histórico: {{ estrategia.casos_historicos }} casos de sucesso</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise Detalhada -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="result-card">
+                <h4><i class="fas fa-shield-alt me-2"></i>Defesas Possíveis</h4>
+                <ul class="list-unstyled">
+                    {% if caso.prescricao %}
+                    <li><i class="fas fa-check text-success me-2"></i>Prescrição</li>
+                    {% endif %}
+                    {% if caso.nulidade_prova %}
+                    <li><i class="fas fa-check text-success me-2"></i>Nulidade de Prova</li>
+                    {% endif %}
+                    {% if caso.ilegitimidade %}
+                    <li><i class="fas fa-check text-success me-2"></i>Ilegitimidade</li>
+                    {% endif %}
+                    {% if caso.decadencia %}
+                    <li><i class="fas fa-check text-success me-2"></i>Decadência</li>
+                    {% endif %}
+                    {% if caso.impugnacao_pericia %}
+                    <li><i class="fas fa-check text-success me-2"></i>Impugnação de Perícia</li>
+                    {% endif %}
+                    {% if caso.acordo_proposto %}
+                    <li><i class="fas fa-handshake text-info me-2"></i>Acordo Proposto</li>
+                    {% endif %}
+                    {% if caso.incompetencia %}
+                    <li><i class="fas fa-check text-warning me-2"></i>Incompetência</li>
+                    {% endif %}
+                    {% if caso.conexao %}
+                    <li><i class="fas fa-link text-primary me-2"></i>Conexão</li>
+                    {% endif %}
+                    {% set tem_defesas = caso.prescricao or caso.nulidade_prova or caso.ilegitimidade or caso.decadencia or caso.impugnacao_pericia or caso.acordo_proposto or caso.incompetencia or caso.conexao %}
+                    {% if not tem_defesas %}
+                    <li><i class="fas fa-info-circle text-muted me-2"></i>Nenhuma defesa específica selecionada no formulário</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="result-card">
+                <h4><i class="fas fa-exclamation-triangle me-2"></i>Pontos de Atenção</h4>
+                <div class="alert alert-warning">
+                    <strong>Análise baseada em dados reais</strong><br>
+                    Esta recomendação foi gerada utilizando {{ recomendacao.total_casos_analisados|default('5000') }} casos reais do dataset jurídico brasileiro.
+                </div>
+                {% if recomendacao.observacoes %}
+                <ul class="list-unstyled">
+                    {% for obs in recomendacao.observacoes %}
+                    <li><i class="fas fa-info-circle text-info me-2"></i>{{ obs }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatório e Ações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="result-card">
+                <h4><i class="fas fa-download me-2"></i>Relatório e Próximos Passos</h4>
+                <div class="d-flex gap-3 flex-wrap">
+                    {% if caminho_relatorio %}
+                    <a href="{{ url_for('modelos_juridicos.download_relatorio', filename=caminho_relatorio.split('/')[-1]) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-file-pdf me-2"></i>Download Relatório PDF
+                    </a>
+                    {% endif %}
+                    <button class="btn btn-info" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir Análise
+                    </button>
+                    <a href="{{ url_for('modelos_juridicos.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animar barras de porcentagem
+    const bars = document.querySelectorAll('.percentage-fill');
+    bars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 300);
+    });
+});
+</script>
+{% endblock %}

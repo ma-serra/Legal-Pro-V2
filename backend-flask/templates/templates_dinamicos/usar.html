@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Utilizar Template: {{ template_data.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="background: #2c3e50;">
+    <!-- Header -->
+    <div class="bg-success text-white p-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('templates_dinamicos_index') }}" class="btn btn-outline-light me-3" title="Voltar aos templates">
+                <i class="fas fa-arrow-left"></i>
+                <span class="d-none d-sm-inline ms-1">Templates</span>
+            </a>
+            <i class="fas fa-file-alt me-2"></i>
+            <h4 class="mb-0">Utilizar Template: {{ template_data.nome }}</h4>
+        </div>
+        <button type="button" class="btn-close btn-close-white" onclick="window.history.back()"></button>
+    </div>
+
+    <!-- Seção de Formatação do Documento -->
+    <div class="bg-light text-dark p-3">
+        <div class="card border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-palette me-2"></i> Formatação Profissional Padrão OAB
+                    <span id="format-status" class="badge bg-success ms-2">
+                        <i class="fas fa-check-circle me-1"></i>Ativa
+                    </span>
+                </h5>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="format-item d-flex align-items-center p-2 rounded border">
+                            <i class="fas fa-font text-primary me-2"></i>
+                            <div>
+                                <small class="d-block fw-bold">Fonte</small>
+                                <small class="text-muted">Avenir Next LT Pro, 10pt</small>
+                            </div>
+                            <div class="format-indicator ms-auto">
+                                <i class="fas fa-circle text-success" style="font-size: 8px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="format-item d-flex align-items-center p-2 rounded border">
+                            <i class="fas fa-align-justify text-primary me-2"></i>
+                            <div>
+                                <small class="d-block fw-bold">Alinhamento</small>
+                                <small class="text-muted">Justificado</small>
+                            </div>
+                            <div class="format-indicator ms-auto">
+                                <i class="fas fa-circle text-success" style="font-size: 8px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="format-item d-flex align-items-center p-2 rounded border">
+                            <i class="fas fa-arrows-alt-v text-primary me-2"></i>
+                            <div>
+                                <small class="d-block fw-bold">Entrelinhas</small>
+                                <small class="text-muted">1,15</small>
+                            </div>
+                            <div class="format-indicator ms-auto">
+                                <i class="fas fa-circle text-success" style="font-size: 8px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="format-item d-flex align-items-center p-2 rounded border">
+                            <i class="fas fa-border-style text-primary me-2"></i>
+                            <div>
+                                <small class="d-block fw-bold">Margens</small>
+                                <small class="text-muted">Padrão ABNT</small>
+                            </div>
+                            <div class="format-indicator ms-auto">
+                                <i class="fas fa-circle text-success" style="font-size: 8px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-0" style="height: calc(100vh - 180px);">
+        <!-- Painel Esquerdo - Campos do Documento -->
+        <div class="col-md-4 bg-secondary text-white p-4" style="height: 100%; overflow-y: auto;">
+            <div class="mb-4">
+                <h5 class="text-white mb-3">
+                    <i class="fas fa-edit me-2"></i>
+                    Campos do Documento
+                </h5>
+                
+                <form id="documentoForm">
+                    <!-- Nome do documento -->
+                    <div class="mb-3">
+                        <label class="form-label text-white">Nome do Documento</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" 
+                               id="nomeDocumento" value="{{ template_data.nome }} - {{ template_data.data_atual }}" required>
+                    </div>
+
+                    <!-- Campos dinâmicos baseados no template -->
+                    <div class="mb-4">
+                        <h6 class="text-white mb-2">
+                            <i class="fas fa-list me-1"></i>
+                            Dados para Preenchimento
+                        </h6>
+                        
+                        <div id="camposContainer">
+                            {% for campo in template_data.campos %}
+                            <div class="mb-3">
+                                <label class="form-label text-white">
+                                    {{ campo.label }}
+                                    {% if campo.required %}
+                                    <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                
+                                {% if campo.type == 'textarea' %}
+                                <textarea class="form-control bg-dark text-white border-secondary campo-dinamico" 
+                                          data-campo="{{ campo.name }}" 
+                                          rows="3" 
+                                          {% if campo.required %}required{% endif %}
+                                          placeholder="{{ campo.label }}"></textarea>
+                                {% elif campo.type == 'date' %}
+                                <input type="date" 
+                                       class="form-control bg-dark text-white border-secondary campo-dinamico" 
+                                       data-campo="{{ campo.name }}"
+                                       {% if campo.required %}required{% endif %}>
+                                {% elif campo.type == 'number' %}
+                                <input type="number" 
+                                       class="form-control bg-dark text-white border-secondary campo-dinamico" 
+                                       data-campo="{{ campo.name }}"
+                                       {% if campo.required %}required{% endif %}
+                                       placeholder="{{ campo.label }}">
+                                {% else %}
+                                <input type="text" 
+                                       class="form-control bg-dark text-white border-secondary campo-dinamico" 
+                                       data-campo="{{ campo.name }}"
+                                       {% if campo.required %}required{% endif %}
+                                       placeholder="{{ campo.label }}">
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Botões de ação -->
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" onclick="atualizarDocumento()">
+                            <i class="fas fa-sync me-1"></i> Atualizar Visualização
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="exportarDOCX()">
+                            <i class="fas fa-file-word me-1"></i> Exportar DOCX
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="gerarDocumentoFinal()">
+                            <i class="fas fa-download me-1"></i> Baixar HTML
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Informações do Template -->
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h6 class="mb-0 text-white">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações do Template
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 text-white small">
+                        <li><strong>Tipo:</strong> {{ template_data.nome }}</li>
+                        <li><strong>Categoria:</strong> {{ template_data.categoria_nome }}</li>
+                        <li><strong>Campos:</strong> {{ template_data.campos|length }}</li>
+                        <li><strong>Formatação:</strong> Padrão Profissional</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Direito - Preview do Documento -->
+        <div class="col-md-8 bg-dark text-white d-flex flex-column" style="height: 100%;">
+            <div class="p-3 border-bottom border-secondary flex-shrink-0">
+                <h5 class="text-white mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Prévia do Documento
+                </h5>
+            </div>
+            
+            <div class="flex-grow-1 p-4" style="height: 0; overflow: hidden;">
+                <div class="document-preview-container h-100" style="overflow-y: auto; border: 1px solid #495057; border-radius: 8px;">
+                    <div id="documentoPreview" class="documento-profissional" 
+                         style="background: white; color: black; padding: 60px; font-family: 'Avenir Next LT Pro', Arial, sans-serif; line-height: 1.15; font-size: 10pt; text-align: justify;">
+                        <!-- Conteúdo será injetado via JavaScript de forma segura -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados do template
+const templateId = {{ template_data.id }};
+// SEGURANÇA: Usar tojson para escapar conteúdo HTML/JavaScript
+const conteudoOriginal = {{ template_data.conteudo|tojson }};
+
+// Atualizar documento em tempo real
+document.querySelectorAll('.campo-dinamico').forEach(input => {
+    input.addEventListener('input', atualizarDocumento);
+});
+
+{% raw %}
+function atualizarDocumento() {
+    let conteudo = conteudoOriginal;
+    
+    // Substituir cada campo
+    document.querySelectorAll('.campo-dinamico').forEach(input => {
+        const campo = input.getAttribute('data-campo');
+        const valor = input.value || `<span style="background: #fff3cd; padding: 2px 6px; border: 1px dashed #856404;">{{${campo}}}</span>`;
+        const regex = new RegExp(`\\{\\{${campo}\\}\\}`, 'g');
+        conteudo = conteudo.replace(regex, valor);
+    });
+    
+    // Atualizar preview
+    document.getElementById('documentoPreview').innerHTML = conteudo;
+}
+{% endraw %}
+
+async function exportarDOCX() {
+    // Validar campos obrigatórios
+    const camposObrigatorios = document.querySelectorAll('.campo-dinamico[required]');
+    let todosPreenchidos = true;
+    
+    camposObrigatorios.forEach(campo => {
+        if (!campo.value.trim()) {
+            todosPreenchidos = false;
+            campo.classList.add('is-invalid');
+        } else {
+            campo.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!todosPreenchidos) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    // Coletar dados
+    const dados = {};
+    document.querySelectorAll('.campo-dinamico').forEach(input => {
+        const campo = input.getAttribute('data-campo');
+        dados[campo] = input.value;
+    });
+    
+    try {
+        const response = await fetch(`/api/templates-dinamicos/${templateId}/exportar-docx`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        if (response.ok) {
+            // Baixar arquivo DOCX
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `documento_${templateId}_${Date.now()}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            alert('Documento DOCX exportado com sucesso!');
+        } else {
+            const erro = await response.json();
+            alert('Erro ao exportar documento: ' + (erro.erro || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao exportar documento DOCX.');
+    }
+}
+
+async function gerarDocumentoFinal() {
+    // Validar campos obrigatórios
+    const camposObrigatorios = document.querySelectorAll('.campo-dinamico[required]');
+    let todosPreenchidos = true;
+    
+    camposObrigatorios.forEach(campo => {
+        if (!campo.value.trim()) {
+            todosPreenchidos = false;
+            campo.classList.add('is-invalid');
+        } else {
+            campo.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!todosPreenchidos) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    // Coletar dados
+    const dados = {};
+    document.querySelectorAll('.campo-dinamico').forEach(input => {
+        const campo = input.getAttribute('data-campo');
+        dados[campo] = input.value;
+    });
+    
+    try {
+        const response = await fetch(`/api/templates-dinamicos/${templateId}/gerar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.sucesso) {
+            // Criar e baixar arquivo HTML
+            const blob = new Blob([resultado.conteudo], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = resultado.nome_arquivo;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            alert('Documento HTML gerado com sucesso!');
+        } else {
+            alert('Erro ao gerar documento: ' + resultado.erro);
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao gerar documento.');
+    }
+}
+
+// Inicializar  
+document.addEventListener('DOMContentLoaded', () => {
+    // Renderizar conteúdo inicial de forma segura
+    document.getElementById('documentoPreview').innerHTML = conteudoOriginal;
+    atualizarDocumento();
+});
+</script>
+
+<style>
+.format-item {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.format-item:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(2px);
+}
+
+.campo-dinamico.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.documento-profissional {
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}

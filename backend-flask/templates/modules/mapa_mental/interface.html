@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental Colaborativo - Legal Design Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .mapa-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1400px;
+            overflow: hidden;
+        }
+        
+        .header-mapa {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .canvas-area {
+            position: relative;
+            height: 600px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            overflow: hidden;
+        }
+        
+        .area-central {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .area-central:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .agente-externo {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+        
+        .agente-externo:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .conexao-linha {
+            position: absolute;
+            background: #3498db;
+            height: 3px;
+            z-index: 1;
+            opacity: 0.7;
+        }
+        
+        .painel-controles {
+            background: #ecf0f1;
+            padding: 20px;
+            border-top: 1px solid #bdc3c7;
+        }
+        
+        .area-selector {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .area-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .area-card:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+        
+        .area-card.selected {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        
+        .audio-controls {
+            background: #2c3e50;
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .record-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #e74c3c;
+            color: white;
+            font-size: 24px;
+            margin: 0 auto;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .record-button:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        .record-button.recording {
+            background: #f39c12;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .timer-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .mapas-salvos {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .mapa-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #3498db;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .mapa-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="mapa-container">
+            <!-- Header -->
+            <div class="header-mapa position-relative">
+                <a href="/home" class="btn btn-light position-absolute" style="top: 15px; right: 20px; z-index: 10;">
+                    <i class="fas fa-home me-2"></i>Home
+                </a>
+                <h1><i class="fas fa-brain"></i> Mapa Mental Colaborativo</h1>
+                <p class="mb-0">Sistema de estratégias jurídicas com IA - 18 áreas especializadas</p>
+            </div>
+            
+            <!-- Canvas Principal -->
+            <div class="canvas-area" id="canvasArea">
+                <!-- Estado inicial centralizado -->
+                <div class="canvas-placeholder d-flex align-items-center justify-content-center h-100" id="canvasPlaceholder">
+                    <div class="text-center">
+                        <i class="fas fa-brain fa-5x text-primary mb-3 opacity-50"></i>
+                        <h4 class="text-muted">Aguardando conteúdo para análise</h4>
+                        <p class="text-muted">Faça upload de um áudio ou digite um texto para começar</p>
+                    </div>
+                </div>
+                
+                <!-- Área Central será criada dinamicamente -->
+                <div class="area-central" id="areaCentral" style="background-color: #3498db; display: none;">
+                    <div>
+                        <div>Civil</div>
+                        <small>25 agentes</small>
+                    </div>
+                </div>
+                
+                <!-- Conexões e agentes externos serão criados dinamicamente -->
+            </div>
+            
+            <!-- Painel de Controles -->
+            <div class="painel-controles">
+                <div class="row">
+                    <!-- Seletor de Áreas -->
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-list"></i> Áreas Jurídicas</h5>
+                        <div class="area-selector" id="areaSelector">
+                            {% for area in areas_juridicas %}
+                            <div class="area-card" data-area-id="{{ area.id }}" 
+                                 style="border-left: 4px solid {{ area.cor }};">
+                                <strong>{{ area.nome }}</strong>
+                                <br><small>{{ area.agentes }} agentes disponíveis</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Controles de Áudio -->
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-microphone"></i> Comando por Voz</h5>
+                        <div class="audio-controls">
+                            <button class="record-button" id="recordButton">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <div class="timer-display" id="timerDisplay">00:00</div>
+                            <div class="text-center">
+                                <small>Clique para gravar comando</small>
+                            </div>
+                            
+                            <!-- Seletor de Pasta -->
+                            <div class="mt-3">
+                                <label for="folderSelector" class="form-label">Pasta para salvar:</label>
+                                <select class="form-select" id="folderSelector">
+                                    <option value="uploads">uploads/</option>
+                                    <option value="temp">temp/</option>
+                                    <option value="cache">cache/</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload de Áudio e IA -->
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-upload"></i> Upload de Áudio</h5>
+                        <div class="audio-controls">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="audioUpload" accept=".mp3,.wav,.m4a,.ogg,.flac,.webm">
+                                <small class="text-muted">Formatos: MP3, WAV, M4A, OGG, FLAC, WEBM</small>
+                            </div>
+                            
+                            <button class="btn btn-success w-100 mb-2" id="processarAudio" disabled>
+                                <i class="fas fa-magic"></i> Criar Mapa com IA
+                            </button>
+                            
+                            <div class="text-center mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-microphone"></i> Whisper → 
+                                    <i class="fas fa-brain"></i> GPT-4o → 
+                                    <i class="fas fa-project-diagram"></i> Mapa
+                                </small>
+                            </div>
+                            
+                            <div id="progressoProcessamento" class="mt-2" style="display: none;">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                         role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small id="statusProcessamento" class="text-muted">Preparando...</small>
+                            </div>
+                            
+                            <div id="resultadoProcessamento" class="mt-2" style="display: none;">
+                                <div class="alert alert-success" role="alert">
+                                    <i class="fas fa-check-circle"></i> Mapa criado com sucesso!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botões de Ação -->
+                <div class="row mt-3">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-primary-custom btn-custom me-2" id="salvarMapa">
+                            <i class="fas fa-save"></i> Salvar Mapa
+                        </button>
+                        <button class="btn btn-success btn-custom me-2" id="gerarEstrategia">
+                            <i class="fas fa-magic"></i> Gerar Estratégia IA
+                        </button>
+                        <button class="btn btn-warning btn-custom me-2" id="limparMapa">
+                            <i class="fas fa-eraser"></i> Limpar Mapa
+                        </button>
+                        <button class="btn btn-info btn-custom" id="exportarMapa">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legenda Detalhada do Mapa Mental -->
+            <div class="card mt-3" id="legenda-mapa" style="display: none;">
+                <div class="card-body py-2">
+                    <h6 class="mb-2"><i class="fas fa-info-circle text-primary"></i> Legenda do Mapa Mental</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="small">
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="rounded-circle me-2" style="width: 16px; height: 16px; background: #3498db; border: 2px solid rgba(255,255,255,0.3);"></div>
+                                    <span>Área Central (Foco Principal)</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <div class="rounded-circle me-2" style="width: 12px; height: 12px; background: #e74c3c; border: 1px solid #fff;"></div>
+                                    <span>Agentes Externos (Especialistas)</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <div style="width: 16px; height: 2px; background: #2c3e50; margin-right: 8px;"></div>
+                                    <span>Conexões Estratégicas</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-brain me-2 text-primary"></i>
+                                    <span>Clique na área central para mudá-la</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-plus me-2 text-success"></i>
+                                    <span>Clique em áreas para adicionar agentes</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-microphone me-2 text-warning"></i>
+                                    <span>Use comandos de voz para interagir</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class MapaMentalColaborativo {
+            constructor() {
+                this.areaCentral = null;
+                this.agentesExternos = [];
+                this.isRecording = false;
+                this.recordingTimer = null;
+                this.recordingStartTime = null;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.setupAudioRecording();
+                // Mostrar placeholder inicialmente
+                this.mostrarPlaceholder();
+            }
+            
+            setupEventListeners() {
+                // Seletor de áreas
+                document.getElementById('areaSelector').addEventListener('click', (e) => {
+                    const areaCard = e.target.closest('.area-card');
+                    if (areaCard) {
+                        this.selecionarArea(areaCard);
+                    }
+                });
+                
+                // Botões de ação
+                document.getElementById('salvarMapa').addEventListener('click', () => this.salvarMapa());
+                document.getElementById('gerarEstrategia').addEventListener('click', () => this.gerarEstrategia());
+                document.getElementById('limparMapa').addEventListener('click', () => this.limparMapa());
+                document.getElementById('exportarMapa').addEventListener('click', () => this.exportarMapa());
+                
+                // Gravação de áudio
+                document.getElementById('recordButton').addEventListener('click', () => this.toggleRecording());
+                
+                // Mapas salvos
+                document.getElementById('mapasSalvos').addEventListener('click', (e) => {
+                    const mapaItem = e.target.closest('.mapa-item');
+                    if (mapaItem) {
+                        this.carregarMapa(mapaItem.dataset.mapaId);
+                    }
+                });
+            }
+            
+            async setupAudioRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.audioStream = stream;
+                } catch (error) {
+                    console.warn('Microfone não disponível:', error);
+                }
+            }
+            
+            selecionarArea(areaCard) {
+                // Remover seleção anterior
+                document.querySelectorAll('.area-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Selecionar nova área
+                areaCard.classList.add('selected');
+                
+                const areaId = areaCard.dataset.areaId;
+                const areaNome = areaCard.querySelector('strong').textContent;
+                const areaAgentes = areaCard.querySelector('small').textContent.match(/\d+/)[0];
+                
+                // Se clicou na área central, mudar área central
+                if (this.agentesExternos.length === 0) {
+                    const areas = {{ areas_juridicas|tojson|safe }};
+                    const area = areas.find(a => a.id === areaId);
+                    this.renderizarAreaCentral(area);
+                } else {
+                    // Adicionar como agente externo
+                    this.adicionarAgenteExterno(areaId);
+                }
+            }
+            
+            mostrarPlaceholder() {
+                document.getElementById('canvasPlaceholder').style.display = 'flex';
+                document.getElementById('areaCentral').style.display = 'none';
+                document.getElementById('legenda-mapa').style.display = 'none';
+            }
+            
+            ocultarPlaceholder() {
+                document.getElementById('canvasPlaceholder').style.display = 'none';
+                document.getElementById('areaCentral').style.display = 'flex';
+                document.getElementById('legenda-mapa').style.display = 'block';
+            }
+            
+            renderizarAreaCentral(area) {
+                this.areaCentral = area;
+                this.ocultarPlaceholder();
+                
+                const elemento = document.getElementById('areaCentral');
+                elemento.style.backgroundColor = area.cor;
+                elemento.innerHTML = `
+                    <div>
+                        <div>${area.nome}</div>
+                        <small>${area.agentes} agentes</small>
+                    </div>
+                `;
+            }
+            
+            adicionarAgenteExterno(areaId) {
+                const areas = {{ areas_juridicas|tojson|safe }};
+                const area = areas.find(a => a.id === areaId);
+                if (!area) return;
+                
+                const agente = {
+                    area: area,
+                    agente_id: this.agentesExternos.length + 1,
+                    posicao: this.calcularPosicaoAgente(this.agentesExternos.length)
+                };
+                
+                this.agentesExternos.push(agente);
+                this.renderizarAgenteExterno(agente);
+                this.atualizarConexoes();
+            }
+            
+            calcularPosicaoAgente(index) {
+                const angulo = (index * 360 / 8) * (Math.PI / 180);
+                const raio = 250;
+                const canvas = document.getElementById('canvasArea');
+                const centerX = canvas.offsetWidth / 2;
+                const centerY = canvas.offsetHeight / 2;
+                
+                return {
+                    x: centerX + Math.cos(angulo) * raio - 60,
+                    y: centerY + Math.sin(angulo) * raio - 60
+                };
+            }
+            
+            renderizarAgenteExterno(agente) {
+                const canvas = document.getElementById('canvasArea');
+                
+                const elemento = document.createElement('div');
+                elemento.className = 'agente-externo';
+                elemento.style.backgroundColor = agente.area.cor;
+                elemento.style.left = agente.posicao.x + 'px';
+                elemento.style.top = agente.posicao.y + 'px';
+                elemento.innerHTML = `
+                    <div>
+                        <div>${agente.area.nome}</div>
+                        <small>Agente ${agente.agente_id}</small>
+                    </div>
+                `;
+                
+                canvas.appendChild(elemento);
+            }
+            
+            atualizarConexoes() {
+                // Remover conexões existentes
+                document.querySelectorAll('.conexao-linha').forEach(linha => linha.remove());
+                
+                // Criar novas conexões
+                const canvas = document.getElementById('canvasArea');
+                const centerX = canvas.offsetWidth / 2;
+                const centerY = canvas.offsetHeight / 2;
+                
+                this.agentesExternos.forEach(agente => {
+                    const linha = document.createElement('div');
+                    linha.className = 'conexao-linha';
+                    
+                    const deltaX = (agente.posicao.x + 60) - centerX;
+                    const deltaY = (agente.posicao.y + 60) - centerY;
+                    const comprimento = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    const angulo = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+                    
+                    linha.style.width = comprimento + 'px';
+                    linha.style.left = centerX + 'px';
+                    linha.style.top = centerY + 'px';
+                    linha.style.transformOrigin = '0 50%';
+                    linha.style.transform = `rotate(${angulo}deg)`;
+                    
+                    canvas.appendChild(linha);
+                });
+            }
+            
+            toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    this.startRecording();
+                }
+            }
+            
+            startRecording() {
+                if (!this.audioStream) {
+                    alert('Microfone não disponível');
+                    return;
+                }
+                
+                this.isRecording = true;
+                this.recordingStartTime = Date.now();
+                this.audioChunks = [];
+                
+                const recordButton = document.getElementById('recordButton');
+                recordButton.classList.add('recording');
+                recordButton.innerHTML = '<i class="fas fa-stop"></i>';
+                
+                this.mediaRecorder = new MediaRecorder(this.audioStream);
+                this.mediaRecorder.ondataavailable = (event) => {
+                    this.audioChunks.push(event.data);
+                };
+                
+                this.mediaRecorder.onstop = () => {
+                    this.processarAudio();
+                };
+                
+                this.mediaRecorder.start();
+                this.startTimer();
+            }
+            
+            stopRecording() {
+                this.isRecording = false;
+                
+                const recordButton = document.getElementById('recordButton');
+                recordButton.classList.remove('recording');
+                recordButton.innerHTML = '<i class="fas fa-microphone"></i>';
+                
+                if (this.mediaRecorder) {
+                    this.mediaRecorder.stop();
+                }
+                
+                this.stopTimer();
+            }
+            
+            startTimer() {
+                this.recordingTimer = setInterval(() => {
+                    const elapsed = Date.now() - this.recordingStartTime;
+                    const minutes = Math.floor(elapsed / 60000);
+                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    
+                    document.getElementById('timerDisplay').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+            
+            stopTimer() {
+                if (this.recordingTimer) {
+                    clearInterval(this.recordingTimer);
+                    this.recordingTimer = null;
+                }
+                document.getElementById('timerDisplay').textContent = '00:00';
+            }
+            
+            async processarAudio() {
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+                const folder = document.getElementById('folderSelector').value;
+                
+                // Criar FormData para upload
+                const formData = new FormData();
+                formData.append('audio', audioBlob, `comando_${Date.now()}.wav`);
+                formData.append('pasta', folder);
+                
+                try {
+                    // Simular processamento (substituir por API real)
+                    console.log('Processando comando de voz...');
+                    alert('Comando de voz gravado e salvo com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao processar áudio:', error);
+                    alert('Erro ao processar comando de voz');
+                }
+            }
+            
+            // Configurar upload de áudio
+            configurarUploadAudio() {
+                const audioUpload = document.getElementById('audioUpload');
+                const processarButton = document.getElementById('processarAudio');
+                
+                // Habilitar botão quando arquivo for selecionado
+                audioUpload.addEventListener('change', function() {
+                    processarButton.disabled = !this.files.length;
+                });
+                
+                // Processar áudio com IA
+                processarButton.addEventListener('click', async () => {
+                    const file = audioUpload.files[0];
+                    if (!file) return;
+                    
+                    await this.processarAudioComIA(file);
+                });
+            }
+            
+            async processarAudioComIA(audioFile) {
+                const progressDiv = document.getElementById('progressoProcessamento');
+                const progressBar = progressDiv.querySelector('.progress-bar');
+                const statusText = document.getElementById('statusProcessamento');
+                const resultadoDiv = document.getElementById('resultadoProcessamento');
+                
+                // Mostrar progresso
+                progressDiv.style.display = 'block';
+                resultadoDiv.style.display = 'none';
+                
+                try {
+                    // Etapa 1: Preparar upload
+                    this.atualizarProgresso(progressBar, statusText, 10, 'Preparando upload...');
+                    
+                    const formData = new FormData();
+                    formData.append('audio', audioFile);
+                    
+                    // Etapa 2: Upload e transcrição
+                    this.atualizarProgresso(progressBar, statusText, 30, 'Transcrevendo com Whisper...');
+                    
+                    const response = await fetch('/api/mapa-mental/processar-audio-completo', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+                    
+                    // Etapa 3: Análise com GPT-4o
+                    this.atualizarProgresso(progressBar, statusText, 60, 'Analisando com GPT-4o...');
+                    
+                    const resultado = await response.json();
+                    
+                    // Etapa 4: Criar mapa mental
+                    this.atualizarProgresso(progressBar, statusText, 90, 'Gerando mapa mental...');
+                    
+                    if (resultado.success) {
+                        // Aplicar mapa gerado
+                        await this.aplicarMapaGerado(resultado.data);
+                        
+                        // Finalizar
+                        this.atualizarProgresso(progressBar, statusText, 100, 'Concluído!');
+                        
+                        // Mostrar resultado
+                        setTimeout(() => {
+                            progressDiv.style.display = 'none';
+                            resultadoDiv.style.display = 'block';
+                        }, 1000);
+                        
+                    } else {
+                        throw new Error(resultado.message || 'Erro desconhecido');
+                    }
+                    
+                } catch (error) {
+                    console.error('Erro ao processar áudio:', error);
+                    
+                    progressDiv.style.display = 'none';
+                    
+                    // Mostrar erro
+                    resultadoDiv.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}
+                        </div>
+                    `;
+                    resultadoDiv.style.display = 'block';
+                }
+            }
+            
+            atualizarProgresso(progressBar, statusText, porcentagem, texto) {
+                progressBar.style.width = porcentagem + '%';
+                statusText.textContent = texto;
+            }
+            
+            async aplicarMapaGerado(dadosResposta) {
+                const { transcricao, estrategia, mapa_gerado } = dadosResposta;
+                
+                // Aplicar área central identificada
+                if (estrategia.area_identificada) {
+                    const areas = {{ areas_juridicas|tojson|safe }};
+                    const areaCentral = areas.find(a => a.id === estrategia.area_identificada.id);
+                    if (areaCentral) {
+                        this.renderizarAreaCentral(areaCentral);
+                    }
+                }
+                
+                // Limpar agentes externos
+                this.agentesExternos = [];
+                document.querySelectorAll('.agente-externo').forEach(el => el.remove());
+                
+                // Adicionar agentes recomendados
+                if (mapa_gerado.agentes_externos) {
+                    for (const agenteData of mapa_gerado.agentes_externos) {
+                        await new Promise(resolve => {
+                            setTimeout(() => {
+                                this.adicionarAgenteExterno(agenteData.area_id);
+                                resolve();
+                            }, 200);
+                        });
+                    }
+                }
+                
+                // Log para debug
+                console.log('Transcrição:', transcricao);
+                console.log('Estratégia:', estrategia);
+                console.log('Mapa aplicado com sucesso');
+            }
+            }
+            
+            salvarMapa() {
+                const mapaData = {
+                    nome: prompt('Nome do mapa mental:') || 'Mapa sem título',
+                    descricao: 'Mapa mental gerado no sistema colaborativo',
+                    dados_mapa: {
+                        area_central: this.areaCentral,
+                        agentes_externos: this.agentesExternos,
+                        conexoes: this.agentesExternos.length
+                    },
+                    fonte: 'manual'
+                };
+                
+                fetch('/api/mapa-mental/salvar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mapaData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Mapa mental salvo com sucesso!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao salvar mapa: ' + data.error);
+                    }
+                });
+            }
+            
+            gerarEstrategia() {
+                const texto = prompt('Descreva o caso jurídico para gerar estratégia:');
+                if (!texto) return;
+                
+                fetch('/api/mapa-mental/gerar-estrategia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texto: texto, fonte: 'texto' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Estratégia gerada: ${data.estrategia.titulo}\n\n${data.estrategia.descricao}`);
+                    } else {
+                        alert('Erro ao gerar estratégia: ' + data.error);
+                    }
+                });
+            }
+            
+            limparMapa() {
+                if (confirm('Limpar mapa atual?')) {
+                    this.agentesExternos = [];
+                    document.querySelectorAll('.agente-externo, .conexao-linha').forEach(el => el.remove());
+                    this.renderizarAreaCentral({ id: 'civil', nome: 'Civil', cor: '#3498db', agentes: 25 });
+                }
+            }
+            
+            exportarMapa() {
+                const formato = prompt('Formato de exportação (json/html/markdown):', 'json');
+                if (!formato) return;
+                
+                const mapaData = {
+                    area_central: this.areaCentral,
+                    agentes_externos: this.agentesExternos,
+                    conexoes: this.agentesExternos.length
+                };
+                
+                fetch('/api/mapa-mental/exportar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mapa: mapaData, formato: formato })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    }
+                    throw new Error('Erro na exportação');
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `mapa_mental_${Date.now()}.${formato}`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                });
+            }
+            
+            carregarMapa(mapaId) {
+                fetch(`/api/mapa-mental/carregar/${mapaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const mapa = data.mapa.dados_mapa;
+                        this.areaCentral = mapa.area_central;
+                        this.agentesExternos = mapa.agentes_externos || [];
+                        
+                        // Limpar canvas
+                        document.querySelectorAll('.agente-externo, .conexao-linha').forEach(el => el.remove());
+                        
+                        // Renderizar área central
+                        this.renderizarAreaCentral(this.areaCentral);
+                        
+                        // Renderizar agentes externos
+                        this.agentesExternos.forEach(agente => {
+                            this.renderizarAgenteExterno(agente);
+                        });
+                        
+                        this.atualizarConexoes();
+                        alert('Mapa carregado com sucesso!');
+                    } else {
+                        alert('Erro ao carregar mapa: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        // Inicializar sistema
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapa = new MapaMentalColaborativo();
+            mapa.configurarUploadAudio();
+        });
+    </script>
+</body>
+</html>

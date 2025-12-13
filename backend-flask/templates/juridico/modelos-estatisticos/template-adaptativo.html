@@ -1,0 +1,1034 @@
+{% extends "base.html" %}
+
+{% block title %}Algoritmo Adaptativo - Legal Pro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modelos-juridicos-theme.css') }}">
+<style>
+    body { 
+        background: #3b576f !important;
+        min-height: 100vh !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        color: white !important;
+    }
+    .card {
+        background: rgba(46, 93, 133, 0.3) !important;
+        border: 1px solid rgba(78, 205, 196, 0.3) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(10px) !important;
+        color: white !important;
+    }
+    .card-header {
+        background: #3b576f !important;
+        border-bottom: none !important;
+        color: white !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-success .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-info .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-warning .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-danger .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-secondary .card-header {
+        background: #3b576f !important;
+    }
+
+    .btn-info { background: #3b576f !important; border: #3b576f !important; }
+    .btn-info:hover { background: #2a4050 !important; border: #2a4050 !important; }
+    .form-control {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+    
+    .form-select {
+        background: #7b8c93 !important;
+        background-image: none !important;
+    }
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: #3b576f !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.2rem rgba(59, 87, 111, 0.25) !important;
+    }
+    .form-select:focus {
+        background: #7b8c93 !important;
+        background-image: none !important;
+        border-color: #3b576f !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.2rem rgba(59, 87, 111, 0.25) !important;
+    }
+
+    .form-label {
+        color: white !important;
+        font-weight: 500 !important;
+    }
+
+    .btn-primary {
+        background-color: #3b576f !important;
+        border-color: #3b576f !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #2a4050 !important;
+        border-color: #2a4050 !important;
+    }
+
+    /* Sobrescrever cores do Bootstrap */
+    .bg-primary,
+    .card-header.bg-primary,
+    .bg-success,
+    .card-header.bg-success,
+    .bg-warning,
+    .card-header.bg-warning,
+    .bg-danger,
+    .card-header.bg-danger,
+    .bg-info,
+    .card-header.bg-info {
+        background-color: #3b576f !important;
+        background: #3b576f !important;
+    }
+
+    .border-primary,
+    .border-success,
+    .border-warning,
+    .border-danger,
+    .border-info {
+        border-color: #3b576f !important;
+    }
+
+    /* Sobrescrever cores dos alerts Bootstrap */
+    .alert-info,
+    .alert-success,
+    .alert-warning,
+    .alert-danger {
+        background-color: rgba(59, 87, 111, 0.2) !important;
+        border-color: #3b576f !important;
+        color: white !important;
+    }
+
+    /* Placeholders em branco */
+    .form-control::placeholder,
+    .form-select::placeholder,
+    input::placeholder,
+    textarea::placeholder,
+    select::placeholder {
+        color: white !important;
+        opacity: 0.8 !important;
+    }
+
+    .form-control::-webkit-input-placeholder,
+    .form-select::-webkit-input-placeholder,
+    input::-webkit-input-placeholder,
+    textarea::-webkit-input-placeholder {
+        color: white !important;
+        opacity: 0.8 !important;
+    }
+
+    .form-control::-moz-placeholder,
+    .form-select::-moz-placeholder,
+    input::-moz-placeholder,
+    textarea::-moz-placeholder {
+        color: white !important;
+        opacity: 0.8 !important;
+    }
+
+    .form-control:-ms-input-placeholder,
+    .form-select:-ms-input-placeholder,
+    input:-ms-input-placeholder,
+    textarea:-ms-input-placeholder {
+        color: white !important;
+        opacity: 0.8 !important;
+    }
+
+    /* Forçar cor branca para todos os textos auxiliares */
+    .form-text,
+    .text-muted,
+    small.text-muted,
+    .small,
+    small,
+    .text-secondary,
+    .text-info,
+    .text-light,
+    .text-dark,
+    div.form-text,
+    small.form-text {
+        color: white !important;
+        opacity: 0.8 !important;
+    }
+
+    /* Garantir cor branca para todos os elementos de texto */
+    body, body *,
+    .card-body,
+    .card-body *,
+    .form-label,
+    .form-check-label,
+    h1, h2, h3, h4, h5, h6,
+    p, span, div, label {
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Botão Voltar -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="/juridico/analise-estatistica-preditiva" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Voltar para Modelos Estatísticos
+            </a>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>Algoritmo Adaptativo - Configuração Avançada
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Seção Explicativa do Modelo -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Algoritmo Adaptativo - Sobre o Modelo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-info"><i class="fas fa-robot me-2"></i>O que entrega:</h6>
+                                            <p class="mb-3">Sistema que aprende e evolui automaticamente com cada novo caso, ajustando suas estratégias conforme os resultados obtidos em tempo real.</p>
+                                            
+                                            <h6 class="text-primary"><i class="fas fa-chess me-2"></i>Poder estratégico:</h6>
+                                            <p class="mb-3">Adapta-se instantaneamente a mudanças na jurisprudência, novas leis ou alterações no comportamento dos tribunais. Personaliza automaticamente a abordagem para cada magistrado baseado no histórico de decisões recentes.</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-warning"><i class="fas fa-target me-2"></i>Resultado prático:</h6>
+                                            <p class="mb-3">Elimina a necessidade de reconfiguração manual dos modelos. Mantém a estratégia sempre atualizada com as tendências mais recentes do judiciário. Melhora continuamente a precisão das predições sem intervenção humana.</p>
+                                            
+                                            <h6 class="text-success"><i class="fas fa-layer-group me-2"></i>Classificação por Níveis de Certeza:</h6>
+                                            <ul class="mb-0">
+                                                <li><strong>Alta Precisão (>90%):</strong> Análises com mais de 1000 casos similares processados pelo algoritmo</li>
+                                                <li><strong>Precisão Moderada (75-90%):</strong> Cenários com 100-1000 casos de referência para adaptação</li>
+                                                <li><strong>Baixa Precisão (<75%):</strong> Situações completamente novas com menos de 100 casos base</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="formEditarAdaptativo">
+                    <!-- Configurações Base do Modelo -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-primary">
+                                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações Base do Modelo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nome do Modelo</label>
+                                            <input type="text" class="form-control" id="nomeModeloAdaptativo" 
+                                                   placeholder="Ex: Algoritmo Adaptativo Civil 2025" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Área Jurídica Principal</label>
+                                            <select class="form-select" id="areaJuridicaModeloAdaptativo" onchange="atualizarParametrosAdaptativo()">
+                                                <option value="civil">Direito Civil</option>
+                                                <option value="trabalhista">Direito Trabalhista</option>
+                                                <option value="tributario">Direito Tributário</option>
+                                                <option value="empresarial">Direito Empresarial</option>
+                                                <option value="consumidor">Direito do Consumidor</option>
+                                                <option value="familia">Direito de Família</option>
+                                                <option value="agrario">Direito Agrário</option>
+                                                <option value="penal">Direito Penal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Descrição do Modelo</label>
+                                            <textarea class="form-control" id="descricaoModeloAdaptativo" rows="3" 
+                                                      placeholder="Descreva os objetivos e aplicações deste algoritmo adaptativo..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos Universais Obrigatórios -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Campos Universais Obrigatórios (Todas as Áreas)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Número do Processo (CNJ) <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="numeroProcessoCnjAdaptativo" 
+                                                   placeholder="Ex: 1234567-89.2024.8.26.0100" required>
+                                            <div class="form-text">Autocomplete com processos da base</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Cliente/Autor <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="clienteAutorAdaptativo" 
+                                                   placeholder="Nome do cliente ou autor" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">CNPJ/CPF <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="cnpjCpfClienteAdaptativo" 
+                                                   placeholder="Ex: 12.345.678/0001-90 ou 123.456.789-10" required>
+                                            <div class="form-text">Preenchimento automático baseado no processo</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tipo de Pessoa</label>
+                                            <select class="form-select" id="tipoPessoaAdaptativo">
+                                                <option value="">Selecione...</option>
+                                                <option value="fisica">Pessoa Física</option>
+                                                <option value="juridica">Pessoa Jurídica</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Estado <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="estadoProcessoAdaptativo" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="SP">São Paulo</option>
+                                                <option value="RJ">Rio de Janeiro</option>
+                                                <option value="MG">Minas Gerais</option>
+                                                <option value="RS">Rio Grande do Sul</option>
+                                                <option value="PR">Paraná</option>
+                                                <option value="SC">Santa Catarina</option>
+                                                <option value="GO">Goiás</option>
+                                                <option value="BA">Bahia</option>
+                                                <option value="PE">Pernambuco</option>
+                                                <option value="CE">Ceará</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Comarca <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="comarcaProcessoAdaptativo" required>
+                                                <option value="">Selecione a cidade...</option>
+                                                <optgroup label="São Paulo (SP)">
+                                                    <option value="São Paulo">São Paulo</option>
+                                                    <option value="Guarulhos">Guarulhos</option>
+                                                    <option value="Santo André">Santo André</option>
+                                                    <option value="São Bernardo do Campo">São Bernardo do Campo</option>
+                                                    <option value="Osasco">Osasco</option>
+                                                    <option value="Campinas">Campinas</option>
+                                                    <option value="Ribeirão Preto">Ribeirão Preto</option>
+                                                    <option value="Sorocaba">Sorocaba</option>
+                                                    <option value="Santos">Santos</option>
+                                                    <option value="São José dos Campos">São José dos Campos</option>
+                                                    <option value="Bauru">Bauru</option>
+                                                    <option value="Piracicaba">Piracicaba</option>
+                                                    <option value="São Carlos">São Carlos</option>
+                                                </optgroup>
+                                                <optgroup label="Rio de Janeiro (RJ)">
+                                                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                                                    <option value="Niterói">Niterói</option>
+                                                    <option value="Duque de Caxias">Duque de Caxias</option>
+                                                    <option value="São Gonçalo">São Gonçalo</option>
+                                                    <option value="Nova Iguaçu">Nova Iguaçu</option>
+                                                    <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+                                                    <option value="Volta Redonda">Volta Redonda</option>
+                                                    <option value="Petrópolis">Petrópolis</option>
+                                                    <option value="Cabo Frio">Cabo Frio</option>
+                                                </optgroup>
+                                                <optgroup label="Minas Gerais (MG)">
+                                                    <option value="Belo Horizonte">Belo Horizonte</option>
+                                                    <option value="Contagem">Contagem</option>
+                                                    <option value="Juiz de Fora">Juiz de Fora</option>
+                                                    <option value="Uberlândia">Uberlândia</option>
+                                                    <option value="Montes Claros">Montes Claros</option>
+                                                    <option value="Governador Valadares">Governador Valadares</option>
+                                                </optgroup>
+                                                <optgroup label="Distrito Federal (DF)">
+                                                    <option value="Brasília">Brasília</option>
+                                                    <option value="Taguatinga">Taguatinga</option>
+                                                    <option value="Ceilândia">Ceilândia</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Juízo <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="juizoProcessoAdaptativo" required>
+                                                <option value="">Selecione a vara...</option>
+                                                <optgroup label="Varas Cíveis - São Paulo SP">
+                                                    <option value="1ª Vara Cível São Paulo SP">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível São Paulo SP">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível São Paulo SP">3ª Vara Cível</option>
+                                                    <option value="4ª Vara Cível São Paulo SP">4ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível São Paulo SP">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível São Paulo SP">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível São Paulo SP">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível São Paulo SP">20ª Vara Cível</option>
+                                                    <option value="25ª Vara Cível São Paulo SP">25ª Vara Cível</option>
+                                                    <option value="30ª Vara Cível São Paulo SP">30ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Rio de Janeiro RJ">
+                                                    <option value="1ª Vara Cível Rio de Janeiro RJ">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Rio de Janeiro RJ">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível Rio de Janeiro RJ">3ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Rio de Janeiro RJ">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Rio de Janeiro RJ">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível Rio de Janeiro RJ">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível Rio de Janeiro RJ">20ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Belo Horizonte MG">
+                                                    <option value="1ª Vara Cível Belo Horizonte MG">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Belo Horizonte MG">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível Belo Horizonte MG">3ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Belo Horizonte MG">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Belo Horizonte MG">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível Belo Horizonte MG">15ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Brasília DF">
+                                                    <option value="1ª Vara Cível Brasília DF">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Brasília DF">2ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Brasília DF">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Brasília DF">10ª Vara Cível</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Instância <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="instanciaProcessoAdaptativo" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="primeira">1ª Instância</option>
+                                                <option value="segunda">2ª Instância</option>
+                                                <option value="superior">Tribunal Superior</option>
+                                                <option value="supremo">Supremo Tribunal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos Específicos por Área Jurídica -->
+                    <div class="row mb-4" id="camposEspecificosAdaptativo">
+                        <div class="col-12">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-list-ul me-2"></i>Campos Específicos - <span id="areaAtualAdaptativo">Direito Civil</span></h6>
+                                </div>
+                                <div class="card-body" id="camposEspecificosContentAdaptativo">
+                                    <!-- Conteúdo será preenchido dinamicamente pelo JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Base Vetorial PostgreSQL -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-database me-2"></i>Base Vetorial PostgreSQL</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tabela PostgreSQL</label>
+                                            <select class="form-select" id="tabelaPostgreSQLAdaptativo" onchange="carregarColunasPostgreSQLAdaptativo()">
+                                                <option value="">Carregando tabelas...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Coluna Variável Dependente</label>
+                                            <select class="form-select" id="colunaVariavelDependenteAdaptativo">
+                                                <option value="">Primeiro selecione uma tabela</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Base Vetorial Qdrant -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-vector-square me-2"></i>Base Vetorial Qdrant</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Collection Qdrant</label>
+                                            <select class="form-select" id="collectionQdrantAdaptativo" onchange="carregarInfoCollectionAdaptativo()">
+                                                <option value="">Carregando collections...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Informações da Collection</label>
+                                            <select class="form-select" id="infoCollectionQdrantAdaptativo">
+                                                <option value="">Primeiro selecione uma collection</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parâmetros de Adaptação -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Parâmetros de Adaptação</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Taxa de Aprendizado</label>
+                                            <input type="number" class="form-control" id="taxaAprendizadoAdaptativo" 
+                                                   min="0.001" max="1.0" step="0.001" value="0.01"
+                                                   placeholder="Ex: 0.01">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Fator de Adaptação</label>
+                                            <input type="number" class="form-control" id="fatorAdaptacaoAdaptativo" 
+                                                   min="0.1" max="2.0" step="0.1" value="1.0"
+                                                   placeholder="Ex: 1.0">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Threshold de Mudança</label>
+                                            <input type="number" class="form-control" id="thresholdMudancaAdaptativo" 
+                                                   min="0.01" max="0.5" step="0.01" value="0.05"
+                                                   placeholder="Ex: 0.05">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Estratégia de Adaptação</label>
+                                            <select class="form-select" id="estrategiaAdaptacaoAdaptativo">
+                                                <option value="gradual">Adaptação Gradual</option>
+                                                <option value="rapida">Adaptação Rápida</option>
+                                                <option value="conservadora">Adaptação Conservadora</option>
+                                                <option value="agressiva">Adaptação Agressiva</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Janela de Observação (dias)</label>
+                                            <input type="number" class="form-control" id="janelaObservacaoAdaptativo" 
+                                                   min="1" max="365" value="30"
+                                                   placeholder="Ex: 30">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="button" class="btn btn-secondary me-2" onclick="limparFormularioAdaptativo()">
+                                <i class="fas fa-eraser me-2"></i>Limpar Formulário
+                            </button>
+                            <button type="button" class="btn btn-info me-2" onclick="salvarModeloAdaptativo()">
+                                <i class="fas fa-save me-2"></i>Salvar Modelo
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play me-2"></i>Executar Algoritmo Adaptativo
+                            </button>
+                        </div>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/juridico/modelos-estatisticos/templates-javascript.js"></script>
+<script>
+// Inicialização específica do modelo adaptativo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 Inicializando modelo adaptativo...');
+    
+    // Carregar tabelas PostgreSQL
+    carregarTabelasPostgreSQLAdaptativo();
+    
+    // Carregar collections Qdrant
+    carregarCollectionsQdrantAdaptativo();
+    
+    // Atualizar campos específicos para a área padrão
+    atualizarParametrosAdaptativo();
+    
+    console.log('✅ Modelo adaptativo inicializado com sucesso!');
+});
+
+// Funções específicas do modelo adaptativo
+function carregarTabelasPostgreSQLAdaptativo() {
+    fetch('/api/database/tabelas')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('tabelaPostgreSQLAdaptativo');
+            select.innerHTML = '<option value="">Selecione uma tabela...</option>';
+            
+            if (data.success && data.tabelas) {
+                data.tabelas.forEach(tabela => {
+                    const option = document.createElement('option');
+                    option.value = tabela.nome || tabela.name || tabela;
+                    option.textContent = tabela.nome ? `${tabela.nome} (${tabela.tipo})` : tabela;
+                    select.appendChild(option);
+                });
+                console.log(`✅ ${data.tabelas.length} tabelas carregadas no select tabelaPostgreSQLAdaptativo`);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro ao carregar tabelas PostgreSQL:', error);
+        });
+}
+
+function carregarColunasPostgreSQLAdaptativo() {
+    const tabela = document.getElementById('tabelaPostgreSQLAdaptativo').value;
+    const selectColunas = document.getElementById('colunaVariavelDependenteAdaptativo');
+    
+    if (!tabela) {
+        selectColunas.innerHTML = '<option value="">Primeiro selecione uma tabela</option>';
+        return;
+    }
+    
+    fetch(`/api/database/colunas/${tabela}`)
+        .then(response => response.json())
+        .then(data => {
+            selectColunas.innerHTML = '<option value="">Selecione uma coluna...</option>';
+            
+            if (data.success && data.colunas) {
+                data.colunas.forEach(coluna => {
+                    const option = document.createElement('option');
+                    option.value = coluna.nome;
+                    option.textContent = `${coluna.nome} (${coluna.tipo})`;
+                    selectColunas.appendChild(option);
+                });
+                console.log(`✅ ${data.colunas.length} colunas carregadas para tabela ${tabela}`);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro ao carregar colunas:', error);
+        });
+}
+
+function carregarCollectionsQdrantAdaptativo() {
+    fetch('/api/qdrant/collections')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('collectionQdrantAdaptativo');
+            select.innerHTML = '<option value="">Selecione uma collection...</option>';
+            
+            if (data.success && data.collections) {
+                data.collections.forEach(collection => {
+                    const option = document.createElement('option');
+                    option.value = collection.nome || collection.name || collection;
+                    const nome = collection.nome || collection.name || collection;
+                    const pontos = collection.pontos || collection.points_count || 0;
+                    const area = collection.area_juridica || collection.area || '';
+                    option.textContent = area ? `${nome} - ${area} (${pontos} pontos)` : `${nome} (${pontos} pontos)`;
+                    select.appendChild(option);
+                });
+                console.log(`✅ ${data.collections.length} collections carregadas do Qdrant`);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro ao carregar collections Qdrant:', error);
+        });
+}
+
+function carregarInfoCollectionAdaptativo() {
+    const collection = document.getElementById('collectionQdrantAdaptativo').value;
+    const selectInfo = document.getElementById('infoCollectionQdrantAdaptativo');
+    
+    if (!collection) {
+        selectInfo.innerHTML = '<option value="">Primeiro selecione uma collection</option>';
+        return;
+    }
+    
+    // Simulação de informações da collection
+    selectInfo.innerHTML = `
+        <option value="">Selecione uma informação...</option>
+        <option value="vector_size">Tamanho do Vetor</option>
+        <option value="distance_metric">Métrica de Distância</option>
+        <option value="payload_schema">Schema do Payload</option>
+        <option value="index_config">Configuração do Índice</option>
+    `;
+}
+
+function atualizarParametrosAdaptativo() {
+    const area = document.getElementById('areaJuridicaModeloAdaptativo').value;
+    const camposContent = document.getElementById('camposEspecificosContentAdaptativo');
+    const areaAtual = document.getElementById('areaAtualAdaptativo');
+    
+    areaAtual.textContent = document.getElementById('areaJuridicaModeloAdaptativo').selectedOptions[0].text;
+    
+    // Definir campos específicos baseados na área jurídica
+    const camposEspecificos = {
+        civil: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ação Civil</label>
+                    <select class="form-select" id="tipoAcaoCivil">
+                        <option value="indenizacao">Ação de Indenização</option>
+                        <option value="cobranca">Ação de Cobrança</option>
+                        <option value="rescisao">Ação de Rescisão Contratual</option>
+                        <option value="cumprimento">Cumprimento de Sentença</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor da Causa (R$)</label>
+                    <input type="text" class="form-control" id="valorCausaCivil" 
+                           placeholder="Ex: R$ 50.000,00">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <label class="form-label">Natureza do Dano</label>
+                    <select class="form-select" id="naturezaDanoCivil">
+                        <option value="material">Dano Material</option>
+                        <option value="moral">Dano Moral</option>
+                        <option value="estetico">Dano Estético</option>
+                        <option value="misto">Dano Misto (Material + Moral)</option>
+                    </select>
+                </div>
+            </div>
+        `,
+        trabalhista: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ação Trabalhista</label>
+                    <select class="form-select" id="tipoAcaoTrabalhista">
+                        <option value="rescisao">Rescisão Indireta</option>
+                        <option value="horas_extras">Horas Extras</option>
+                        <option value="adicional">Adicional de Insalubridade</option>
+                        <option value="equiparacao">Equiparação Salarial</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Salário Base (R$)</label>
+                    <input type="text" class="form-control" id="salarioBaseTrabalhista" 
+                           placeholder="Ex: R$ 3.500,00">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Tempo de Serviço (anos)</label>
+                    <input type="number" class="form-control" id="tempoServicoTrabalhista" 
+                           placeholder="Ex: 5" min="0" max="50">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Regime de Trabalho</label>
+                    <select class="form-select" id="regimeTrabalhoTrabalhista">
+                        <option value="clt">CLT</option>
+                        <option value="estatutario">Estatutário</option>
+                        <option value="terceirizado">Terceirizado</option>
+                    </select>
+                </div>
+            </div>
+        `,
+        tributario: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Tributo</label>
+                    <select class="form-select" id="tipoTributoTributario">
+                        <option value="icms">ICMS</option>
+                        <option value="ipi">IPI</option>
+                        <option value="pis_cofins">PIS/COFINS</option>
+                        <option value="irpj">IRPJ</option>
+                        <option value="csll">CSLL</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor do Tributo (R$)</label>
+                    <input type="text" class="form-control" id="valorTributoTributario" 
+                           placeholder="Ex: R$ 125.000,00">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Período de Apuração</label>
+                    <input type="month" class="form-control" id="periodoApuracaoTributario">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Regime Tributário</label>
+                    <select class="form-select" id="regimeTributarioTributario">
+                        <option value="simples">Simples Nacional</option>
+                        <option value="presumido">Lucro Presumido</option>
+                        <option value="real">Lucro Real</option>
+                        <option value="arbitrado">Lucro Arbitrado</option>
+                    </select>
+                </div>
+            </div>
+        `,
+        empresarial: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ação Empresarial</label>
+                    <select class="form-select" id="tipoAcaoEmpresarial">
+                        <option value="societario">Direito Societário</option>
+                        <option value="falencia">Falência e Recuperação</option>
+                        <option value="contrato">Contratos Empresariais</option>
+                        <option value="concorrencia">Concorrência Desleal</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Porte da Empresa</label>
+                    <select class="form-select" id="porteEmpresaEmpresarial">
+                        <option value="mei">MEI</option>
+                        <option value="micro">Microempresa</option>
+                        <option value="pequena">Pequena Empresa</option>
+                        <option value="media">Média Empresa</option>
+                        <option value="grande">Grande Empresa</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <label class="form-label">Setor de Atividade</label>
+                    <select class="form-select" id="setorAtividadeEmpresarial">
+                        <option value="comercio">Comércio</option>
+                        <option value="industria">Indústria</option>
+                        <option value="servicos">Serviços</option>
+                        <option value="tecnologia">Tecnologia</option>
+                        <option value="financeiro">Financeiro</option>
+                    </select>
+                </div>
+            </div>
+        `,
+        consumidor: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Relação de Consumo</label>
+                    <select class="form-select" id="tipoRelacaoConsumidor">
+                        <option value="produto">Vício do Produto</option>
+                        <option value="servico">Vício do Serviço</option>
+                        <option value="publicidade">Publicidade Enganosa</option>
+                        <option value="cobranca">Cobrança Indevida</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor do Produto/Serviço (R$)</label>
+                    <input type="text" class="form-control" id="valorProdutoConsumidor" 
+                           placeholder="Ex: R$ 2.500,00">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Segmento do Fornecedor</label>
+                    <select class="form-select" id="segmentoFornecedorConsumidor">
+                        <option value="telecomunicacoes">Telecomunicações</option>
+                        <option value="bancario">Bancário</option>
+                        <option value="varejo">Varejo</option>
+                        <option value="automotivo">Automotivo</option>
+                        <option value="alimenticio">Alimentício</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tempo da Relação (meses)</label>
+                    <input type="number" class="form-control" id="tempoRelacaoConsumidor" 
+                           placeholder="Ex: 12" min="1" max="120">
+                </div>
+            </div>
+        `,
+        familia: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ação Familiar</label>
+                    <select class="form-select" id="tipoAcaoFamilia">
+                        <option value="divorcio">Divórcio</option>
+                        <option value="pensao">Pensão Alimentícia</option>
+                        <option value="guarda">Guarda de Menores</option>
+                        <option value="adocao">Adoção</option>
+                        <option value="uniao_estavel">União Estável</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Número de Filhos</label>
+                    <input type="number" class="form-control" id="numeroFilhosFamilia" 
+                           placeholder="Ex: 2" min="0" max="10">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Regime de Bens</label>
+                    <select class="form-select" id="regimeBensFamilia">
+                        <option value="comunhao_parcial">Comunhão Parcial</option>
+                        <option value="comunhao_universal">Comunhão Universal</option>
+                        <option value="separacao_bens">Separação de Bens</option>
+                        <option value="participacao_final">Participação Final</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tempo de Relacionamento (anos)</label>
+                    <input type="number" class="form-control" id="tempoRelacionamentoFamilia" 
+                           placeholder="Ex: 10" min="1" max="50">
+                </div>
+            </div>
+        `,
+        agrario: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Ação Agrária</label>
+                    <select class="form-select" id="tipoAcaoAgrario">
+                        <option value="possessoria">Ação Possessória</option>
+                        <option value="desapropriacao">Desapropriação Rural</option>
+                        <option value="reforma">Reforma Agrária</option>
+                        <option value="arrendamento">Arrendamento Rural</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Área do Imóvel (hectares)</label>
+                    <input type="number" class="form-control" id="areaImovelAgrario" 
+                           placeholder="Ex: 250" min="0.1" step="0.1">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Exploração</label>
+                    <select class="form-select" id="tipoExploracaoAgrario">
+                        <option value="agricultura">Agricultura</option>
+                        <option value="pecuaria">Pecuária</option>
+                        <option value="misto">Misto</option>
+                        <option value="florestal">Florestal</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor da Terra (R$/hectare)</label>
+                    <input type="text" class="form-control" id="valorTerraAgrario" 
+                           placeholder="Ex: R$ 15.000,00">
+                </div>
+            </div>
+        `,
+        penal: `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de Crime</label>
+                    <select class="form-select" id="tipoCrimePenal">
+                        <option value="furto">Furto</option>
+                        <option value="roubo">Roubo</option>
+                        <option value="homicidio">Homicídio</option>
+                        <option value="estelionato">Estelionato</option>
+                        <option value="trafico">Tráfico de Drogas</option>
+                        <option value="lavagem">Lavagem de Dinheiro</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor do Prejuízo (R$)</label>
+                    <input type="text" class="form-control" id="valorPrejuizoPenal" 
+                           placeholder="Ex: R$ 50.000,00">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Antecedentes Criminais</label>
+                    <select class="form-select" id="antecedentesPenal">
+                        <option value="primario">Réu Primário</option>
+                        <option value="reincidente">Reincidente</option>
+                        <option value="habitual">Criminoso Habitual</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Complexidade do Caso</label>
+                    <select class="form-select" id="complexidadePenal">
+                        <option value="simples">Simples</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="muito_alta">Muito Alta</option>
+                    </select>
+                </div>
+            </div>
+        `
+    };
+    
+    camposContent.innerHTML = camposEspecificos[area] || camposEspecificos.civil;
+    console.log(`✅ Campos específicos atualizados para área '${area}' no modelo 'adaptativo'`);
+}
+
+function salvarModeloAdaptativo() {
+    const dadosModelo = {
+        nome: document.getElementById('nomeModeloAdaptativo').value,
+        area_juridica: document.getElementById('areaJuridicaModeloAdaptativo').value,
+        descricao: document.getElementById('descricaoModeloAdaptativo').value,
+        numero_processo: document.getElementById('numeroProcessoCnjAdaptativo').value,
+        cliente_autor: document.getElementById('clienteAutorAdaptativo').value,
+        cnpj_cpf: document.getElementById('cnpjCpfClienteAdaptativo').value,
+        tipo_pessoa: document.getElementById('tipoPessoaAdaptativo').value,
+        estado: document.getElementById('estadoProcessoAdaptativo').value,
+        comarca: document.getElementById('comarcaProcessoAdaptativo').value,
+        juizo: document.getElementById('juizoProcessoAdaptativo').value,
+        instancia: document.getElementById('instanciaProcessoAdaptativo').value,
+        tabela_postgresql: document.getElementById('tabelaPostgreSQLAdaptativo').value,
+        coluna_variavel: document.getElementById('colunaVariavelDependenteAdaptativo').value,
+        collection_qdrant: document.getElementById('collectionQdrantAdaptativo').value,
+        info_collection: document.getElementById('infoCollectionQdrantAdaptativo').value,
+        taxa_aprendizado: document.getElementById('taxaAprendizadoAdaptativo').value,
+        fator_adaptacao: document.getElementById('fatorAdaptacaoAdaptativo').value,
+        threshold_mudanca: document.getElementById('thresholdMudancaAdaptativo').value,
+        estrategia_adaptacao: document.getElementById('estrategiaAdaptacaoAdaptativo').value,
+        janela_observacao: document.getElementById('janelaObservacaoAdaptativo').value,
+        tipo_modelo: 'adaptativo'
+    };
+    
+    fetch('/api/modelos-estatisticos/salvar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosModelo)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Modelo adaptativo salvo com sucesso!');
+        } else {
+            alert('❌ Erro ao salvar modelo: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Erro ao salvar modelo:', error);
+        alert('❌ Erro ao salvar modelo. Verifique o console para mais detalhes.');
+    });
+}
+
+function limparFormularioAdaptativo() {
+    if (confirm('Tem certeza que deseja limpar todos os campos do formulário?')) {
+        document.getElementById('formEditarAdaptativo').reset();
+        atualizarParametrosAdaptativo();
+    }
+}
+</script>
+{% endblock %}

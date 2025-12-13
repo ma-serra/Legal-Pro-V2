@@ -1,0 +1,795 @@
+{% extends "base.html" %}
+
+{% block title %}Análise Jurídica{% endblock %}
+
+{% block head %}
+<style>
+.navbar .navbar-brand {
+    display: none !important;
+}
+body {
+    background-color: #21333d !important;
+}
+
+/* Form Group - Cor personalizada */
+.form-group {
+    background-color: #575b5c !important;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+}
+
+/* Elementos de texto - Cor personalizada */
+.form-label,
+.form-text,
+.text-muted,
+p,
+h5,
+label {
+    color: #fcfffb !important;
+}
+
+/* Input fields com melhor contraste */
+.form-control,
+.form-select {
+    background-color: #21333d !important;
+    border-color: #fcfffb !important;
+    color: #fcfffb !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #21333d !important;
+    border-color: #fcfffb !important;
+    color: #fcfffb !important;
+    box-shadow: 0 0 0 0.2rem rgba(252, 255, 251, 0.25) !important;
+}
+
+/* Form check labels */
+.form-check-label {
+    color: #fcfffb !important;
+}
+
+/* Upload area styling */
+.upload-area {
+    background-color: #575b5c !important;
+    border: 2px dashed #fcfffb !important;
+    color: #fcfffb !important;
+}
+
+.upload-icon {
+    color: #fcfffb !important;
+}
+
+/* Botão outline-primary personalizado */
+.btn-outline-primary {
+    --bs-btn-color: #ffffff;
+    --bs-btn-border-color: #ffffff;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #336866;
+    --bs-btn-hover-border-color: #336866;
+    --bs-btn-focus-shadow-rgb: 13,110,253;
+    --bs-btn-active-color: #336866;
+    --bs-btn-active-bg: #336866;
+    --bs-btn-active-border-color: #336866;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #336866;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: #336866;
+    --bs-gradient: none;
+}
+
+/* Botão outline-info personalizado */
+.btn-outline-info {
+    --bs-btn-color: #21333d;
+    --bs-btn-border-color: #21333d;
+    --bs-btn-hover-color: #f8f9fa;
+    --bs-btn-hover-bg: #21333d;
+    --bs-btn-hover-border-color: #21333d;
+    --bs-btn-focus-shadow-rgb: 13,202,240;
+    --bs-btn-active-color: #f8f9fa;
+    --bs-btn-active-bg: #21333d;
+    --bs-btn-active-border-color: #21333d;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #21333d;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: #21333d;
+    --bs-gradient: none;
+}
+
+/* Botão primary personalizado */
+.btn-primary {
+    --bs-btn-color: #21333d;
+    --bs-btn-border-color: #21333d;
+    --bs-btn-hover-color: #f8f9fa;
+    --bs-btn-hover-bg: #21333d;
+    --bs-btn-hover-border-color: #21333d;
+    --bs-btn-focus-shadow-rgb: 13,202,240;
+    --bs-btn-active-color: #f8f9fa;
+    --bs-btn-active-bg: #21333d;
+    --bs-btn-active-border-color: #21333d;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #21333d;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: #21333d;
+    --bs-gradient: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-search"></i> Análise Jurídica
+                        {% if agente_selecionado %}
+                            - {{ agente_selecionado.nome }}
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('analisar') }}" id="formAnalise" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="modo_analise" class="form-label">Modo de Análise</label>
+                                    <select class="form-select" id="modo_analise" name="modo_analise">
+                                        <option value="especializado">Agente Especializado</option>
+                                        <option value="sequencial">Múltiplos Agentes (Sequencial)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3" id="agente_especializado_group">
+                                    <label for="agente_especializado" class="form-label">Agente Especializado</label>
+                                    <select class="form-select" id="agente_especializado" name="agente_especializado">
+                                        <option value="">Selecione um agente...</option>
+                                        {% for agente in agentes_disponíveis %}
+                                            <option value="{{ agente.id }}" 
+                                                    {% if agente_selecionado and agente.id == agente_selecionado.id %}selected{% endif %}>
+                                                {{ agente.nome }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3" id="agentes_multiplos_group" style="display: none;">
+                                    <label class="form-label">Agentes para Análise Sequencial</label>
+                                    <div class="row">
+                                        {% for agente in agentes_disponíveis %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="agentes[]" value="{{ agente.id }}" 
+                                                           id="agente_{{ agente.id }}">
+                                                    <label class="form-check-label" for="agente_{{ agente.id }}">
+                                                        {{ agente.nome }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload de Arquivos -->
+                        <div class="form-group mb-4">
+                            <label class="form-label">Envio de Documentos</label>
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <h5>Arraste arquivos aqui ou clique para selecionar</h5>
+                                    <p class="text-muted">Suporte para PDF, DOC, DOCX, TXT (máximo 10MB)</p>
+                                    <input type="file" id="fileInput" name="arquivos[]" multiple 
+                                           accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fas fa-file-upload me-2"></i>Selecionar Arquivos
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="fileList" class="file-list mt-3"></div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="texto" class="form-label">Texto para Análise</label>
+                            <textarea class="form-control" id="texto" name="texto" rows="10" 
+                                      placeholder="Insira o texto que deseja analisar ou carregue um arquivo acima..."></textarea>
+                            <div class="form-text">
+                                Cole aqui o documento, contrato, petição ou qualquer texto jurídico que deseja analisar.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="formato_saida" class="form-label">Formato de Saída</label>
+                                    <select class="form-select" id="formato_saida" name="formato_saida">
+                                        <option value="html">HTML (Visualização)</option>
+                                        <option value="pdf">PDF (Download)</option>
+                                        <option value="docx">Word (Download)</option>
+                                        <option value="json">JSON (Dados Estruturados)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="nivel_detalhamento" class="form-label">Nível de Detalhamento</label>
+                                    <select class="form-select" id="nivel_detalhamento" name="nivel_detalhamento">
+                                        <option value="basico">Básico</option>
+                                        <option value="intermediario" selected>Intermediário</option>
+                                        <option value="avancado">Avançado</option>
+                                        <option value="completo">Completo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-info" id="btnSegundaOpiniao">
+                                    <i class="fas fa-user-friends"></i> Segunda Opinião
+                                </button>
+                                <button type="submit" class="btn btn-primary" id="btnAnalysar">
+                                    <i class="fas fa-search"></i> Iniciar Análise
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if agente_selecionado %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Informações do Agente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nome:</strong> {{ agente_selecionado.nome }}</p>
+                            <p><strong>Tipo:</strong> {{ agente_selecionado.tipo }}</p>
+                            {% if agente_selecionado.categoria %}
+                                <p><strong>Categoria:</strong> {{ agente_selecionado.categoria.nome }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if agente_selecionado.descricao %}
+                                <p><strong>Descrição:</strong></p>
+                                <p class="text-muted">{{ agente_selecionado.descricao }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-area {
+    border: 2px dashed #6c757d;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    background-color: rgba(108, 117, 125, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover, .upload-area.dragover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.upload-area.dragover .upload-icon {
+    color: #0d6efd;
+}
+
+.file-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+}
+
+.file-icon {
+    margin-right: 10px;
+    color: #6c757d;
+}
+
+.file-name {
+    font-weight: 500;
+}
+
+.file-size {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-left: 10px;
+}
+
+.file-remove {
+    color: #dc3545;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.file-remove:hover {
+    color: #c82333;
+}
+</style>
+
+<script>
+let uploadedFiles = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modoAnalise = document.getElementById('modo_analise');
+    const agenteEspecializadoGroup = document.getElementById('agente_especializado_group');
+    const agentesMultiplosGroup = document.getElementById('agentes_multiplos_group');
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const textoArea = document.getElementById('texto');
+
+    // Configurar drag and drop
+    uploadArea.addEventListener('click', () => fileInput.click());
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (validateFile(file)) {
+                uploadedFiles.push(file);
+                addFileToList(file);
+                processFile(file);
+            }
+        });
+    }
+
+    function validateFile(file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = ['application/pdf', 'application/msword', 
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                            'text/plain'];
+        
+        if (file.size > maxSize) {
+            alert(`Arquivo ${file.name} é muito grande. Máximo 10MB.`);
+            return false;
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+            alert(`Tipo de arquivo ${file.name} não suportado.`);
+            return false;
+        }
+        
+        return true;
+    }
+
+    function addFileToList(file) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <i class="fas fa-file-${getFileIcon(file.type)} file-icon"></i>
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">(${formatFileSize(file.size)})</span>
+            </div>
+            <i class="fas fa-times file-remove" onclick="removeFile('${file.name}')"></i>
+        `;
+        fileList.appendChild(fileItem);
+    }
+
+    function getFileIcon(type) {
+        switch(type) {
+            case 'application/pdf': return 'pdf';
+            case 'application/msword':
+            case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 
+                return 'word';
+            case 'text/plain': return 'alt';
+            default: return 'alt';
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function processFile(file) {
+        // Criar FormData para enviar o arquivo
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Mostrar indicador de carregamento
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'alert alert-info';
+        loadingIndicator.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Extraindo texto de ${file.name}...`;
+        textoArea.parentNode.insertBefore(loadingIndicator, textoArea.nextSibling);
+        
+        // Enviar arquivo para extração de texto
+        fetch('/extrair-texto', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingIndicator.remove();
+            
+            if (data.sucesso) {
+                // Adicionar o texto extraído ao campo textarea
+                if (textoArea.value.trim()) {
+                    textoArea.value += '\n\n--- Conteúdo de ' + file.name + ' ---\n';
+                } else {
+                    textoArea.value = '--- Conteúdo de ' + file.name + ' ---\n';
+                }
+                textoArea.value += data.texto;
+                
+                // Mostrar mensagem de sucesso
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.innerHTML = `
+                    <i class="fas fa-check me-2"></i>Texto extraído de ${file.name} com sucesso!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                textoArea.parentNode.insertBefore(successAlert, textoArea.nextSibling);
+                
+                // Remover alerta após 3 segundos
+                setTimeout(() => {
+                    if (successAlert.parentNode) {
+                        successAlert.remove();
+                    }
+                }, 3000);
+            } else {
+                // Mostrar erro
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-warning alert-dismissible fade show';
+                errorAlert.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>Erro ao extrair texto de ${file.name}: ${data.erro}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                textoArea.parentNode.insertBefore(errorAlert, textoArea.nextSibling);
+                
+                // Remover alerta após 5 segundos
+                setTimeout(() => {
+                    if (errorAlert.parentNode) {
+                        errorAlert.remove();
+                    }
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            loadingIndicator.remove();
+            console.error('Erro ao extrair texto:', error);
+            
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+            errorAlert.innerHTML = `
+                <i class="fas fa-times me-2"></i>Erro de conexão ao extrair texto de ${file.name}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            textoArea.parentNode.insertBefore(errorAlert, textoArea.nextSibling);
+            
+            // Remover alerta após 5 segundos
+            setTimeout(() => {
+                if (errorAlert.parentNode) {
+                    errorAlert.remove();
+                }
+            }, 5000);
+        });
+    }
+
+    window.removeFile = function(fileName) {
+        uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+        const fileItems = fileList.querySelectorAll('.file-item');
+        fileItems.forEach(item => {
+            if (item.querySelector('.file-name').textContent === fileName) {
+                item.remove();
+            }
+        });
+        
+        if (uploadedFiles.length === 0) {
+            textoArea.value = '';
+        }
+    };
+
+    function toggleModoAnalise() {
+        if (modoAnalise.value === 'especializado') {
+            agenteEspecializadoGroup.style.display = 'block';
+            agentesMultiplosGroup.style.display = 'none';
+        } else {
+            agenteEspecializadoGroup.style.display = 'none';
+            agentesMultiplosGroup.style.display = 'block';
+        }
+    }
+    
+    modoAnalise.addEventListener('change', toggleModoAnalise);
+    toggleModoAnalise(); // Inicializar
+    
+    // Função para exibir alertas de validação
+    function showValidationAlert(message, type = 'danger') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-validation`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Inserir o alerta no topo do formulário
+        const form = document.getElementById('formAnalise');
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Scroll para o alerta
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Validação e envio do formulário
+    document.getElementById('formAnalise').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const texto = document.getElementById('texto').value.trim();
+        const modo = modoAnalise.value;
+        
+        // Remover alertas anteriores
+        const alertsAnteriores = document.querySelectorAll('.alert-validation');
+        alertsAnteriores.forEach(alert => alert.remove());
+        
+        // Validar texto
+        if (!texto) {
+            showValidationAlert('Por favor, insira um texto para análise ou carregue um arquivo.', 'warning');
+            document.getElementById('texto').focus();
+            return false;
+        }
+        
+        // Validar agente selecionado
+        if (modo === 'especializado') {
+            const agenteSelect = document.getElementById('agente_especializado');
+            const agente = agenteSelect.value;
+            
+
+            
+            if (!agente || agente === '') {
+                showValidationAlert('Por favor, selecione um agente especializado.', 'danger');
+                agenteSelect.focus();
+                return false;
+            }
+        } else {
+            const agentes = document.querySelectorAll('input[name="agentes[]"]:checked');
+            if (agentes.length === 0) {
+                showValidationAlert('Por favor, selecione pelo menos um agente para análise sequencial.', 'danger');
+                return false;
+            }
+        }
+        
+        // Mostrar indicador de loading
+        const btnAnalysar = document.getElementById('btnAnalysar');
+        btnAnalysar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        btnAnalysar.disabled = true;
+        
+        // Preparar FormData com validação aprovada
+        const formData = new FormData();
+        const form = e.target;
+        
+        // Adicionar todos os campos do formulário
+        for (let element of form.elements) {
+            if (element.name && element.type !== 'file') {
+                formData.append(element.name, element.value);
+            }
+        }
+        
+        // Adicionar arquivos carregados
+        uploadedFiles.forEach(file => {
+            formData.append('arquivos[]', file);
+        });
+        
+        // Enviar formulário via fetch
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.text();
+            }
+        })
+        .then(html => {
+            if (html) {
+                // Se a resposta contém HTML, substitui o conteúdo da página
+                document.open();
+                document.write(html);
+                document.close();
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao enviar formulário');
+            
+            // Restaurar botão em caso de erro
+            btnAnalysar.innerHTML = '<i class="fas fa-play"></i> Executar Análise';
+            btnAnalysar.disabled = false;
+        });
+    });
+    
+    // Funcionalidade do botão Segunda Opinião
+    document.getElementById('btnSegundaOpiniao').addEventListener('click', function() {
+        const texto = document.getElementById('texto').value.trim();
+        const agenteAtual = document.getElementById('agente_especializado').value;
+        
+        if (!texto) {
+            alert('Por favor, insira um texto para análise antes de solicitar uma segunda opinião.');
+            return;
+        }
+        
+        if (!agenteAtual) {
+            alert('Por favor, selecione um agente especializado primeiro.');
+            return;
+        }
+        
+        // Criar modal para seleção de agente para segunda opinião
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-friends me-2"></i>
+                            Selecionar Agente para Segunda Opinião
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted">Escolha um agente diferente para obter uma segunda perspectiva sobre a análise:</p>
+                        <select class="form-select" id="agenteSegundaOpiniao">
+                            <option value="">Selecione um agente...</option>
+                            {% for agente in agentes_disponíveis %}
+                            <option value="{{ agente.tipo }}">{{ agente.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="compararAnalises">
+                            <label class="form-check-label" for="compararAnalises">
+                                Mostrar comparação entre as duas análises
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmarSegundaOpiniao">
+                            <i class="fas fa-search me-1"></i>Gerar Segunda Opinião
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+        
+        // Filtrar agentes (remover o atual da lista)
+        const selectSegunda = modal.querySelector('#agenteSegundaOpiniao');
+        Array.from(selectSegunda.options).forEach(option => {
+            if (option.value === agenteAtual) {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Confirmar segunda opinião
+        modal.querySelector('#confirmarSegundaOpiniao').addEventListener('click', function() {
+            const agenteSegunda = selectSegunda.value;
+            const comparar = modal.querySelector('#compararAnalises').checked;
+            
+            if (!agenteSegunda) {
+                alert('Por favor, selecione um agente para a segunda opinião.');
+                return;
+            }
+            
+            modalInstance.hide();
+            
+            // Preparar formulário para segunda opinião
+            const formData = new FormData();
+            formData.append('texto', texto);
+            formData.append('agente_especializado', agenteSegunda);
+            formData.append('modo_analise', 'especializado');
+            formData.append('formato_saida', document.getElementById('formato_saida').value);
+            formData.append('nivel_detalhamento', document.getElementById('nivel_detalhamento').value);
+            formData.append('segunda_opiniao', 'true');
+            formData.append('agente_primeira_opiniao', agenteAtual);
+            formData.append('comparar_analises', comparar);
+            
+            // Adicionar arquivos se houver
+            uploadedFiles.forEach(file => {
+                formData.append('arquivos[]', file);
+            });
+            
+            // Mostrar loading
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando segunda opinião...';
+            this.disabled = true;
+            
+            // Enviar requisição
+            fetch('{{ url_for("analisar") }}', {
+                method: 'POST',
+                body: formData,
+                redirect: 'follow'
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao gerar segunda opinião');
+                this.innerHTML = '<i class="fas fa-user-friends"></i> Segunda Opinião';
+                this.disabled = false;
+            });
+        });
+        
+        // Cleanup quando modal é fechado
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modal);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Multi-Agente - Sistema Jurídico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a2127;
+            --secondary-color: #355d6c;
+            --accent-color: #fcfffb;
+            --border-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --step-inactive: #34495e;
+            --step-active: #3498db;
+            --step-completed: #27ae60;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2127 0%, #2c3e50 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Horizontal Workflow Styles */
+        .workflow-container {
+            background: rgba(26, 33, 39, 0.95);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            flex: 1;
+        }
+
+        .workflow-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .workflow-title {
+            color: var(--accent-color);
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-subtitle {
+            color: #95a5a6;
+            font-size: 1.3rem;
+            margin-bottom: 0;
+        }
+
+        .horizontal-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            margin: 4rem 0;
+            padding: 0 2rem;
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 60px;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background: linear-gradient(90deg, 
+                var(--step-completed) 0%, 
+                var(--step-completed) 20%,
+                var(--step-inactive) 20%, 
+                var(--step-inactive) 100%);
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .workflow-step:hover {
+            transform: translateY(-5px);
+        }
+
+        .step-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 1.5rem;
+            border: 4px solid transparent;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .step-circle.inactive {
+            background: var(--step-inactive);
+            border-color: var(--step-inactive);
+        }
+
+        .step-circle.active {
+            background: var(--step-active);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 25px rgba(52, 152, 219, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .step-circle.completed {
+            background: var(--step-completed);
+            border-color: var(--step-completed);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 25px rgba(52, 152, 219, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(52, 152, 219, 0.8); }
+            100% { box-shadow: 0 0 25px rgba(52, 152, 219, 0.5); }
+        }
+
+        .step-title {
+            color: var(--accent-color);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .step-description {
+            color: #bdc3c7;
+            font-size: 1rem;
+            line-height: 1.4;
+            max-width: 180px;
+        }
+
+        .step-content {
+            display: none;
+            background: rgba(53, 93, 108, 0.3);
+            border-radius: 15px;
+            padding: 3rem;
+            margin-top: 3rem;
+            border: 1px solid rgba(252, 255, 251, 0.1);
+        }
+
+        .step-content.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--step-active);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .content-title {
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .agent-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .agent-card {
+            background: rgba(26, 33, 39, 0.8);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--secondary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .agent-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .agent-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.selected {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.15);
+        }
+
+        .agent-card.selected::before {
+            background: var(--success-color);
+            transform: scaleX(1);
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .agent-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            border: 3px solid rgba(252, 255, 251, 0.1);
+        }
+
+        .agent-info h4 {
+            color: var(--accent-color);
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .agent-specialty {
+            color: #95a5a6;
+            font-size: 0.95rem;
+            margin: 0.3rem 0 0 0;
+        }
+
+        .agent-description {
+            color: #bdc3c7;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .agent-checkbox {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 24px;
+            height: 24px;
+            accent-color: var(--success-color);
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--secondary-color);
+            border-radius: 20px;
+            padding: 4rem 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(53, 93, 108, 0.1);
+            margin-top: 2rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-color);
+            background: rgba(53, 93, 108, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.15);
+            box-shadow: 0 0 30px rgba(39, 174, 96, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-text {
+            color: var(--accent-color);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .upload-subtitle {
+            color: #95a5a6;
+            font-size: 1rem;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(252, 255, 251, 0.1);
+        }
+
+        .btn-workflow {
+            background: var(--secondary-color);
+            border: none;
+            color: var(--accent-color);
+            font-weight: 600;
+            padding: 1rem 2.5rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .btn-workflow:hover {
+            background: #2c4e5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: var(--accent-color);
+        }
+
+        .btn-workflow:disabled {
+            background: var(--step-inactive);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .selected-count {
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            display: inline-block;
+        }
+
+        @media (max-width: 1200px) {
+            .horizontal-steps {
+                flex-wrap: wrap;
+                gap: 2rem;
+            }
+            
+            .step-connector {
+                display: none;
+            }
+            
+            .workflow-step {
+                min-width: 150px;
+            }
+            
+            .step-circle {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .agent-selection-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .workflow-title {
+                font-size: 2.2rem;
+            }
+            
+            .workflow-container {
+                padding: 2rem;
+                margin: 1rem 0;
+            }
+        }
+
+        .main-container {
+            padding: 2rem 0;
+        }
+
+        .header-section {
+            background: rgba(26, 33, 39, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header-title {
+            color: var(--accent-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            color: #95a5a6;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(53, 93, 108, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(252, 255, 251, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .upload-section {
+            background: rgba(26, 33, 39, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--secondary-color);
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(53, 93, 108, 0.1);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-color);
+            background: rgba(53, 93, 108, 0.2);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtitle {
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        .agents-section {
+            background: rgba(26, 33, 39, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .agent-card {
+            background: rgba(53, 93, 108, 0.6);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .agent-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.selected {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.2);
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .agent-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+        }
+
+        .agent-info h4 {
+            color: var(--accent-color);
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .agent-category {
+            color: #95a5a6;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .agent-description {
+            color: #bdc3c7;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .agent-checkbox {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        .analysis-section {
+            background: rgba(26, 33, 39, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: var(--accent-color);
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #2c4e5a;
+            border-color: #2c4e5a;
+            transform: translateY(-1px);
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress {
+            height: 8px;
+            background: rgba(53, 93, 108, 0.3);
+            border-radius: 4px;
+        }
+
+        .progress-bar {
+            background: var(--success-color);
+            border-radius: 4px;
+        }
+
+        .results-container {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result-card {
+            background: rgba(53, 93, 108, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-agent {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .result-confidence {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .result-content {
+            color: #bdc3c7;
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .agent-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Workflow Container -->
+        <div class="workflow-container">
+            <!-- Header -->
+            <div class="workflow-header">
+                <div class="d-flex align-items-center justify-content-center mb-3">
+                    <img loading="lazy" src="{{ url_for('static', filename='images/ars-logo.png') }}" alt="ARS Data Science" style="width: 75px; height: 62px; margin-right: 1rem;">
+                    <h1 class="workflow-title mb-0">
+                        <i class="fas fa-brain me-3"></i>
+                        Análise Multi-Agente
+                    </h1>
+                </div>
+                <p class="workflow-subtitle">
+                    Sistema avançado de análise jurídica com múltiplos especialistas em IA
+                </p>
+            </div>
+
+            <!-- Horizontal Steps -->
+            <div class="horizontal-steps">
+                <div class="step-connector"></div>
+                
+                <!-- Step 1: Seleção de Agentes -->
+                <div class="workflow-step" data-step="1">
+                    <div class="step-circle active">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="step-title">Seleção de Agentes</h3>
+                    <p class="step-description">Escolha especialistas</p>
+                </div>
+
+                <!-- Step 2: Documento -->
+                <div class="workflow-step" data-step="2">
+                    <div class="step-circle inactive">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="step-title">Documento</h3>
+                    <p class="step-description">Inserir conteúdo</p>
+                </div>
+
+                <!-- Step 3: Configuração -->
+                <div class="workflow-step" data-step="3">
+                    <div class="step-circle inactive">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3 class="step-title">Configuração</h3>
+                    <p class="step-description">Ajustar parâmetros</p>
+                </div>
+
+                <!-- Step 4: Execução -->
+                <div class="workflow-step" data-step="4">
+                    <div class="step-circle inactive">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <h3 class="step-title">Execução</h3>
+                    <p class="step-description">Processar análise</p>
+                </div>
+
+                <!-- Step 5: Resultados -->
+                <div class="workflow-step" data-step="5">
+                    <div class="step-circle inactive">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="step-title">Resultados</h3>
+                    <p class="step-description">Visualizar dados</p>
+                </div>
+            </div>
+
+            <!-- Step Content Areas -->
+            
+            <!-- Step 1 Content: Agent Selection -->
+            <div class="step-content active" id="step-1-content">
+                <div class="content-header">
+                    <div class="content-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2 class="content-title">Selecionar Especialistas Jurídicos</h2>
+                </div>
+                
+                <p style="color: #bdc3c7; font-size: 1.1rem; margin-bottom: 2rem;">
+                    Escolha até 4 agentes especialistas para análise do documento. Cada agente possui expertise específica e acesso a bases de conhecimento especializadas.
+                </p>
+
+                {% if agentes and agentes|length > 0 %}
+                <div class="agent-selection-grid">
+                    {% for agente in agentes[:12] %}
+                    <div class="agent-card" data-agent-id="{{ agente.id }}">
+                        <input type="checkbox" class="agent-checkbox" id="agent_{{ agente.id }}" value="{{ agente.id }}">
+                        <div class="agent-header">
+                            <div class="agent-avatar" style="background-color: {{ agente.cor_destaque }};">
+                                <i class="{{ agente.icone }}"></i>
+                            </div>
+                            <div class="agent-info">
+                                <h4>{{ agente.nome }}</h4>
+                                <p class="agent-specialty">{{ agente.categoria }}</p>
+                            </div>
+                        </div>
+                        <p class="agent-description">{{ agente.descricao }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div id="selectedAgentsInfo" style="display: none;">
+                    <span class="selected-count" id="selectedCount">0 agentes selecionados</span>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Sistema carregando agentes... Por favor, aguarde.
+                </div>
+                {% endif %}
+
+                <div class="navigation-buttons">
+                    <button class="btn-workflow" disabled>
+                        <i class="fas fa-arrow-left"></i>
+                        Anterior
+                    </button>
+                    <button class="btn-workflow" id="nextStep1" disabled>
+                        Próximo
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2 Content: Document Upload -->
+            <div class="step-content" id="step-2-content">
+                <div class="content-header">
+                    <div class="content-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h2 class="content-title">Upload de Documento</h2>
+                </div>
+                
+                <p style="color: #bdc3c7; font-size: 1.1rem; margin-bottom: 2rem;">
+                    Faça upload do documento jurídico que será analisado pelos agentes selecionados.
+                </p>
+
+                <div class="upload-zone" id="uploadZone">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <div class="upload-text">Clique aqui ou arraste seu documento</div>
+                    <div class="upload-subtitle">Formatos aceitos: PDF, DOCX, TXT (máx. 50MB)</div>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display: none;">
+                
+                <div id="fileInfo" class="mt-4" style="display: none;">
+                    <div class="alert alert-success">
+                        <i class="fas fa-file-check me-2"></i>
+                        <strong id="fileName"></strong>
+                        <span id="fileSize" class="ms-2 text-muted"></span>
+                    </div>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn-workflow" id="prevStep2">
+                        <i class="fas fa-arrow-left"></i>
+                        Anterior
+                    </button>
+                    <button class="btn-workflow" id="nextStep2" disabled>
+                        Próximo
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3 Content: Configuration -->
+            <div class="step-content" id="step-3-content">
+                <div class="content-header">
+                    <div class="content-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h2 class="content-title">Configurações da Análise</h2>
+                </div>
+                
+                <p style="color: #bdc3c7; font-size: 1.1rem; margin-bottom: 2rem;">
+                    Ajuste os parâmetros da análise para obter melhores resultados.
+                </p>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <label class="form-label" style="color: var(--accent-color); font-weight: 600;">Profundidade da Análise</label>
+                            <select class="form-select" id="analysisDepth" style="background: rgba(26, 33, 39, 0.8); border: 1px solid var(--border-color); color: var(--accent-color);">
+                                <option value="rapida">Análise Rápida (2-3 min)</option>
+                                <option value="detalhada" selected>Análise Detalhada (5-7 min)</option>
+                                <option value="completa">Análise Completa (10-15 min)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <label class="form-label" style="color: var(--accent-color); font-weight: 600;">Formato de Saída</label>
+                            <select class="form-select" id="outputFormat" style="background: rgba(26, 33, 39, 0.8); border: 1px solid var(--border-color); color: var(--accent-color);">
+                                <option value="resumo">Resumo Executivo</option>
+                                <option value="detalhado" selected>Relatório Detalhado</option>
+                                <option value="comparativo">Análise Comparativa</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" style="color: var(--accent-color); font-weight: 600;">Áreas de Foco</label>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="focus1" checked>
+                                <label class="form-check-label" for="focus1" style="color: #bdc3c7;">
+                                    Análise de Riscos
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="focus2" checked>
+                                <label class="form-check-label" for="focus2" style="color: #bdc3c7;">
+                                    Conformidade Legal
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="focus3">
+                                <label class="form-check-label" for="focus3" style="color: #bdc3c7;">
+                                    Recomendações
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn-workflow" id="prevStep3">
+                        <i class="fas fa-arrow-left"></i>
+                        Anterior
+                    </button>
+                    <button class="btn-workflow" id="nextStep3">
+                        Próximo
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4 Content: Execution -->
+            <div class="step-content" id="step-4-content">
+                <div class="content-header">
+                    <div class="content-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <h2 class="content-title">Executar Análise</h2>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <p style="color: #bdc3c7; font-size: 1.1rem;">
+                        Tudo pronto! Clique em "Iniciar Análise" para processar o documento com os agentes selecionados.
+                    </p>
+                </div>
+
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <span class="stat-number" id="summaryAgents">0</span>
+                            <div class="stat-label">Agentes Selecionados</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <span class="stat-number" id="summarySize">0 KB</span>
+                            <div class="stat-label">Tamanho do Documento</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <span class="stat-number" id="summaryTime">~5 min</span>
+                            <div class="stat-label">Tempo Estimado</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-4">
+                    <button class="btn-workflow btn-lg" id="startAnalysis" style="font-size: 1.3rem; padding: 1.5rem 3rem;">
+                        <i class="fas fa-brain me-2"></i>
+                        Iniciar Análise Multi-Agente
+                    </button>
+                </div>
+
+                <div id="analysisProgress" style="display: none;">
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" style="width: 0%; background: var(--success-color);"></div>
+                    </div>
+                    <div class="text-center">
+                        <p style="color: #bdc3c7;" id="progressText">Iniciando análise...</p>
+                    </div>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn-workflow" id="prevStep4">
+                        <i class="fas fa-arrow-left"></i>
+                        Anterior
+                    </button>
+                    <button class="btn-workflow" id="nextStep4" disabled>
+                        Próximo
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5 Content: Results -->
+            <div class="step-content" id="step-5-content">
+                <div class="content-header">
+                    <div class="content-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h2 class="content-title">Resultados da Análise</h2>
+                </div>
+                
+                <div id="resultsContainer">
+                    <div class="text-center" style="padding: 4rem 0;">
+                        <i class="fas fa-chart-line" style="font-size: 4rem; color: var(--secondary-color); margin-bottom: 1rem;"></i>
+                        <p style="color: #bdc3c7; font-size: 1.2rem;">
+                            Os resultados da análise aparecerão aqui após a execução.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn-workflow" id="prevStep5">
+                        <i class="fas fa-arrow-left"></i>
+                        Anterior
+                    </button>
+                    <button class="btn-workflow" id="newAnalysis" disabled>
+                        <i class="fas fa-redo"></i>
+                        Nova Análise
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+        let selectedAgents = [];
+        let selectedFile = null;
+        let analysisConfig = {};
+        const maxAgents = 4;
+
+        // Initialize workflow
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWorkflow();
+            bindEvents();
+            updateStepState();
+        });
+
+        function initializeWorkflow() {
+            // Reset all steps
+            document.querySelectorAll('.step-circle').forEach(circle => {
+                circle.className = 'step-circle inactive';
+            });
+            
+            // Set first step as active
+            document.querySelector('[data-step="1"] .step-circle').className = 'step-circle active';
+            
+            // Show only first step content
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('step-1-content').classList.add('active');
+        }
+
+        function bindEvents() {
+            // Step navigation
+            document.querySelectorAll('.workflow-step').forEach(step => {
+                step.addEventListener('click', function() {
+                    const stepNumber = parseInt(this.dataset.step);
+                    if (canNavigateToStep(stepNumber)) {
+                        goToStep(stepNumber);
+                    }
+                });
+            });
+
+            // Agent selection
+            document.querySelectorAll('.agent-card').forEach(card => {
+                card.addEventListener('click', handleAgentSelection);
+            });
+
+            // File upload
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadZone.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('dragover', handleDragOver);
+            uploadZone.addEventListener('dragleave', handleDragLeave);
+            uploadZone.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Navigation buttons
+            document.getElementById('nextStep1').addEventListener('click', () => goToStep(2));
+            document.getElementById('prevStep2').addEventListener('click', () => goToStep(1));
+            document.getElementById('nextStep2').addEventListener('click', () => goToStep(3));
+            document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
+            document.getElementById('nextStep3').addEventListener('click', () => goToStep(4));
+            document.getElementById('prevStep4').addEventListener('click', () => goToStep(3));
+            document.getElementById('nextStep4').addEventListener('click', () => goToStep(5));
+            document.getElementById('prevStep5').addEventListener('click', () => goToStep(4));
+            
+            // Analysis button
+            document.getElementById('startAnalysis').addEventListener('click', startAnalysis);
+            document.getElementById('newAnalysis').addEventListener('click', () => {
+                location.reload();
+            });
+        }
+
+        function canNavigateToStep(stepNumber) {
+            switch(stepNumber) {
+                case 1: return true;
+                case 2: return selectedAgents.length > 0;
+                case 3: return selectedAgents.length > 0 && selectedFile !== null;
+                case 4: return selectedAgents.length > 0 && selectedFile !== null;
+                case 5: return false; // Only accessible after analysis
+                default: return false;
+            }
+        }
+
+        function goToStep(stepNumber) {
+            if (!canNavigateToStep(stepNumber)) return;
+            
+            currentStep = stepNumber;
+            
+            // Update step circles
+            document.querySelectorAll('.workflow-step').forEach((step, index) => {
+                const circle = step.querySelector('.step-circle');
+                const stepNum = index + 1;
+                
+                if (stepNum < currentStep) {
+                    circle.className = 'step-circle completed';
+                } else if (stepNum === currentStep) {
+                    circle.className = 'step-circle active';
+                } else {
+                    circle.className = 'step-circle inactive';
+                }
+            });
+            
+            // Update step content
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`step-${stepNumber}-content`).classList.add('active');
+            
+            // Update connector
+            updateStepConnector();
+            
+            // Update step-specific content
+            if (stepNumber === 4) {
+                updateExecutionSummary();
+            }
+            
+            updateStepState();
+        }
+
+        function updateStepConnector() {
+            const connector = document.querySelector('.step-connector');
+            const completedPercentage = ((currentStep - 1) / 4) * 100;
+            
+            connector.style.background = `linear-gradient(90deg, 
+                var(--step-completed) 0%, 
+                var(--step-completed) ${completedPercentage}%,
+                var(--step-inactive) ${completedPercentage}%, 
+                var(--step-inactive) 100%)`;
+        }
+
+        function updateStepState() {
+            // Update button states
+            const nextStep1 = document.getElementById('nextStep1');
+            const nextStep2 = document.getElementById('nextStep2');
+            
+            nextStep1.disabled = selectedAgents.length === 0;
+            nextStep2.disabled = selectedFile === null;
+        }
+
+        function handleAgentSelection(e) {
+            e.preventDefault();
+            const card = e.currentTarget;
+            const checkbox = card.querySelector('.agent-checkbox');
+            const agentId = card.dataset.agentId;
+
+            if (checkbox.checked) {
+                // Deselect
+                checkbox.checked = false;
+                card.classList.remove('selected');
+                selectedAgents = selectedAgents.filter(id => id !== agentId);
+            } else {
+                // Select (if under limit)
+                if (selectedAgents.length < maxAgents) {
+                    checkbox.checked = true;
+                    card.classList.add('selected');
+                    selectedAgents.push(agentId);
+                } else {
+                    alert(`Máximo de ${maxAgents} agentes permitidos.`);
+                    return;
+                }
+            }
+
+            updateAgentCount();
+            updateStepState();
+        }
+
+        function updateAgentCount() {
+            const countElement = document.getElementById('selectedCount');
+            const infoElement = document.getElementById('selectedAgentsInfo');
+            
+            if (selectedAgents.length > 0) {
+                countElement.textContent = `${selectedAgents.length} agente${selectedAgents.length > 1 ? 's' : ''} selecionado${selectedAgents.length > 1 ? 's' : ''}`;
+                infoElement.style.display = 'block';
+            } else {
+                infoElement.style.display = 'none';
+            }
+        }
+
+        // File handling
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function processFile(file) {
+            // Validate file type
+            const allowedTypes = ['.pdf', '.docx', '.txt'];
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedTypes.includes(fileExt)) {
+                alert('Formato de arquivo não suportado. Use PDF, DOCX ou TXT.');
+                return;
+            }
+
+            // Validate file size (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Arquivo muito grande. Máximo permitido: 50MB.');
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = `(${formatFileSize(file.size)})`;
+            document.getElementById('fileInfo').style.display = 'block';
+            
+            updateStepState();
+        }
+
+        function updateExecutionSummary() {
+            document.getElementById('summaryAgents').textContent = selectedAgents.length;
+            document.getElementById('summarySize').textContent = selectedFile ? formatFileSize(selectedFile.size) : '0 KB';
+            
+            const depth = document.getElementById('analysisDepth').value;
+            const timeMap = {
+                'rapida': '~3 min',
+                'detalhada': '~7 min',
+                'completa': '~15 min'
+            };
+            document.getElementById('summaryTime').textContent = timeMap[depth] || '~7 min';
+        }
+
+        async function startAnalysis() {
+            if (!selectedFile || selectedAgents.length === 0) return;
+
+            const progressContainer = document.getElementById('analysisProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const startBtn = document.getElementById('startAnalysis');
+
+            // Show progress
+            startBtn.disabled = true;
+            progressContainer.style.display = 'block';
+
+            try {
+                // Upload file
+                updateProgress(10, 'Fazendo upload do arquivo...');
+                const formData = new FormData();
+                formData.append('documento', selectedFile);
+
+                const uploadResponse = await fetch('/multiagent/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Erro no upload do arquivo');
+                }
+
+                const uploadResult = await uploadResponse.json();
+                updateProgress(30, 'Arquivo processado, iniciando análise...');
+
+                // Start analysis
+                const analysisData = {
+                    agentes: selectedAgents,
+                    texto: uploadResult.preview,
+                    config: {
+                        depth: document.getElementById('analysisDepth').value,
+                        format: document.getElementById('outputFormat').value,
+                        focus: {
+                            risks: document.getElementById('focus1').checked,
+                            compliance: document.getElementById('focus2').checked,
+                            recommendations: document.getElementById('focus3').checked
+                        }
+                    }
+                };
+
+                updateProgress(50, 'Executando análise multi-agente...');
+
+                const analysisResponse = await fetch('/multiagent/analisar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(analysisData)
+                });
+
+                if (!analysisResponse.ok) {
+                    throw new Error('Erro na análise');
+                }
+
+                const analysisResult = await analysisResponse.json();
+                updateProgress(100, 'Análise concluída!');
+
+                setTimeout(() => {
+                    displayResults(analysisResult.resultados);
+                    goToStep(5);
+                    document.getElementById('nextStep4').disabled = false;
+                    document.getElementById('newAnalysis').disabled = false;
+                }, 1500);
+
+            } catch (error) {
+                console.error('Erro na análise:', error);
+                alert('Erro na análise: ' + error.message);
+                progressContainer.style.display = 'none';
+                startBtn.disabled = false;
+            }
+
+            function updateProgress(percent, text) {
+                progressBar.style.width = percent + '%';
+                progressText.textContent = text;
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            if (!results || results.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
+                        <p style="color: #bdc3c7;">Nenhum resultado foi gerado. Tente novamente.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            results.forEach((result, index) => {
+                const resultCard = document.createElement('div');
+                resultCard.className = 'result-card';
+                resultCard.style.animationDelay = `${index * 0.1}s`;
+                
+                resultCard.innerHTML = `
+                    <div class="result-header">
+                        <div class="result-agent">
+                            <i class="fas fa-user-tie me-2"></i>
+                            ${result.agente_nome}
+                        </div>
+                        <div class="result-confidence">${result.confianca}% confiança</div>
+                    </div>
+                    <div class="result-content">
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-color);">Análise:</strong>
+                            <p class="mt-1">${result.analise}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-color);">Pontos-chave:</strong>
+                            <ul class="mt-1">
+                                ${result.pontos_chave.map(ponto => `<li>${ponto}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Processado em ${result.tempo_processamento}
+                        </small>
+                    </div>
+                `;
+                
+                container.appendChild(resultCard);
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Additional CSS for result animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .result-card {
+                animation: slideInUp 0.5s ease forwards;
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            
+            @keyframes slideInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .stat-card {
+                transition: transform 0.3s ease;
+            }
+            
+            .stat-card:hover {
+                transform: scale(1.05);
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    <!-- Footer -->
+    <footer class="footer py-3" style="background: rgba(26, 33, 39, 0.95); border-top: 1px solid var(--border-color); margin-top: auto;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1" style="color: var(--accent-color);">© 2025 Ars Data Science - Todos os Direitos Reservados</p>
+                    <p class="mb-0" style="color: var(--accent-color);">Email: suporte@arsdatascience.com.br</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/legal/politica-privacidade" style="color: var(--step-active);">Política de Privacidade</a>
+                    <span class="mx-2" style="color: var(--accent-color);">|</span>
+                    <a href="/legal/termos-uso" style="color: var(--step-active);">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

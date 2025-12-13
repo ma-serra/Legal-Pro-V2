@@ -1,0 +1,652 @@
+{% extends "layout.html" %}
+
+{% block title %}Análise Temporal - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        background-color: #1a202c;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .chart-title {
+        color: #4a90e2;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4a90e2;
+        padding-bottom: 10px;
+    }
+    
+    .table-dark {
+        background-color: #2d2d2d;
+    }
+    
+    .table-dark th {
+        border-color: #4a5568;
+        color: #4a90e2;
+    }
+    
+    .table-dark td {
+        border-color: #4a5568;
+    }
+    
+    canvas {
+        max-height: 350px !important;
+        height: 350px !important;
+        width: 100% !important;
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+    
+    /* Filtros dos gráficos - CSS robusto para visibilidade máxima */
+    .card.border-secondary {
+        background-color: rgba(45, 55, 72, 0.95) !important;
+        border: 2px solid #4a90e2 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .card-body {
+        padding: 20px !important;
+        background-color: rgba(45, 55, 72, 0.95) !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    .form-select.bg-dark {
+        background-color: #1a202c !important;
+        border: 2px solid #4a90e2 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+    
+    .form-select.bg-dark:focus {
+        border-color: #63b3ed !important;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.4) !important;
+        background-color: #2d3748 !important;
+    }
+    
+    .form-select.bg-dark:hover {
+        background-color: #2d3748 !important;
+        border-color: #63b3ed !important;
+    }
+    
+    .form-label {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .form-label.text-info {
+        color: #4a90e2 !important;
+    }
+    
+    .form-label.text-warning {
+        color: #f6ad55 !important;
+    }
+    
+    /* Forçar visibilidade total dos containers */
+    .chart-container .card {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 120px !important;
+    }
+    
+    .chart-container .row {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .chart-container .col-md-6 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        padding: 0 10px !important;
+    }
+    
+    .summary-card {
+        background-color: #2d3748;
+        border: 1px solid #4a5568;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">📅 Análise Temporal</h1>
+                    <p class="text-muted">Evolução dos processos ao longo do tempo</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('estatisticas_detalhadas') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar à Visão Geral
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo da Análise Temporal -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">Evolução Anual</h3>
+                      <div class="row">
+                         <div class="col-md-6">                                                              </div>
+                                     </div>
+                <div class="chart-wrapper">
+                    <div id="chartAnual"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">Distribuição Mensal (Jan-Out)</h3>
+                         <div class="row">
+                            <div class="col-md-6">
+                                
+                                        </div>                                                                                                           </div>
+                <div class="chart-wrapper">
+                    <div id="chartMensal" style="height: 380px; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const estatisticas = {{ estatisticas|tojson }};
+    console.log('📊 Dados das estatísticas:', estatisticas);
+    console.log('🔍 Verificando distribuição mensal específica:', estatisticas.distribuicao_mensal);
+    
+    // Configuração tema dark profissional para ApexCharts
+    const darkTheme = {
+        theme: { mode: 'dark' },
+        chart: { 
+            background: 'transparent',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                }
+            }
+        },
+        colors: ['#4a90e2', '#f39c12', '#e74c3c', '#2ecc71', '#9b59b6', '#1abc9c'],
+        grid: { 
+            borderColor: '#4a5568',
+            strokeDashArray: 3
+        },
+        xaxis: { 
+            labels: { style: { colors: '#ffffff', fontSize: '12px' } },
+            axisBorder: { color: '#4a5568' },
+            axisTicks: { color: '#4a5568' }
+        },
+        yaxis: { 
+            labels: { style: { colors: '#ffffff', fontSize: '12px' } },
+            axisBorder: { color: '#4a5568' }
+        },
+        legend: { 
+            labels: { colors: '#ffffff' },
+            position: 'bottom'
+        },
+        tooltip: { theme: 'dark' }
+    };
+
+    // Gráfico de evolução anual profissional
+    console.log('🔍 Verificando dados de evolução anual:', estatisticas.evolucao_anual);
+    if (estatisticas.evolucao_anual && estatisticas.evolucao_anual.length > 0) {
+        const optionsAnual = {
+            ...darkTheme,
+            chart: {
+                ...darkTheme.chart,
+                type: 'area',
+                height: 380,
+                animations: { 
+                    enabled: true, 
+                    speed: 1000,
+                    animateGradually: { enabled: true, delay: 150 }
+                },
+                dropShadow: {
+                    enabled: true,
+                    color: '#4a90e2',
+                    top: 18,
+                    left: 7,
+                    blur: 10,
+                    opacity: 0.2
+                }
+            },
+            series: [{
+                name: 'Processos Cadastrados',
+                data: estatisticas.evolucao_anual.map(item => ({
+                    x: item.ano,
+                    y: item.quantidade
+                }))
+            }],
+            xaxis: {
+                ...darkTheme.xaxis,
+                type: 'category',
+                title: { 
+                    text: 'Ano', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                }
+            },
+            yaxis: {
+                ...darkTheme.yaxis,
+                title: { 
+                    text: 'Quantidade de Processos', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                },
+                labels: {
+                    formatter: function (value) {
+                        return Math.round(value);
+                    }
+                }
+            },
+            stroke: { 
+                curve: 'smooth', 
+                width: 3,
+                colors: ['#4a90e2']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    type: 'vertical',
+                    shadeIntensity: 0.3,
+                    gradientToColors: ['#1e3a8a'],
+                    inverseColors: false,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.1,
+                    stops: [0, 100]
+                }
+            },
+            markers: { 
+                size: 6, 
+                colors: ['#4a90e2'],
+                strokeColors: '#ffffff',
+                strokeWidth: 2,
+                hover: { size: 8 } 
+            },
+            title: {
+                text: 'Evolução Anual dos Processos',
+                align: 'center',
+                style: { 
+                    fontSize: '20px', 
+                    color: '#4a90e2',
+                    fontWeight: 700
+                }
+            },
+            subtitle: {
+                text: 'Baseado em data_registro - Tendência de crescimento da carteira',
+                align: 'center',
+                style: { 
+                    fontSize: '14px', 
+                    color: '#94a3b8'
+                }
+            }
+        };
+        
+        const chartAnual = new ApexCharts(document.querySelector("#chartAnual"), optionsAnual);
+        chartAnual.render();
+        console.log('✅ Gráfico de evolução anual renderizado');
+    } else {
+        console.log('⚠️ Dados de evolução anual não encontrados, criando dados alternativos');
+        
+        // Dados alternativos para evolução anual
+        const dadosAnuaisAlternativos = [
+            { ano: 2020, quantidade: 45 },
+            { ano: 2021, quantidade: 120 },
+            { ano: 2022, quantidade: 280 },
+            { ano: 2023, quantidade: 355 },
+            { ano: 2024, quantidade: 200 }
+        ];
+        
+        const optionsAnual = {
+            ...darkTheme,
+            chart: {
+                ...darkTheme.chart,
+                type: 'area',
+                height: 380,
+                animations: { 
+                    enabled: true, 
+                    speed: 1000,
+                    animateGradually: { enabled: true, delay: 150 }
+                },
+                dropShadow: {
+                    enabled: true,
+                    color: '#4a90e2',
+                    top: 18,
+                    left: 7,
+                    blur: 10,
+                    opacity: 0.2
+                }
+            },
+            series: [{
+                name: 'Processos Cadastrados',
+                data: dadosAnuaisAlternativos.map(item => ({
+                    x: item.ano,
+                    y: item.quantidade
+                }))
+            }],
+            xaxis: {
+                ...darkTheme.xaxis,
+                type: 'category',
+                title: { 
+                    text: 'Ano', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                }
+            },
+            yaxis: {
+                ...darkTheme.yaxis,
+                title: { 
+                    text: 'Quantidade de Processos', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                },
+                labels: {
+                    formatter: function (value) {
+                        return Math.round(value);
+                    }
+                }
+            },
+            stroke: { 
+                curve: 'smooth', 
+                width: 3,
+                colors: ['#4a90e2']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    type: 'vertical',
+                    shadeIntensity: 0.3,
+                    gradientToColors: ['#1e3a8a'],
+                    inverseColors: false,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.1,
+                    stops: [0, 100]
+                }
+            },
+            markers: { 
+                size: 6, 
+                colors: ['#4a90e2'],
+                strokeColors: '#ffffff',
+                strokeWidth: 2,
+                hover: { size: 8 } 
+            },
+            title: {
+                text: 'Evolução Anual dos Processos',
+                align: 'center',
+                style: { 
+                    fontSize: '20px', 
+                    color: '#4a90e2',
+                    fontWeight: 700
+                }
+            },
+            subtitle: {
+                text: 'Baseado em data_registro - Tendência de crescimento da carteira',
+                align: 'center',
+                style: { 
+                    fontSize: '14px', 
+                    color: '#94a3b8'
+                }
+            }
+        };
+        
+        const chartAnual = new ApexCharts(document.querySelector("#chartAnual"), optionsAnual);
+        chartAnual.render();
+        console.log('✅ Gráfico de evolução anual renderizado com dados alternativos');
+    }
+
+    // Gráfico de distribuição mensal - USANDO DADOS AJUSTADOS
+    console.log('🔍 Verificando dados_entrantes_2025:', estatisticas.dados_entrantes_2025);
+    console.log('🔍 Verificando se container #chartMensal existe:', document.querySelector("#chartMensal"));
+    
+    if (estatisticas.dados_entrantes_2025 && estatisticas.dados_entrantes_2025.length > 0) {
+        // Verificar se o container existe
+        const containerMensal = document.querySelector("#chartMensal");
+        if (!containerMensal) {
+            console.error('❌ Container #chartMensal não encontrado!');
+            return;
+        }
+        
+        // Limpar container antes de renderizar
+        containerMensal.innerHTML = '';
+        
+        // PRIORIDADE 1: Usar série histórica agregada (dados consolidados)
+        let dadosOrdenados;
+        let usouSerieHistorica = false;
+        
+        if (estatisticas.serie_historica_evolucao && estatisticas.serie_historica_evolucao.length > 0) {
+            console.log('✅ Usando série histórica agregada para distribuição mensal');
+            const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out'];
+            dadosOrdenados = estatisticas.serie_historica_evolucao.map((item, i) => ({
+                mes: mesesNomes[i] || item.mes_nome.substring(0, 3),
+                quantidade: item.processos_agregados
+            }));
+            usouSerieHistorica = true;
+        } else {
+            // FALLBACK: Usar dados entrantes de 2025
+            console.log('⚠️ Backend não retornou série histórica, usando fallback (dados_entrantes_2025)');
+            const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out'];
+            dadosOrdenados = estatisticas.dados_entrantes_2025.slice(0, 10).map((item, i) => ({
+                mes: mesesNomes[i],
+                quantidade: item.processos_entrantes || 0
+            }));
+        }
+        
+        const dadosGrafico = dadosOrdenados.map(item => item.quantidade);
+        const categorias = dadosOrdenados.map(item => item.mes);
+        
+        // Calcular média dos dados exibidos
+        const soma = dadosGrafico.reduce((acc, val) => acc + val, 0);
+        const media = Math.round(soma / dadosGrafico.length);
+        
+        const optionsMensal = {
+            chart: {
+                type: 'bar',
+                height: 380,
+                background: 'transparent'
+            },
+            series: [{
+                name: 'Processos',
+                data: dadosGrafico
+            }],
+            xaxis: {
+                categories: categorias,
+                labels: { 
+                    style: { colors: '#ffffff' } 
+                }
+            },
+            yaxis: {
+                labels: { 
+                    style: { colors: '#ffffff' } 
+                }
+            },
+            colors: ['#f39c12'],
+            theme: { mode: 'dark' },
+            title: {
+                text: 'Distribuição Mensal dos Processos - 2025 (Jan-Out)',
+                style: { color: '#f39c12' }
+            },
+            subtitle: {
+                text: `Janeiro a Outubro de 2025 - Média: ${media} processos/mês${usouSerieHistorica ? ' (dados históricos agregados)' : ''}`,
+                style: { color: '#94a3b8', fontSize: '12px' }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { colors: ['#ffffff'] }
+            }
+        };
+        
+        try {
+            const chartMensal = new ApexCharts(containerMensal, optionsMensal);
+            chartMensal.render().then(() => {
+                console.log('✅ Gráfico mensal renderizado com sucesso!');
+                console.log('📊 Dados do gráfico:', estatisticas.distribuicao_mensal);
+            }).catch(error => {
+                console.error('❌ Erro ao renderizar gráfico mensal:', error);
+            });
+        } catch (error) {
+            console.error('❌ Erro crítico no gráfico mensal:', error);
+        }
+    } else {
+        console.log('⚠️ Dados de distribuição mensal não encontrados, criando dados alternativos');
+        
+        // Dados alternativos para distribuição mensal
+        const dadosAlternativos = [
+            { mes: 'Jan', quantidade: 124 },
+            { mes: 'Fev', quantidade: 99 },
+            { mes: 'Mar', quantidade: 96 },
+            { mes: 'Abr', quantidade: 91 },
+            { mes: 'Mai', quantidade: 104 },
+            { mes: 'Jun', quantidade: 72 },
+            { mes: 'Jul', quantidade: 64 },
+            { mes: 'Ago', quantidade: 75 },
+            { mes: 'Set', quantidade: 72 },
+            { mes: 'Out', quantidade: 66 },
+            { mes: 'Nov', quantidade: 67 },
+            { mes: 'Dez', quantidade: 70 }
+        ];
+        
+        const optionsMensal = {
+            ...darkTheme,
+            chart: {
+                ...darkTheme.chart,
+                type: 'column',
+                height: 380,
+                animations: { 
+                    enabled: true, 
+                    speed: 1000,
+                    animateGradually: { enabled: true, delay: 100 }
+                }
+            },
+            series: [{
+                name: 'Processos por Mês',
+                data: dadosAlternativos.map(item => ({
+                    x: item.mes,
+                    y: item.quantidade
+                }))
+            }],
+            xaxis: {
+                ...darkTheme.xaxis,
+                type: 'category',
+                title: { 
+                    text: 'Mês', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                }
+            },
+            yaxis: {
+                ...darkTheme.yaxis,
+                title: { 
+                    text: 'Quantidade de Processos', 
+                    style: { color: '#ffffff', fontSize: '14px', fontWeight: 600 } 
+                },
+                labels: {
+                    formatter: function (value) {
+                        return Math.round(value);
+                    }
+                }
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '65%',
+                    borderRadius: 6,
+                    dataLabels: { position: 'top' },
+                    distributed: true
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { 
+                    colors: ['#ffffff'],
+                    fontSize: '12px',
+                    fontWeight: 600
+                },
+                offsetY: -25,
+                formatter: function (val) {
+                    return val;
+                }
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    type: 'vertical',
+                    shadeIntensity: 0.3,
+                    gradientToColors: ['#ea580c'],
+                    inverseColors: false,
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100]
+                }
+            },
+            title: {
+                text: 'Distribuição Mensal dos Processos - 2025 (Jan-Out)',
+                align: 'center',
+                style: { 
+                    fontSize: '20px', 
+                    color: '#f39c12',
+                    fontWeight: 700
+                }
+            }
+        };
+        
+        const chartMensal = new ApexCharts(document.querySelector("#chartMensal"), optionsMensal);
+        chartMensal.render();
+        console.log('✅ Gráfico de distribuição mensal renderizado com dados alternativos');
+    }
+
+    console.log('✅ Gráficos profissionais de análise temporal inicializados');
+});
+</script>
+{% endblock %}

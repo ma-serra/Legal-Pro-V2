@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Resultados - Legal Design Pro</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #2a2a2a;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --dark-bg: #1a1a1a;
+            --card-bg: #ffffff;
+            --text-dark: #000000;
+            --text-light: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #004080) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color), #004080);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: var(--text-dark);
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .result-body {
+            padding: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-concluido {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-processando {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-erro {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 3px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .info-box h6 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .info-box .content {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            max-height: 120px;
+            overflow-y: auto;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .uuid-badge {
+            background: #e9ecef;
+            color: var(--text-dark);
+            font-family: 'Courier New', monospace;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .metric-badge {
+            background: linear-gradient(135deg, var(--primary-color), #004080);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .search-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 2px solid #dee2e6;
+            color: var(--text-dark);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+
+        .filter-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            color: #6c757d;
+        }
+
+        .timestamp-box {
+            background: #e9ecef;
+            padding: 0.75rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .timestamp-box .date {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .timestamp-box .time {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .component-count {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .verified-badge {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 51, 102, 0.15);
+        }
+
+        .input-group-text {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px 0 0 10px;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .processing-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-box .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="/home">
+                <i class="fas fa-balance-scale me-2"></i>Legal Design Pro V2
+            </a>
+            
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item me-3">
+                        <a class="nav-link px-2 py-2" href="/home">
+                            <img loading="lazy" src="/static/ars-logo.png" alt="ARS Data Science" style="width: 40px; height: 40px; border-radius: 8px;">
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fluxos">
+                            <i class="fas fa-project-diagram me-1"></i>Fluxos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/historico-resultados">
+                            <i class="fas fa-history me-1"></i>Histórico
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid px-4 mt-4">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-history me-3"></i>Histórico de Resultados
+                    </h1>
+                    <p class="mb-0 opacity-75">Todos os resultados de execução de fluxos multi-agente jurídicos</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-2 justify-content-end align-items-center flex-wrap">
+                        <div class="metric-badge">
+                            <i class="fas fa-database"></i>
+                            <span id="totalCount">{{ resultados|length }}</span> resultado(s)
+                        </div>
+                        <a href="/home" class="btn btn-outline-light">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                        <a href="/fluxos" class="btn btn-outline-light">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Grid -->
+        {% if resultados %}
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="number text-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="statConcluidos">{{ resultados|selectattr('status', 'equalto', 'concluido')|list|length }}</span>
+                </div>
+                <div class="label">Concluídos</div>
+            </div>
+            <div class="stat-box">
+                <div class="number text-warning">
+                    <i class="fas fa-spinner me-2"></i>
+                    <span id="statProcessando">{{ resultados|selectattr('status', 'equalto', 'processando')|list|length }}</span>
+                </div>
+                <div class="label">Processando</div>
+            </div>
+            <div class="stat-box">
+                <div class="number text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="statErro">{{ resultados|selectattr('status', 'equalto', 'erro')|list|length }}</span>
+                </div>
+                <div class="label">Com Erro</div>
+            </div>
+            <div class="stat-box">
+                <div class="number text-primary">
+                    <i class="fas fa-project-diagram me-2"></i>
+                    <span>{{ resultados|map(attribute='fluxo_id')|unique|list|length }}</span>
+                </div>
+                <div class="label">Fluxos Únicos</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Search and Filters -->
+        <div class="search-container">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" 
+                               placeholder="Buscar por fluxo, entrada ou conteúdo...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="filter-btn active" data-filter="todos">
+                            <i class="fas fa-list me-1"></i> Todos
+                        </button>
+                        <button class="filter-btn" data-filter="concluido">
+                            <i class="fas fa-check-circle me-1"></i> Concluídos
+                        </button>
+                        <button class="filter-btn" data-filter="processando">
+                            <i class="fas fa-spinner me-1"></i> Processando
+                        </button>
+                        <button class="filter-btn" data-filter="erro">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Com Erro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results List -->
+        <div id="resultsContainer">
+            {% if resultados %}
+                {% for resultado in resultados %}
+                <div class="result-card" data-status="{{ resultado.status }}" data-search="{{ (resultado.input_original + ' ' + (resultado.template_gerado or ''))|lower }}">
+                    <div class="result-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-2" style="color: var(--text-dark);">
+                                    <i class="fas fa-project-diagram me-2" style="color: var(--primary-color);"></i>
+                                    Fluxo ID: <strong>{{ resultado.fluxo_id }}</strong>
+                                </h5>
+                                <div class="uuid-badge">
+                                    <i class="fas fa-fingerprint me-1"></i>
+                                    {{ resultado.uuid_resultado[:8] }}...{{ resultado.uuid_resultado[-8:] }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="timestamp-box">
+                                    <div class="date">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        {{ resultado.data_execucao.strftime('%d/%m/%Y') }}
+                                    </div>
+                                    <div class="time">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ resultado.data_execucao.strftime('%H:%M:%S') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <span class="status-badge status-{{ resultado.status }}{% if resultado.status == 'processando' %} processing-pulse{% endif %}">
+                                    <i class="fas fa-{{ 'check-circle' if resultado.status == 'concluido' else 'spinner fa-spin' if resultado.status == 'processando' else 'exclamation-triangle' }}"></i>
+                                    {{ resultado.status.title() }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <h6><i class="fas fa-keyboard me-1"></i> Entrada Original</h6>
+                                    <div class="content">{{ resultado.input_original[:250] }}{% if resultado.input_original|length > 250 %}...{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% if resultado.template_gerado %}
+                                <div class="info-box">
+                                    <h6><i class="fas fa-file-alt me-1"></i> Template Gerado</h6>
+                                    <div class="content">{{ resultado.template_gerado[:250] }}{% if resultado.template_gerado|length > 250 %}...{% endif %}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if resultado.analise_juridica %}
+                        <div class="info-box">
+                            <h6><i class="fas fa-gavel me-1"></i> Análise Jurídica</h6>
+                            <div class="content">{{ resultado.analise_juridica[:350] }}{% if resultado.analise_juridica|length > 350 %}...{% endif %}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row mt-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    {% if resultado.componentes_processados %}
+                                    <span class="component-count">
+                                        <i class="fas fa-cogs"></i>
+                                        {{ resultado.componentes_processados }} componente(s)
+                                    </span>
+                                    {% endif %}
+                                    {% if resultado.hash_resultado %}
+                                    <span class="verified-badge">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Verificado
+                                    </span>
+                                    {% endif %}
+                                    {% if resultado.tempo_execucao %}
+                                    <span class="component-count">
+                                        <i class="fas fa-stopwatch"></i>
+                                        {{ resultado.tempo_execucao }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="btn-group">
+                                    <a href="/fluxos/editor/{{ resultado.fluxo_id }}" 
+                                       class="btn btn-outline-primary action-btn">
+                                        <i class="fas fa-edit me-1"></i>Editor
+                                    </a>
+                                    <a href="/resultado/{{ resultado.uuid_resultado }}" 
+                                       class="btn btn-outline-info action-btn">
+                                        <i class="fas fa-eye me-1"></i>Detalhes
+                                    </a>
+                                    <button class="btn btn-outline-secondary action-btn" 
+                                            onclick="copyUUID('{{ resultado.uuid_resultado }}')">
+                                        <i class="fas fa-copy me-1"></i>UUID
+                                    </button>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-outline-success action-btn dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="fas fa-download me-1"></i>Exportar
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="/resultado/{{ resultado.uuid_resultado }}/export">
+                                                    <i class="fas fa-file-code me-2"></i>JSON
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="/resultado/{{ resultado.uuid_resultado }}/export/docx">
+                                                    <i class="fas fa-file-word me-2"></i>DOCX
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-history fa-5x mb-4"></i>
+                <h3>Nenhum resultado encontrado</h3>
+                <p class="mb-4">Ainda não há resultados de execução salvos no sistema.</p>
+                <a href="/fluxos" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Executar um Fluxo
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Search functionality
+        document.getElementById('searchInput')?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filterResults(searchTerm, getActiveFilter());
+        });
+
+        // Filter functionality
+        document.querySelectorAll('[data-filter]').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+                filterResults(searchTerm, filter);
+            });
+        });
+
+        function getActiveFilter() {
+            return document.querySelector('[data-filter].active')?.dataset.filter || 'todos';
+        }
+
+        function filterResults(searchTerm, statusFilter) {
+            const results = document.querySelectorAll('.result-card');
+            let visibleCount = 0;
+            let countConcluidos = 0;
+            let countProcessando = 0;
+            let countErro = 0;
+
+            results.forEach(result => {
+                const status = result.dataset.status;
+                const searchContent = result.dataset.search;
+                
+                const matchesSearch = !searchTerm || searchContent.includes(searchTerm);
+                const matchesFilter = statusFilter === 'todos' || status === statusFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    result.style.display = 'block';
+                    visibleCount++;
+                    
+                    // Contar por status
+                    if (status === 'concluido') countConcluidos++;
+                    if (status === 'processando') countProcessando++;
+                    if (status === 'erro') countErro++;
+                } else {
+                    result.style.display = 'none';
+                }
+            });
+
+            // Update counts
+            document.getElementById('totalCount').textContent = visibleCount;
+            document.getElementById('statConcluidos').textContent = countConcluidos;
+            document.getElementById('statProcessando').textContent = countProcessando;
+            document.getElementById('statErro').textContent = countErro;
+        }
+
+        // Copy UUID to clipboard
+        function copyUUID(uuid) {
+            navigator.clipboard.writeText(uuid).then(function() {
+                const button = event.target.closest('button');
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check me-1"></i>Copiado!';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-outline-secondary');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+            });
+        }
+
+        // Auto-refresh desabilitado para evitar piscar na tela
+        // Se quiser habilitar novamente, descomente as linhas abaixo:
+        // setInterval(() => {
+        //     const searchInput = document.getElementById('searchInput');
+        //     if (!searchInput?.value && getActiveFilter() === 'todos') {
+        //         location.reload();
+        //     }
+        // }, 30000);
+    </script>
+</body>
+</html>

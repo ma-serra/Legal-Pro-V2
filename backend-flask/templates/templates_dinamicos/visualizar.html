@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar Template: {{ template_data.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="background: #2c3e50;">
+    <!-- Header -->
+    <div class="text-white p-3 d-flex justify-content-between align-items-center" 
+         style="background: {{ template_data.categoria_cor or '#3b576f' }};">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('templates_dinamicos_index') }}" class="btn btn-outline-light me-3" title="Voltar aos templates">
+                <i class="fas fa-arrow-left"></i>
+                <span class="d-none d-sm-inline ms-1">Templates</span>
+            </a>
+            <i class="{{ template_data.icone or 'fas fa-file-alt' }} me-2"></i>
+            <h4 class="mb-0">{{ template_data.nome }}</h4>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('usar_template_dinamico', template_id=template_data.id) }}" 
+               class="btn btn-light">
+                <i class="fas fa-edit me-1"></i> Usar Template
+            </a>
+            <button type="button" class="btn-close btn-close-white" onclick="window.history.back()"></button>
+        </div>
+    </div>
+
+    <!-- Informações do Template -->
+    <div class="bg-light text-dark p-3 border-bottom">
+        <div class="container-fluid">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-folder text-primary me-2"></i>
+                        <div>
+                            <small class="d-block text-muted fw-bold">Categoria</small>
+                            <span>{{ template_data.categoria_nome }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-list-ul text-success me-2"></i>
+                        <div>
+                            <small class="d-block text-muted fw-bold">Total de Campos</small>
+                            <span>{{ template_data.campos|length }} campos personalizáveis</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-0" style="height: calc(100vh - 180px);">
+        <!-- Painel Esquerdo - Campos do Template -->
+        <div class="col-md-3 bg-secondary text-white p-4" style="height: 100%; overflow-y: auto;">
+            <h5 class="text-white mb-3">
+                <i class="fas fa-tags me-2"></i>
+                Campos do Template
+            </h5>
+            
+            {% if template_data.campos %}
+            <div class="list-group">
+                {% for campo in template_data.campos %}
+                <div class="list-group-item bg-dark text-white border-secondary mb-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-braces me-2 text-info"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">{{ campo.label }}</div>
+                            <small class="text-muted">
+                                <code class="bg-secondary text-warning px-2 py-1 rounded"
+                                      style="font-size: 11px;">{{ '{{' + campo.name + '}}' }}</code>
+                            </small>
+                        </div>
+                        {% if campo.required %}
+                        <span class="badge bg-danger ms-2">Obrigatório</span>
+                        {% endif %}
+                    </div>
+                    {% if campo.placeholder %}
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ campo.placeholder }}
+                    </small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Este template não possui campos personalizáveis.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Painel Direito - Preview do Documento -->
+        <div class="col-md-9 bg-white p-5" style="height: 100%; overflow-y: auto;">
+            <div class="documento-preview" style="max-width: 800px; margin: 0 auto;">
+                <div id="conteudo-template">
+                    {{ template_data.conteudo|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Destacar campos no preview
+document.addEventListener('DOMContentLoaded', () => {
+    const conteudo = document.getElementById('conteudo-template');
+    let html = conteudo.innerHTML;
+    
+    // Regex para encontrar {{campo}}
+    const regex = /\{\{([^}]+)\}\}/g;
+    
+    html = html.replace(regex, (match, campo) => {
+        return `<span class="campo-destaque" title="Campo: ${campo.trim()}">${match}</span>`;
+    });
+    
+    conteudo.innerHTML = html;
+});
+</script>
+
+<style>
+.campo-destaque {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #856404;
+    cursor: help;
+    transition: all 0.3s ease;
+}
+
+.campo-destaque:hover {
+    background-color: #ffc107;
+    color: #000;
+    transform: scale(1.05);
+}
+
+.documento-preview {
+    background: white;
+    box-shadow: 0 0 30px rgba(0,0,0,0.1);
+    padding: 40px;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}

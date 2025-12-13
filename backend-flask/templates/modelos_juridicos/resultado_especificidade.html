@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Análise de Especificidade</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .result-header {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/modelos_juridicos_nav.html' %}
+
+    <div class="container mt-4">
+        <!-- Header de Resultados -->
+        <div class="card result-header mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h2><i class="fas fa-chart-bar"></i> Análise de Especificidade Concluída</h2>
+                        <p class="lead mb-0">{{ resultados|length }} modelo(s) executado(s) com sucesso</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-analytics" style="font-size: 4rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados dos Modelos -->
+        <div class="row">
+            {% for nome_modelo, resultado in resultados.items() %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header 
+                        {% if nome_modelo == 'beta' %}bg-primary text-white
+                        {% elif nome_modelo == 'binomial' %}bg-success text-white
+                        {% elif nome_modelo == 'bayes' %}bg-info text-white
+                        {% elif nome_modelo == 'scores' %}bg-warning text-dark
+                        {% else %}bg-secondary text-white{% endif %}">
+                        <h5>
+                            {% if nome_modelo == 'beta' %}
+                            <i class="fas fa-chart-line"></i> Regressão Beta
+                            {% elif nome_modelo == 'binomial' %}
+                            <i class="fas fa-calculator"></i> GLM Binomial
+                            {% elif nome_modelo == 'bayes' %}
+                            <i class="fas fa-brain"></i> Análise Bayesiana
+                            {% elif nome_modelo == 'scores' %}
+                            <i class="fas fa-crosshairs"></i> Modelo de Scores
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if nome_modelo == 'beta' %}
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <strong>R²:</strong>
+                                    <span class="metric-value text-primary">{{ "%.4f"|format(resultado.r2) }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>AIC:</strong>
+                                    <span class="metric-value text-success">{{ "%.2f"|format(resultado.aic) }}</span>
+                                </div>
+                            </div>
+                            <p class="text-muted">Coeficiente de determinação e critério de informação</p>
+                        
+                        {% elif nome_modelo == 'binomial' %}
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <strong>Deviance:</strong>
+                                    <span class="metric-value text-success">{{ "%.2f"|format(resultado.deviance) }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>AIC:</strong>
+                                    <span class="metric-value text-info">{{ "%.2f"|format(resultado.aic) }}</span>
+                                </div>
+                            </div>
+                            <p class="text-muted">Modelo linear generalizado para dados binomiais</p>
+                        
+                        {% elif nome_modelo == 'bayes' %}
+                            <div class="mb-2">
+                                <strong>Correlação Sens-Spec:</strong>
+                                <span class="metric-value text-info">{{ "%.4f"|format(resultado.correlacao_sens_spec) }}</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Observações:</strong>
+                                <span class="metric-value text-secondary">{{ resultado.n_observacoes }}</span>
+                            </div>
+                            <p class="text-muted">Análise bivariada de sensibilidade vs especificidade</p>
+                        
+                        {% elif nome_modelo == 'scores' %}
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <strong>Threshold Ótimo:</strong>
+                                    <span class="metric-value text-warning">{{ resultado.threshold_otimo }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Especif. Máxima:</strong>
+                                    <span class="metric-value text-success">{{ "%.3f"|format(resultado.especificidade_maxima) }}</span>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <strong>AUC Estimada:</strong>
+                                <span class="metric-value text-primary">{{ "%.3f"|format(resultado.auc_estimada) }}</span>
+                            </div>
+                            <p class="text-muted">Threshold que maximiza especificidade</p>
+                        {% endif %}
+
+                        <!-- Botão para ver detalhes -->
+                        <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#detalhes_{{ nome_modelo }}">
+                            <i class="fas fa-eye"></i> Ver Detalhes
+                        </button>
+                        
+                        <div class="collapse mt-3" id="detalhes_{{ nome_modelo }}">
+                            <div class="code-block">
+                                <h6>Parâmetros do Modelo:</h6>
+                                {% if resultado.params %}
+                                <ul class="list-unstyled">
+                                    {% for param, valor in resultado.params.items() %}
+                                    <li><code>{{ param }}</code>: {{ "%.4f"|format(valor) if valor is number else valor }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Resumo Geral -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clipboard-list"></i> Resumo da Análise</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-chart-pie"></i> Modelos Executados:</h6>
+                                <ul>
+                                    {% for nome_modelo in resultados.keys() %}
+                                    <li>
+                                        {% if nome_modelo == 'beta' %}Regressão Beta - Especificidade observada
+                                        {% elif nome_modelo == 'binomial' %}GLM Binomial - Verdadeiros negativos
+                                        {% elif nome_modelo == 'bayes' %}Bayesiano Bivariado - Correlações
+                                        {% elif nome_modelo == 'scores' %}Modelo de Scores - Thresholds ótimos
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-tools"></i> Ações Disponíveis:</h6>
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('modelos_juridicos.visualizacoes') }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-chart-bar"></i> Ver Visualizações
+                                    </a>
+                                    <a href="{{ url_for('modelos_juridicos.exportar_dados') }}" 
+                                       class="btn btn-success btn-sm">
+                                        <i class="fas fa-download"></i> Exportar Resultados
+                                    </a>
+                                    <a href="{{ url_for('modelos_juridicos.analisar_especificidade') }}" 
+                                       class="btn btn-warning btn-sm">
+                                        <i class="fas fa-redo"></i> Nova Análise
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

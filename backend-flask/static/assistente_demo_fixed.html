@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente AI - Demo</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --dark-bg: #1c1c1c;
+            --darker-bg: #161616;
+            --light-text: #f8f9fa;
+            --border-color: #333;
+            --message-user-bg: #2a3b4d;
+            --message-assistant-bg: #1f2937;
+            --upload-btn-color: #1f5981;
+        }
+        
+        body {
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .assistente-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            padding: 0.5rem;
+            gap: 0.5rem;
+        }
+        
+        .assistente-sidebar {
+            width: 280px;
+            background-color: var(--dark-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .conversas-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .sem-conversas {
+            text-align: center;
+            color: var(--secondary-color);
+            padding: 2rem 0;
+        }
+        
+        .assistente-main {
+            flex-grow: 1;
+            background-color: var(--dark-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .config-card {
+            background-color: var(--darker-bg);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .chat-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+        
+        .messages-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-right: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .message {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-width: 85%;
+        }
+        
+        .message-user {
+            align-self: flex-end;
+            background-color: var(--message-user-bg);
+        }
+        
+        .message-assistant {
+            align-self: flex-start;
+            background-color: var(--message-assistant-bg);
+        }
+        
+        .message-content {
+            margin-bottom: 0.5rem;
+            white-space: pre-wrap;
+            color: white;
+        }
+        
+        .message-info {
+            text-align: right;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .empty-chat-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+        }
+        
+        .empty-chat-message h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        textarea.form-control {
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+            border-color: var(--border-color);
+            resize: none;
+        }
+        
+        textarea.form-control:focus {
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+        }
+        
+        .form-select {
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+            border-color: var(--border-color);
+        }
+        
+        .form-select:focus {
+            background-color: var(--darker-bg);
+            color: var(--light-text);
+        }
+        
+        .form-check-input {
+            background-color: var(--darker-bg);
+            border-color: var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-success {
+            color: var(--light-text);
+            border-color: var(--upload-btn-color);
+            background-color: var(--upload-btn-color);
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .typing-indicator span {
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--light-text);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: typing 1s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @media (max-width: 768px) {
+            .assistente-container {
+                flex-direction: column;
+                height: auto;
+                min-height: calc(100vh - 60px);
+            }
+            
+            .assistente-sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-3">
+        <div class="assistente-container">
+            <!-- Barra lateral esquerda com histórico de conversas -->
+            <div class="assistente-sidebar">
+                <div class="sidebar-header">
+                    <h5>Histórico de Conversas</h5>
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Nova Conversa
+                    </a>
+                </div>
+                
+                <div class="conversas-list">
+                    <div class="sem-conversas">
+                        <p>Nenhuma conversa encontrada.</p>
+                        <p>Clique em "Nova Conversa" para começar.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Área principal do chat -->
+            <div class="assistente-main">
+                <!-- Card de configurações sempre visível -->
+                <div class="config-card">
+                    <h5 class="mb-3">Configurações do Assistente</h5>
+                    <form id="configForm" class="row g-3">
+                        
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="modelo_llm"><i class="fas fa-brain"></i> Modelo de Linguagem</label>
+                                <select id="modelo_llm" class="form-select">
+                                    <option value="openai/gpt-4o">GPT-4o</option>
+                                    <option value="anthropic/claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                    <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="personalidade"><i class="fas fa-user-tie"></i> Personalidade Jurídica</label>
+                                <select id="personalidade" class="form-select">
+                                    <option value="advogado">Advogado</option>
+                                    <option value="juiz">Juiz</option>
+                                    <option value="promotor">Promotor</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="tom_voz"><i class="fas fa-comment-dots"></i> Tom de Voz</label>
+                                <select id="tom_voz" class="form-select">
+                                    <option value="formal">Formal</option>
+                                    <option value="natural">Natural</option>
+                                    <option value="simples">Simplificado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Nova linha com opções de fontes de contexto -->
+                        <div class="col-12 mt-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usar_pesquisa_web">
+                                        <label class="form-check-label" for="usar_pesquisa_web">
+                                            <i class="fas fa-globe"></i> Usar Pesquisa Web
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usar_documentos">
+                                        <label class="form-check-label" for="usar_documentos">
+                                            <i class="fas fa-file-alt"></i> Usar Documentos Enviados
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-save"></i> Salvar Configurações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Área de mensagens -->
+                <div class="chat-area">
+                    <div id="messages" class="messages-container">
+                        <div class="empty-chat-message">
+                            <h3>Assistente AI</h3>
+                            <p>Bem-vindo ao seu assistente especializado para questões jurídicas!</p>
+                            <p>Você pode fazer perguntas, enviar documentos para análise, e obter respostas baseadas em conhecimento jurídico.</p>
+                            <p>Utilize as configurações acima para ajustar o modelo, personalidade e tom das respostas.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário de mensagem -->
+                    <form id="chatForm">
+                        <div class="input-group">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <label class="dropdown-item" for="fileUpload">
+                                        <i class="fas fa-file-upload"></i> Enviar Arquivo
+                                    </label>
+                                    <input id="fileUpload" type="file" style="display: none;">
+                                </li>
+                            </ul>
+                            <textarea id="userInput" class="form-control" placeholder="Digite sua mensagem aqui..." rows="1"></textarea>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos da página
+        const messages = document.getElementById('messages');
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const fileUpload = document.getElementById('fileUpload');
+        
+        // Elementos de configuração
+        const useWebToggle = document.getElementById('usar_pesquisa_web');
+        const useDocsToggle = document.getElementById('usar_documentos');
+        const modeloSelect = document.getElementById('modelo_llm');
+        const personalidadeSelect = document.getElementById('personalidade');
+        const tomVozSelect = document.getElementById('tom_voz');
+        
+        // Estado do chat
+        let isWaitingResponse = false;
+        
+        // Obter hora atual formatada
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Função para rolar para o final do chat
+        function scrollToBottom() {
+            if (messages) {
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+        
+        // Adicionar mensagem do usuário ao chat
+        function addUserMessage(text) {
+            if (!messages) return;
+            
+            // Remove a mensagem de boas vindas se existir
+            const emptyChat = messages.querySelector('.empty-chat-message');
+            if (emptyChat) {
+                emptyChat.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-user';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'message-info';
+            infoDiv.innerHTML = `<small class="text-muted">${getCurrentTime()}</small>`;
+            
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(infoDiv);
+            messages.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+        
+        // Adicionar mensagem do assistente ao chat
+        function addAssistantMessage(text) {
+            if (!messages) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-assistant';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Se o texto for vazio, mostrar indicador de digitação
+            if (!text) {
+                contentDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            } else {
+                contentDiv.textContent = text;
+            }
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'message-info';
+            infoDiv.innerHTML = `<small class="text-muted">${getCurrentTime()}</small>`;
+            
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(infoDiv);
+            messages.appendChild(messageDiv);
+            
+            scrollToBottom();
+            
+            return contentDiv; // Retorna o div de conteúdo para atualização posterior
+        }
+        
+        // Manipular envio do formulário
+        if (chatForm) {
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const message = userInput.value.trim();
+                if (!message || isWaitingResponse) return;
+                
+                // Adicionar mensagem do usuário ao chat
+                addUserMessage(message);
+                
+                // Limpar campo de entrada e mostrar estado de espera
+                userInput.value = '';
+                isWaitingResponse = true;
+                
+                // Preparar área para resposta do assistente
+                const responseContent = addAssistantMessage('');
+                
+                // Simulação de resposta (em um app real, faria uma chamada à API)
+                setTimeout(() => {
+                    // Em uma implementação real, aqui seria a resposta da API
+                    let resposta = "Obrigado pela sua mensagem. Como assistente jurídico, posso ajudar com sua consulta legal. ";
+                    
+                    // Personalização da resposta baseada nas configurações
+                    const modelo = modeloSelect.value;
+                    const personalidade = personalidadeSelect.value;
+                    const tomVoz = tomVozSelect.value;
+                    
+                    if (modelo.includes("gpt-4o")) {
+                        resposta += "Estou utilizando o modelo GPT-4o da OpenAI para gerar minhas respostas. ";
+                    } else if (modelo.includes("claude")) {
+                        resposta += "Estou utilizando o modelo Claude 3.5 Sonnet da Anthropic para gerar minhas respostas. ";
+                    } else {
+                        resposta += "Estou utilizando o modelo DeepSeek para gerar minhas respostas. ";
+                    }
+                    
+                    if (personalidade === "advogado") {
+                        resposta += "Como advogado, posso orientar sobre seus direitos e possíveis ações legais. ";
+                    } else if (personalidade === "juiz") {
+                        resposta += "Como juiz, posso oferecer uma perspectiva imparcial sobre aspectos legais do seu caso. ";
+                    } else {
+                        resposta += "Como promotor, posso explicar aspectos relacionados à aplicação da lei e acusação. ";
+                    }
+                    
+                    if (useWebToggle.checked) {
+                        resposta += "Utilizarei pesquisa web para fornecer informações atualizadas. ";
+                    }
+                    
+                    if (useDocsToggle.checked) {
+                        resposta += "Analisarei documentos enviados para contextualizar minhas respostas. ";
+                    }
+                    
+                    resposta += "Como posso ajudar com sua questão jurídica hoje?";
+                    
+                    if (responseContent) {
+                        // Atualiza o conteúdo
+                        responseContent.innerHTML = resposta;
+                    }
+                    
+                    // Reabilita o formulário
+                    isWaitingResponse = false;
+                    
+                    scrollToBottom();
+                }, 2000);
+            });
+        }
+        
+        // Manipular o upload de arquivos
+        if (fileUpload) {
+            fileUpload.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
+                    
+                    // Adicionar mensagem sobre o arquivo
+                    addUserMessage(`Arquivo enviado: ${file.name}`);
+                    
+                    // Simular processamento do arquivo
+                    setTimeout(() => {
+                        addAssistantMessage(`Recebi seu arquivo "${file.name}". Você pode fazer perguntas sobre seu conteúdo agora.`);
+                    }, 1500);
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

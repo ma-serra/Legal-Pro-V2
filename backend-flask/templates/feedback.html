@@ -1,0 +1,163 @@
+{% extends "layout.html" %}
+
+{% block title %}Feedback da Análise{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-3">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Início</a></li>
+          <li class="breadcrumb-item"><a href="/resultado/{{ execucao_id }}">Resultado #{{ execucao_id }}</a></li>
+          <li class="breadcrumb-item active">Feedback</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h2>Feedback da Análise #{{ execucao_id }}</h2>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/feedback/{{ execucao_id }}" id="formFeedback">
+            <input type="hidden" name="execucao_id" value="{{ execucao_id }}">
+            <div class="mb-3">
+              <label for="avaliacao" class="form-label">Avaliação Geral</label>
+              <div class="rating-stars mb-2">
+                {% for n in range(1, 6) %}
+                <input type="radio" name="avaliacao" id="rating-{{ n }}" value="{{ n }}" 
+                       {% if n == 3 %}checked{% endif %}>
+                <label for="rating-{{ n }}"><i class="fas fa-star"></i></label>
+                {% endfor %}
+              </div>
+              <div class="text-muted small">
+                1 - Ruim | 2 - Regular | 3 - Bom | 4 - Muito Bom | 5 - Excelente
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="comentario" class="form-label">Comentários (opcional)</label>
+              <textarea class="form-control" id="comentario" name="comentario" rows="4" 
+                placeholder="Compartilhe suas impressões sobre o resultado ou sugestões para melhorias"></textarea>
+            </div>
+            
+            <div class="mb-4">
+              <p class="mb-2"><strong>Avaliação dos Agentes</strong></p>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Agente</th>
+                      <th>Avaliação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for agente in agentes %}
+                    <tr>
+                      <td>{{ agente.nome }}</td>
+                      <td>
+                        <div class="rating-stars small">
+                          {% for n in range(1, 6) %}
+                          <input type="radio" name="agente_{{ agente.id }}" 
+                                 id="agente_{{ agente.id }}_{{ n }}" value="{{ n }}"
+                                 {% if n == 3 %}checked{% endif %}>
+                          <label for="agente_{{ agente.id }}_{{ n }}">
+                            <i class="fas fa-star"></i>
+                          </label>
+                          {% endfor %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="autorizar_melhoria" 
+                       name="autorizar_melhoria" value="1" checked>
+                <label class="form-check-label" for="autorizar_melhoria">
+                  Autorizo o uso deste feedback para melhorias do sistema
+                </label>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+              <a href="/resultado/{{ execucao_id }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i> Enviar Feedback
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .rating-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+  }
+  
+  .rating-stars input {
+    display: none;
+  }
+  
+  .rating-stars label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #ddd;
+    padding: 0 0.1rem;
+  }
+  
+  .rating-stars.small label {
+    font-size: 1rem;
+  }
+  
+  .rating-stars input:checked ~ label {
+    color: #ffcc00;
+  }
+  
+  .rating-stars label:hover,
+  .rating-stars label:hover ~ label {
+    color: #ffcc00;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Facilita a seleção de estrelas ao clicar
+  document.querySelectorAll('.rating-stars label').forEach(label => {
+    label.addEventListener('click', function() {
+      const id = this.getAttribute('for');
+      document.getElementById(id).checked = true;
+    });
+  });
+  
+  // Valida o formulário antes de enviar
+  document.getElementById('formFeedback').addEventListener('submit', function(e) {
+    const avaliacao = document.querySelector('input[name="avaliacao"]:checked');
+    
+    if (!avaliacao) {
+      e.preventDefault();
+      alert('Por favor, forneça uma avaliação geral antes de enviar.');
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Análise Multi-Agente | Legal Design Pro V2</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #2c5282 0%, #3b576f 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: #1a202c;
+            border: 1px solid #2d3748;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        
+        .card-header {
+            background: #2d3748;
+            border-bottom: 1px solid #4a5568;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #a0aec0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .info-value {
+            color: #e2e8f0;
+            font-weight: 500;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+        
+        .agent-card {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .agent-header {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #718096;
+        }
+        
+        .agent-content {
+            padding: 1.5rem;
+        }
+        
+        .analysis-text {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #27ae60;
+            padding: 1.5rem;
+            border-radius: 8px;
+            color: #e2e8f0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+        }
+        
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+        }
+        
+        .back-button {
+            background: linear-gradient(45deg, #3b576f, #2c5282);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: linear-gradient(45deg, #2c5282, #3b576f);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: white;
+        }
+        
+        .export-buttons {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #4a5568;
+        }
+        
+        .btn-export {
+            margin: 0.25rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .section-title {
+            color: #e2e8f0;
+            border-bottom: 2px solid #3b576f;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .agent-badge {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1rem 0;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .info-value {
+                max-width: 100%;
+                text-align: left;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Seção Hero -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold mb-2">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Resultado da Análise Multi-Agente
+                    </h1>
+                    <p class="lead mb-0">
+                        Visualização completa dos resultados da análise jurídica especializada
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('validacao_multi_agente_expandida') }}" class="btn back-button">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar à Análise
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Informações da Análise -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-white mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informações da Análise
+                        </h3>
+                        <small class="text-muted">ID: {{ resultado_id }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-hashtag"></i>
+                                        Número de Registro
+                                    </span>
+                                    <span class="info-value">{{ resultado.numero_registro or 'N/A' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-calendar"></i>
+                                        Data da Análise
+                                    </span>
+                                    <span class="info-value">{{ resultado.data_criacao }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-clock"></i>
+                                        Tempo de Processamento
+                                    </span>
+                                    <span class="info-value">{{ resultado.tempo_processamento or 'N/A' }}s</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-users"></i>
+                                        Total de Agentes
+                                    </span>
+                                    <span class="info-value">{{ resultado.total_agentes or 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-cog"></i>
+                                        Modo de Análise
+                                    </span>
+                                    <span class="info-value">{{ resultado.modo_analise or 'Completa' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-bullseye"></i>
+                                        Área de Foco
+                                    </span>
+                                    <span class="info-value">{{ resultado.area_foco or 'Todas' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-server"></i>
+                                        Sistema Utilizado
+                                    </span>
+                                    <span class="info-value">{{ resultado.sistema_usado or 'Multi-Agente' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">
+                                        <i class="fas fa-check-circle"></i>
+                                        Status
+                                    </span>
+                                    <span class="info-value">
+                                        <span class="badge badge-custom status-success">
+                                            {{ resultado.status_analise or 'Concluída' }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if resultado.observacoes %}
+                        <div class="mt-3 pt-3" style="border-top: 1px solid #4a5568;">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                Observações
+                            </h6>
+                            <p class="text-muted mb-0">{{ resultado.observacoes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documento Original -->
+        {% if resultado.documento_original %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-white mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Documento Analisado
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="analysis-text" style="max-height: 200px; overflow-y: auto;">
+                            {{ resultado.documento_original[:1000] }}
+                            {% if resultado.documento_original|length > 1000 %}
+                                <span class="text-muted">... (truncado)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Resultados dos Agentes -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">
+                    <i class="fas fa-brain me-2"></i>
+                    Análises dos Agentes Especialistas
+                </h2>
+            </div>
+        </div>
+
+        {% if resultados_agentes %}
+            {% for agente in resultados_agentes %}
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="agent-card">
+                        <div class="agent-header">
+                            <div class="d-flex align-items-center">
+                                <span class="agent-badge">{{ loop.index }}</span>
+                                <div>
+                                    <h4 class="text-white mb-1">
+                                        {{ agente.agente_nome or 'Agente Especializado' }}
+                                    </h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <small class="badge" style="background: #3b576f;">
+                                            <i class="fas fa-graduation-cap me-1"></i>
+                                            {{ agente.especialidade or 'Especialista' }}
+                                        </small>
+                                        <small class="badge" style="background: #27ae60;">
+                                            <i class="fas fa-robot me-1"></i>
+                                            {{ agente.api_utilizada or 'Sistema' }}
+                                        </small>
+                                        {% if agente.modelo_usado %}
+                                        <small class="badge" style="background: #e67e22;">
+                                            <i class="fas fa-microchip me-1"></i>
+                                            {{ agente.modelo_usado }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="agent-content">
+                            <div class="analysis-text">
+                                {{ agente.resultado or 'Análise não disponível' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h4 class="text-white">Nenhum resultado de agente encontrado</h4>
+                            <p class="text-muted">
+                                Os resultados dos agentes não estão disponíveis para esta análise.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Botões de Exportação -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="text-white mb-3">
+                            <i class="fas fa-download me-2"></i>
+                            Exportar Resultados
+                        </h5>
+                        <div class="export-buttons text-center">
+                            <button class="btn btn-export" style="background: #27ae60; color: white;" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf me-2"></i>
+                                Exportar PDF
+                            </button>
+                            <button class="btn btn-export" style="background: #3498db; color: white;" onclick="exportToWord()">
+                                <i class="fas fa-file-word me-2"></i>
+                                Exportar Word
+                            </button>
+                            <button class="btn btn-export" style="background: #e67e22; color: white;" onclick="exportToJSON()">
+                                <i class="fas fa-code me-2"></i>
+                                Exportar JSON
+                            </button>
+                            <button class="btn btn-export" style="background: #9b59b6; color: white;" onclick="shareResult()">
+                                <i class="fas fa-share-alt me-2"></i>
+                                Compartilhar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4" style="background: #1a202c; border-top: 1px solid #2d3748;">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                <i class="fas fa-gavel me-2"></i>
+                Legal Design Pro V2 - Sistema de Análise Jurídica Multi-Agente
+            </p>
+            <small class="text-muted">
+                Desenvolvido com tecnologia de ponta para análise jurídica especializada
+            </small>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Funções de exportação
+        function exportToPDF() {
+            alert('Funcionalidade de exportação PDF em desenvolvimento');
+        }
+        
+        function exportToWord() {
+            alert('Funcionalidade de exportação Word em desenvolvimento');
+        }
+        
+        function exportToJSON() {
+            const data = {
+                resultado: {{ resultado | tojson }},
+                resultados_agentes: {{ resultados_agentes | tojson }}
+            };
+            
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analise_multi_agente_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function shareResult() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Resultado da Análise Multi-Agente',
+                    text: 'Confira os resultados da análise jurídica especializada',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copiar URL para clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('URL copiada para a área de transferência!');
+                });
+            }
+        }
+        
+        // Auto-ajustar altura das análises
+        document.addEventListener('DOMContentLoaded', function() {
+            const analysisTexts = document.querySelectorAll('.analysis-text');
+            analysisTexts.forEach(text => {
+                if (text.scrollHeight > 300) {
+                    text.style.maxHeight = '300px';
+                    text.style.overflowY = 'auto';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

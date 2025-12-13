@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparação: {{ comparacao.titulo or 'Documento' }}</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-hover: #5a6fd8;
+            --success-color: #48bb78;
+            --danger-color: #f56565;
+            --warning-color: #ed8936;
+            --info-color: #4299e1;
+            --dark-color: #2d3748;
+            --light-bg: #f7fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #30648a 0%, #2c5782 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        /* Container principal */
+        .main-container {
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        
+        /* Header moderno */
+        .modern-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header-info h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-info .subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .badge-modern {
+            background: linear-gradient(135deg, #30648a, #2c5782);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        /* Cartão de comparação */
+        .comparison-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            overflow: visible;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .comparison-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .comparison-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tab-button:not(.active) {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        /* Painéis de documento */
+        .documents-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .document-panel {
+            padding: 2rem;
+            position: relative;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        
+        .document-panel:first-child {
+            border-right: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+        
+        .document-panel:last-child {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        }
+        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .panel-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+        
+        .panel-title i {
+            font-size: 1.25rem;
+        }
+        
+        .document-panel:first-child .panel-title {
+            color: var(--danger-color);
+        }
+        
+        .document-panel:last-child .panel-title {
+            color: var(--success-color);
+        }
+        
+        .document-content {
+            line-height: 1.8;
+            font-size: 0.95rem;
+            color: #374151;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Marcações de diferenças - DESIGN MODERNO */
+        span[style*="background-color:#ffdddd"] {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+            color: #dc2626 !important;
+            text-decoration: line-through !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+            display: inline-block !important;
+            margin: 2px !important;
+            border: 2px solid #ef4444 !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2) !important;
+            position: relative !important;
+        }
+        
+        span[style*="background-color:#ddffdd"] {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+            color: #16a34a !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+            display: inline-block !important;
+            margin: 2px !important;
+            border: 2px solid #22c55e !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2) !important;
+            position: relative !important;
+        }
+        
+        /* Animações para marcações */
+        span[style*="background-color:#ffdddd"],
+        span[style*="background-color:#ddffdd"] {
+            animation: highlight 0.5s ease-in-out;
+        }
+        
+        @keyframes highlight {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Barra de ações moderna */
+        .actions-bar {
+            background: var(--action-bar-bg);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn-modern {
+            background: linear-gradient(135deg, #30648a, #2c5782);
+            border: none;
+            border-radius: 12px;
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(48, 100, 138, 0.3);
+            color: white;
+        }
+        
+        .btn-modern.btn-success {
+            background: #48bb78;
+        }
+        
+        .btn-modern.btn-success:hover {
+            background: #5cc385;
+            box-shadow: 0 8px 16px rgba(72, 187, 120, 0.3);
+        }
+        
+        .btn-modern.btn-danger {
+            background: #ca443b;
+        }
+        
+        .btn-modern.btn-danger:hover {
+            background: #ca443b;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .btn-modern.btn-word {
+            background: #0d6efd;
+        }
+        
+        .btn-modern.btn-word:hover {
+            background: #0d6efd;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .btn-modern.btn-secondary {
+            background: #64748b;
+        }
+        
+        .btn-modern.btn-secondary:hover {
+            background: #748496;
+            box-shadow: 0 8px 16px rgba(100, 116, 139, 0.3);
+        }
+        
+        /* Seção de análise IA */
+        .ai-analysis-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 2rem;
+            display: none;
+        }
+        
+        .ai-header {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .ai-header h3 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .ai-content {
+            padding: 2rem;
+        }
+        
+        .loading-modern {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .spinner-modern {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #30648a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Dropdown z-index fix */
+        .dropdown {
+            position: relative;
+            z-index: 2000;
+        }
+        
+        .dropdown-menu {
+            z-index: 2100 !important;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+            position: absolute !important;
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            margin: 0 0.5rem;
+            color: #2d3748;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(88, 91, 92, 0.1);
+            color: #2d3748;
+            transform: translateX(4px);
+        }
+        
+        /* Comparison tabs z-index */
+        .comparison-tabs {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .comparison-card {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Toast notifications modernas */
+        .toast-modern {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 9999;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            min-width: 320px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease-out;
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast-modern.success {
+            border-left: 4px solid #48bb78;
+        }
+        
+        .toast-modern.error {
+            border-left: 4px solid #f56565;
+        }
+        
+        .toast-modern.warning {
+            border-left: 4px solid #ed8936;
+        }
+        
+        .toast-modern.info {
+            border-left: 4px solid #4299e1;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .modern-header,
+            .comparison-card,
+            .actions-bar,
+            .ai-analysis-card {
+                border-radius: 16px;
+                padding: 1.5rem;
+            }
+            
+            .documents-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .document-panel:first-child {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Melhorias de acessibilidade */
+        .btn-modern:focus,
+        .tab-button:focus {
+            outline: 2px solid #30648a;
+            outline-offset: 2px;
+        }
+        
+        /* Scroll customizado */
+        .document-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .document-panel::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .document-panel::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .document-panel::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container-fluid">
+            <!-- Header moderno -->
+            <div class="modern-header">
+                <div class="header-content">
+                    <div class="header-info">
+                        <h1>
+                            <i class="fas fa-file-contract text-primary"></i>
+                            {{ comparacao.titulo or 'Comparação de Documentos' }}
+                        </h1>
+                        <div class="subtitle">
+                            <span><i class="fas fa-user me-1"></i>{{ comparacao.documento_cliente or 'Cliente não informado' }}</span>
+                            <span class="badge-modern">
+                                <i class="fas fa-tag"></i>
+                                {{ comparacao.area_processo or 'Área Geral' }}
+                            </span>
+                            <span><i class="fas fa-calendar me-1"></i>{{ comparacao.data_criacao.strftime('%d/%m/%Y %H:%M') if comparacao.data_criacao else '20/06/2025 06:00' }}</span>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <a href="{{ url_for('comparacao_documentos.index') }}" class="btn-modern btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Barra de ações -->
+            <div class="actions-bar">
+                <div class="actions-grid">
+                    <button class="btn-modern btn-success" onclick="iniciarAnaliseIA()">
+                        <i class="fas fa-robot"></i>
+                        Análise IA
+                    </button>
+
+                    <div class="dropdown">
+                        <button class="btn-modern btn-word dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-file-word"></i>
+                            Exportar Word
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportarWord('original')">
+                                <i class="fas fa-file-word me-2 text-success"></i>Documento Original
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportarWord('modificado')">
+                                <i class="fas fa-file-word me-2 text-danger"></i>Documento Modificado
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportarWord('comparacao')">
+                                <i class="fas fa-file-word me-2 text-primary"></i>Relatório Comparação
+                            </a></li>
+                        </ul>
+                    </div>
+                    <button class="btn-modern btn-secondary" onclick="window.print()">
+                        <i class="fas fa-print"></i>
+                        Imprimir
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Cartão de comparação -->
+            <div class="comparison-card">
+                <div class="comparison-header">
+                    <div class="comparison-tabs">
+                        <button class="tab-button active" onclick="switchTab('side-by-side')">
+                            <i class="fas fa-columns"></i>
+                            Lado a Lado
+                        </button>
+                        <button class="tab-button" onclick="switchTab('unified')">
+                            <i class="fas fa-align-left"></i>
+                            Unificado
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="side-by-side-view" class="documents-container">
+                    <div class="document-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title" style="color: #22c55e;">
+                                <i class="fas fa-file-check" style="color: #22c55e;"></i>
+                                Versão Original
+                                <small class="text-muted ms-2">(Remoções em vermelho)</small>
+                            </h4>
+                        </div>
+                        <div class="document-content" id="documento-original">
+                            {{ comparacao.resultado_editado_a | safe if comparacao.resultado_editado_a else (comparacao.resultado_html_original | safe if comparacao.resultado_html_original else 'Nenhum conteúdo disponível') }}
+                        </div>
+                    </div>
+                    
+                    <div class="document-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title" style="color: #ef4444;">
+                                <i class="fas fa-file-times" style="color: #ef4444;"></i>
+                                Versão Modificada
+                                <small class="text-muted ms-2">(Adições em verde)</small>
+                            </h4>
+                        </div>
+                        <div class="document-content" id="documento-modificado">
+                            {{ comparacao.resultado_editado_b | safe if comparacao.resultado_editado_b else (comparacao.resultado_html_modificado | safe if comparacao.resultado_html_modificado else 'Nenhum conteúdo disponível') }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="unified-view" class="documents-container" style="display: none; grid-template-columns: 1fr;">
+                    <div class="document-panel" style="border-right: none;">
+                        <div class="panel-header">
+                            <h4 class="panel-title">
+                                <i class="fas fa-file-alt"></i>
+                                Comparação Unificada
+                                <small class="text-muted ms-2">(Remoções em vermelho, adições em verde)</small>
+                            </h4>
+                        </div>
+                        <div class="document-content" id="documento-unificado">
+                            <!-- Conteúdo será gerado via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Análise IA -->
+            <div class="ai-analysis-card" id="ai-analysis-section">
+                <div class="ai-header">
+                    <i class="fas fa-brain"></i>
+                    <h3>Análise Inteligente</h3>
+                </div>
+                <div class="ai-content" id="ai-analysis-content">
+                    <div class="loading-modern">
+                        <div class="spinner-modern"></div>
+                        <p class="mb-0">Realizando análise inteligente das diferenças...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Funções principais
+        let comparacaoId = '{{ comparacao.id }}';
+        
+        // Função para mostrar toast moderno
+        function mostrarToast(mensagem, tipo = 'info', corPersonalizada = null) {
+            // Remover toasts existentes
+            document.querySelectorAll('.toast-modern').forEach(toast => toast.remove());
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-triangle',
+                warning: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-modern ${tipo}`;
+            
+            // Aplicar cor personalizada se fornecida
+            if (corPersonalizada && tipo === 'success') {
+                toast.style.backgroundColor = corPersonalizada;
+                toast.style.borderColor = corPersonalizada;
+            }
+            
+            toast.innerHTML = `
+                <i class="${icons[tipo]} me-2"></i>
+                <span>${mensagem}</span>
+                <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remover após 5 segundos
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOut 0.3s ease-out forwards';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // Função para trocar abas
+        function switchTab(tabType) {
+            // Atualizar botões
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Mostrar/esconder views
+            const sideBySide = document.getElementById('side-by-side-view');
+            const unified = document.getElementById('unified-view');
+            
+            if (tabType === 'side-by-side') {
+                sideBySide.style.display = 'grid';
+                unified.style.display = 'none';
+            } else {
+                sideBySide.style.display = 'none';
+                unified.style.display = 'grid';
+                generateUnifiedView();
+            }
+        }
+        
+        // Função para gerar view unificada
+        function generateUnifiedView() {
+            const originalContent = document.getElementById('documento-original').innerHTML;
+            const modificadoContent = document.getElementById('documento-modificado').innerHTML;
+            const unifiedContainer = document.getElementById('documento-unificado');
+            
+            // Combinar os conteúdos mantendo as marcações
+            let unifiedContent = originalContent + '<br><br>' + modificadoContent;
+            unifiedContainer.innerHTML = unifiedContent;
+        }
+        
+        // Função para análise IA
+        async function iniciarAnaliseIA() {
+            const aiSection = document.getElementById('ai-analysis-section');
+            const aiContent = document.getElementById('ai-analysis-content');
+            
+            aiSection.style.display = 'block';
+            aiContent.innerHTML = `
+                <div class="loading-modern">
+                    <div class="spinner-modern"></div>
+                    <p class="mb-0">Realizando análise inteligente das diferenças...</p>
+                </div>
+            `;
+            
+            // Scroll para a seção
+            aiSection.scrollIntoView({ behavior: 'smooth' });
+            
+            try {
+                const response = await fetch(`/comparacao-documentos/api/analisar-ia/${comparacaoId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.analise_json) {
+                    exibirAnaliseIA(result.analise_json);
+                    mostrarToast('Análise IA concluída com sucesso!', 'success');
+                } else {
+                    aiContent.innerHTML = `
+                        <div class="alert alert-danger border-0 rounded-3">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Erro na Análise</h5>
+                            <p class="mb-0">${result.error || 'Erro desconhecido na análise de IA'}</p>
+                        </div>
+                    `;
+                    mostrarToast('Erro na análise IA', 'error');
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Erro:', error);
+                
+                let errorMessage = 'Não foi possível conectar com o servidor para análise.';
+                let errorTitle = 'Erro de Conexão';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = 'A análise demorou mais que o esperado. Tente novamente em alguns momentos.';
+                    errorTitle = 'Timeout na Análise';
+                } else if (error.message.includes('fetch')) {
+                    errorMessage = 'Problema de conectividade. Verifique sua conexão e tente novamente.';
+                }
+                
+                aiContent.innerHTML = `
+                    <div class="alert alert-danger border-0 rounded-3">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>${errorTitle}</h5>
+                        <p class="mb-3">${errorMessage}</p>
+                        <button class="btn btn-outline-danger btn-sm" onclick="analisarComIA()">
+                            <i class="fas fa-redo me-2"></i>Tentar Novamente
+                        </button>
+                    </div>
+                `;
+                mostrarToast(errorTitle, 'error');
+            }
+        }
+        
+        // Função para exibir análise IA no formato estruturado
+        function exibirAnaliseIA(analise) {
+            const content = document.getElementById('ai-analysis-content');
+            
+            if (!content) {
+                console.error('Elemento da análise IA não encontrado');
+                return;
+            }
+            
+            let html = '';
+            
+            // Resumo geral
+            if (analise.resumo_geral) {
+                html += `
+                    <div class="card border-0 rounded-3 mb-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                        <div class="card-header" style="background: linear-gradient(135deg, #4299e1, #63b3ed); color: white; border-radius: 1rem 1rem 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Resumo Geral</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">${analise.resumo_geral}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Score global e gravidade
+            if (analise.score_global || analise.gravidade_alteracoes) {
+                html += `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card border-0 rounded-3" style="background: linear-gradient(135deg, #30648a, #2c5782); color: white;">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Score Global</h6>
+                                    <h3 class="text-white">${analise.score_global ? parseFloat(analise.score_global).toFixed(2) : 'N/A'}%</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 rounded-3" style="background: linear-gradient(135deg, #ed8936, #f6ad55); color: white;">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Gravidade das Alterações</h6>
+                                    <span class="badge bg-light text-dark fs-6">
+                                        ${analise.gravidade_alteracoes || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Impacto jurídico
+            if (analise.impacto_juridico) {
+                html += `
+                    <div class="card border-0 rounded-3 mb-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 3px solid #ed8936 !important;">
+                        <div class="card-header" style="background: linear-gradient(135deg, #ed8936, #f6ad55); color: white; border-radius: 1rem 1rem 0 0;">
+                            <h4 class="mb-0"><i class="fas fa-balance-scale me-2"></i>🎯 IMPACTO JURÍDICO</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning border-0 rounded-3" style="background: linear-gradient(135deg, #fff5e6, #ffe8cc); border-left: 5px solid #ed8936 !important;">
+                                <p class="mb-0 fw-bold" style="font-size: 1.1rem; color: #8b5a2b;">${analise.impacto_juridico}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Riscos identificados
+            if (analise.riscos_identificados && analise.riscos_identificados.length > 0) {
+                html += `
+                    <div class="card border-0 rounded-3 mb-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                        <div class="card-header" style="background: linear-gradient(135deg, #f56565, #fc8181); color: white; border-radius: 1rem 1rem 0 0;">
+                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Riscos Identificados</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                `;
+                
+                analise.riscos_identificados.forEach((risco, index) => {
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #fef5e7, #ffffff); border-left: 4px solid ${getRiscoColorHex(risco.probabilidade)} !important;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title">${risco.tipo_risco || 'Risco'}</h6>
+                                        <span class="badge bg-${getRiscoColor(risco.probabilidade)}">${risco.probabilidade || 'N/A'}</span>
+                                    </div>
+                                    <p class="card-text small">${risco.descricao || 'Descrição não disponível'}</p>
+                                    <hr class="my-2">
+                                    <p class="small mb-1"><strong>Impacto:</strong> ${risco.impacto_potencial || 'N/A'}</p>
+                                    <p class="small mb-0"><strong>Mitigação:</strong> ${risco.medidas_mitigacao || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Trechos analisados
+            if (analise.trechos_analisados && analise.trechos_analisados.length > 0) {
+                html += `
+                    <div class="card border-0 rounded-3 mb-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 3px solid #30648a !important;">
+                        <div class="card-header" style="background: linear-gradient(135deg, #30648a, #2c5782); color: white; border-radius: 1rem 1rem 0 0;">
+                            <h4 class="mb-0"><i class="fas fa-search me-2"></i>📋 TRECHOS ANALISADOS</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                `;
+                
+                analise.trechos_analisados.forEach((trecho, index) => {
+                    html += `
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #f0fff4, #ffffff); border: 2px solid ${getUrgenciaColorHex(trecho.urgencia)} !important; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <span class="badge bg-secondary me-1">${trecho.tipo || 'N/A'}</span>
+                                            <span class="badge bg-${getAlteracaoColor(trecho.natureza_alteracao)}">${trecho.natureza_alteracao || 'N/A'}</span>
+                                        </div>
+                                        <span class="badge bg-${getUrgenciaColor(trecho.urgencia)}">${trecho.urgencia || 'N/A'}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="alert alert-light border-0 rounded-3 mb-0" style="background: linear-gradient(135deg, #30648a, #2c5782); color: white;">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0"><i class="fas fa-quote-left me-2"></i>Trecho Analisado</h6>
+                                                <button class="btn btn-sm btn-outline-light" onclick="destacarTrechoNoDocumento(\`${(trecho.trecho_original || trecho.trecho_modificado || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${index})" title="Destacar no documento">
+                                                    <i class="fas fa-search-plus"></i> Localizar
+                                                </button>
+                                            </div>
+                                            ${trecho.trecho_original && trecho.trecho_original !== 'N/A' ? `
+                                                <div class="mb-2">
+                                                    <small class="d-block opacity-75">Original:</small>
+                                                    <p class="mb-0 small trecho-original-${index}" style="font-style: italic; line-height: 1.4; background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 0.5rem; cursor: pointer;" onclick="destacarTrechoNoDocumento(\`${(trecho.trecho_original || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${index})" title="Clique para localizar no documento">"${trecho.trecho_original.substring(0, 300)}${trecho.trecho_original.length > 300 ? '...' : ''}"</p>
+                                                </div>
+                                            ` : ''}
+                                            ${trecho.trecho_modificado && trecho.trecho_modificado !== 'N/A' && trecho.trecho_modificado !== trecho.trecho_original ? `
+                                                <div>
+                                                    <small class="d-block opacity-75">Modificado:</small>
+                                                    <p class="mb-0 small trecho-modificado-${index}" style="font-style: italic; line-height: 1.4; background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 0.5rem; cursor: pointer;" onclick="destacarTrechoNoDocumento(\`${(trecho.trecho_modificado || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, ${index})" title="Clique para localizar no documento">"${trecho.trecho_modificado.substring(0, 300)}${trecho.trecho_modificado.length > 300 ? '...' : ''}"</p>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="alert alert-warning border-0 rounded-3 mb-0" style="background: linear-gradient(135deg, #ed8936, #f6ad55); color: white;">
+                                            <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Impacto Jurídico</h6>
+                                            <p class="mb-0 small" style="font-weight: 500;">${trecho.impacto_detalhado || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Recomendação:</small>
+                                        <p class="small mb-0">${trecho.recomendacao_especifica || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
+        }
+        
+        // Funções auxiliares para cores
+        function getGravidadeColor(gravidade) {
+            switch(gravidade) {
+                case 'ALTA': return 'danger';
+                case 'MÉDIA': return 'warning';
+                case 'BAIXA': return 'success';
+                default: return 'secondary';
+            }
+        }
+        
+        function getRiscoColor(probabilidade) {
+            switch(probabilidade) {
+                case 'ALTA': return 'danger';
+                case 'MÉDIA': return 'warning';
+                case 'BAIXA': return 'success';
+                default: return 'secondary';
+            }
+        }
+        
+        function getAlteracaoColor(natureza) {
+            switch(natureza) {
+                case 'SUBSTANTIVA': return 'danger';
+                case 'REDACIONAL': return 'warning';
+                case 'TÉCNICA': return 'info';
+                default: return 'secondary';
+            }
+        }
+        
+        function getUrgenciaColor(urgencia) {
+            switch(urgencia) {
+                case 'ALTA': return 'danger';
+                case 'MÉDIA': return 'warning';
+                case 'BAIXA': return 'success';
+                default: return 'secondary';
+            }
+        }
+        
+        function getRiscoColorHex(probabilidade) {
+            switch(probabilidade) {
+                case 'ALTA': return '#f56565';
+                case 'MÉDIA': return '#ed8936';
+                case 'BAIXA': return '#48bb78';
+                default: return '#718096';
+            }
+        }
+        
+        function getUrgenciaColorHex(urgencia) {
+            switch(urgencia) {
+                case 'ALTA': return '#f56565';
+                case 'MÉDIA': return '#ed8936';
+                case 'BAIXA': return '#48bb78';
+                default: return '#718096';
+            }
+        }
+        
+        // Função de exportação Word
+        function exportarWord(lado) {
+            console.log('Exportando Word para lado:', lado);
+            mostrarToast(`Exportando Word da versão ${lado}...`, 'info');
+            window.location.href = `/comparacao-documentos/exportar/${comparacaoId}/${lado}`;
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Template moderno carregado');
+            
+            // Verificar marcações
+            const originalContent = document.getElementById('documento-original').innerHTML;
+            const modificadoContent = document.getElementById('documento-modificado').innerHTML;
+            
+            const temMarcacaoOriginal = originalContent.includes('background-color:#ffdddd');
+            const temMarcacaoModificado = modificadoContent.includes('background-color:#ddffdd');
+            
+            if (temMarcacaoOriginal || temMarcacaoModificado) {
+                mostrarToast('Marcações de diferenças carregadas com sucesso', 'success', '#1f744d');
+            } else {
+                mostrarToast('Documentos carregados - nenhuma diferença detectada', 'info');
+            }
+            
+            // Adicionar animação aos elementos com marcação
+            setTimeout(() => {
+                const marcacoes = document.querySelectorAll('span[style*="background-color:#ffdddd"], span[style*="background-color:#ddffdd"]');
+                marcacoes.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.animation = 'highlight 0.5s ease-in-out';
+                    }, index * 100);
+                });
+            }, 500);
+        });
+        
+        // Função para destacar trechos no documento usando âncora inicial
+        function destacarTrechoNoDocumento(texto, index) {
+            console.log('🎯 Localizando trecho:', texto.substring(0, 100));
+            
+            // Limpar destaques anteriores
+            document.querySelectorAll('[class*="highlight-trecho-"]').forEach(el => {
+                el.classList.forEach(className => {
+                    if (className.startsWith('highlight-trecho-')) {
+                        el.classList.remove(className);
+                    }
+                });
+            });
+            
+            // Remover estilos anteriores
+            document.querySelectorAll('[id*="style-highlight-trecho-"]').forEach(el => el.remove());
+            
+            const documentoOriginal = document.getElementById('documento-original');
+            const documentoModificado = document.getElementById('documento-modificado');
+            
+            // Extrair âncora inicial (primeiras 5-10 palavras significativas)
+            const ancoraTrecho = extrairAncoraInicial(texto);
+            console.log('🔍 Âncora extraída:', ancoraTrecho);
+            
+            // Função para extrair âncora inicial do trecho
+            function extrairAncoraInicial(textoCompleto) {
+                const texto = textoCompleto.trim();
+                const palavras = texto.split(/\s+/);
+                
+                // Filtrar palavras significativas (mais de 3 caracteres, não são artigos/preposições)
+                const palavrasComuns = ['que', 'para', 'com', 'por', 'uma', 'dos', 'das', 'nas', 'nos', 'ela', 'ele', 'seu', 'sua', 'isso', 'esta', 'este'];
+                const palavrasSignificativas = palavras.filter(p => 
+                    p.length > 3 && 
+                    !palavrasComuns.includes(p.toLowerCase()) &&
+                    !/^\d+$/.test(p)
+                ).slice(0, 8); // Primeiras 8 palavras significativas
+                
+                return palavrasSignificativas.join(' ');
+            }
+            
+            // Função melhorada para encontrar texto usando âncora inicial
+            function encontrarEDestacarTexto(container, textoCompleto, docIndex, ancora) {
+                if (!container) return false;
+                
+                console.log(`📍 Buscando âncora no documento ${docIndex === 0 ? 'original' : 'modificado'}:`, ancora);
+                
+                let encontrou = false;
+                
+                // Método 1: Busca por âncora inicial (mais preciso)
+                const palavrasAncora = ancora.toLowerCase().split(/\s+/).filter(p => p.length > 3);
+                console.log('🔎 Palavras-chave da âncora:', palavrasAncora);
+                
+                // Buscar elementos que contenham as palavras da âncora em sequência ou próximas
+                const walker = document.createTreeWalker(
+                    container,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                const candidatos = [];
+                let node;
+                while (node = walker.nextNode()) {
+                    const textoNode = node.textContent.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
+                    
+                    // Verificar se contém palavras da âncora em ordem ou próximas
+                    let ultimaPosicao = -1;
+                    let sequenciaEncontrada = 0;
+                    
+                    palavrasAncora.forEach(palavra => {
+                        const posicao = textoNode.indexOf(palavra, ultimaPosicao);
+                        if (posicao > ultimaPosicao) {
+                            sequenciaEncontrada++;
+                            ultimaPosicao = posicao;
+                        }
+                    });
+                    
+                    const percentualSequencia = (sequenciaEncontrada / palavrasAncora.length) * 100;
+                    
+                    if (percentualSequencia >= 60) {
+                        candidatos.push({
+                            elemento: node.parentElement,
+                            percentual: percentualSequencia,
+                            texto: textoNode.substring(0, 100)
+                        });
+                    }
+                }
+                
+                // Ordenar candidatos por percentual
+                candidatos.sort((a, b) => b.percentual - a.percentual);
+                
+                if (candidatos.length > 0) {
+                    encontrou = true;
+                    const melhorCandidato = candidatos[0];
+                    console.log(`✅ Âncora encontrada! ${melhorCandidato.percentual.toFixed(1)}% match:`, melhorCandidato.texto);
+                    destacarElemento(melhorCandidato.elemento, index, docIndex);
+                } else {
+                    console.log('🔍 Âncora não encontrada, tentando busca alternativa...');
+                }
+                
+                // Método 2: Busca por fragmentos do texto original (fallback)
+                if (!encontrou) {
+                    console.log('🔄 Tentando busca por fragmentos do texto...');
+                    const fragmentos = textoCompleto.trim().split(/[.!?;]/).filter(f => f.trim().length > 20);
+                    
+                    fragmentos.forEach((fragmento, fragIndex) => {
+                        if (encontrou) return;
+                        
+                        const fragmentoLimpo = fragmento.trim().toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
+                        const palavrasFragmento = fragmentoLimpo.split(' ').filter(p => p.length > 3).slice(0, 5);
+                        
+                        if (palavrasFragmento.length < 2) return;
+                        
+                        const elementos = container.querySelectorAll('*');
+                        elementos.forEach(el => {
+                            if (encontrou) return;
+                            
+                            const textoElemento = (el.textContent || '').toLowerCase().replace(/[^\w\s]/g, ' ');
+                            
+                            let matchesPalavras = 0;
+                            palavrasFragmento.forEach(palavra => {
+                                if (textoElemento.includes(palavra)) {
+                                    matchesPalavras++;
+                                }
+                            });
+                            
+                            const percentualMatch = (matchesPalavras / palavrasFragmento.length) * 100;
+                            
+                            if (percentualMatch >= 80 && textoElemento.length > 30) {
+                                encontrou = true;
+                                console.log(`✅ Fragmento encontrado! ${percentualMatch.toFixed(1)}% match`);
+                                destacarElemento(el, index, docIndex);
+                            }
+                        });
+                    });
+                }
+                
+                // Método 3: Busca por caracteres únicos (último recurso)
+                if (!encontrou && textoParaBuscar.length > 30) {
+                    console.log('Tentando busca por caracteres únicos...');
+                    const trechoUnico = textoParaBuscar.substring(0, 30).toLowerCase();
+                    
+                    const walker = document.createTreeWalker(
+                        container,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+                    
+                    let node;
+                    while (node = walker.nextNode()) {
+                        if (encontrou) break;
+                        
+                        const textoNode = node.textContent.toLowerCase();
+                        if (textoNode.includes(trechoUnico.substring(0, 15))) {
+                            encontrou = true;
+                            console.log('✓ Caracteres únicos encontrados!', node.parentElement);
+                            destacarElemento(node.parentElement, index, docIndex);
+                        }
+                    }
+                }
+                
+                return encontrou;
+            }
+            
+            function destacarElemento(elemento, index, docIndex) {
+                const highlightClass = `highlight-trecho-${index}`;
+                
+                // Criar CSS se não existir
+                if (!document.getElementById(`style-${highlightClass}`)) {
+                    const style = document.createElement('style');
+                    style.id = `style-${highlightClass}`;
+                    style.textContent = `
+                        .${highlightClass} {
+                            background: linear-gradient(135deg, #30648a, #2c5782) !important;
+                            color: white !important;
+                            padding: 4px 8px !important;
+                            border-radius: 5px !important;
+                            box-shadow: 0 0 15px rgba(48, 100, 138, 0.6) !important;
+                            animation: pulseHighlight 2s ease-in-out 4 !important;
+                            border: 2px solid #ffffff !important;
+                        }
+                        @keyframes pulseHighlight {
+                            0%, 100% { 
+                                transform: scale(1); 
+                                box-shadow: 0 0 15px rgba(53, 93, 105, 0.6); 
+                            }
+                            50% { 
+                                transform: scale(1.02); 
+                                box-shadow: 0 0 25px rgba(53, 93, 105, 0.8); 
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                
+                // Aplicar destaque
+                elemento.classList.add(highlightClass);
+                
+                // Scroll para o elemento
+                setTimeout(() => {
+                    elemento.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 100);
+                
+                // Remover highlight após 15 segundos
+                setTimeout(() => {
+                    elemento.classList.remove(highlightClass);
+                    setTimeout(() => {
+                        const styleEl = document.getElementById(`style-${highlightClass}`);
+                        if (styleEl) styleEl.remove();
+                    }, 500);
+                }, 15000);
+            }
+            
+            // Procurar nos dois documentos usando âncora
+            let encontrouOriginal = encontrarEDestacarTexto(documentoOriginal, texto, 0, ancoraTrecho);
+            let encontrouModificado = encontrarEDestacarTexto(documentoModificado, texto, 1, ancoraTrecho);
+            
+            // Feedback ao usuário
+            if (encontrouOriginal || encontrouModificado) {
+                const docs = [];
+                if (encontrouOriginal) docs.push('original');
+                if (encontrouModificado) docs.push('modificado');
+                mostrarToast(`Trecho ${index + 1} encontrado no documento ${docs.join(' e ')}`, 'success');
+                console.log('✅ Sucesso! Trecho localizado com sucesso');
+            } else {
+                mostrarToast(`Trecho ${index + 1} não encontrado. Verifique se o texto está visível.`, 'warning');
+                console.log('❌ Falha na localização');
+                console.log('Texto procurado:', texto.substring(0, 200));
+                
+                // Debug: mostrar conteúdo dos documentos
+                console.log('Conteúdo doc original (primeiras 200 chars):', documentoOriginal?.textContent?.substring(0, 200));
+                console.log('Conteúdo doc modificado (primeiras 200 chars):', documentoModificado?.textContent?.substring(0, 200));
+            }
+        }
+
+        // Adicionar CSS para animação de slideOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            .destaque-ia-analise {
+                background: linear-gradient(135deg, #30648a, #2c5782) !important;
+                color: white !important;
+                padding: 2px 4px !important;
+                border-radius: 3px !important;
+                box-shadow: 0 0 8px rgba(48, 100, 138, 0.4) !important;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

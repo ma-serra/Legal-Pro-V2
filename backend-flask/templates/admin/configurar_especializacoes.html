@@ -1,0 +1,265 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurar Especializações - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-white">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Configurar Níveis de Especialização
+                    </h1>
+                    <p class="text-muted mb-0">Gerencie os níveis de especialização dos agentes jurídicos</p>
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Distribuição Atual dos Níveis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-secondary rounded">
+                                <h4 class="text-primary mb-1">{{ stats.total }}</h4>
+                                <small class="text-muted">Total de Agentes</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-danger bg-opacity-25 rounded">
+                                <h4 class="text-danger mb-1">{{ stats.nivel_1 }}</h4>
+                                <small class="text-muted">Nível 1 - Iniciante</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-warning bg-opacity-25 rounded">
+                                <h4 class="text-warning mb-1">{{ stats.nivel_2 }}</h4>
+                                <small class="text-muted">Nível 2 - Básico</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-info bg-opacity-25 rounded">
+                                <h4 class="text-info mb-1">{{ stats.nivel_3 }}</h4>
+                                <small class="text-muted">Nível 3 - Intermediário</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-success bg-opacity-25 rounded">
+                                <h4 class="text-success mb-1">{{ stats.nivel_4 }}</h4>
+                                <small class="text-muted">Nível 4 - Expert</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="stat-box p-3 bg-primary bg-opacity-25 rounded">
+                                <h4 class="text-primary mb-1">{{ stats.nivel_5 }}</h4>
+                                <small class="text-muted">Nível 5 - Autoridade</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações em Massa -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>
+                        Ações em Massa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="d-flex align-items-end gap-3">
+                        {{ csrf_token() }}
+                        <div class="flex-grow-1">
+                            <label for="nivel_padrao" class="form-label text-light">Padronizar todos os agentes para o nível:</label>
+                            <select class="form-select bg-secondary text-light border-0" id="nivel_padrao" name="nivel_padrao" required>
+                                <option value="1">1 - Iniciante</option>
+                                <option value="2">2 - Básico</option>
+                                <option value="3">3 - Intermediário</option>
+                                <option value="4">4 - Expert</option>
+                                <option value="5" selected>5 - Autoridade (Recomendado)</option>
+                            </select>
+                        </div>
+                        <button type="submit" name="padronizar_nivel" class="btn btn-warning text-dark" onclick="return confirm('Tem certeza que deseja padronizar TODOS os agentes para este nível?')">
+                            <i class="fas fa-level-up-alt me-1"></i>
+                            Padronizar Todos
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Agentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Configuração Individual dos Agentes
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <form method="POST" id="form-individuais">
+                        {{ csrf_token() }}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped mb-0">
+                                <thead class="table-info">
+                                    <tr>
+                                        <th style="width: 40%">Agente</th>
+                                        <th style="width: 25%">Categoria</th>
+                                        <th style="width: 20%">Nível Atual</th>
+                                        <th style="width: 15%">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for agente, categoria in agentes %}
+                                    <tr id="row-{{ agente.id }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    <i class="fas fa-robot text-white"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0 text-light">{{ agente.nome }}</h6>
+                                                    <small class="text-muted">ID: {{ agente.id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ categoria.nome }}</span>
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm bg-secondary text-light border-0" 
+                                                    name="nivel_{{ agente.id }}" 
+                                                    id="nivel_{{ agente.id }}"
+                                                    onchange="markAsChanged({{ agente.id }})">
+                                                <option value="1" {% if agente.nivel_especializacao == 1 %}selected{% endif %}>1 - Iniciante</option>
+                                                <option value="2" {% if agente.nivel_especializacao == 2 %}selected{% endif %}>2 - Básico</option>
+                                                <option value="3" {% if agente.nivel_especializacao == 3 %}selected{% endif %}>3 - Intermediário</option>
+                                                <option value="4" {% if agente.nivel_especializacao == 4 %}selected{% endif %}>4 - Expert</option>
+                                                <option value="5" {% if agente.nivel_especializacao == 5 %}selected{% endif %}>5 - Autoridade</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin_agente_editar', agente_id=agente.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="Editar agente completo">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="card-footer bg-dark border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Total: {{ stats.total }} agentes configurados
+                                </small>
+                                <button type="submit" name="atualizar_individuais" class="btn btn-success" id="btn-salvar" disabled>
+                                    <i class="fas fa-save me-1"></i>
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+}
+
+.stat-box {
+    transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.changed-row {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+</style>
+
+<script>
+let changedRows = new Set();
+
+function markAsChanged(agentId) {
+    changedRows.add(agentId);
+    document.getElementById('row-' + agentId).classList.add('changed-row');
+    document.getElementById('btn-salvar').disabled = false;
+    
+    // Atualizar contador
+    updateChangedCounter();
+}
+
+function updateChangedCounter() {
+    const btnSalvar = document.getElementById('btn-salvar');
+    if (changedRows.size > 0) {
+        btnSalvar.innerHTML = `<i class="fas fa-save me-1"></i>Salvar ${changedRows.size} Alteração${changedRows.size > 1 ? 'ões' : ''}`;
+        btnSalvar.disabled = false;
+    } else {
+        btnSalvar.innerHTML = '<i class="fas fa-save me-1"></i>Salvar Alterações';
+        btnSalvar.disabled = true;
+    }
+}
+
+// Auto-refresh da página a cada 2 minutos para sincronizar dados
+setInterval(() => {
+    if (changedRows.size === 0) {
+        console.log('Auto-refresh: dados sincronizados');
+        // location.reload(); // Desabilitado para não perder alterações em andamento
+    }
+}, 120000);
+
+// Confirmação antes de sair da página com alterações não salvas
+window.addEventListener('beforeunload', function(e) {
+    if (changedRows.size > 0) {
+        e.preventDefault();
+        e.returnValue = 'Você tem alterações não salvas. Deseja realmente sair?';
+        return e.returnValue;
+    }
+});
+</script>
+{% endblock %}

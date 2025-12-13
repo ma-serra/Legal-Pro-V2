@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Sistema Preditivo Fintechs{% endblock %}
+
+{% block head %}
+<style>
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .fintech-header {
+    background: linear-gradient(135deg, #387ff5 0%, #4a8ff7 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .status-card {
+    background: linear-gradient(135deg, #3a5772 0%, #2c4356 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    color: white;
+  }
+  
+  .status-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(58, 87, 114, 0.3);
+  }
+  
+  .kpi-card {
+    background: linear-gradient(135deg, #336866 0%, #2a5553 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    color: white;
+  }
+  
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(51, 104, 102, 0.3);
+  }
+  
+  .feature-card {
+    background: linear-gradient(135deg, #575b5c 0%, #464a4b 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    color: white;
+    height: 100%;
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+  
+  .status-ok { background-color: #28a745; }
+  .status-warning { background-color: #ffc107; }
+  .status-error { background-color: #dc3545; }
+  
+  .btn-fintech {
+    background: linear-gradient(135deg, #387ff5 0%, #4a8ff7 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-fintech:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(56, 127, 245, 0.4);
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Fintechs -->
+<div class="fintech-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-12">
+        <h1 class="mb-2">
+          <i class="fas fa-chart-line me-3"></i>
+          Sistema Preditivo Fintechs
+        </h1>
+        <p class="mb-0 lead">
+          Análise inteligente de decisões judiciais com Machine Learning avançado
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  
+  <!-- Status do Sistema -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="text-white mb-3">
+        <i class="fas fa-server me-2"></i>Status do Sistema
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="card status-card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <span class="status-indicator {{ 'status-ok' if system_status.etl_completed else 'status-error' }}"></span>
+            Base de Dados
+          </h5>
+          <p class="card-text">
+            {{ "✅ ETL processado com sucesso" if system_status.etl_completed else "❌ Aguardando ETL" }}
+          </p>
+          {% if not system_status.etl_completed %}
+          <a href="/fintechs/etl" class="btn btn-fintech btn-sm">
+            <i class="fas fa-database me-2"></i>Executar ETL
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card status-card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <span class="status-indicator {{ 'status-ok' if system_status.models_trained else 'status-warning' }}"></span>
+            Modelos ML
+          </h5>
+          <p class="card-text">
+            {{ "✅ Treinados" if system_status.models_trained else "❌ Não Treinados" }}
+          </p>
+          <a href="/fintechs/models" class="btn btn-fintech btn-sm">
+            <i class="fas fa-robot me-2"></i>Gerenciar Modelos
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card status-card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <span class="status-indicator {{ 'status-ok' if system_status.dashboard_ready else 'status-error' }}"></span>
+            Dashboard
+          </h5>
+          <p class="card-text">
+            {{ "✅ Disponível" if system_status.dashboard_ready else "❌ Indisponível" }}
+          </p>
+          <a href="/fintechs/strategic-dashboards" class="btn btn-fintech btn-sm {{ 'disabled' if not system_status.dashboard_ready else '' }}">
+            <i class="fas fa-chart-line me-2"></i>Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- KPIs Principais -->
+  {% if kpis and kpis.total_casos > 0 %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="text-white mb-3">
+        <i class="fas fa-analytics me-2"></i>Métricas Principais
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="card kpi-card">
+        <div class="card-body text-center">
+          <h2 class="mb-1">{{ "{:,}".format(kpis.total_casos) }}</h2>
+          <h6 class="card-title">Total de Casos</h6>
+          <p class="card-text">
+            <i class="fas fa-gavel me-1"></i>
+            Decisões processadas
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card kpi-card">
+        <div class="card-body text-center">
+          <h2 class="mb-1">{{ "%.1f"|format(kpis.taxa_sucesso) }}%</h2>
+          <h6 class="card-title">Taxa de Sucesso</h6>
+          <p class="card-text">
+            <i class="fas fa-chart-line me-1"></i>
+            Performance geral
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+      <div class="card kpi-card">
+        <div class="card-body text-center">
+          <h2 class="mb-1">{{ kpis.periodo }}</h2>
+          <h6 class="card-title">Período dos Dados</h6>
+          <p class="card-text">
+            <i class="fas fa-calendar me-1"></i>
+            Cobertura temporal
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+    
+  <!-- Ferramentas de Gestão -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="text-white mb-3">
+        <i class="fas fa-tools me-2"></i>Gestão do Sistema
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-5">
+    <div class="col-md-6 col-lg-3 mb-4">
+      <div class="card feature-card">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-database fa-2x mb-3" style="color: #17a2b8;"></i>
+          <h5 class="card-title">ETL de Dados</h5>
+          <p class="card-text">Processamento dos dados Excel das Fintechs.</p>
+          <a href="/fintechs/etl" class="btn btn-outline-light">
+            <i class="fas fa-cogs me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+      <div class="card feature-card">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-robot fa-2x mb-3" style="color: #6c757d;"></i>
+          <h5 class="card-title">Modelos ML</h5>
+          <p class="card-text">Gerenciamento dos modelos preditivos.</p>
+          <a href="/fintechs/models" class="btn btn-outline-light">
+            <i class="fas fa-brain me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+      <div class="card feature-card">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-file-alt fa-2x mb-3" style="color: #6f42c1;"></i>
+          <h5 class="card-title">Relatórios</h5>
+          <p class="card-text">Exportação e análises detalhadas.</p>
+          <a href="/fintechs/reports" class="btn btn-outline-light">
+            <i class="fas fa-download me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+      <div class="card feature-card">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-code fa-2x mb-3" style="color: #e83e8c;"></i>
+          <h5 class="card-title">API</h5>
+          <p class="card-text">Endpoints para integração externa.</p>
+          <a href="/fintechs/api/docs" class="btn btn-outline-light">
+            <i class="fas fa-plug me-2"></i>Documentação
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+     
+  <!-- Dashboards Estratégicos -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card feature-card">
+        <div class="card-body text-center p-5">
+          <h2 class="card-title mb-3">
+            <i class="fas fa-chart-pie me-3" style="color: #387ff5;"></i>
+            Dashboards Estratégicos
+          </h2>
+          <p class="card-text lead mb-4">
+            Acesse os 9 dashboards especializados com visualizações avançadas em Plotly.js para análise preditiva detalhada e insights estratégicos.
+          </p>
+          <a href="/fintechs/strategic-dashboards" class="btn btn-fintech btn-lg">
+            <i class="fas fa-chart-bar me-2"></i>
+            Acessar Dashboards Estratégicos
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+// Auto-refresh de status a cada 30 segundos
+setInterval(function() {
+  fetch('/fintechs/api/kpis')
+    .then(response => response.json())
+    .then(data => {
+      if (data.overview) {
+        // Atualizar KPIs se necessário
+        console.log('KPIs atualizados:', data.overview);
+      }
+    })
+    .catch(error => console.log('Status check:', error));
+}, 30000);
+
+// Animações suaves para cards
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.feature-card, .status-card, .kpi-card');
+  
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'all 0.5s ease';
+      
+      setTimeout(() => {
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, 100);
+    }, index * 100);
+  });
+});
+</script>
+{% endblock %}

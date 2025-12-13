@@ -1,0 +1,723 @@
+{% extends "modelos_juridicos/base.html" %}
+
+{% block title %}Análise de Especificidade - Modelos Jurídicos{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Força cor branca para elementos específicos desta página */
+        .text-muted,
+        .text-secondary,
+        .card-text,
+        .card-body p,
+        .card-body small,
+        .alert p,
+        .alert h6,
+        .form-text,
+        label,
+        .form-label,
+        .form-check-label {
+            color: white !important;
+        }
+        
+        /* Garantir que títulos sejam brancos */
+        h1, h2, h3, h4, h5, h6 {
+            color: white !important;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h4><i class="fas fa-analytics"></i> Análise de Especificidade Jurídica</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Sobre a Análise - Dataset Completo 5.000 Casos</h6>
+                            <p class="mb-0">Execute 4 tipos diferentes de análise estatística para entender especificidade jurídica por contexto (foro/área).</p>
+                            <small><strong>📊 Base de dados:</strong> 5.000 casos reais de processos jurídicos brasileiros (SP, RJ, MG, RS)</small>
+                        </div>
+
+                        <form method="POST">
+                            <!-- Configuração Avançada dos Dados -->
+                            <div class="card mb-4 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6><i class="fas fa-database"></i> Configuração Avançada dos Dados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Filtros Principais -->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="foro_analise" class="form-label">Tribunal/Vara</label>
+                                            <select class="form-select" id="foro_analise" name="foro_analise">
+                                                <option value="">Todos os Tribunais</option>
+                                                <option value="SP" {% if request.form.foro_analise == 'SP' %}selected{% endif %}>TJSP - São Paulo</option>
+                                                <option value="RJ" {% if request.form.foro_analise == 'RJ' %}selected{% endif %}>TJRJ - Rio de Janeiro</option>
+                                                <option value="MG" {% if request.form.foro_analise == 'MG' %}selected{% endif %}>TJMG - Minas Gerais</option>
+                                                <option value="RS" {% if request.form.foro_analise == 'RS' %}selected{% endif %}>TJRS - Rio Grande do Sul</option>
+                                                <option value="DF" {% if request.form.foro_analise == 'DF' %}selected{% endif %}>TJDFT - Distrito Federal</option>
+                                                <option value="PR" {% if request.form.foro_analise == 'PR' %}selected{% endif %}>TJPR - Paraná</option>
+                                            </select>
+                                            <small class="form-text">Filtrar por tribunal específico</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="area_analise" class="form-label">Área Jurídica</label>
+                                            <select class="form-select" id="area_analise" name="area_analise">
+                                                <option value="">Todas as Áreas</option>
+                                                <option value="Direito Civil" {% if request.form.area_analise == 'Direito Civil' %}selected{% endif %}>Direito Civil</option>
+                                                <option value="Direito do Consumidor" {% if request.form.area_analise == 'Direito do Consumidor' %}selected{% endif %}>Direito do Consumidor</option>
+                                                <option value="Direito Penal" {% if request.form.area_analise == 'Direito Penal' %}selected{% endif %}>Direito Penal</option>
+                                                <option value="Direito Trabalhista" {% if request.form.area_analise == 'Direito Trabalhista' %}selected{% endif %}>Direito Trabalhista</option>
+                                                <option value="Direito Tributário" {% if request.form.area_analise == 'Direito Tributário' %}selected{% endif %}>Direito Tributário</option>
+                                                <option value="Direito Empresarial" {% if request.form.area_analise == 'Direito Empresarial' %}selected{% endif %}>Direito Empresarial</option>
+                                                <option value="Direito Imobiliário" {% if request.form.area_analise == 'Direito Imobiliário' %}selected{% endif %}>Direito Imobiliário</option>
+                                                <option value="Direito Previdenciário" {% if request.form.area_analise == 'Direito Previdenciário' %}selected{% endif %}>Direito Previdenciário</option>
+                                                <option value="Direito de Família" {% if request.form.area_analise == 'Direito de Família' %}selected{% endif %}>Direito de Família</option>
+                                                <option value="Direito Administrativo" {% if request.form.area_analise == 'Direito Administrativo' %}selected{% endif %}>Direito Administrativo</option>
+                                                <option value="Direito Agrário" {% if request.form.area_analise == 'Direito Agrário' %}selected{% endif %}>Direito Agrário</option>
+                                            </select>
+                                            <small class="form-text">Filtrar por área específica</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="tipo_acao" class="form-label">Tipo de Ação</label>
+                                            <select class="form-select" id="tipo_acao" name="tipo_acao">
+                                                <option value="">Todos os Tipos</option>
+                                                <option value="Civil" {% if request.form.tipo_acao == 'Civil' %}selected{% endif %}>Civil</option>
+                                                <option value="Trabalhista" {% if request.form.tipo_acao == 'Trabalhista' %}selected{% endif %}>Trabalhista</option>
+                                                <option value="Penal" {% if request.form.tipo_acao == 'Penal' %}selected{% endif %}>Penal</option>
+                                                <option value="Tributário" {% if request.form.tipo_acao == 'Tributário' %}selected{% endif %}>Tributário</option>
+                                                <option value="Administrativo" {% if request.form.tipo_acao == 'Administrativo' %}selected{% endif %}>Administrativo</option>
+                                                <option value="Agrário" {% if request.form.tipo_acao == 'Agrário' %}selected{% endif %}>Agrário</option>
+                                            </select>
+                                            <small class="form-text">Categoria da ação jurídica</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filtros Adicionais -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-3">
+                                            <label for="ano_processo" class="form-label">Ano do Processo</label>
+                                            <select class="form-select" id="ano_processo" name="ano_processo">
+                                                <option value="">Todos os Anos</option>
+                                                <option value="2024" {% if request.form.ano_processo == '2024' %}selected{% endif %}>2024</option>
+                                                <option value="2023" {% if request.form.ano_processo == '2023' %}selected{% endif %}>2023</option>
+                                                <option value="2022" {% if request.form.ano_processo == '2022' %}selected{% endif %}>2022</option>
+                                                <option value="2021" {% if request.form.ano_processo == '2021' %}selected{% endif %}>2021</option>
+                                                <option value="2020" {% if request.form.ano_processo == '2020' %}selected{% endif %}>2020</option>
+                                            </select>
+                                            <small class="form-text">Filtrar por ano específico</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="valor_causa_faixa" class="form-label">Valor da Causa</label>
+                                            <select class="form-select" id="valor_causa_faixa" name="valor_causa_faixa">
+                                                <option value="">Todos os Valores</option>
+                                                <option value="baixo" {% if request.form.valor_causa_faixa == 'baixo' %}selected{% endif %}>Até R$ 50.000</option>
+                                                <option value="medio" {% if request.form.valor_causa_faixa == 'medio' %}selected{% endif %}>R$ 50.001 - R$ 500.000</option>
+                                                <option value="alto" {% if request.form.valor_causa_faixa == 'alto' %}selected{% endif %}>Acima R$ 500.000</option>
+                                            </select>
+                                            <small class="form-text">Faixas automáticas de valor</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="complexidade_analise" class="form-label">Complexidade</label>
+                                            <select class="form-select" id="complexidade_analise" name="complexidade_analise">
+                                                <option value="">Todas as Complexidades</option>
+                                                <option value="Baixa" {% if request.form.complexidade_analise == 'Baixa' %}selected{% endif %}>Baixa</option>
+                                                <option value="Média" {% if request.form.complexidade_analise == 'Média' %}selected{% endif %}>Média</option>
+                                                <option value="Alta" {% if request.form.complexidade_analise == 'Alta' %}selected{% endif %}>Alta</option>
+                                            </select>
+                                            <small class="form-text">Nível de complexidade jurídica</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="tamanho_amostra" class="form-label">Tamanho da Amostra</label>
+                                            <select class="form-select" id="tamanho_amostra" name="tamanho_amostra">
+                                                <option value="500" {% if request.form.tamanho_amostra == '500' %}selected{% endif %}>500 casos</option>
+                                                <option value="1000" {% if request.form.tamanho_amostra == '1000' %}selected{% endif %}>1.000 casos</option>
+                                                <option value="1500" {% if request.form.tamanho_amostra == '1500' %}selected{% endif %}>1.500 casos</option>
+                                                <option value="2500" {% if request.form.tamanho_amostra == '2500' %}selected{% endif %}>2.500 casos</option>
+                                                <option value="5000" {% if request.form.tamanho_amostra == '5000' or not request.form.tamanho_amostra %}selected{% endif %}>5.000 casos (completo)</option>
+                                            </select>
+                                            <small class="form-text">Quantidade para análise</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Amostragem Inteligente -->
+                                    <div class="card mt-4 border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6><i class="fas fa-random"></i> Amostragem Inteligente</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="tipo_amostragem" value="random" id="random_sampling" {% if not request.form.tipo_amostragem or request.form.tipo_amostragem == 'random' %}checked{% endif %}>
+                                                        <label class="form-check-label" for="random_sampling">
+                                                            <strong>Random Sampling</strong><br>
+                                                            <small>Amostragem aleatória simples</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="tipo_amostragem" value="stratified" id="stratified_sampling" {% if request.form.tipo_amostragem == 'stratified' %}checked{% endif %}>
+                                                        <label class="form-check-label" for="stratified_sampling">
+                                                            <strong>Stratified Sampling</strong><br>
+                                                            <small>Balanceamento automático de classes</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="tipo_amostragem" value="bootstrap" id="bootstrap_sampling" {% if request.form.tipo_amostragem == 'bootstrap' %}checked{% endif %}>
+                                                        <label class="form-check-label" for="bootstrap_sampling">
+                                                            <strong>Bootstrap Sampling</strong><br>
+                                                            <small>Validação interna robusta</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Base Vetorial Qdrant -->
+                                    <div class="card mt-4 border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6><i class="fas fa-brain"></i> Base Vetorial Qdrant</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label for="collection_qdrant" class="form-label">Collection Qdrant</label>
+                                                    <select class="form-select" id="collection_qdrant" name="collection_qdrant">
+                                                        <option value="">Carregar collections...</option>
+                                                    </select>
+                                                    <small class="form-text">Embeddings jurisprudenciais para análise semântica</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="similaridade_threshold" class="form-label">Threshold Similaridade</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="similaridade_threshold" name="similaridade_threshold" 
+                                                               min="0.1" max="1.0" step="0.1" value="0.7" placeholder="0.7">
+                                                        <span class="input-group-text">score</span>
+                                                    </div>
+                                                    <small class="form-text">Nível mínimo de similaridade semântica</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Conexão PostgreSQL -->
+                                    <div class="card mt-4 border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6><i class="fas fa-database"></i> Fonte PostgreSQL</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label for="tabela_postgresql" class="form-label">Tabela PostgreSQL</label>
+                                                    <select class="form-select" id="tabela_postgresql" name="tabela_postgresql">
+                                                        <option value="">Carregar tabelas...</option>
+                                                    </select>
+                                                    <small class="form-text">Fonte de dados principal</small>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="colunas_adicionais" class="form-label">Colunas Adicionais</label>
+                                                    <select class="form-select" id="colunas_adicionais" name="colunas_adicionais" multiple>
+                                                        <option value="">Selecione a tabela primeiro</option>
+                                                    </select>
+                                                    <small class="form-text">Variáveis extras para análise</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seleção de Modelos Estatísticos -->
+                            <div class="card mb-4 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6><i class="fas fa-cogs"></i> Modelos Estatísticos Avançados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5><i class="fas fa-chart-line"></i> Modelos Principais (Mantidos)</h5>
+                                    <p class="text-muted">Modelos já testados e validados:</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="beta" id="beta" checked>
+                                                <label class="form-check-label" for="beta">
+                                                    <strong>Beta Regression</strong><br>
+                                                    <small>Análise de proporções e probabilidades</small>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="binomial" id="binomial" checked>
+                                                <label class="form-check-label" for="binomial">
+                                                    <strong>GLM Binomial</strong><br>
+                                                    <small>Análise binária (sucesso/fracasso)</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="bayes" id="bayes" checked>
+                                                <label class="form-check-label" for="bayes">
+                                                    <strong>Bayesian Bivariate</strong><br>
+                                                    <small>Análise bivariada com inferência bayesiana</small>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="scores" id="scores" checked>
+                                                <label class="form-check-label" for="scores">
+                                                    <strong>Generative Model via Scores</strong><br>
+                                                    <small>Modelo generativo baseado em pontuações</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <h5><i class="fas fa-plus-circle"></i> Novos Modelos Avançados</h5>
+                                    <p class="text-muted">Modelos experimentais de última geração:</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="survival" id="survival">
+                                                <label class="form-check-label" for="survival">
+                                                    <strong>Survival Analysis (Cox/Kaplan-Meier)</strong><br>
+                                                    <small>Tempo até encerramento do processo</small>
+                                                    <span class="badge bg-warning text-dark ms-2">Novo</span>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="multinomial" id="multinomial">
+                                                <label class="form-check-label" for="multinomial">
+                                                    <strong>Multinomial Logistic Regression</strong><br>
+                                                    <small>Múltiplas classes (instâncias de recurso)</small>
+                                                    <span class="badge bg-warning text-dark ms-2">Novo</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="mixed_effects" id="mixed_effects">
+                                                <label class="form-check-label" for="mixed_effects">
+                                                    <strong>Mixed-Effects Models</strong><br>
+                                                    <small>Efeitos fixos (foro) e aleatórios (juiz/vara)</small>
+                                                    <span class="badge bg-warning text-dark ms-2">Novo</span>
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="modelos" 
+                                                       value="hierarchical_bayes" id="hierarchical_bayes">
+                                                <label class="form-check-label" for="hierarchical_bayes">
+                                                    <strong>Hierarchical Bayesian Models</strong><br>
+                                                    <small>Variações entre regiões/áreas jurídicas</small>
+                                                    <span class="badge bg-warning text-dark ms-2">Novo</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configurações Avançadas do Treinamento -->
+                            <div class="card mb-4 border-dark">
+                                <div class="card-header bg-dark text-white">
+                                    <h6><i class="fas fa-sliders-h"></i> Configurações Avançadas do Treinamento</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="validacao_cruzada" class="form-label">Validação Cruzada</label>
+                                            <select class="form-select" id="validacao_cruzada" name="validacao_cruzada">
+                                                <option value="kfold_5" {% if request.form.validacao_cruzada == 'kfold_5' or not request.form.validacao_cruzada %}selected{% endif %}>K-Fold (k=5)</option>
+                                                <option value="kfold_10" {% if request.form.validacao_cruzada == 'kfold_10' %}selected{% endif %}>K-Fold (k=10)</option>
+                                                <option value="stratified_5" {% if request.form.validacao_cruzada == 'stratified_5' %}selected{% endif %}>Stratified K-Fold (k=5)</option>
+                                                <option value="stratified_10" {% if request.form.validacao_cruzada == 'stratified_10' %}selected{% endif %}>Stratified K-Fold (k=10)</option>
+                                            </select>
+                                            <small class="form-text">Método de validação</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="seed_reproducibilidade" class="form-label">Seed Fixo</label>
+                                            <input type="number" class="form-control" id="seed_reproducibilidade" 
+                                                   name="seed_reproducibilidade" value="42" min="1" max="9999">
+                                            <small class="form-text">Para reprodutibilidade</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="threshold_probabilidade" class="form-label">Threshold</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="threshold_probabilidade" 
+                                                       name="threshold_probabilidade" value="0.5" min="0.1" max="0.9" step="0.1">
+                                                <span class="input-group-text">prob</span>
+                                            </div>
+                                            <small class="form-text">Ponto de corte da probabilidade</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="regularizacao" class="form-label">Regularização</label>
+                                            <select class="form-select" id="regularizacao" name="regularizacao">
+                                                <option value="none" {% if request.form.regularizacao == 'none' or not request.form.regularizacao %}selected{% endif %}>Nenhuma</option>
+                                                <option value="l1" {% if request.form.regularizacao == 'l1' %}selected{% endif %}>L1 (Lasso)</option>
+                                                <option value="l2" {% if request.form.regularizacao == 'l2' %}selected{% endif %}>L2 (Ridge)</option>
+                                                <option value="elastic_net" {% if request.form.regularizacao == 'elastic_net' %}selected{% endif %}>Elastic Net</option>
+                                            </select>
+                                            <small class="form-text">Técnica de regularização</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="otimizacao_hiperparametros" 
+                                                       name="otimizacao_hiperparametros" {% if request.form.otimizacao_hiperparametros %}checked{% endif %}>
+                                                <label class="form-check-label" for="otimizacao_hiperparametros">
+                                                    <strong>Otimização de Hiperparâmetros</strong><br>
+                                                    <small>Grid Search / Bayesian Optimization</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="preprocessamento_automatico" 
+                                                       name="preprocessamento_automatico" {% if request.form.preprocessamento_automatico or not request.form.preprocessamento_automatico %}checked{% endif %}>
+                                                <label class="form-check-label" for="preprocessamento_automatico">
+                                                    <strong>Pré-processamento Automático</strong><br>
+                                                    <small>Normalização + Balanceamento (SMOTE)</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle"></i> Informações Importantes</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="fas fa-database"></i> Base de dados: 5.000 casos reais brasileiros</li>
+                                    <li><i class="fas fa-map-marker-alt"></i> Foros disponíveis: SP, RJ, MG, RS</li>
+                                    <li><i class="fas fa-clock"></i> Tempo estimado: 30-60 segundos por modelo</li>
+                                    <li><i class="fas fa-chart-line"></i> Resultados incluem métricas de performance</li>
+                                </ul>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning w-100 mt-3">
+                                <i class="fas fa-play"></i> Executar Análises Selecionadas
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Explicações Estratégicas em Grade 2x2 -->
+                <div class="row mb-4">
+                    <!-- Beta Regression -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-percentage"></i> <strong>Beta Regression</strong></h6>
+                                <small>Análise de proporções e probabilidades</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Quantifica com precisão as chances de sucesso em diferentes contextos jurídicos, permitindo decisões baseadas em probabilidades reais.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Análise de Portfolio:</strong> Identifica tipos de processo com maior probabilidade de êxito em foros específicos</li>
+                                    <li><strong>Precificação Inteligente:</strong> Ajusta honorários baseado na probabilidade real de sucesso</li>
+                                    <li><strong>Alocação de Recursos:</strong> Prioriza casos com maior potencial de retorno</li>
+                                    <li><strong>Negociação Estratégica:</strong> Fundamenta propostas com dados probabilísticos</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Análise estatística avançada vs experiência subjetiva para maximizar resultados e minimizar riscos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GLM Binomial -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-balance-scale"></i> <strong>GLM Binomial</strong></h6>
+                                <small>Análise binária (sucesso/fracasso)</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Prediz com alta precisão se um caso específico será ganho ou perdido, eliminando incertezas e otimizando estratégias processuais.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Triagem de Casos:</strong> Aceita apenas processos com alta probabilidade de vitória</li>
+                                    <li><strong>Estratégia Processual:</strong> Define se vale investir em recursos ou buscar acordo</li>
+                                    <li><strong>Gestão de Expectativas:</strong> Informa clientes sobre chances reais</li>
+                                    <li><strong>Planejamento Financeiro:</strong> Projeta receitas futuras com previsões fundamentadas</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Transforma incertezas jurídicas em decisões objetivas com gestão de risco superior.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bayesian Bivariate -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-network-wired"></i> <strong>Bayesian Bivariate</strong></h6>
+                                <small>Análise bivariada com inferência bayesiana</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Analisa simultaneamente múltiplas variáveis e suas interações, revelando padrões ocultos que influenciam resultados jurídicos.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Análise Multifatorial:</strong> Compreende relações entre foro, área jurídica, valor da causa</li>
+                                    <li><strong>Estratégia Personalizada:</strong> Abordagens específicas considerando múltiplos fatores</li>
+                                    <li><strong>Identificação de Sinergias:</strong> Combinações que potencializam chances de sucesso</li>
+                                    <li><strong>Atualização Contínua:</strong> Refina previsões conforme novos dados emergem</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Visão sistêmica e holística que advogados tradicionais não conseguem alcançar.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generative Model via Scores -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-robot"></i> <strong>Generative Model via Scores</strong></h6>
+                                <small>Modelo generativo baseado em pontuações</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Simula cenários futuros e gera insights preditivos avançados, permitindo antecipação de tendências e preparação para diferentes desfechos.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Simulação de Cenários:</strong> Modela estratégias e prevê impactos antes da implementação</li>
+                                    <li><strong>Benchmarking Inteligente:</strong> Compara performance com padrões estatísticos ideais</li>
+                                    <li><strong>Detecção de Tendências:</strong> Identifica mudanças nos padrões jurisprudenciais</li>
+                                    <li><strong>Otimização Contínua:</strong> Sugere ajustes estratégicos baseados em análise preditiva</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Advocacia data-driven de vanguarda com sofisticação incomparável no mercado.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Resultado Final -->
+                <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="text-center">
+                            <h5><i class="fas fa-trophy"></i> <strong>Resultado Final: Advocacia Estratégica Baseada em Dados</strong></h5>
+                            <p class="mb-0">A combinação dessas quatro metodologias transforma a prática jurídica tradicional em uma operação estratégica altamente sofisticada, onde cada decisão é fundamentada em análise estatística rigorosa, maximizando resultados para clientes e otimizando a performance do escritório.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resultados (aparecem apenas quando há análise) -->
+        {% if resultados %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-chart-bar"></i> Resultados da Análise</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for modelo, resultado in resultados.items() %}
+                        <div class="alert alert-secondary mb-3">
+                            <h6><i class="fas fa-calculator"></i> {{ modelo|replace('_', ' ')|title }}</h6>
+                            <p>{{ resultado }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ==================== INICIALIZAÇÃO ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎯 Inicializando Análise de Especificidade Avançada...');
+        
+        // Carregar dados das bases
+        carregarTabelasPostgreSQL();
+        carregarCollectionsQdrant();
+        
+        // Event listeners
+        document.getElementById('tabela_postgresql').addEventListener('change', carregarColunasTabela);
+        
+        console.log('✅ Sistema inicializado com sucesso!');
+    });
+
+    // ==================== FUNÇÕES POSTGRESQL ====================
+    function carregarTabelasPostgreSQL() {
+        fetch('/api/database/tabelas')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('tabela_postgresql');
+                select.innerHTML = '<option value="">Selecione uma tabela...</option>';
+                
+                data.tabelas.forEach(tabela => {
+                    const option = document.createElement('option');
+                    option.value = tabela;
+                    option.textContent = tabela;
+                    select.appendChild(option);
+                });
+                
+                console.log(`✅ ${data.tabelas.length} tabelas PostgreSQL carregadas`);
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar tabelas PostgreSQL:', error);
+                document.getElementById('tabela_postgresql').innerHTML = 
+                    '<option value="">Erro ao carregar tabelas</option>';
+            });
+    }
+
+    function carregarColunasTabela() {
+        const tabela = document.getElementById('tabela_postgresql').value;
+        const selectColunas = document.getElementById('colunas_adicionais');
+        
+        if (!tabela) {
+            selectColunas.innerHTML = '<option value="">Selecione a tabela primeiro</option>';
+            return;
+        }
+        
+        selectColunas.innerHTML = '<option value="">Carregando colunas...</option>';
+        
+        fetch(`/api/database/tabelas/${tabela}/colunas`)
+            .then(response => response.json())
+            .then(data => {
+                selectColunas.innerHTML = '';
+                
+                data.colunas.forEach(coluna => {
+                    const option = document.createElement('option');
+                    option.value = `${tabela}.${coluna.nome}`;
+                    option.textContent = `${coluna.nome} (${coluna.tipo})`;
+                    selectColunas.appendChild(option);
+                });
+                
+                console.log(`✅ ${data.colunas.length} colunas carregadas da tabela ${tabela}`);
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar colunas:', error);
+                selectColunas.innerHTML = '<option value="">Erro ao carregar colunas</option>';
+            });
+    }
+
+    // ==================== FUNÇÕES QDRANT ====================
+    function carregarCollectionsQdrant() {
+        fetch('/api/qdrant/collections')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('collection_qdrant');
+                select.innerHTML = '<option value="">Selecione uma collection...</option>';
+                
+                data.collections.forEach(collection => {
+                    const option = document.createElement('option');
+                    option.value = collection.name;
+                    option.textContent = `${collection.name} (${collection.vectors_count || 0} vetores)`;
+                    select.appendChild(option);
+                });
+                
+                console.log(`✅ ${data.collections.length} collections Qdrant carregadas`);
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar collections Qdrant:', error);
+                document.getElementById('collection_qdrant').innerHTML = 
+                    '<option value="">Erro ao carregar collections</option>';
+            });
+    }
+
+    // ==================== VALIDAÇÃO DE FORMULÁRIO ====================
+    function validarFormulario() {
+        const modelosSelecionados = document.querySelectorAll('input[name="modelos"]:checked');
+        
+        if (modelosSelecionados.length === 0) {
+            alert('⚠️ Selecione pelo menos um modelo estatístico para executar a análise.');
+            return false;
+        }
+        
+        // Validar configurações avançadas
+        const threshold = parseFloat(document.getElementById('threshold_probabilidade').value);
+        if (threshold < 0.1 || threshold > 0.9) {
+            alert('⚠️ O threshold deve estar entre 0.1 e 0.9');
+            return false;
+        }
+        
+        const seed = parseInt(document.getElementById('seed_reproducibilidade').value);
+        if (seed < 1 || seed > 9999) {
+            alert('⚠️ O seed deve estar entre 1 e 9999');
+            return false;
+        }
+        
+        console.log(`✅ Formulário validado. ${modelosSelecionados.length} modelos selecionados`);
+        return true;
+    }
+
+    // Event listener para validação do formulário
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!validarFormulario()) {
+            e.preventDefault();
+        }
+    });
+
+    // ==================== INDICADORES VISUAIS ====================
+    function atualizarIndicadores() {
+        const modelosSelecionados = document.querySelectorAll('input[name="modelos"]:checked').length;
+        const tabela = document.getElementById('tabela_postgresql').value;
+        const collection = document.getElementById('collection_qdrant').value;
+        
+        // Atualizar texto do botão com contadores
+        const botaoExecutar = document.querySelector('button[type="submit"]');
+        if (botaoExecutar) {
+            botaoExecutar.innerHTML = `<i class="fas fa-play"></i> Executar Análises (${modelosSelecionados} modelos)`;
+        }
+        
+        console.log(`📊 Status: ${modelosSelecionados} modelos, Tabela: ${tabela || 'nenhuma'}, Collection: ${collection || 'nenhuma'}`);
+    }
+
+    // Event listeners para atualizar indicadores
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'modelos' || e.target.id === 'tabela_postgresql' || e.target.id === 'collection_qdrant') {
+            atualizarIndicadores();
+        }
+    });
+
+    // Atualizar indicadores iniciais
+    setTimeout(atualizarIndicadores, 1000);
+</script>
+{% endblock %}

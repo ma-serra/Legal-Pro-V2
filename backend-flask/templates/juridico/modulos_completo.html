@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+
+{% block title %}Módulos Jurídicos Especializados{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/unique-agent-icons.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/juridico-icons-standard.css') }}" rel="stylesheet">
+<style>
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.assistant-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.assistant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.category-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border-radius: 12px 12px 0 0;
+}
+
+.btn-utilizar {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-utilizar:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header Principal -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0" style="color: white;">
+                        <i class="fas fa-layer-group me-2"></i>
+                        Módulos Jurídicos Especializados
+                    </h1>
+                    <p class="lead mb-0" style="color: rgba(255,255,255,0.8);">
+                        Sistema completo com 140 assistentes especializados organizados por área
+                    </p>
+                </div>
+            </div>
+
+            <!-- Estatísticas Gerais -->
+            {% if estatisticas %}
+            <div class="row mb-5">
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white border-0">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">{{ estatisticas.total_assistentes }}</h3>
+                            <small>Assistentes Ativos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white border-0">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">{{ estatisticas.total_categorias }}</h3>
+                            <small>Categorias Jurídicas</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-warning text-white border-0">
+                        <div class="card-body text-center">
+                            <h3 class="mb-0">{{ estatisticas.total_templates }}</h3>
+                            <small>Templates Disponíveis</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Grid de Categorias com Assistentes -->
+            {% if categorias_assistentes %}
+                {% for categoria in categorias_assistentes %}
+                <div class="mb-5">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header category-header text-white">
+                            <h4 class="mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                {{ categoria.nome }}
+                                <span class="badge bg-light text-primary ms-2">{{ categoria.total }} assistentes</span>
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row">
+                                {% for assistente in categoria.assistentes %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card assistant-card h-100 bg-light border-0">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary fw-bold">{{ assistente.nome }}</h6>
+                                            <p class="card-text small text-muted mb-3">{{ assistente.descricao }}</p>
+                                            <div class="d-grid">
+                                                <a href="/validacao-multi-agente-expandida?agente={{ assistente.nome|urlencode }}" 
+                                                   class="btn btn-utilizar text-white">
+                                                    <i class="fas fa-play me-1"></i>
+                                                    Utilizar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-5">
+                <div class="card bg-white border-0 shadow-lg">
+                    <div class="card-body py-5">
+                        <i class="fas fa-layer-group fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Carregando assistentes...</h4>
+                        <p class="text-muted">O sistema está inicializando os assistentes jurídicos especializados.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

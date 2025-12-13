@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+
+{% block title %}Testar Template - Sistema Multi-Agente{% endblock %}
+
+{% block head %}
+<style>
+    .template-viewer {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        min-height: 100px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    
+    .prompt-section {
+        border-left: 4px solid #17a2b8;
+        padding-left: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .result-section {
+        border-left: 4px solid #1f5981;
+        padding-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0 text-[#ffffff] bg-[#ffffff00]">Testar Template</h1>
+        <a href="{{ url_for('listar_templates') }}" class="btn btn-secondary text-[#ffffff] bg-[#ffffff00]">
+            <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-[#ffffff00]">
+                <div class="card-header bg-[#ffffff00]">
+                    <h5 class="card-title mb-0 bg-[#ffffff00]">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ template_nome }}
+                        <span class="badge bg-info ms-2">{{ template_categoria }}</span>
+                    </h5>
+                </div>
+                <div class="card-body bg-[#ffffff00]">
+                    <p class="lead bg-[#ffffff00]">{{ template_descricao }}</p>
+                    
+                    <div class="row bg-[#ffffff00]">
+                        <div class="col-md-6 bg-[#ffffff00]">
+                            <p><strong>Tipo:</strong> {{ template_tipo }}</p>
+                        </div>
+                        <div class="col-md-6 bg-[#ffffff00]">
+                            <p><strong>ID:</strong> <code>{{ template_id }}</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <form method="post">
+                <div class="card mb-4 bg-[#ffffff00]">
+                    <div class="card-header bg-[#ffffff00]">
+                        <h5 class="card-title mb-0 bg-[#ffffff00]"><i class="fas fa-vial me-2"></i>Teste do Template</h5>
+                    </div>
+                    <div class="card-body bg-[#ffffff00]">
+                        <div class="mb-3 bg-[#ffffff00]">
+                            <label for="texto_entrada" class="form-label bg-[#ffffff00]">Texto de Entrada</label>
+                            <textarea class="form-control" id="texto_entrada" name="texto_entrada" rows="5" placeholder="Digite um texto para testar o template..." required></textarea>
+                            <div class="form-text bg-[#ffffff00]">Este texto será processado pelo template para gerar uma saída.</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary bg-[#ffffff00]">
+                            <i class="fas fa-play-circle me-1"></i> Processar
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            {% if resultado %}
+            <div class="card mb-4 dark-theme">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Resultado do Processamento
+                        {% if resultado.qualidade %}
+                        <span class="badge bg-light text-dark ms-2">
+                            Qualidade: 
+                            {% for i in range(resultado.qualidade) %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - resultado.qualidade) %}
+                            <i class="far fa-star text-muted"></i>
+                            {% endfor %}
+                        </span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Abas para navegação entre análise e prompts -->
+                    <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="resultado-tab" data-bs-toggle="tab" data-bs-target="#resultado-content" type="button" role="tab" aria-controls="resultado-content" aria-selected="true">
+                                <i class="fas fa-file-alt me-1"></i> Resultado
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analise-tab" data-bs-toggle="tab" data-bs-target="#analise-content" type="button" role="tab" aria-controls="analise-content" aria-selected="false">
+                                <i class="fas fa-chart-bar me-1"></i> Análise
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="prompts-tab" data-bs-toggle="tab" data-bs-target="#prompts-content" type="button" role="tab" aria-controls="prompts-content" aria-selected="false">
+                                <i class="fas fa-code me-1"></i> Prompts
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- Conteúdo das abas -->
+                    <div class="tab-content" id="resultTabsContent">
+                        <!-- Aba de Resultado -->
+                        <div class="tab-pane fade show active" id="resultado-content" role="tabpanel" aria-labelledby="resultado-tab">
+                            <div class="mb-3">
+                                <h6 class="border-bottom pb-2">Entrada Processada</h6>
+                                <div class="template-viewer bg-light">{{ resultado.texto_entrada }}</div>
+                            </div>
+                            
+                            <div class="result-section">
+                                <h6 class="border-bottom pb-2">Resposta do Template</h6>
+                                <div class="template-viewer">{{ resultado.resposta }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Aba de Análise -->
+                        <div class="tab-pane fade" id="analise-content" role="tabpanel" aria-labelledby="analise-tab">
+                            <div class="mb-4">
+                                <h6 class="border-bottom pb-2">Checklist de Qualidade</h6>
+                                <div class="template-viewer">{{ resultado.analise_prompt }}</div>
+                            </div>
+                            
+                            {% if resultado.sugestoes %}
+                            <div class="mb-3">
+                                <h6 class="border-bottom pb-2">Sugestões de Melhoria</h6>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-lightbulb me-2"></i> Considere implementar as seguintes melhorias:
+                                    <ul class="mb-0 mt-2">
+                                        {% for sugestao in resultado.sugestoes %}
+                                        <li>{{ sugestao }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> Este template atende a todos os critérios de qualidade!
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Informações do Template</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Categoria:</strong> {{ resultado.categoria }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Nome:</strong> {{ template_nome }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Aba de Prompts -->
+                        <div class="tab-pane fade" id="prompts-content" role="tabpanel" aria-labelledby="prompts-tab">
+                            <div class="mb-3">
+                                <h6 class="border-bottom pb-2">Prompt do Sistema</h6>
+                                <div class="template-viewer resultado-processado">{{ resultado.sistema }}</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="border-bottom pb-2">Prompt do Usuário (Original)</h6>
+                                <div class="template-viewer resultado-processado">{{ template_prompt_usuario }}</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="border-bottom pb-2">Prompt do Usuário (Com variáveis substituídas)</h6>
+                                <div class="template-viewer resultado-processado">{{ resultado.usuario }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="alert alert-info mb-0 dark-theme">
+                        <i class="fas fa-info-circle me-2"></i> Esta é uma simulação de como o template seria processado. 
+                        A resposta real pode variar de acordo com o modelo de IA utilizado.
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

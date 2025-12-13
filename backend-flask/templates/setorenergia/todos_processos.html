@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todos os Processos | Energia Smart Legal Analytics</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background-color: #003366;
+            padding: 1.5rem 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            max-width: 120px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.1);
+            color: #ffffff;
+            border-left-color: #0089CF;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+            border-left-color: #0089CF;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #0089CF 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .top-bar h2 {
+            color: #ffffff;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .top-bar p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0.5rem 0 0 0;
+        }
+        
+        .kpi-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #0089CF;
+        }
+        
+        .kpi-card h6 {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .kpi-card h2 {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .filter-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .table-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .table {
+            color: #000000 !important;
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background-color: #ffffff;
+            color: #000000 !important;
+            border-bottom: 2px solid #0089CF;
+            padding: 1rem;
+        }
+        
+        .table tbody td {
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem;
+            color: #000000 !important;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000000;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-info {
+            background-color: #0089CF;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff;
+        }
+        
+        .btn-primary:hover {
+            background-color: #006ba8;
+            border-color: #006ba8;
+        }
+        
+        .dataTables_wrapper {
+            color: #ffffff;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input,
+        .dataTables_wrapper .dataTables_length select {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #3a3a3a;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #ffffff;
+        }
+        
+        .page-link {
+            background-color: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .page-link:hover {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff;
+        }
+        
+        .page-item.active .page-link {
+            background-color: #0089CF;
+            border-color: #0089CF;
+        }
+        
+        h1, h2, h3, h4, h5, h6, p, span, div, label {
+            color: #ffffff !important;
+        }
+        
+        .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        /* Estilos específicos para a tabela de processos */
+        .table-card h5 {
+            color: #000000 !important;
+        }
+        
+        .table-card .dataTables_wrapper {
+            color: #000000 !important;
+        }
+        
+        .table-card .dataTables_wrapper .dataTables_filter input,
+        .table-card .dataTables_wrapper .dataTables_length select {
+            background-color: #ffffff;
+            color: #000000 !important;
+            border: 1px solid #dee2e6;
+        }
+        
+        .table-card .dataTables_wrapper .dataTables_info,
+        .table-card .dataTables_wrapper .dataTables_paginate,
+        .table-card .dataTables_wrapper label {
+            color: #000000 !important;
+        }
+        
+        .table-card .page-link {
+            background-color: #ffffff;
+            border-color: #dee2e6;
+            color: #000000 !important;
+        }
+        
+        .table-card .page-link:hover {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff !important;
+        }
+        
+        .table-card .page-item.active .page-link {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff !important;
+        }
+        
+        /* Tabela com scroll para todos os processos */
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        /* Botões Energia */
+        .btn-energia-green {
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-energia-green:hover {
+            background-color: #218838;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item active">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/todos-processos/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-list me-2"></i>Todos os Processos Setor de Energia</h2>
+            <p>Visualização completa e gerenciamento de {{ "{:,}".format(stats['total_processos']).replace(',', '.') }} processos jurídicos</p>
+        </div>
+        
+        <!-- KPIs -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <h6 class="text-muted"><i class="fas fa-folder me-2"></i>Total de Processos</h6>
+                    <h2 id="kpi-total">{{ "{:,}".format(stats['total_processos']).replace(',', '.') }}</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #28a745;">
+                    <h6 class="text-muted"><i class="fas fa-check-circle me-2"></i>Favoráveis</h6>
+                    <h2 id="kpi-favoraveis">-</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #dc3545;">
+                    <h6 class="text-muted"><i class="fas fa-times-circle me-2"></i>Desfavoráveis</h6>
+                    <h2 id="kpi-desfavoraveis">-</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #ffc107;">
+                    <h6 class="text-muted"><i class="fas fa-dollar-sign me-2"></i>Valor Total</h6>
+                    <h2 id="kpi-valor">R$ {{ "{:,.1f}M".format(stats['valor_total_risco']/1000000).replace(',', 'X').replace('.', ',').replace('X', '.') }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="filter-card">
+            <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filtros Avançados</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Buscar Número do Processo</label>
+                    <input type="text" class="form-control" id="buscaNumeroProcesso" placeholder="Digite o número do processo">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Buscar Causa Raiz</label>
+                    <input type="text" class="form-control" id="buscaCausaRaiz" placeholder="Digite a causa raiz">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Comarca</label>
+                    <select class="form-select" id="filtroComarca">
+                        <option value="">Todas</option>
+                        <option value="porto-alegre">Porto Alegre</option>
+                        <option value="caxias-do-sul">Caxias do Sul</option>
+                        <option value="pelotas">Pelotas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filtroStatus">
+                        <option value="">Todos</option>
+                        <option value="ativo">Ativo</option>
+                        <option value="arquivado">Arquivado</option>
+                        <option value="sobrestado">Sobrestado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Decisão</label>
+                    <select class="form-select" id="filtroDecisao">
+                        <option value="">Todas</option>
+                        <option value="favoravel">Favorável</option>
+                        <option value="desfavoravel">Desfavorável</option>
+                        <option value="parcial">Parcialmente Desfavorável</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Período</label>
+                    <select class="form-select" id="filtroPeriodo">
+                        <option value="">Todos</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Processos -->
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Lista Completa de Processos</h5>
+                <a href="/setorenergia/api/export/todos-processos/excel" class="btn btn-energia-green">
+                    <i class="fas fa-file-excel me-2"></i>Exportar para Excel
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="processosTable">
+                    <thead>
+                        <tr>
+                            <th>Número do Processo</th>
+                            <th>Comarca</th>
+                            <th>Causa Raiz</th>
+                            <th>Valor (R$)</th>
+                            <th>Decisão</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dados carregados dinamicamente via API -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        // Carregamento dinâmico de dados via API
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carregar dados da API
+            fetch('/setorenergia/api/processos')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const processos = data.data;
+                        console.log(`✅ ${processos.length} processos carregados da API`);
+                        
+                        // Calcular KPIs
+                        const favoraveis = processos.filter(p => p['Decisão (1ª Instância)'] === 'Favorável').length;
+                        const desfavoraveis = processos.filter(p => p['Decisão (1ª Instância)'] === 'Desfavorável').length;
+                        
+                        // Atualizar KPIs
+                        document.getElementById('kpi-favoraveis').textContent = favoraveis.toLocaleString('pt-BR');
+                        document.getElementById('kpi-desfavoraveis').textContent = desfavoraveis.toLocaleString('pt-BR');
+                        
+                        // Função para formatar data no padrão brasileiro
+                        function formatarData(dataStr) {
+                            if (!dataStr) return '-';
+                            const data = new Date(dataStr + 'T00:00:00');
+                            return data.toLocaleDateString('pt-BR');
+                        }
+                        
+                        // Popular tabela
+                        const tbody = document.querySelector('#processosTable tbody');
+                        processos.forEach(processo => {
+                            const tr = document.createElement('tr');
+                            
+                            // Formatar decisão
+                            let decisaoBadge = '';
+                            const decisao = processo['Decisão (1ª Instância)'];
+                            if (decisao === 'Favorável') {
+                                decisaoBadge = '<span class="badge-success">Favorável</span>';
+                            } else if (decisao === 'Desfavorável') {
+                                decisaoBadge = '<span class="badge-danger">Desfavorável</span>';
+                            } else if (decisao === 'Parcialmente Desfavorável') {
+                                decisaoBadge = '<span class="badge-warning">Parcialmente Desfavorável</span>';
+                            } else {
+                                decisaoBadge = '<span class="badge-info">' + decisao + '</span>';
+                            }
+                            
+                            // Formatar valor
+                            const valor = parseFloat(processo['Valor Envolvido Atual - Passiva']).toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            
+                            tr.innerHTML = `
+                                <td>${processo['Número do Processo']}</td>
+                                <td>${processo['Comarca Desdobramento']}</td>
+                                <td>${processo['Causa-Raiz']}</td>
+                                <td>R$ ${valor}</td>
+                                <td>${decisaoBadge}</td>
+                                <td><span class="badge-info">${processo['Situação']}</span></td>
+                                <td>${formatarData(processo['Data criação'])}</td>
+                            `;
+                            
+                            tbody.appendChild(tr);
+                        });
+                        
+                        console.log(`✅ Tabela populada com ${processos.length} processos`);
+                        
+                        // Inicializar DataTables com localização em português
+                        $('#processosTable').DataTable({
+                            language: {
+                                "sEmptyTable": "Nenhum registro encontrado",
+                                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                                "sInfoPostFix": "",
+                                "sInfoThousands": ".",
+                                "sLengthMenu": "Mostrar _MENU_ registros por página",
+                                "sLoadingRecords": "Carregando...",
+                                "sProcessing": "Processando...",
+                                "sZeroRecords": "Nenhum registro encontrado",
+                                "sSearch": "Pesquisar:",
+                                "oPaginate": {
+                                    "sNext": "Próximo",
+                                    "sPrevious": "Anterior",
+                                    "sFirst": "Primeiro",
+                                    "sLast": "Último"
+                                },
+                                "oAria": {
+                                    "sSortAscending": ": Ordenar colunas de forma ascendente",
+                                    "sSortDescending": ": Ordenar colunas de forma descendente"
+                                }
+                            },
+                            pageLength: 25,
+                            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+                            order: [[6, 'desc']], // Ordenar por data (última coluna) em ordem decrescente
+                            responsive: true,
+                            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p">>'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar processos:', error);
+                });
+        });
+    </script>
+    
+</body>
+</html>

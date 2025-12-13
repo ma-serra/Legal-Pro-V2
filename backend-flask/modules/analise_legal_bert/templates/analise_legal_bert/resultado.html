@@ -1,0 +1,585 @@
+{% extends "analise_legal_bert/base.html" %}
+
+{% block title %}Resultado da Análise{% endblock %}
+
+{% block page_title %}Resultado da Análise{% endblock %}
+{% block page_description %}{{ documento.titulo }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Informações Principais -->
+    <div class="col-lg-8">
+        <!-- Resumo Geral -->
+        <div class="result-summary">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h4 class="text-success mb-2">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Análise Concluída
+                    </h4>
+                    <p class="mb-0">{{ documento.resumo_automatico or 'Resumo não disponível' }}</p>
+                </div>
+                <div class="text-end">
+                    <div class="fs-2 fw-bold text-primary">{{ (documento.score_confianca * 100)|round(1) }}%</div>
+                    <small class="text-muted">Confiança</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-muted">Tipo</div>
+                        <div class="text-primary">{{ documento.tipo_documento.title() if documento.tipo_documento else 'Indefinido' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-muted">Entidades</div>
+                        <div class="text-info">{{ entidades|length }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-muted">Tempo</div>
+                        <div class="text-success">{{ documento.tempo_processamento|round(2) if documento.tempo_processamento else 0 }}s</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-muted">Modelo</div>
+                        <div class="text-secondary small">{{ documento.modelo_utilizado or 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classificação do Documento -->
+        {% if classificacoes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>
+                    Classificação do Documento
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for classificacao in classificacoes %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-1">{{ classificacao.categoria.title() }}</h6>
+                        {% if classificacao.subcategoria %}
+                            <span class="badge bg-light text-dark">{{ classificacao.subcategoria.replace('_', ' ').title() }}</span>
+                        {% endif %}
+                        {% if classificacao.justificativa %}
+                            <p class="small text-muted mb-1">{{ classificacao.justificativa }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">{{ (classificacao.confianca * 100)|round(1) }}%</div>
+                        <div class="confidence-bar bg-light">
+                            <div class="bg-success h-100" style="width: {{ classificacao.confianca * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if classificacao.palavras_chave %}
+                <div class="mt-2">
+                    <strong class="small text-muted">Palavras-chave identificadas:</strong><br>
+                    {% for palavra in classificacao.palavras_chave %}
+                        <span class="badge bg-light text-dark me-1">{{ palavra }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Entidades Extraídas -->
+        {% if entidades %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Entidades Extraídas
+                </h5>
+                <span class="badge bg-primary">{{ entidades|length }} encontradas</span>
+            </div>
+            <div class="card-body">
+                <!-- Agrupamento por tipo -->
+                {% set entidades_by_type = {} %}
+                {% for entidade in entidades %}
+                    {% if entidade.tipo_entidade not in entidades_by_type %}
+                        {% set _ = entidades_by_type.update({entidade.tipo_entidade: []}) %}
+                    {% endif %}
+                    {% set _ = entidades_by_type[entidade.tipo_entidade].append(entidade) %}
+                {% endfor %}
+
+                {% for tipo, lista_entidades in entidades_by_type.items() %}
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">
+                        <i class="fas fa-{{ 'user' if 'CPF' in tipo else 'building' if 'CNPJ' in tipo else 'calendar' if 'DATA' in tipo else 'dollar-sign' if 'VALOR' in tipo else 'file' if 'LEI' in tipo or 'ARTIGO' in tipo or 'PROCESSO' in tipo else 'tag' }} me-1"></i>
+                        {{ tipo.replace('_', ' ').title() }}
+                        <span class="badge bg-light text-dark ms-2">{{ lista_entidades|length }}</span>
+                    </h6>
+                    
+                    <div class="row">
+                        {% for entidade in lista_entidades %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold">{{ entidade.texto_entidade }}</div>
+                                        {% if entidade.normalizada and entidade.normalizada != entidade.texto_entidade %}
+                                            <div class="small text-muted">Normalizado: {{ entidade.normalizada }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small fw-bold text-{{ 'success' if entidade.confianca > 0.8 else 'warning' if entidade.confianca > 0.6 else 'danger' }}">
+                                            {{ (entidade.confianca * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if entidade.contexto %}
+                                <div class="small text-muted bg-light p-2 rounded">
+                                    <strong>Contexto:</strong> {{ entidade.contexto }}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mt-2 small text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Posição: {{ entidade.posicao_inicio }} - {{ entidade.posicao_fim }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Análise Específica -->
+        {% if documento.resultado_analise and documento.resultado_analise.analise_especifica %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-microscope me-2"></i>
+                    Análise Específica
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set analise = documento.resultado_analise.analise_especifica %}
+                
+                {% if analise.tipo == 'contrato' %}
+                    <!-- Análise de Contrato -->
+                    {% if analise.clausulas_identificadas %}
+                    <div class="mb-4">
+                        <h6>Cláusulas Identificadas</h6>
+                        {% if analise.clausulas_identificadas is string %}
+                            <div class="bg-light p-3 rounded">{{ analise.clausulas_identificadas }}</div>
+                        {% else %}
+                            <div class="list-group">
+                                {% for clausula in analise.clausulas_identificadas %}
+                                <div class="list-group-item">
+                                    <i class="fas fa-file-contract me-2 text-success"></i>
+                                    {{ clausula }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if analise.partes_contratuais %}
+                    <div class="mb-4">
+                        <h6>Partes Contratuais</h6>
+                        <div class="bg-light p-3 rounded">
+                            {% if analise.partes_contratuais is string %}
+                                <!-- Se for string, exibir como texto -->
+                                <p class="mb-0">{{ analise.partes_contratuais }}</p>
+                            {% else %}
+                                <!-- Se for lista, exibir cada item -->
+                                {% for parte in analise.partes_contratuais %}
+                                <div class="mb-2">
+                                    <i class="fas fa-user me-2 text-primary"></i>
+                                    {{ parte }}
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if analise.valores_identificados %}
+                    <div class="mb-4">
+                        <h6>Valores Identificados</h6>
+                        {% if analise.valores_identificados is string %}
+                            <div class="bg-light p-3 rounded">{{ analise.valores_identificados }}</div>
+                        {% else %}
+                            <div class="row">
+                                {% for valor in analise.valores_identificados %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="border rounded p-3">
+                                        <div class="fw-bold text-success">
+                                            <i class="fas fa-dollar-sign me-2"></i>
+                                            {% if valor is mapping %}
+                                                {{ valor.valor if valor.valor else valor }}
+                                            {% else %}
+                                                {{ valor }}
+                                            {% endif %}
+                                        </div>
+                                        {% if valor is mapping and valor.contexto %}
+                                            <div class="small text-muted mt-1">{{ valor.contexto }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                {% elif analise.tipo == 'peticao' %}
+                    <!-- Análise de Petição -->
+                    {% if analise.pedidos_identificados %}
+                    <div class="mb-4">
+                        <h6>Pedidos Identificados</h6>
+                        {% if analise.pedidos_identificados is string %}
+                            <div class="bg-light p-3 rounded">{{ analise.pedidos_identificados }}</div>
+                        {% else %}
+                            <ol class="list-group list-group-numbered">
+                                {% for pedido in analise.pedidos_identificados %}
+                                <li class="list-group-item">{{ pedido }}</li>
+                                {% endfor %}
+                            </ol>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if analise.fundamentos_legais %}
+                    <div class="mb-4">
+                        <h6>Fundamentos Legais</h6>
+                        {% if analise.fundamentos_legais is string %}
+                            <div class="bg-light p-3 rounded">{{ analise.fundamentos_legais }}</div>
+                        {% else %}
+                            {% for fundamento in analise.fundamentos_legais %}
+                            <div class="bg-light p-3 rounded mb-2">
+                                <i class="fas fa-gavel me-2 text-warning"></i>
+                                {{ fundamento }}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                {% elif analise.tipo == 'sentenca' %}
+                    <!-- Análise de Sentença -->
+                    {% if analise.dispositivo %}
+                    <div class="mb-4">
+                        <h6>Dispositivo</h6>
+                        <div class="bg-light p-3 rounded">
+                            <strong>{{ analise.dispositivo }}</strong>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if analise.resultado %}
+                    <div class="mb-4">
+                        <h6>Resultado</h6>
+                        <span class="badge bg-{{ 'success' if analise.resultado == 'procedente' else 'danger' if analise.resultado == 'improcedente' else 'warning' }} fs-6">
+                            {{ analise.resultado.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if analise.fundamentacao %}
+                    <div class="mb-4">
+                        <h6>Fundamentação</h6>
+                        <div class="bg-light p-3 rounded">{{ analise.fundamentacao }}</div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Problemas Identificados -->
+        {% if documento.resultado_analise and documento.resultado_analise.problemas_identificados %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Problemas Identificados
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for problema in documento.resultado_analise.problemas_identificados %}
+                <div class="alert alert-{{ 'danger' if problema.gravidade == 'alta' else 'warning' if problema.gravidade == 'media' else 'info' }}" role="alert">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading">{{ problema.tipo.replace('_', ' ').title() }}</h6>
+                            <p class="mb-1">{{ problema.descricao }}</p>
+                            {% if problema.sugestao %}
+                            <small class="text-muted">
+                                <strong>Sugestão:</strong> {{ problema.sugestao }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-{{ 'danger' if problema.gravidade == 'alta' else 'warning' if problema.gravidade == 'media' else 'info' }}">
+                            {{ problema.gravidade.title() }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar com Ações e Informações -->
+    <div class="col-lg-4">
+        <!-- Ações -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>
+                    Ações
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-2"></i>
+                            Exportar Relatório
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('analise_legal_bert.exportar_docx', doc_id=documento.id) }}">
+                                    <i class="fas fa-file-word me-2"></i>
+                                    Relatório DOCX Formatado
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('analise_legal_bert.exportar_json', doc_id=documento.id) }}">
+                                    <i class="fas fa-code me-2"></i>
+                                    Dados JSON Estruturados
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-outline-secondary" onclick="compartilharResultado()">
+                        <i class="fas fa-share me-2"></i>
+                        Compartilhar
+                    </button>
+                    <button class="btn btn-outline-info" onclick="reprocessarDocumento()">
+                        <i class="fas fa-redo me-2"></i>
+                        Reprocessar
+                    </button>
+                    <hr>
+                    <a href="{{ url_for('analise_legal_bert.nova_analise') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Análise
+                    </a>
+                    <a href="{{ url_for('analise_legal_bert.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar ao Início
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações Técnicas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informações Técnicas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Processado em:</span>
+                        <span>{{ documento.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tempo total:</span>
+                        <span>{{ documento.tempo_processamento|round(2) if documento.tempo_processamento else 0 }}s</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Modelo usado:</span>
+                        <span>{{ documento.modelo_utilizado or 'N/A' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Versão:</span>
+                        <span>{{ documento.versao_sistema or '1.0' }}</span>
+                    </div>
+                    {% if documento.resultado_analise and documento.resultado_analise.estatisticas %}
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Palavras:</span>
+                        <span>{{ documento.resultado_analise.estatisticas.total_palavras or 0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Caracteres:</span>
+                        <span>{{ documento.resultado_analise.estatisticas.total_caracteres or 0 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Original -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Conteúdo Original
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                    <small class="text-muted">
+                        {{ documento.conteudo_original[:500] }}
+                        {% if documento.conteudo_original|length > 500 %}
+                        ...
+                        <button class="btn btn-link btn-sm p-0" onclick="mostrarConteudoCompleto()">
+                            Ver completo
+                        </button>
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Conteúdo Completo -->
+<div class="modal fade" id="conteudo-modal" tabindex="-1" aria-labelledby="conteudoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="conteudoModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Conteúdo Original Completo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-light p-3 rounded">
+                    <pre class="mb-0" style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem; line-height: 1.6;">{{ documento.conteudo_original }}</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Fechar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="copiarConteudo()">
+                    <i class="fas fa-copy me-2"></i>
+                    Copiar Texto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mostrarConteudoCompleto() {
+    try {
+        const modalElement = document.getElementById('conteudo-modal');
+        if (!modalElement) {
+            console.error('Modal não encontrado');
+            showNotification('Erro ao abrir modal', 'error');
+            return;
+        }
+        
+        // Garantir que Bootstrap está carregado
+        if (typeof bootstrap === 'undefined') {
+            console.error('Bootstrap não está carregado');
+            showNotification('Erro: Bootstrap não carregado', 'error');
+            return;
+        }
+        
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } catch (error) {
+        console.error('Erro ao abrir modal:', error);
+        showNotification('Erro ao abrir conteúdo completo', 'error');
+    }
+}
+
+function copiarConteudo() {
+    const conteudo = `{{ documento.conteudo_original|e }}`;
+    navigator.clipboard.writeText(conteudo).then(() => {
+        showNotification('Conteúdo copiado para a área de transferência!', 'success');
+    }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        showNotification('Erro ao copiar conteúdo', 'error');
+    });
+}
+
+function exportarResultado() {
+    // Gerar relatório PDF ou texto
+    const dados = {
+        titulo: '{{ documento.titulo }}',
+        resumo: '{{ documento.resumo_automatico|e }}',
+        confianca: {{ documento.score_confianca or 0 }},
+        tipo: '{{ documento.tipo_documento or "indefinido" }}',
+        entidades: {{ entidades|length }},
+        processamento: '{{ documento.tempo_processamento|round(2) if documento.tempo_processamento else 0 }}s'
+    };
+    
+    const blob = new Blob([JSON.stringify(dados, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analise_${dados.titulo.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showNotification('Relatório exportado com sucesso!', 'success');
+}
+
+function compartilharResultado() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ documento.titulo }}',
+            text: 'Resultado da análise legal: {{ documento.resumo_automatico|e }}',
+            url: window.location.href
+        });
+    } else {
+        // Fallback para copiar link
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('Link copiado para a área de transferência!', 'success');
+        });
+    }
+}
+
+function reprocessarDocumento() {
+    if (confirm('Tem certeza que deseja reprocessar este documento? O resultado atual será sobrescrito.')) {
+        // Implementar reprocessamento via AJAX
+        showNotification('Funcionalidade em desenvolvimento', 'info');
+    }
+}
+
+// Auto-atualizar confiança visualmente
+document.addEventListener('DOMContentLoaded', function() {
+    const confidenceBars = document.querySelectorAll('.confidence-bar > div');
+    confidenceBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-in-out';
+            bar.style.width = width;
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

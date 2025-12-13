@@ -1,0 +1,457 @@
+{% extends "analise_legal_bert/base.html" %}
+
+{% block title %}Histórico de Análises{% endblock %}
+
+{% block page_title %}Histórico de Análises{% endblock %}
+{% block page_description %}Todas as suas análises de documentos jurídicos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Filtros e Busca -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="busca" class="form-label">Buscar</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="busca" 
+                               name="busca" 
+                               placeholder="Título ou conteúdo..."
+                               value="{{ request.args.get('busca', '') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="tipo" name="tipo">
+                            <option value="">Todos</option>
+                            <option value="contrato" {{ 'selected' if request.args.get('tipo') == 'contrato' }}>Contrato</option>
+                            <option value="peticao" {{ 'selected' if request.args.get('tipo') == 'peticao' }}>Petição</option>
+                            <option value="sentenca" {{ 'selected' if request.args.get('tipo') == 'sentenca' }}>Sentença</option>
+                            <option value="acordo" {{ 'selected' if request.args.get('tipo') == 'acordo' }}>Acordo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Todos</option>
+                            <option value="concluida" {{ 'selected' if request.args.get('status') == 'concluida' }}>Concluída</option>
+                            <option value="processando" {{ 'selected' if request.args.get('status') == 'processando' }}>Processando</option>
+                            <option value="erro" {{ 'selected' if request.args.get('status') == 'erro' }}>Erro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="ordem" class="form-label">Ordenar por</label>
+                        <select class="form-select" id="ordem" name="ordem">
+                            <option value="recente" {{ 'selected' if request.args.get('ordem') == 'recente' or not request.args.get('ordem') }}>Mais recente</option>
+                            <option value="antigo" {{ 'selected' if request.args.get('ordem') == 'antigo' }}>Mais antigo</option>
+                            <option value="confianca" {{ 'selected' if request.args.get('ordem') == 'confianca' }}>Maior confiança</option>
+                            <option value="titulo" {{ 'selected' if request.args.get('ordem') == 'titulo' }}>Título A-Z</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>
+                            Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Documentos -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Análises Realizadas
+                </h5>
+                <div class="d-flex align-items-center">
+                    <small class="me-3" style="color: white;">
+                        {{ documentos.total }} documento{{ 's' if documentos.total != 1 }} encontrado{{ 's' if documentos.total != 1 }}
+                    </small>
+                    <button onclick="history.back()" class="btn btn-sm btn-outline-light me-2" title="Voltar">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Voltar
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-light me-2" title="Ir para o painel principal">
+                        <i class="fas fa-home me-1"></i>
+                        Home
+                    </a>
+                    <a href="{{ url_for('analise_legal_bert.nova_analise') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Nova Análise
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if documentos.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Documento</th>
+                                    <th width="15%">Tipo</th>
+                                    <th width="15%">Status</th>
+                                    <th width="10%">Confiança</th>
+                                    <th width="15%">Data</th>
+                                    <th width="10%">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documentos.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-start">
+                                            <div class="me-3">
+                                                {% if doc.tipo_documento == 'contrato' %}
+                                                    <i class="fas fa-handshake text-primary fs-4"></i>
+                                                {% elif doc.tipo_documento == 'peticao' %}
+                                                    <i class="fas fa-gavel text-info fs-4"></i>
+                                                {% elif doc.tipo_documento == 'sentenca' %}
+                                                    <i class="fas fa-balance-scale text-success fs-4"></i>
+                                                {% elif doc.tipo_documento == 'acordo' %}
+                                                    <i class="fas fa-handshake-angle text-warning fs-4"></i>
+                                                {% else %}
+                                                    <i class="fas fa-file-alt text-muted fs-4"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">
+                                                    <a href="{{ url_for('analise_legal_bert.resultado', doc_id=doc.id) }}" 
+                                                       class="text-decoration-none">
+                                                        {{ doc.titulo }}
+                                                    </a>
+                                                </h6>
+                                                {% if doc.resumo_automatico %}
+                                                    <p class="small text-muted mb-1">
+                                                        {{ doc.resumo_automatico[:80] }}{% if doc.resumo_automatico|length > 80 %}...{% endif %}
+                                                    </p>
+                                                {% endif %}
+                                                {% if doc.resultado_analise and doc.resultado_analise.estatisticas %}
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-file-word me-1"></i>
+                                                        {{ doc.resultado_analise.estatisticas.total_palavras or 0 }} palavras
+                                                        {% if doc.resultado_analise.estatisticas.total_entidades %}
+                                                            • {{ doc.resultado_analise.estatisticas.total_entidades }} entidades
+                                                        {% endif %}
+                                                    </small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if doc.tipo_documento %}
+                                            <span class="badge bg-light text-dark">
+                                                {{ doc.tipo_documento.title() }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted small">Indefinido</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.status_analise == 'concluida' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>
+                                                Concluída
+                                            </span>
+                                        {% elif doc.status_analise == 'processando' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-spinner spinning me-1"></i>
+                                                Processando
+                                            </span>
+                                        {% elif doc.status_analise == 'erro' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                Erro
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                {{ doc.status_analise.title() }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if doc.score_confianca > 0 %}
+                                            <div class="d-flex align-items-center">
+                                                <small class="me-2">{{ (doc.score_confianca * 100)|round(1) }}%</small>
+                                                <div class="progress flex-grow-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-{{ 'success' if doc.score_confianca > 0.8 else 'warning' if doc.score_confianca > 0.6 else 'danger' }}" 
+                                                         style="width: {{ doc.score_confianca * 100 }}%"></div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <div>{{ doc.created_at.strftime('%d/%m/%Y') }}</div>
+                                            <div class="text-muted">{{ doc.created_at.strftime('%H:%M') }}</div>
+                                            {% if doc.tempo_processamento %}
+                                                <div class="text-muted">{{ doc.tempo_processamento|round(1) }}s</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            {% if doc.status_analise == 'concluida' %}
+                                                <a href="{{ url_for('analise_legal_bert.resultado', doc_id=doc.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Ver Resultado">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-outline-secondary" 
+                                                    onclick="exportarDocumento({{ doc.id }})"
+                                                    title="Exportar">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="excluirDocumento({{ doc.id }})"
+                                                    title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    {% if documentos.pages > 1 %}
+                    <div class="card-footer">
+                        <nav aria-label="Navegação de páginas">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if documentos.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('analise_legal_bert.historico', page=documentos.prev_num, **request.args) }}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for page_num in documentos.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != documentos.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('analise_legal_bert.historico', page=page_num, **request.args) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">…</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if documentos.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('analise_legal_bert.historico', page=documentos.next_num, **request.args) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        
+                        <div class="text-center mt-2">
+                            <small class="text-muted">
+                                Mostrando {{ documentos.per_page * (documentos.page - 1) + 1 }} - 
+                                {{ documentos.per_page * (documentos.page - 1) + documentos.items|length }} 
+                                de {{ documentos.total }} documentos
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                {% else %}
+                    <!-- Estado vazio -->
+                    <div class="text-center py-5">
+                        {% if request.args.get('busca') or request.args.get('tipo') or request.args.get('status') %}
+                            <i class="fas fa-search fs-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum documento encontrado</h5>
+                            <p class="text-muted">
+                                Nenhum documento corresponde aos filtros aplicados.
+                            </p>
+                            <a href="{{ url_for('analise_legal_bert.historico') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-times me-2"></i>
+                                Limpar Filtros
+                            </a>
+                        {% else %}
+                            <i class="fas fa-file-alt fs-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhuma análise realizada</h5>
+                            <p class="text-muted">
+                                Você ainda não analisou nenhum documento.<br>
+                                Comece enviando seu primeiro documento para análise.
+                            </p>
+                            <a href="{{ url_for('analise_legal_bert.nova_analise') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Primeira Análise
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="excluir-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta análise?</p>
+                <p class="text-muted small">
+                    <strong>Atenção:</strong> Esta ação não pode ser desfeita. Todos os dados da análise serão perdidos permanentemente.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmar-exclusao">
+                    <i class="fas fa-trash me-2"></i>
+                    Excluir Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let documentoParaExcluir = null;
+
+function exportarDocumento(docId) {
+    // Implementar exportação do documento
+    fetch(`/analise-legal-bert/api/documento/${docId}/entidades`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.sucesso) {
+                const blob = new Blob([JSON.stringify(data.entidades, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `documento_${docId}_entidades.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification('Documento exportado com sucesso!', 'success');
+            } else {
+                showNotification('Erro ao exportar documento: ' + data.erro, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showNotification('Erro de conexão ao exportar documento', 'error');
+        });
+}
+
+function excluirDocumento(docId) {
+    documentoParaExcluir = docId;
+    const modal = new bootstrap.Modal(document.getElementById('excluir-modal'));
+    modal.show();
+}
+
+// Confirmar exclusão
+document.getElementById('confirmar-exclusao')?.addEventListener('click', async function() {
+    if (documentoParaExcluir) {
+        try {
+            const response = await fetch(`/analise-legal-bert/excluir/${documentoParaExcluir}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                showNotification('Documento excluído com sucesso!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Erro ao excluir documento. Tente novamente.', 'error');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showNotification('Erro de conexão. Tente novamente.', 'error');
+        }
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('excluir-modal'));
+        modal.hide();
+        documentoParaExcluir = null;
+    }
+});
+
+// Auto-submit do formulário de filtros quando houver mudança
+document.querySelectorAll('#tipo, #status, #ordem').forEach(select => {
+    select.addEventListener('change', function() {
+        // Opcional: auto-submit quando filtros mudarem
+        // this.form.submit();
+    });
+});
+
+// Atalhos de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K para focar na busca
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('busca').focus();
+    }
+    
+    // N para nova análise
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            window.location.href = '{{ url_for("analise_legal_bert.nova_analise") }}';
+        }
+    }
+});
+
+// Atualizar status de documentos em processamento
+setInterval(function() {
+    const processandoElements = Array.from(document.querySelectorAll('.badge')).filter(el => el.textContent.includes('Processando'));
+    if (processandoElements.length > 0) {
+        // Recarregar página se houver documentos em processamento
+        location.reload();
+    }
+}, 30000); // Verificar a cada 30 segundos
+
+// Função para mostrar notificações
+function showNotification(message, type = 'info') {
+    // Criar elemento de notificação
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Adicionar ao body
+    document.body.appendChild(notification);
+    
+    // Remover automaticamente após 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+
+// Função simplificada para exportar documento
+function exportarDocumentoSimples(docId) {
+    // Redirecionar para a página de resultado
+    window.location.href = `/analise-legal-bert/resultado/${docId}`;
+}
+</script>
+{% endblock %}

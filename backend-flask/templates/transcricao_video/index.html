@@ -1,0 +1,870 @@
+{% extends "layout.html" %}
+
+{% block title %}Transcrição de Vídeo{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcrição de Áudio/Vídeo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+/* Sistema de transcrição baseado no template fornecido */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.transcription-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    color: white;
+}
+
+/* Header */
+.transcription-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.transcription-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #FFFFFF;
+    letter-spacing: -0.025em;
+}
+
+.transcription-subtitle {
+    font-size: 1.125rem;
+    color: #A0AEC0;
+    font-weight: 400;
+}
+
+.header-action {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+}
+
+.btn-link {
+    color: #E2E8F0;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    background: rgba(226, 232, 240, 0.1);
+    color: white;
+    text-decoration: none;
+}
+
+/* Status Card */
+.status-card {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.status-title {
+    font-size: 0.875rem;
+    color: #CBD5E0;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.status-value {
+    font-size: 1rem;
+    color: #68D391;
+    font-weight: 600;
+}
+
+/* Upload Area */
+.upload-container {
+    margin-bottom: 40px;
+}
+
+.upload-area {
+    border: 2px dashed #4A5568;
+    border-radius: 16px;
+    background: rgba(45, 55, 72, 0.6);
+    padding: 80px 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area:hover {
+    border-color: #68D391;
+    background: rgba(45, 55, 72, 0.8);
+    transform: translateY(-2px);
+}
+
+.upload-area.dragover {
+    border-color: #68D391;
+    background: rgba(45, 55, 72, 0.9);
+    border-style: solid;
+}
+
+.upload-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(74, 85, 104, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    font-size: 28px;
+    color: #A0AEC0;
+}
+
+.upload-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 12px;
+}
+
+.upload-subtitle {
+    font-size: 1rem;
+    color: #A0AEC0;
+    margin-bottom: 20px;
+}
+
+.upload-formats {
+    font-size: 0.875rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.file-input {
+    display: none;
+}
+
+/* File Selected State */
+.file-selected {
+    background: rgba(104, 211, 145, 0.1);
+    border-color: #68D391;
+    border-style: solid;
+    padding: 20px;
+    margin-top: 16px;
+    border-radius: 8px;
+    display: none;
+    color: #68D391;
+}
+
+.file-selected.show {
+    display: block;
+}
+
+/* Configuration Panel */
+.config-panel {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+}
+
+.config-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.config-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.config-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #E2E8F0;
+    margin-bottom: 8px;
+}
+
+.config-select {
+    background: rgba(74, 85, 104, 0.8);
+    border: 1px solid rgba(113, 128, 150, 0.3);
+    color: #FFFFFF;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.config-select:focus {
+    border-color: #68D391;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: #3182CE;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2C5282;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #A0AEC0;
+    border: 1px solid rgba(160, 174, 192, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(160, 174, 192, 0.1);
+    color: white;
+    text-decoration: none;
+}
+
+/* Progress Section */
+.progress-section {
+    display: none;
+    background: rgba(45, 55, 72, 0.9);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 32px;
+    margin-top: 32px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.progress-filename {
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+.progress-percentage {
+    font-weight: 700;
+    color: #68D391;
+    font-size: 1.125rem;
+}
+
+.progress-bar-container {
+    background: rgba(113, 128, 150, 0.2);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3182CE, #68D391);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-message {
+    color: #CBD5E0;
+    text-align: center;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+/* Loading Spinner */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #3182CE;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .transcription-container {
+        padding: 20px 16px;
+    }
+    
+    .transcription-title {
+        font-size: 2rem;
+    }
+    
+    .upload-area {
+        padding: 60px 20px;
+        min-height: 280px;
+    }
+    
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .header-action {
+        position: static;
+        text-align: center;
+        margin-top: 20px;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="transcription-container">
+        <!-- Header -->
+        <div class="transcription-header">
+            <h1 class="transcription-title">Transcrição de Áudio/Vídeo</h1>
+            <p class="transcription-subtitle">Converta seus arquivos de áudio e vídeo em texto com inteligência artificial</p>
+            
+            <!-- Botões de navegação movidos para baixo do texto -->
+            <div style="margin-top: 20px;">
+                <a href="/home" class="btn-link me-3">
+                    <i class="fas fa-home me-1"></i> Home
+                </a>
+                <a href="{{ url_for('transcricao_video.history') }}" class="btn-link">
+                    <i class="fas fa-history me-1"></i> Ver Histórico
+                </a>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="status-card">
+            <div class="status-title">Sistema de Transcrição Online</div>
+            <div class="status-value">
+                AssemblyAI conectado e pronto para usar
+            </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="upload-container">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="upload-title">Clique ou arraste o arquivo de vídeo/áudio</h3>
+                    <p class="upload-subtitle">Processamento automatizado com IA avançada</p>
+                    <p class="upload-formats">
+                        Formatos: MP4, MOV, WMV, AVI, MP3, WAV, M4A, AAC, OGG<br>
+                        <strong>Limite: 500MB</strong> (Chunks de 5MB >30MB)
+                    </p>
+                    <input type="file" id="videoFile" name="file" accept="video/*,audio/*" class="file-input">
+                </div>
+                
+                <!-- File Selected Info -->
+                <div id="fileInfo" class="file-selected"></div>
+            </form>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="config-panel">
+            <h3 class="config-title">Configurações de Análise</h3>
+            
+            <div class="config-grid">
+                <!-- Campo Análise de Sentimentos removido conforme solicitado -->
+                
+                <div class="config-field">
+                    <label class="config-label">Detectar Múltiplos Falantes</label>
+                    <select id="speakerDetection" class="config-select">
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select>
+                </div>
+                
+                <div class="config-field">
+                    <label class="config-label">Número de Falantes</label>
+                    <select id="speakerCount" class="config-select">
+                        <option value="auto">Detecção Automática</option>
+                        <option value="2">2 Falantes</option>
+                        <option value="3">3 Falantes</option>
+                        <option value="4">4 Falantes</option>
+                        <option value="5">5 Falantes</option>
+                        <option value="6">6 Falantes</option>
+                        <option value="7">7 Falantes</option>
+                        <option value="8">8 Falantes</option>
+                        <option value="9">9 Falantes</option>
+                        <option value="10">10 Falantes</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button type="button" id="startTranscription" class="btn btn-primary" disabled>
+                    <i class="fas fa-play"></i>
+                    Iniciar Transcrição
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="progress-section">
+            <div class="progress-header">
+                <span id="progressFilename" class="progress-filename"></span>
+                <span id="progressPercentage" class="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="progressMessage" class="progress-message">Preparando upload...</div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let selectedFile = null;
+        let currentTranscriptId = null;
+        
+        // Garantir que elementos DOM estejam carregados
+        document.addEventListener('DOMContentLoaded', function() {
+            // Resetar progresso inicial
+            updateProgress(0, 'Selecione um arquivo para começar');
+        });
+        let chunkedUploader = null;
+
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('videoFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const startButton = document.getElementById('startTranscription');
+        const progressSection = document.getElementById('progressSection');
+        
+        // Classe para upload em chunks
+        class ChunkedUploader {
+            constructor(options = {}) {
+                this.chunkSize = options.chunkSize || 5 * 1024 * 1024; // 5MB chunks
+                this.maxRetries = options.maxRetries || 3;
+                this.onProgress = options.onProgress || (() => {});
+                this.onComplete = options.onComplete || (() => {});
+                this.onError = options.onError || (() => {});
+            }
+
+            async upload(file) {
+                const totalChunks = Math.ceil(file.size / this.chunkSize);
+                const sessionId = this.generateSessionId();
+                
+                console.log(`🔄 Iniciando upload em chunks: ${totalChunks} chunks de ${Math.round(this.chunkSize / 1024 / 1024)}MB`);
+                
+                try {
+                    // Upload cada chunk sequencialmente
+                    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                        const start = chunkIndex * this.chunkSize;
+                        const end = Math.min(start + this.chunkSize, file.size);
+                        const chunk = file.slice(start, end);
+                        
+                        console.log(`📤 Enviando chunk ${chunkIndex + 1}/${totalChunks} (${start}-${end})`);
+                        
+                        await this.uploadChunk(chunk, chunkIndex, totalChunks, sessionId, file.name);
+                        
+                        // Atualizar progresso com animação suave
+                        const baseProgress = (chunkIndex / totalChunks) * 80;
+                        const nextProgress = ((chunkIndex + 1) / totalChunks) * 80;
+                        
+                        // Animar progresso durante o upload do chunk
+                        this.animateProgress(baseProgress, nextProgress, `Enviando chunk ${chunkIndex + 1}/${totalChunks}`);
+                    }
+                    
+                    // Finalizar upload
+                    this.onProgress(85, 'Reunindo arquivos...');
+                    const result = await this.finalizeUpload(sessionId, file.name);
+                    this.onComplete(result);
+                    
+                    return result;
+                    
+                } catch (error) {
+                    console.error('❌ Erro no upload em chunks:', error);
+                    this.onError(error);
+                    throw error;
+                }
+            }
+            
+            async uploadChunk(chunk, chunkIndex, totalChunks, sessionId, filename) {
+                const formData = new FormData();
+                formData.append('chunk', chunk);
+                formData.append('chunkIndex', chunkIndex);
+                formData.append('totalChunks', totalChunks);
+                formData.append('sessionId', sessionId);
+                formData.append('filename', filename);
+                
+                let retries = 0;
+                while (retries < this.maxRetries) {
+                    try {
+                        const response = await fetch('{{ url_for("transcricao_video.upload_chunk") }}', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            return result;
+                        } else {
+                            throw new Error(result.error || 'Erro no upload do chunk');
+                        }
+                        
+                    } catch (error) {
+                        retries++;
+                        console.warn(`⚠️ Tentativa ${retries}/${this.maxRetries} falhou para chunk ${chunkIndex}:`, error);
+                        
+                        if (retries >= this.maxRetries) {
+                            throw new Error(`Falha após ${this.maxRetries} tentativas no chunk ${chunkIndex}: ${error.message}`);
+                        }
+                        
+                        // Esperar antes de tentar novamente (backoff exponencial)
+                        await this.delay(Math.pow(2, retries) * 1000);
+                    }
+                }
+            }
+            
+            async finalizeUpload(sessionId, filename) {
+                const response = await fetch('{{ url_for("transcricao_video.finalize_upload") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        filename: filename
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ao finalizar upload: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            }
+            
+            generateSessionId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+            
+            // Animar progresso suavemente
+            animateProgress(from, to, message) {
+                const duration = 500; // 500ms de animação
+                const steps = 20;
+                const increment = (to - from) / steps;
+                let currentProgress = from;
+                
+                const animate = () => {
+                    if (currentProgress < to) {
+                        currentProgress = Math.min(currentProgress + increment, to);
+                        this.onProgress(currentProgress, message);
+                        setTimeout(animate, duration / steps);
+                    }
+                };
+                
+                animate();
+            }
+            
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Upload area events
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        startButton.addEventListener('click', startTranscription);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                selectedFile = files[0];
+                displayFileInfo();
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                displayFileInfo();
+            }
+        }
+
+        function displayFileInfo() {
+            if (!selectedFile || !selectedFile.size) return;
+
+            const fileSizeInMB = (selectedFile.size / (1024 * 1024)).toFixed(2);
+            const fileName = selectedFile.name;
+            
+            // Verificar se é muito grande mesmo para chunks
+            if (selectedFile.size > 500 * 1024 * 1024) {
+                fileInfo.innerHTML = `
+                    <div class="file-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Arquivo muito grande: ${fileName} (${fileSizeInMB}MB)</span>
+                        <p>Limite máximo: 500MB</p>
+                        <small>Comprima o vídeo para reduzir o tamanho</small>
+                    </div>
+                `;
+                startButton.disabled = true;
+                return;
+            }
+            
+            // Aviso para arquivos grandes que usarão chunks
+            let uploadMethod = '';
+            if (selectedFile.size > 30 * 1024 * 1024) {
+                uploadMethod = ' (Chunks 5MB - Produção)';
+            }
+            
+            fileInfo.innerHTML = `
+                <i class="fas fa-file-video"></i>
+                <strong>${fileName}</strong> (${fileSizeInMB} MB)${uploadMethod}
+            `;
+            fileInfo.classList.add('show');
+            startButton.disabled = false;
+        }
+
+        async function startTranscription() {
+            if (!selectedFile) {
+                alert('Selecione um arquivo primeiro');
+                return;
+            }
+
+            // Mostrar progress
+            showProgress(selectedFile.name);
+
+            try {
+                // Decidir se usar upload em chunks ou direto baseado no tamanho
+                const useChunks = selectedFile.size > 30 * 1024 * 1024; // 30MB
+                
+                if (useChunks) {
+                    console.log('🔄 Usando upload em chunks para arquivo grande');
+                    
+                    // Inicializar uploader em chunks
+                    const uploader = new ChunkedUploader({
+                        chunkSize: 5 * 1024 * 1024, // 5MB chunks
+                        onProgress: (progress, message) => {
+                            updateProgress(progress, message || 'Processando...');
+                        },
+                        onComplete: (result) => {
+                            if (result.success && result.transcript_id) {
+                                currentTranscriptId = result.transcript_id;
+                                updateProgress(90, 'Upload concluído. Iniciando transcrição...');
+                                monitorTranscription(currentTranscriptId);
+                            } else {
+                                showError(result.error || 'Erro no upload em chunks');
+                            }
+                        },
+                        onError: (error) => {
+                            showError('Erro no upload: ' + error.message);
+                        }
+                    });
+                    
+                    await uploader.upload(selectedFile);
+                    
+                } else {
+                    console.log('📤 Usando upload direto para arquivo pequeno');
+                    
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    formData.append('speakerDetection', document.getElementById('speakerDetection').value);
+                    formData.append('speakerCount', document.getElementById('speakerCount').value);
+
+                    updateProgress(10, 'Enviando arquivo...');
+                    
+                    const response = await fetch('{{ url_for("transcricao_video.upload") }}', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // Verificar erro 413 (arquivo muito grande)
+                    if (response.status === 413) {
+                        showError('Arquivo muito grande para upload direto. Tentando upload em chunks...');
+                        // Tentar upload em chunks como fallback (recursão controlada)
+                        setTimeout(() => {
+                            startTranscription();
+                        }, 1000);
+                        return;
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        currentTranscriptId = result.transcript_id;
+                        updateProgress(30, 'Arquivo enviado. Iniciando transcrição...');
+                        
+                        // Monitorar progresso
+                        monitorTranscription(currentTranscriptId);
+                    } else {
+                        showError(result.error);
+                    }
+                }
+                
+            } catch (error) {
+                showError('Erro na conexão: ' + error.message);
+            }
+        }
+
+        function showProgress(filename) {
+            document.getElementById('progressFilename').textContent = filename;
+            progressSection.style.display = 'block';
+            startButton.disabled = true;
+        }
+
+        function updateProgress(percentage, message) {
+            const roundedPercentage = Math.round(percentage);
+            document.getElementById('progressPercentage').textContent = roundedPercentage + '%';
+            document.getElementById('progressBar').style.width = roundedPercentage + '%';
+            document.getElementById('progressMessage').textContent = message;
+        }
+
+        async function monitorTranscription(transcriptId) {
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`{{ url_for("transcricao_video.status", transcript_id="TRANSCRIPT_ID") }}`.replace('TRANSCRIPT_ID', transcriptId));
+                    const result = await response.json();
+
+                    if (result.success) {
+                        updateProgress(result.progress, result.message);
+
+                        if (result.status === 'completed') {
+                            setTimeout(() => {
+                                window.location.href = `{{ url_for("transcricao_video.result", transcript_id="TRANSCRIPT_ID") }}`.replace('TRANSCRIPT_ID', transcriptId);
+                            }, 2000);
+                        } else if (result.status === 'error') {
+                            showError('Erro no processamento');
+                        } else {
+                            // Continue monitorando
+                            setTimeout(checkStatus, 3000);
+                        }
+                    } else {
+                        showError(result.error);
+                    }
+                } catch (error) {
+                    showError('Erro ao verificar status: ' + error.message);
+                }
+            };
+
+            checkStatus();
+        }
+
+        function showError(message) {
+            updateProgress(0, 'Erro: ' + message);
+            startButton.disabled = false;
+            
+            // Criar alert
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-error';
+            alert.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Atualizar opções baseadas na seleção
+        document.getElementById('speakerDetection').addEventListener('change', function() {
+            const speakerCount = document.getElementById('speakerCount');
+            speakerCount.disabled = this.value === 'false';
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

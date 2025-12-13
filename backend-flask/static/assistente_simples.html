@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Jurídico - Versão Simplificada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --border-color: #2c2c2c;
+            --text-light: #ffffff;
+            --user-msg-bg: #2a3b4d;
+            --assistant-msg-bg: #1e2937;
+            --primary-color: #0d6efd;
+            --green-color: #1f5981;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .config-panel {
+            background-color: var(--darker-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+        
+        .messages-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 300px;
+            max-height: calc(100vh - 350px);
+            background-color: var(--darker-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .input-area {
+            background-color: var(--darker-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 80%;
+            color: white;
+        }
+        
+        .user-message {
+            background-color: var(--user-msg-bg);
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .assistant-message {
+            background-color: var(--assistant-msg-bg);
+        }
+        
+        .message-input {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            resize: none;
+        }
+        
+        .message-input:focus {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            border-color: var(--primary-color);
+            box-shadow: none;
+            outline: none;
+        }
+        
+        .btn-upload {
+            background-color: var(--green-color);
+            color: white;
+        }
+        
+        .btn-upload:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        .form-select {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-check-input {
+            background-color: var(--dark-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .welcome-message {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .welcome-message h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .config-panel .row > div {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <header class="text-center mb-4">
+            <h1>Assistente Jurídico</h1>
+            <p class="text-muted">Consultas e análises jurídicas especializadas</p>
+        </header>
+        
+        <div class="config-panel mb-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="modelSelect" class="form-label">Modelo de IA</label>
+                    <select id="modelSelect" class="form-select">
+                        <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
+                        <option value="deepseek-chat">DeepSeek Chat</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="personalitySelect" class="form-label">Personalidade</label>
+                    <select id="personalitySelect" class="form-select">
+                        <option value="advogado">Advogado</option>
+                        <option value="juiz">Juiz</option>
+                        <option value="promotor">Promotor</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="toneSelect" class="form-label">Tom de Voz</label>
+                    <select id="toneSelect" class="form-select">
+                        <option value="formal">Formal</option>
+                        <option value="natural">Natural</option>
+                        <option value="simples">Simplificado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="webSearchToggle">
+                        <label class="form-check-label" for="webSearchToggle">
+                            <i class="fas fa-globe me-1"></i> Usar Pesquisa Web
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="useDocumentsToggle">
+                        <label class="form-check-label" for="useDocumentsToggle">
+                            <i class="fas fa-file-alt me-1"></i> Usar Documentos
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div id="messagesArea" class="messages-area">
+                <div id="welcomeMessage" class="welcome-message">
+                    <h2>Bem-vindo ao Assistente Jurídico</h2>
+                    <p>Estou aqui para ajudar com suas consultas jurídicas.</p>
+                    <p>Você pode personalizar meu comportamento usando as opções acima.</p>
+                    <p>Digite sua mensagem abaixo para começar.</p>
+                </div>
+                <!-- Mensagens serão adicionadas aqui via JavaScript -->
+            </div>
+            
+            <div class="input-area">
+                <div class="d-flex gap-2">
+                    <button id="uploadBtn" class="btn btn-upload" title="Enviar arquivo">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="fileInput" style="display: none;">
+                    <textarea id="messageInput" class="form-control message-input" placeholder="Digite sua mensagem..." rows="2"></textarea>
+                    <button id="sendBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Elementos DOM
+        const messagesArea = document.getElementById('messagesArea');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        
+        // Elementos de configuração
+        const modelSelect = document.getElementById('modelSelect');
+        const personalitySelect = document.getElementById('personalitySelect');
+        const toneSelect = document.getElementById('toneSelect');
+        const webSearchToggle = document.getElementById('webSearchToggle');
+        const useDocumentsToggle = document.getElementById('useDocumentsToggle');
+        
+        // Estado da aplicação
+        let messageCount = 0;
+        
+        // Habilitar/desabilitar botão de envio com base no input
+        messageInput.addEventListener('input', function() {
+            sendBtn.disabled = messageInput.value.trim() === '';
+            
+            // Auto-ajustar altura do textarea
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+        
+        // Enviar mensagem ao clicar no botão de envio
+        sendBtn.addEventListener('click', sendMessage);
+        
+        // Enviar mensagem ao pressionar Enter (sem Shift)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.disabled) {
+                    sendMessage();
+                }
+            }
+        });
+        
+        // Abrir seletor de arquivo ao clicar no botão de upload
+        uploadBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Processar arquivo selecionado
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const file = this.files[0];
+                
+                // Ocultar mensagem de boas-vindas
+                if (welcomeMessage.style.display !== 'none') {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                // Adicionar mensagem do usuário
+                addMessage('user', `Arquivo enviado: ${file.name}`);
+                
+                // Simular resposta do assistente
+                setTimeout(() => {
+                    addMessage('assistant', `Recebi seu arquivo "${file.name}". Você pode fazer perguntas sobre o conteúdo deste documento.`);
+                }, 1000);
+                
+                // Limpar seleção de arquivo
+                this.value = '';
+            }
+        });
+        
+        // Função para enviar mensagem
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+            
+            // Ocultar mensagem de boas-vindas
+            if (welcomeMessage.style.display !== 'none') {
+                welcomeMessage.style.display = 'none';
+            }
+            
+            // Adicionar mensagem do usuário à área de chat
+            addMessage('user', message);
+            
+            // Limpar campo de mensagem
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            messageInput.focus();
+            
+            // Desabilitar botão de envio enquanto aguarda resposta
+            sendBtn.disabled = true;
+            
+            // Simular resposta do assistente
+            setTimeout(() => {
+                const response = generateResponse(message);
+                addMessage('assistant', response);
+                
+                // CRÍTICO: Garantir foco no campo de entrada após a resposta
+                setTimeout(() => {
+                    messageInput.focus();
+                    sendBtn.disabled = false;
+                }, 100);
+            }, 1500);
+            
+            // Incrementar contador de mensagens
+            messageCount++;
+        }
+        
+        // Função para adicionar mensagem à área de chat
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            
+            messagesArea.appendChild(messageDiv);
+            
+            // Rolar para a última mensagem
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+        
+        // Função para gerar resposta simulada com base nas configurações
+        function generateResponse(userMessage) {
+            const model = modelSelect.value;
+            const personality = personalitySelect.value;
+            const tone = toneSelect.value;
+            const useWebSearch = webSearchToggle.checked;
+            const useDocuments = useDocumentsToggle.checked;
+            
+            // Texto para personalidade
+            let personalityText = '';
+            if (personality === 'advogado') {
+                personalityText = 'Como advogado especializado,';
+            } else if (personality === 'juiz') {
+                personalityText = 'Como juiz com experiência no tema,';
+            } else {
+                personalityText = 'Como promotor de justiça,';
+            }
+            
+            // Texto para tom
+            let toneText = '';
+            if (tone === 'formal') {
+                toneText = 'respondendo em tom formal e técnico,';
+            } else if (tone === 'natural') {
+                toneText = 'utilizando uma linguagem natural e acessível,';
+            } else {
+                toneText = 'explicando de forma simplificada e didática,';
+            }
+            
+            // Resposta padrão com base em configurações
+            let response = `${personalityText} ${toneText} posso ajudar com sua questão jurídica.\n\n`;
+            
+            // Adicionar referência específica baseada no input do usuário
+            if (userMessage.toLowerCase().includes('contrato')) {
+                response += 'Em relação à sua dúvida sobre contratos, é importante considerar aspectos como validade, cláusulas resolutivas e condições suspensivas que podem afetar a relação contratual.';
+            } else if (userMessage.toLowerCase().includes('processo')) {
+                response += 'Sobre processos judiciais, recomendo atenção aos prazos processuais e requisitos formais para peticionamento, além de verificar a competência do juízo para o caso específico.';
+            } else if (userMessage.toLowerCase().includes('crime') || userMessage.toLowerCase().includes('penal')) {
+                response += 'No âmbito do direito penal, é essencial analisar elementos como tipicidade, antijuridicidade e culpabilidade, além de verificar eventuais excludentes de ilicitude aplicáveis ao caso.';
+            } else {
+                response += 'Para uma análise mais completa da sua situação jurídica, seria importante considerar os detalhes específicos do caso e a legislação aplicável à matéria.';
+            }
+            
+            // Adicionar informação sobre modelo e fontes
+            response += `\n\nEstou utilizando o modelo ${model} para gerar esta resposta.`;
+            
+            if (useWebSearch) {
+                response += '\nEstou considerando informações da web para maior precisão.';
+            }
+            
+            if (useDocuments) {
+                response += '\nEstou analisando os documentos enviados para contextualizar minha resposta.';
+            }
+            
+            return response;
+        }
+        
+        // Iniciar com foco no campo de mensagem
+        messageInput.focus();
+    </script>
+</body>
+</html>

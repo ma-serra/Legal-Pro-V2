@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Análises Multi-Agente - Legal Pro{% endblock %}
+
+{% block head %}
+<style>
+    body { 
+        background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%) !important; 
+        color: #e0e6ed !important;
+    }
+    .card {
+        background: rgba(26, 33, 50, 0.95);
+        border: 1px solid #3a4a5c;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    .stats-header {
+        background: linear-gradient(135deg, #316286, #1B4332);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+    .analise-card {
+        background: rgba(26, 33, 50, 0.9);
+        border-left: 4px solid #316286;
+        margin-bottom: 20px;
+    }
+    .badge-concluida { background-color: #16a085; }
+    .badge-processando { background-color: #f39c12; }
+    .badge-erro { background-color: #e74c3c; }
+    .badge-pendente { background-color: #95a5a6; }
+    .metric-box {
+        background: linear-gradient(135deg, #316286, #2E5266);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .area-badge {
+        background: #B8860B;
+        color: white;
+        border-radius: 15px;
+        padding: 3px 8px;
+        font-size: 0.75em;
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header com Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stats-header">
+                <div class="card-body text-center">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-1">
+                                <i class="fas fa-robot me-2"></i>Histórico de Análises Multi-Agente
+                            </h2>
+                            <p class="mb-0">Visualize todas as análises realizadas pelo sistema multi-agente de IA jurídica</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="/validacao-multi-agente-expandida" class="btn btn-warning btn-lg">
+                                    <i class="fas fa-plus me-2"></i>Nova Análise
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Gerais -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ total_analises or 0 }}</h4>
+                <small>Total de Análises</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ analises|selectattr('status', 'equalto', 'concluida')|list|length }}</h4>
+                <small>Concluídas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ (analises|sum(attribute='tokens_consumidos', start=0))|int }}</h4>
+                <small>Total de Tokens</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">R$ {{ "%.2f"|format(analises|sum(attribute='custo_estimado', start=0)) }}</h4>
+                <small>Custo Total</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Análises -->
+    {% if analises and analises|length > 0 %}
+        <div class="row">
+            {% for analise in analises %}
+            <div class="col-12 mb-3">
+                <div class="card analise-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-contract text-primary me-2"></i>
+                            <h6 class="mb-0 text-light">{{ analise.titulo_analise or "Análise Multi-Agente" }} - {{ analise.numero_registro }}</h6>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if analise.status == 'concluida' %}
+                                <span class="badge badge-concluida">✅ Concluída</span>
+                            {% elif analise.status == 'processando' %}
+                                <span class="badge badge-processando">🔄 Processando</span>
+                            {% elif analise.status == 'erro' %}
+                                <span class="badge badge-erro">❌ Erro</span>
+                            {% else %}
+                                <span class="badge badge-pendente">⏳ {{ analise.status|title }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Informações Principais -->
+                            <div class="col-md-8">
+                                {% if analise.descricao %}
+                                <p class="text-light mb-2">
+                                    <strong>📝 Descrição:</strong> {{ analise.descricao[:150] }}{% if analise.descricao|length > 150 %}...{% endif %}
+                                </p>
+                                {% endif %}
+                                
+                                {% if analise.documento_nome %}
+                                <p class="text-light mb-2">
+                                    <strong>📄 Documento:</strong> {{ analise.documento_nome }}
+                                    {% if analise.documento_tamanho %}
+                                        <small class="text-muted">({{ (analise.documento_tamanho / 1024)|round(1) }} KB)</small>
+                                    {% endif %}
+                                </p>
+                                {% endif %}
+
+                                {% if analise.areas_juridicas_envolvidas and analise.areas_juridicas_envolvidas|length > 0 %}
+                                <p class="text-light mb-2">
+                                    <strong>⚖️ Áreas Jurídicas:</strong>
+                                    {% for area in analise.areas_juridicas_envolvidas %}
+                                        <span class="area-badge">{{ area }}</span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+
+                                {% if analise.data_criacao %}
+                                <p class="text-light mb-0">
+                                    <strong>📅 Criada em:</strong> 
+                                    {% if analise.data_criacao is string %}
+                                        {{ analise.data_criacao }}
+                                    {% else %}
+                                        {{ analise.data_criacao.strftime('%d/%m/%Y às %H:%M') }}
+                                    {% endif %}
+                                </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Métricas da Análise -->
+                            <div class="col-md-4">
+                                <div class="row text-center">
+                                    {% if analise.total_agentes_utilizados %}
+                                    <div class="col-6 mb-2">
+                                        <div class="bg-primary rounded p-2">
+                                            <h6 class="mb-0 text-white">{{ analise.total_agentes_utilizados }}</h6>
+                                            <small class="text-light">Agentes</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if analise.tempo_processamento_segundos %}
+                                    <div class="col-6 mb-2">
+                                        <div class="bg-info rounded p-2">
+                                            <h6 class="mb-0 text-white">{{ analise.tempo_processamento_segundos }}s</h6>
+                                            <small class="text-light">Tempo</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if analise.tokens_consumidos %}
+                                    <div class="col-6 mb-2">
+                                        <div class="bg-warning rounded p-2">
+                                            <h6 class="mb-0 text-dark">{{ analise.tokens_consumidos }}</h6>
+                                            <small class="text-dark">Tokens</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if analise.custo_estimado %}
+                                    <div class="col-6 mb-2">
+                                        <div class="bg-success rounded p-2">
+                                            <h6 class="mb-0 text-white">R$ {{ "%.2f"|format(analise.custo_estimado) }}</h6>
+                                            <small class="text-light">Custo</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <a href="{{ url_for('detalhes_analise_multiagente', analise_id=analise.numero_registro) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Ver Detalhes
+                            </a>
+                            <button class="btn btn-outline-info btn-sm" onclick="verificarEAbrirConsenso('{{ analise.numero_registro }}')">
+                                <i class="fas fa-handshake me-1"></i>Ver Consenso
+                            </button>
+                            <a href="{{ url_for('exportar_analise_docx', analise_id=analise.numero_registro) }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-file-word me-1"></i>Exportar DOCX
+                            </a>
+                            <button class="btn btn-outline-danger btn-sm" onclick="confirmarExclusao('{{ analise.numero_registro }}')">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <!-- Estado Vazio -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-robot fa-4x text-muted mb-4"></i>
+                        <h4 class="text-light mb-3">Nenhuma análise encontrada</h4>
+                        <p class="text-muted mb-4">
+                            Ainda não foram realizadas análises multi-agente. 
+                            Comece criando sua primeira análise para ver o poder da IA jurídica!
+                        </p>
+                        <a href="/validacao-multi-agente-expandida" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Criar Primeira Análise Multi-Agente
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Botão de Voltar -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="/home" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarExclusao(analiseId) {
+    if (confirm('Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.')) {
+        fetch(`/api/analise-multiagente/${analiseId}/excluir`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Análise excluída com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro ao excluir análise: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao excluir análise');
+        });
+    }
+}
+
+// Função para verificar e abrir consenso
+function verificarEAbrirConsenso(numeroRegistro) {
+    // Criar elemento de loading
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.8); z-index: 9999; 
+                    display: flex; align-items: center; justify-content: center;">
+            <div style="background: #1a2132; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #3a4a5c;">
+                <i class="fas fa-spinner fa-spin fa-2x text-info"></i>
+                <h5 class="mt-3 text-light">Verificando Consenso...</h5>
+            </div>
+        </div>`;
+    document.body.appendChild(loadingDiv);
+
+    // Verificar se existe consenso
+    fetch(`/api/relatorio-consenso/verificar/${numeroRegistro}`)
+        .then(response => response.json())
+        .then(data => {
+            document.body.removeChild(loadingDiv);
+            
+            if (data.existe_consenso) {
+                // Abrir consenso existente
+                window.location.href = `/relatorio-consenso/${data.relatorio_id}/detalhes`;
+            } else {
+                // Perguntar se deseja gerar novo consenso
+                if (confirm('Nenhum consenso encontrado para esta análise. Deseja gerar um agora?')) {
+                    gerarRelatorioConsenso(numeroRegistro);
+                }
+            }
+        })
+        .catch(error => {
+            document.body.removeChild(loadingDiv);
+            console.error('Erro:', error);
+            
+            // Se deu erro, tentar gerar novo consenso
+            if (confirm('Erro ao verificar consenso. Deseja gerar um novo relatório de consenso?')) {
+                gerarRelatorioConsenso(numeroRegistro);
+            }
+        });
+}
+
+// Função para gerar relatório de consenso
+function gerarRelatorioConsenso(numeroRegistro) {
+    // Criar elemento de loading
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.8); z-index: 9999; 
+                    display: flex; align-items: center; justify-content: center;">
+            <div style="background: #1a2132; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #3a4a5c;">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                <h5 class="mt-3 text-light">Gerando Consenso...</h5>
+                <p class="text-light">Analisando respostas dos agentes</p>
+            </div>
+        </div>`;
+    document.body.appendChild(loadingDiv);
+
+    fetch('/relatorio-consenso/gerar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'numero_registro': numeroRegistro
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.body.removeChild(loadingDiv);
+        
+        if (data.success) {
+            // Mostrar mensagem de sucesso e redirecionar
+            const successDiv = document.createElement('div');
+            successDiv.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; z-index: 10000; 
+                            background: #28a745; color: white; padding: 20px; 
+                            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <i class="fas fa-check-circle me-2"></i>Consenso gerado com sucesso! Redirecionando...
+                </div>`;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                window.location.href = `/relatorio-consenso/${data.relatorio_id}/detalhes`;
+            }, 1500);
+        } else {
+            alert('Erro ao gerar consenso: ' + (data.error || 'Erro desconhecido'));
+        }
+    })
+    .catch(error => {
+        document.body.removeChild(loadingDiv);
+        console.error('Erro:', error);
+        alert('Erro de conexão ao gerar consenso');
+    });
+}
+</script>
+{% endblock %}

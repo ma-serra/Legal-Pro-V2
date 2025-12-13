@@ -1,0 +1,180 @@
+{% extends 'layout.html' %}
+
+{% block title %}Extração de Entidades{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('analise_avancada.pagina_principal') }}">Recursos Avançados</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Extração de Entidades</li>
+                </ol>
+            </nav>
+            
+            <h1 class="mb-4">Extração de Entidades</h1>
+            <p class="lead">Extraia e organize automaticamente entidades e citações relevantes de documentos jurídicos.</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Seus Documentos</h5>
+                    <a href="{{ url_for('analise_avancada.pagina_busca_entidades') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-search me-1"></i> Busca Avançada
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if documentos %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Tipo</th>
+                                    <th>Data de Criação</th>
+                                    <th>Entidades Extraídas</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documentos %}
+                                <tr>
+                                    <td>{{ doc.titulo }}</td>
+                                    <td><span class="badge bg-secondary">{{ doc.tipo or 'Não especificado' }}</span></td>
+                                    <td>{{ doc.data_criacao|datetimeformat }}</td>
+                                    <td>
+                                        {% if doc.total_entidades %}
+                                        <span class="badge bg-success">{{ doc.total_entidades }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Não extraídas</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('analise_avancada.pagina_entidades_documento', documento_id=doc.id) }}" 
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye me-1"></i> Ver
+                                            </a>
+                                            <button class="btn btn-sm btn-primary btn-extrair-entidades" 
+                                                   data-documento-id="{{ doc.id }}">
+                                                <i class="fas fa-sync me-1"></i> Extrair
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Nenhum documento encontrado. Crie um novo documento para começar.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Tipos de Entidades</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Entidades Jurídicas</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-gavel text-primary me-2"></i> Leis e Normativas</li>
+                                <li><i class="fas fa-landmark text-primary me-2"></i> Tribunais</li>
+                                <li><i class="fas fa-balance-scale text-primary me-2"></i> Precedentes</li>
+                                <li><i class="fas fa-file-contract text-primary me-2"></i> Cláusulas Contratuais</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Entidades Gerais</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-user text-info me-2"></i> Pessoas</li>
+                                <li><i class="fas fa-building text-info me-2"></i> Organizações</li>
+                                <li><i class="fas fa-map-marker-alt text-info me-2"></i> Locais</li>
+                                <li><i class="fas fa-calendar-alt text-info me-2"></i> Datas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Benefícios</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><strong>Indexação automática:</strong> Entidades são identificadas e categorizadas</li>
+                        <li><strong>Pesquisa avançada:</strong> Encontre documentos por entidades específicas</li>
+                        <li><strong>Análise de relacionamentos:</strong> Visualize conexões entre entidades</li>
+                        <li><strong>Citações jurídicas:</strong> Identificação automática de referências a legislação e jurisprudência</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botões para extrair entidades
+    document.querySelectorAll('.btn-extrair-entidades').forEach(button => {
+        button.addEventListener('click', function() {
+            const documentoId = this.getAttribute('data-documento-id');
+            const button = this;
+            
+            // Desabilita o botão e mostra spinner
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
+            
+            // Faz a requisição para extrair entidades
+            fetch('/avancado/api/entidades/extrair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    documento_id: documentoId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Extração concluída! ${data.total_entidades} entidades extraídas.`);
+                    // Redireciona para a página de entidades do documento
+                    window.location.href = `/avancado/entidades/documento/${documentoId}`;
+                } else {
+                    alert(`Erro: ${data.error}`);
+                    // Restaura o botão
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-sync me-1"></i> Extrair';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao extrair entidades:', error);
+                alert('Erro ao extrair entidades. Por favor, tente novamente.');
+                // Restaura o botão
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sync me-1"></i> Extrair';
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

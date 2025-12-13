@@ -1,0 +1,320 @@
+{% extends "layout.html" %}
+
+{% block title %}Agente: {{ agente.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ agente.nome }}</h1>
+    <div>
+      <a href="{{ url_for('editar_agente', agente_id=agente.id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-edit"></i> Editar Agente
+      </a>
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-file-code"></i> Template
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#exportarTemplateModal">
+              <i class="fas fa-file-export"></i> Exportar
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importarTemplateModal">
+              <i class="fas fa-file-import"></i> Importar
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('criar_template') }}?base={{ agente.id }}">
+              <i class="fas fa-plus-circle"></i> Criar Novo Template
+            </a>
+          </li>
+        </ul>
+      </div>
+      <a href="{{ url_for('listar_agentes_route') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Informações do Agente -->
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Informações</h5>
+          <span class="badge rounded-pill 
+            {% if agente.tipo == 'tradutor' %}bg-primary
+            {% elif agente.tipo == 'resumidor' %}bg-success
+            {% elif agente.tipo == 'gerador' %}bg-warning text-dark
+            {% elif agente.tipo == 'classificador' %}bg-info text-dark
+            {% elif agente.tipo == 'extrator' %}bg-danger
+            {% else %}bg-secondary
+            {% endif %}">{{ agente.tipo }}</span>
+        </div>
+        <div class="card-body">
+          <p class="card-text">{{ agente.descricao or 'Sem descrição' }}</p>
+          
+          <h6>Configurações</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Provedor:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.llm_provider }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Modelo:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.llm_model }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Temperatura:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.temperatura }}</span>
+            </li>
+          </ul>
+          
+          {% if agente.configuracoes.parametros %}
+            <h6 class="mt-3">Parâmetros</h6>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Valor Padrão</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for nome, valor in agente.configuracoes.parametros.items() %}
+                  <tr>
+                    <td>{{ nome }}</td>
+                    <td><code>{{ valor }}</code></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+        <div class="card-footer">
+          <small class="text-muted">Criado em {{ agente.criado_em|datetimeformat }}</small>
+        </div>
+      </div>
+      
+      <!-- Card de Uso Rápido -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Uso Rápido</h5>
+        </div>
+        <div class="card-body">
+          <p>Adicione este agente a um fluxo de trabalho:</p>
+          <a href="{{ url_for('fluxos_criar', agente_id=agente.id) }}" class="btn btn-primary w-100">
+            <i class="fas fa-plus"></i> Criar Novo Fluxo
+          </a>
+          
+          <hr>
+          
+          <p>Ou teste diretamente:</p>
+          <a href="{{ url_for('testar_agente', agente_id=agente.id) }}" class="btn btn-outline-primary w-100 mb-3">
+            <i class="fas fa-flask"></i> Testar Agente
+          </a>
+          
+          <hr>
+          
+          <p>Gerenciar este template:</p>
+          <button type="button" class="btn btn-outline-info w-100 mb-2" data-bs-toggle="modal" data-bs-target="#exportarTemplateModal">
+            <i class="fas fa-file-export"></i> Exportar como Template
+          </button>
+          <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#importarTemplateModal">
+            <i class="fas fa-file-import"></i> Importar Template
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Template de Prompt -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Template de Prompt</h5>
+        </div>
+        <div class="card-body">
+          <pre class="prompt-template p-3 bg-light rounded"><code>{{ agente.prompt_template }}</code></pre>
+          
+          <h6 class="mt-4">Referência de Variáveis</h6>
+          <p>No template acima, você pode utilizar as seguintes variáveis:</p>
+          <ul>
+            <li><code>{input}</code> - O texto de entrada recebido dos agentes anteriores</li>
+            <li><code>{contexto}</code> - Informações de contexto para o agente</li>
+            <li><code>{parametros.NOME}</code> - Acesso aos parâmetros configurados</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Histórico de Execuções -->
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Execuções Recentes</h5>
+          <a href="{{ url_for('historico_agente', agente_id=agente.id) }}" class="btn btn-sm btn-outline-secondary">
+            Ver Todas
+          </a>
+        </div>
+        <div class="card-body">
+          {% if execucoes %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fluxo</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for execucao in execucoes %}
+                    <tr>
+                      <td>{{ execucao.id }}</td>
+                      <td>{{ execucao.nome_fluxo }}</td>
+                      <td>{{ execucao.executado_em|datetimeformat }}</td>
+                      <td>
+                        <span class="badge {% if execucao.status == 'concluido' %}bg-success{% elif execucao.status == 'erro' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                          {{ execucao.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <a href="{{ url_for('visualizar_execucao', execucao_id=execucao.id) }}" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              Este agente ainda não foi executado.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .prompt-template {
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+  }
+</style>
+
+<!-- Modal para Exportar Template -->
+<div class="modal fade" id="exportarTemplateModal" tabindex="-1" aria-labelledby="exportarTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exportarTemplateModalLabel">Exportar como Template</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Copie o código JSON abaixo para salvar este agente como um template personalizado:</p>
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i> Você pode editar este JSON e depois importá-lo novamente usando a opção "Importar Template".
+        </div>
+        <div class="form-floating mb-3">
+          <textarea class="form-control" id="templateJson" style="height: 300px; font-family: monospace;" readonly>{{ agente|tojson(indent=2) }}</textarea>
+          <label for="templateJson">Template JSON</label>
+        </div>
+        <button class="btn btn-success w-100" onclick="copiarTemplate()">
+          <i class="fas fa-copy"></i> Copiar para Área de Transferência
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Importar Template -->
+<div class="modal fade" id="importarTemplateModal" tabindex="-1" aria-labelledby="importarTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importarTemplateModalLabel">Importar Template</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Cole o código JSON do template para importar:</p>
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i> Isso substituirá as configurações atuais deste agente. Certifique-se de que o JSON está correto.
+        </div>
+        <div class="form-floating mb-3">
+          <textarea class="form-control" id="importTemplateJson" style="height: 300px; font-family: monospace;"></textarea>
+          <label for="importTemplateJson">Cole o Template JSON aqui</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="importarTemplate({{ agente.id }})">
+          <i class="fas fa-file-import"></i> Importar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function copiarTemplate() {
+    const textarea = document.getElementById('templateJson');
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Feedback ao usuário
+    const btn = document.querySelector('#exportarTemplateModal button.btn-success');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+    }, 2000);
+  }
+  
+  function importarTemplate(agenteId) {
+    const jsonText = document.getElementById('importTemplateJson').value;
+    if (!jsonText.trim()) {
+      alert('Por favor, insira um JSON válido.');
+      return;
+    }
+    
+    try {
+      // Validar se é um JSON válido
+      JSON.parse(jsonText);
+      
+      // Enviar para o servidor
+      fetch(`/api/agentes/${agenteId}/importar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ template_json: jsonText }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Recarregar a página para mostrar as alterações
+          window.location.reload();
+        } else {
+          alert('Erro ao importar template: ' + data.message);
+        }
+      })
+      .catch(error => {
+        alert('Erro ao importar template: ' + error);
+      });
+    } catch (e) {
+      alert('JSON inválido. Por favor, verifique o formato e tente novamente.');
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,2300 @@
+{% extends "base.html" %}
+
+{% block title %}Sistema Multi-Agente - Análise de Texto{% endblock %}
+
+{% block head %}
+<div class="homepage-container" style="display:none;">
+  <!-- Elemento invisível para ativar o estilo da página inicial -->
+</div>
+<style>
+  /* Cor de fundo específica para a página /dashboard */
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .agent-card {
+    transition: all 0.3s ease;
+    border: 2px solid #6c757d !important;
+    border-radius: 8px;
+    height: 100%;
+  }
+  
+  .agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .agent-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+  }
+  
+  .dropzone {
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: rgba(0, 0, 0, 0.025);
+  }
+  
+  .dropzone:hover {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+  }
+  
+  .nav-tabs .nav-link {
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+  }
+  
+  .nav-tabs .nav-link.active {
+    border-bottom: 3px solid var(--bs-primary);
+    background-color: transparent;
+    color: var(--bs-primary);
+  }
+  
+  .nav-tabs .nav-link:hover:not(.active) {
+    border-bottom: 3px solid var(--bs-border-color);
+  }
+  
+  .history-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  
+  .history-badge:hover {
+    transform: scale(1.1);
+  }
+
+  .main-heading {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .btn-action {
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+  }
+  
+  .btn-action-icon {
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+  }
+  
+  .table-history th {
+    font-weight: 600;
+  }
+  
+  /* Fundo da área dos agentes especializados */
+  .agentes-especializados-area {
+    background-color: #21333d !important;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Cor dos checkboxes dos cards de especialistas */
+  .agentes-especializados-area .form-check-input {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    border-width: 2px !important;
+  }
+  
+  .agentes-especializados-area .form-check-input:checked {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23585b5c' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
+  }
+  
+  .agentes-especializados-area .form-check-input:focus {
+    border-color: #585b5c !important;
+    box-shadow: 0 0 0 0.2rem rgba(88, 91, 92, 0.25) !important;
+  }
+
+  /* Cor dos checkboxes da seção Múltiplos Agentes */
+  #selecao-multiplos-agentes .form-check-input {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    border-width: 2px !important;
+  }
+  
+  #selecao-multiplos-agentes .form-check-input:checked {
+    background-color: white !important;
+    border-color: #585b5c !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23585b5c' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
+  }
+  
+  #selecao-multiplos-agentes .form-check-input:focus {
+    border-color: #585b5c !important;
+    box-shadow: 0 0 0 0.2rem rgba(88, 91, 92, 0.25) !important;
+  }
+
+  /* Cor dos card-body */
+  .card-body {
+    background-color: #575b5c !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cores dos textos dos cards */
+  .card-text {
+    color: #768082 !important;
+  }
+  
+  .text-muted {
+    color: #ffffff !important;
+  }
+  
+  .card-title {
+    color: #fcfffb !important;
+  }
+  
+  /* Cores dos botões e elementos */
+  .btn-sm {
+    background-color: #355d6c !important;
+    border-color: #355d6c !important;
+  }
+  
+  .agent-icon {
+    color: #355d6c !important;
+  }
+  
+  .form-group {
+    background-color: #575b5c !important;
+  }
+  
+  .form-label {
+    color: #575b5c !important;
+  }
+  
+  /* Cor dos elementos d-flex */
+  .d-flex {
+    color: #355d6c !important;
+  }
+  
+  /* Cor dos card-header */
+  .card-header {
+    background-color: #355d6c !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cor dos agent-icon */
+  .agent-icon {
+    color: #40aba0 !important;
+  }
+  
+  /* Cor dos form-text */
+  .form-text {
+    color: #40aba0 !important;
+  }
+  
+  /* Cor dos file-upload e btn-sm */
+  .file-upload, .btn-sm {
+    background-color: #40aba0 !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cor dos form-check-label */
+  .form-check-label {
+    color: #40a9a3 !important;
+  }
+  
+  /* Cor dos form-check-input checked */
+  .form-check-input:checked {
+    background-color: #40a9a3 !important;
+    border-color: #40a9a3 !important;
+  }
+  
+  /* Adiciona margem aos form-check-input */
+  .form-check-input {
+    margin: 0.125rem !important;
+  }
+  
+  /* Nav tabs personalizadas */
+  .nav-tabs .nav-link.active {
+    border-bottom: 3px solid #336b69 !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+  }
+  
+  /* Cor dos ícones drag-and-drop */
+  .drag-and-drop i, .file-drop-zone i, .upload-icon, 
+  .fa-upload, .fa-file-upload, .fa-cloud-upload-alt {
+    color: #40a9a3 !important;
+  }
+  
+  /* Cor dos border-bottom */
+  .border-bottom, .card-header, .nav-tabs, .dropdown-divider,
+  hr, .modal-header, .table-bordered th, .table-bordered td {
+    border-bottom-color: #fcfffb !important;
+  }
+  
+  /* Hover do drag-and-drop */
+  .drag-and-drop:hover, .file-drop-zone:hover, 
+  .upload-area:hover, .file-upload-area:hover {
+    border-color: #355d6c !important;
+    background-color: rgba(52, 104, 102, 0.1) !important;
+  }
+  
+  /* Alert-info customizado */
+  .alert-info {
+    --bs-alert-color: #fcfffb;
+    --bs-alert-bg: #355d6c;
+    --bs-alert-border-color: #355d6c;
+    border-left: 4px solid #355d6c !important;
+    color: #fcfffb !important;
+  }
+  
+  .alert-info h1, .alert-info h2, .alert-info h3, .alert-info h4, .alert-info h5, .alert-info h6,
+  .alert-info .alert-heading {
+    color: #fcfffb !important;
+  }
+  
+  .alert-info i, .alert-info .icon, .alert-info .fa, .alert-info [class*="fa-"] {
+    color: #fcfffb !important;
+  }
+  
+  /* Configurações de botões atualizadas */
+  .btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #3c7472;
+    --bs-btn-border-color: #3c7472;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #3c7472;
+    --bs-btn-hover-border-color: #3c7472;
+    --bs-btn-focus-shadow-rgb: 49, 132, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #3c7472;
+    --bs-btn-active-border-color: #3c7472;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #3c7472;
+    --bs-btn-disabled-border-color: #3c7472;
+  }
+  
+  .btn-outline-primary {
+    --bs-btn-color: #3c7472;
+    --bs-btn-border-color: #3c7472;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #3c7472;
+    --bs-btn-hover-border-color: #3c7472;
+    --bs-btn-focus-shadow-rgb: 13, 110, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #3c7472;
+    --bs-btn-active-border-color: #3c7472;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #3c7472;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: #3c7472;
+    --bs-gradient: none;
+  }
+  
+  .btn-sm {
+    background-color: #3c7472 !important;
+    border-color: #3c7472 !important;
+    color: #ffffff !important;
+  }
+  
+  .btn-sm:hover, .btn-sm:active {
+    background-color: #3c7472 !important;
+    border-color: #3c7472 !important;
+    color: #ffffff !important;
+  }
+    text-transform: uppercase;
+    font-size: 0.825rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .highlight-card {
+    border-left: 4px solid var(--bs-primary);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="main-heading">
+        <i class="fas fa-robot me-2 text-white"></i><span style="color: white;">Sistema de Análise Multi-Agente</span>
+      </h1>
+      <p class="lead" style="color: white;">Agentes especializados para analisar documentos e extrair insights relevantes na tomada de decisão.</p>
+    </div>
+  </div>
+
+  <!-- Seção de Acesso Rápido -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-rocket me-2 text-white"></i><span style="color: white;">Acesso Rápido</span>
+      </h3>
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 highlight-card feature-card">
+            <div class="card-body">
+              <div class="feature-icon mb-3">
+                <i class="fas fa-gavel"></i>
+              </div>
+              <h5 class="card-title">Cadastro de Processo</h5>
+              <p class="card-text">Registre novos processos jurídicos com informações completas incluindo dados do cliente, valores e fases processuais.</p>
+              <a href="/processos/cadastro" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Cadastrar Processo
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 highlight-card feature-card">
+            <div class="card-body">
+              <div class="feature-icon mb-3">
+                <i class="fas fa-list-alt"></i>
+              </div>
+              <h5 class="card-title">Lista de Processos</h5>
+              <p class="card-text">Visualize e gerencie todos os processos cadastrados com filtros por área jurídica, status e outras categorias.</p>
+              <a href="/processos/lista" class="btn btn-primary">
+                <i class="fas fa-eye me-2"></i>Ver Processos
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 highlight-card feature-card">
+            <div class="card-body">
+              <div class="feature-icon mb-3">
+                <i class="fas fa-search"></i>
+              </div>
+              <h5 class="card-title">Busca Inteligente</h5>
+              <p class="card-text">Pesquise processos usando critérios avançados como CPF, CNPJ, número do processo ou área jurídica.</p>
+              <a href="/processos/buscar" class="btn btn-primary">
+                <i class="fas fa-search me-2"></i>Buscar
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção de Ferramentas Especializadas -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-tools me-2 text-white"></i><span style="color: white;">Ferramentas Especializadas</span>
+      </h3>
+    </div>
+  </div>
+  
+  <!-- Primeira linha com 3 cards -->
+  <div class="row mb-4">
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-microphone agent-icon" style="color: #3b576f;"></i>
+          <h5 class="card-title">Sistema de Transcrição</h5>
+          <p class="card-text text-muted">Converta arquivos de áudio em texto com análise de sentimentos e múltiplos falantes.</p>
+          <a href="{{ url_for('transcription_index') }}" class="btn btn-sm" style="background-color: #3b576f; border-color: #3b576f; color: white; font-weight: 600;">
+            <i class="fas fa-microphone me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-video agent-icon" style="color: #c29e74;"></i>
+          <h5 class="card-title">Transcrição de Vídeo</h5>
+          <p class="card-text text-muted">Sistema especializado para transcrição de vídeos.</p>
+          <a href="{{ url_for('video_transcription.video_transcription_home') }}" class="btn btn-sm" style="background-color: #c29e74; border-color: #c29e74; color: white; font-weight: 600;">
+            <i class="fas fa-circle me-2" style="color: white;"></i>Acessar
+          </a>
+          <p class="text-muted mt-2 mb-0" style="font-size: 0.85rem;">Em Desenvolvimento</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-gavel agent-icon text-info"></i>
+          <h5 class="card-title">Especialistas Jurídicos</h5>
+          <p class="card-text text-muted">Módulo jurídico com 329 agentes especialistas cobrindo 18 áreas do direito brasileiro.</p>
+          <a href="/juridico/especialistas" class="btn btn-sm" style="background-color: #0d6efd; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-balance-scale me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Segunda linha com cards de análise -->
+  <div class="row mb-5">
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-pencil-square agent-icon" style="color: #007bff;"></i>
+          <h5 class="card-title">Legal Editor</h5>
+          <p class="card-text text-muted">Editor profissional com mais de 50 elementos interativos, handles de redimensionamento e ferramentas avançadas de design jurídico.</p>
+          <a href="/legal-design-pro-v2/editor" class="btn btn-sm" style="background-color: #007bff; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-edit me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-file-contract agent-icon" style="color: #ffc107;"></i>
+          <h5 class="card-title">Legal Templates</h5>
+          <p class="card-text text-muted">Biblioteca completa com 557 templates autênticos distribuídos em 30 áreas especializadas do direito.</p>
+          <a href="/legal-design-pro-v2/templates" class="btn btn-sm" style="background-color: #ffc107; color: #212529; font-weight: 600; border: none;">
+            <i class="fas fa-folder me-2" style="color: #212529;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-chart-line agent-icon" style="color: #5a8ea3;"></i>
+          <h5 class="card-title">Análise Estatística e Preditiva</h5>
+          <!-- Cache-bust: 20250622-2202 -->
+          <p class="card-text text-muted">Sistema de análise inferencial avançada com inteligência artificial e métricas preditivas.</p>
+          <a href="/juridico/analise-multi-agente" class="btn btn-sm" style="background-color: #5a8ea3; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-chart-line me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-robot agent-icon" style="color: #1f9379;"></i>
+          <h5 class="card-title">Análise Multi Agentes</h5>
+          <!-- Multi-Agent Card: 20250622-2240 -->
+          <p class="card-text text-muted">Sistema avançado de análise colaborativa com múltiplos especialistas jurídicos para validação cruzada de documentos.</p>
+          <a href="/validacao-multi-agente-expandida" class="btn btn-sm" style="background-color: #1f9379; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-robot me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+
+  </div>
+
+  <div class="card shadow-sm mb-5 highlight-card">
+    <div class="card-body">
+      <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="analise-tab" data-bs-toggle="tab" data-bs-target="#analise-tab-pane" type="button" role="tab" aria-controls="analise-tab-pane" aria-selected="true" style="color: white;">
+            <i class="fas fa-file-alt me-2" style="color: white;"></i>Nova Análise
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="multiagente-tab" data-bs-toggle="tab" data-bs-target="#multiagente-tab-pane" type="button" role="tab" aria-controls="multiagente-tab-pane" aria-selected="false" style="color: white;">
+            <i class="fas fa-brain me-2" style="color: white;"></i>Validação Multi-Agente
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico-tab-pane" type="button" role="tab" aria-controls="historico-tab-pane" aria-selected="false" style="color: white;">
+            <i class="fas fa-history me-2" style="color: white;"></i>Histórico Recente
+          </button>
+        </li>
+      </ul>
+      
+      <div class="tab-content" id="myTabContent">
+        <!-- Tab de Nova Análise -->
+        <div class="tab-pane fade show active" id="analise-tab-pane" role="tabpanel" aria-labelledby="analise-tab" tabindex="0">
+          <form id="form-analise" action="/analisar" method="POST" enctype="multipart/form-data">
+            <!-- Área de Texto e Upload -->
+            <div class="row mb-4 g-4">
+              <div class="col-lg-7">
+                <div class="mb-3">
+                  <label for="texto" class="form-label fw-bold">Texto para análise</label>
+                  <div id="drag-drop-area" class="mb-3">
+                    <div id="dropzone" class="dropzone">
+                      <div class="dz-message">
+                        <i class="fas fa-file-upload fa-3x mb-3 text-primary"></i>
+                        <h5>Arraste e solte arquivos aqui</h5>
+                        <p>ou clique para selecionar</p>
+                        <small class="text-muted">(Arquivos suportados: .txt, .pdf, .docx, .html, .csv, .xlsx, .xls, .md)</small>
+                      </div>
+                    </div>
+                  </div>
+                  <textarea class="form-control" id="texto" name="texto" rows="8" required placeholder="Cole ou digite aqui o texto que deseja analisar..."></textarea>
+                  <div class="form-text">O texto extraído do arquivo será exibido no campo acima</div>
+                </div>
+              </div>
+              
+              <div class="col-lg-5">
+                <div class="card h-100">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">Configurações de Análise</h5>
+                  </div>
+                  <div class="card-body">
+                    <!-- Modo de Análise -->
+                    <div class="mb-3">
+                      <label class="form-label fw-bold">Modo de análise</label>
+                      <div class="d-flex gap-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="modo_analise" id="modo-agente-unico" value="especializado" checked>
+                          <label class="form-check-label" for="modo-agente-unico">
+                            <i class="fas fa-user-graduate me-1"></i> Agente especializado
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Seleção de Formato -->
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="formato-sintese" class="form-label">Formato de síntese</label>
+                        <select class="form-select" id="formato-sintese" name="formato_sintese">
+                          <option value="resumo" selected>Resumo</option>
+                          <option value="pontos">Lista de pontos</option>
+                          <option value="relatorio">Relatório</option>
+                          <option value="narrativa">Narrativa</option>
+                          <option value="resposta">Resposta direta</option>
+                          <option value="json">JSON estruturado</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="formato-saida" class="form-label">Formato de saída</label>
+                        <select class="form-select" id="formato-saida" name="formato_saida">
+                          <option value="html" selected>HTML</option>
+                          <option value="markdown">Markdown</option>
+                          <option value="json">JSON</option>
+                          <option value="texto">Texto simples</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="nivel-detalhe" class="form-label">Nível de detalhe</label>
+                        <select class="form-select" id="nivel-detalhe" name="nivel_detalhe">
+                          <option value="minimo">Mínimo</option>
+                          <option value="baixo">Baixo</option>
+                          <option value="medio" selected>Médio</option>
+                          <option value="alto">Alto</option>
+                          <option value="completo">Completo</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="provider" class="form-label">Provider de IA</label>
+                        <select class="form-select" id="provider" name="provider">
+                          <option value="openai" selected>OpenAI</option>
+                          <option value="anthropic">Anthropic</option>
+                          <option value="google">Google</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Área para selecionar agentes -->
+            <div class="mb-4">
+              <!-- Seleção de agente único (modo especializado) -->
+              <div id="selecao-agente-unico" class="mb-4 agentes-especializados-area">
+                <h5 class="fw-bold mb-3" style="color: white;">Escolha um agente especializado</h5>
+                
+                <!-- Exibição em cards para melhor UX -->
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                <!-- Cards de Direito Penal/Criminal -->
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-balance-scale-right agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Direito Penal</h5>
+                        <p class="card-text text-muted">Análise de casos criminais com foco no Código Penal e jurisprudência.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-1" value="especialista_defesa_criminal" checked>
+                          <label class="form-check-label" for="agent-1">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                  
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-user-friends agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Júri Criminal</h5>
+                        <p class="card-text text-muted">Análise de casos de tribunal do júri e preparação de estratégias de defesa.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-2" value="especialista_juri_criminal">
+                          <label class="form-check-label" for="agent-2">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-microscope agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Analista de Evidências Criminais</h5>
+                        <p class="card-text text-muted">Avaliação crítica de provas e evidências em processos criminais.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-3" value="analista_evidencias_criminais">
+                          <label class="form-check-label" for="agent-3">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                  
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-user-lock agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Execução Penal</h5>
+                        <p class="card-text text-muted">Análise de processos de execução, progressão de regime e direitos do apenado.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-4" value="especialista_execucao_penal">
+                          <label class="form-check-label" for="agent-4">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                  
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-shield-alt agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Defesa Criminal</h5>
+                        <p class="card-text text-muted">Análise técnica de defesas criminais e estratégias processuais.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-5" value="especialista_defesa_criminal">
+                          <label class="form-check-label" for="agent-5">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                  
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-car-crash agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Crimes de Trânsito</h5>
+                        <p class="card-text text-muted">Análise de casos envolvendo delitos de trânsito, homicídio culposo e CTB.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-8" value="especialista_crimes_transito">
+                          <label class="form-check-label" for="agent-8">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                  
+                {% if mostrar_todas_areas or "Direito Penal" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-pills agent-icon" style="color: #c41e3a;"></i>
+                        <h5 class="card-title">Especialista em Crimes de Drogas</h5>
+                        <p class="card-text text-muted">Análise técnica de casos de tráfico e posse de entorpecentes, Lei 11.343/06.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-9" value="especialista_crimes_drogas">
+                          <label class="form-check-label" for="agent-9">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito Bancário -->
+                {% if mostrar_todas_areas or "Direito Bancário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-university agent-icon" style="color: #b8860b;"></i>
+                        <h5 class="card-title">Especialista em Direito Bancário</h5>
+                        <p class="card-text text-muted">Análise de contratos bancários, operações financeiras e regulamentação do SFN.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-bancario" value="especialista_direito_bancario">
+                          <label class="form-check-label" for="agent-bancario">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito Trabalhista -->
+                {% if mostrar_todas_areas or "Direito Trabalhista" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-hard-hat agent-icon" style="color: #a94513;"></i>
+                        <h5 class="card-title">Especialista em Direito Trabalhista</h5>
+                        <p class="card-text text-muted">Análise de relações trabalhistas, CLT e jurisprudência trabalhista.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-trabalhista" value="especialista_direito_trabalhista">
+                          <label class="form-check-label" for="agent-trabalhista">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito Empresarial -->
+                {% if mostrar_todas_areas or "Direito Empresarial" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-building agent-icon" style="color: #1565c0;"></i>
+                        <h5 class="card-title">Especialista em Direito Empresarial</h5>
+                        <p class="card-text text-muted">Análise de contratos empresariais, sociedades e direito comercial.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-empresarial" value="especialista_direito_empresarial">
+                          <label class="form-check-label" for="agent-empresarial">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Agente de Compliance e Governança -->
+                {% if mostrar_todas_areas or "Direito Empresarial" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-clipboard-check agent-icon" style="color: #1565c0; font-size: 2.5rem; margin-bottom: 0.5rem; display: inline-block;"></i>
+                        <h5 class="card-title">Agente de Compliance e Governança</h5>
+                        <p class="card-text text-muted">Estruturação de boas práticas, políticas internas e conformidade regulatória.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-compliance-empresarial" value="agente_compliance_governanca">
+                          <label class="form-check-label" for="agent-compliance-empresarial">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito Empresarial" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-rocket agent-icon" style="color: #1565c0;"></i>
+                        <h5 class="card-title">Especialista em Startups e VC</h5>
+                        <p class="card-text text-muted">Estruturação jurídica de startups e operações com investidores anjo.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-startups" value="especialista_startups_venture_capital">
+                          <label class="form-check-label" for="agent-startups">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito Empresarial" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-chart-area agent-icon" style="color: #1565c0;"></i>
+                        <h5 class="card-title">Agente de Recuperação Empresarial</h5>
+                        <p class="card-text text-muted">Empresas em crise, negociações com credores e recuperação judicial.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-recuperacao-empresarial" value="agente_recuperacao_empresarial">
+                          <label class="form-check-label" for="agent-recuperacao-empresarial">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito do Consumidor -->
+                {% if mostrar_todas_areas or 'Direito do Consumidor' in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-shopping-cart agent-icon" style="color: #ec7000;"></i>
+                        <h5 class="card-title">Especialista em Direito do Consumidor</h5>
+                        <p class="card-text text-muted">Análise de relações de consumo, CDC e defesa do consumidor.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-consumidor" value="especialista_direito_consumidor">
+                          <label class="form-check-label" for="agent-consumidor">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Novos agentes do consumidor -->
+                {% if mostrar_todas_areas or 'Direito do Consumidor' in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-bullhorn agent-icon" style="color: #ec7000;"></i>
+                        <h5 class="card-title">Agente de Litígios Coletivos</h5>
+                        <p class="card-text text-muted">Identifica práticas abusivas e estrutura ações civis públicas.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-litigios-coletivos" value="agente_litigios_coletivos">
+                          <label class="form-check-label" for="agent-litigios-coletivos">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito do Consumidor" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-handshake agent-icon" style="color: #ec7000;"></i>
+                        <h5 class="card-title">Especialista em Conciliação</h5>
+                        <p class="card-text text-muted">Resolução amigável de conflitos entre consumidores e empresas.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-conciliacao" value="especialista_atendimento_conciliacao">
+                          <label class="form-check-label" for="agent-conciliacao">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito do Consumidor" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-search-plus agent-icon" style="color: #ec7000;"></i>
+                        <h5 class="card-title">Agente de Fiscalização</h5>
+                        <p class="card-text text-muted">Autuações PROCON, ANATEL e ANVISA, defesas administrativas.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-fiscalizacao" value="agente_fiscalizacao_sancoes">
+                          <label class="form-check-label" for="agent-fiscalizacao">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Recuperação de Crédito -->
+                {% if mostrar_todas_areas or "Recuperação de Crédito" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-coins agent-icon" style="color: #455a64;"></i>
+                        <h5 class="card-title">Especialista em Recuperação de Crédito</h5>
+                        <p class="card-text text-muted">Estratégias de cobrança, execução fiscal e recuperação judicial.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-recuperacao" value="especialista_recuperacao_credito">
+                          <label class="form-check-label" for="agent-recuperacao">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito Securitário -->
+                {% if mostrar_todas_areas or "Direito Securitário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-shield-check agent-icon" style="color: #3f51b5; font-size: 2.5rem; margin-bottom: 0.5rem; display: inline-block;"></i>
+                        <h5 class="card-title">Especialista em Direito Securitário</h5>
+                        <p class="card-text text-muted">Análise de contratos de seguros, resseguros e regulamentação SUSEP.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-securitario" value="especialista_direito_securitario">
+                          <label class="form-check-label" for="agent-securitario">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Compliance Bancário -->
+                {% if mostrar_todas_areas or "Direito Bancário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-shield-virus agent-icon" style="color: #b8860b;"></i>
+                        <h5 class="card-title">Gestor de Compliance Bancário</h5>
+                        <p class="card-text text-muted">Monitoramento e interpretação de normas BACEN, CVM e adequação regulatória.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-compliance" value="gestor_compliance_bancario">
+                          <label class="form-check-label" for="agent-compliance">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Novos agentes bancários -->
+                {% if mostrar_todas_areas or "Direito Bancário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-file-contract agent-icon" style="color: #b8860b;"></i>
+                        <h5 class="card-title">Analista de Revisão Contratual Bancária</h5>
+                        <p class="card-text text-muted">Detecção de cláusulas abusivas, anatocismo e práticas ilegais em contratos.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-revisao-bancaria" value="analista_revisao_contratual_bancaria">
+                          <label class="form-check-label" for="agent-revisao-bancaria">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito Bancário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-user-shield agent-icon" style="color: #b8860b;"></i>
+                        <h5 class="card-title">Agente de Defesa do Consumidor Bancário</h5>
+                        <p class="card-text text-muted">Demandas contra práticas bancárias abusivas, PROCON e BACEN.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-defesa-bancaria" value="agente_defesa_consumidor_bancario">
+                          <label class="form-check-label" for="agent-defesa-bancaria">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Contencioso Bancário -->
+                {% if mostrar_todas_areas or "Direito Bancário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-money-bill-wave agent-icon" style="color: #b8860b;"></i>
+                        <h5 class="card-title">Gestor de Contencioso Bancário</h5>
+                        <p class="card-text text-muted">Estratégias processuais, execução de garantias e recuperação de crédito.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-contencioso" value="gestor_contencioso_bancario">
+                          <label class="form-check-label" for="agent-contencioso">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Sinistros Securitários -->
+                {% if mostrar_todas_areas or "Direito Securitário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-file-medical agent-icon" style="color: #3f51b5;"></i>
+                        <h5 class="card-title">Gestor de Sinistros Securitários</h5>
+                        <p class="card-text text-muted">Análise técnica de sinistros, liquidação e disputas entre seguradoras.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-sinistros" value="gestor_sinistros_securitario">
+                          <label class="form-check-label" for="agent-sinistros">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Gestor de Compliance SUSEP -->
+                {% if mostrar_todas_areas or "Direito Securitário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-bell agent-icon" style="color: #3f51b5;"></i>
+                        <h5 class="card-title">Gestor de Compliance SUSEP</h5>
+                        <p class="card-text text-muted">Monitoramento regulatório SUSEP e adequação às normas securitárias.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-compliance-susep" value="gestor_compliance_susep">
+                          <label class="form-check-label" for="agent-compliance-susep">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Contencioso Securitário -->
+                {% if mostrar_todas_areas or "Direito Securitário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-balance-scale agent-icon" style="color: #3f51b5;"></i>
+                        <h5 class="card-title">Gestor de Contencioso Securitário</h5>
+                        <p class="card-text text-muted">Litígios securitários, ações regressivas e estratégias de defesa.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-contencioso-securitario" value="gestor_contencioso_securitario">
+                          <label class="form-check-label" for="agent-contencioso-securitario">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                <!-- Cards de Direito Agrário -->
+                {% if mostrar_todas_areas or "Direito Agrário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-map agent-icon" style="color: #00734d;"></i>
+                        <h5 class="card-title">Agente de Regularização Fundiária</h5>
+                        <p class="card-text text-muted">Especialista em regularização de imóveis rurais, INCRA e órgãos estaduais.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-regularizacao" value="agente_regularizacao_fundiaria">
+                          <label class="form-check-label" for="agent-regularizacao">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito Agrário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-tractor agent-icon" style="color: #00734d;"></i>
+                        <h5 class="card-title">Especialista em Contratos Rurais</h5>
+                        <p class="card-text text-muted">Elaboração e análise de contratos do agronegócio, arrendamento e parceria rural.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-contratos-rurais" value="especialista_contratos_rurais">
+                          <label class="form-check-label" for="agent-contratos-rurais">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                
+                {% if mostrar_todas_areas or "Direito Agrário" in areas_permitidas %}
+                  <div class="col">
+                    <div class="card agent-card h-100 border-2">
+                      <div class="card-body text-center p-4">
+                        <i class="fas fa-hand-holding-usd agent-icon" style="color: #2e7d32;"></i>
+                        <h5 class="card-title">Consultor em Crédito Rural</h5>
+                        <p class="card-text text-muted">Financiamento agrícola, subvenções BNDES e PRONAF, linhas de crédito.</p>
+                        <div class="form-check justify-content-center d-flex mt-3">
+                          <input class="form-check-input me-2" type="radio" name="agente_especializado" id="agent-credito-rural" value="consultor_credito_rural">
+                          <label class="form-check-label" for="agent-credito-rural">Selecionar</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+                </div>
+                
+                <!-- Seção de Agentes Personalizados removida para evitar duplicação -->
+                
+                <!-- Removida a seção duplicada de agentes criminais -->
+                
+                <div class="mt-3 d-flex">
+                  <a href="/agentes" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="fas fa-plus-circle me-1"></i> Criar agente personalizado
+                  </a>
+                  <a href="/juridico/especialistas" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-user-tie me-1"></i> Ver todos os especialistas
+                  </a>
+                </div>
+              </div>
+              
+              <!-- Seleção de múltiplos agentes (modo sequencial) -->
+              <div id="selecao-multiplos-agentes" class="d-none">
+                <h5 class="fw-bold mb-3">Selecione os agentes para o fluxo</h5>
+                
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Agentes de Processamento</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="extrator" id="check-extrator" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-extrator">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-search"></i>
+                            </span>
+                            <span>Extrator</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="classificador" id="check-classificador" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-classificador">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-tags"></i>
+                            </span>
+                            <span>Classificador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analisador" id="check-analisador" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-analisador">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-chart-line"></i>
+                            </span>
+                            <span>Analisador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="sintetizador" id="check-sintetizador" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-sintetizador">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-compress-alt"></i>
+                            </span>
+                            <span>Sintetizador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="formatador" id="check-formatador" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-formatador">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-paint-brush"></i>
+                            </span>
+                            <span>Formatador</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Agentes Especializados -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Orquestradores Jurídicos Especializados</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_trabalhista" id="check-trabalhista">
+                          <label class="form-check-label d-flex align-items-center" for="check-trabalhista">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-balance-scale"></i>
+                            </span>
+                            <span>Direito Trabalhista</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="consultor_direito_previdenciario" id="check-previdenciario">
+                          <label class="form-check-label d-flex align-items-center" for="check-previdenciario">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-alt"></i>
+                            </span>
+                            <span>Direito Previdenciário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analista_riscos_juridicos" id="check-riscos">
+                          <label class="form-check-label d-flex align-items-center" for="check-riscos">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                            <span>Riscos Jurídicos</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_tributario" id="check-tributario">
+                          <label class="form-check-label d-flex align-items-center" for="check-tributario">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-landmark"></i>
+                            </span>
+                            <span>Direito Tributário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_imobiliario" id="check-imobiliario">
+                          <label class="form-check-label d-flex align-items-center" for="check-imobiliario">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-home"></i>
+                            </span>
+                            <span>Direito Imobiliário</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Agentes Empresariais e Digitais -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Agentes Empresariais e Digitais</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_empresarial" id="check-empresarial">
+                          <label class="form-check-label d-flex align-items-center" for="check-empresarial">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-briefcase"></i>
+                            </span>
+                            <span>Direito Empresarial</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_digital" id="check-digital">
+                          <label class="form-check-label d-flex align-items-center" for="check-digital">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-alt"></i>
+                            </span>
+                            <span>Proteção de Dados</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Agentes Bancários e Securitários -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Agentes Bancários e Securitários</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_bancario" id="check-bancario">
+                          <label class="form-check-label d-flex align-items-center" for="check-bancario">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-university"></i>
+                            </span>
+                            <span>Direito Bancário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_securitario" id="check-securitario">
+                          <label class="form-check-label d-flex align-items-center" for="check-securitario">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-file-contract"></i>
+                            </span>
+                            <span>Direito Securitário</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analista_coberturas_securitarias" id="check-coberturas">
+                          <label class="form-check-label d-flex align-items-center" for="check-coberturas">
+                            <span class="btn-warning btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-umbrella"></i>
+                            </span>
+                            <span>Analista de Coberturas</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="avaliador_sinistros_complexos" id="check-sinistros">
+                          <label class="form-check-label d-flex align-items-center" for="check-sinistros">
+                            <span class="btn-warning btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-car-crash"></i>
+                            </span>
+                            <span>Avaliador de Sinistros</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_seguros_cyber_risks" id="check-cyber">
+                          <label class="form-check-label d-flex align-items-center" for="check-cyber">
+                            <span class="btn-warning btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-virus"></i>
+                            </span>
+                            <span>Cyber Risks</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <!-- Novos Agentes Especializados de Direito Bancário -->
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="gestor_compliance_bancario" id="check-compliance-bancario">
+                          <label class="form-check-label d-flex align-items-center" for="check-compliance-bancario">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-clipboard-check"></i>
+                            </span>
+                            <span>Compliance Bancário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="gestor_contencioso_bancario" id="check-contencioso-bancario">
+                          <label class="form-check-label d-flex align-items-center" for="check-contencioso-bancario">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-legal"></i>
+                            </span>
+                            <span>Contencioso Bancário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <!-- Novos Agentes Especializados de Direito Securitário -->
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="gestor_sinistros_securitario" id="check-sinistros-securitario">
+                          <label class="form-check-label d-flex align-items-center" for="check-sinistros-securitario">
+                            <span class="btn-success btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-file-medical"></i>
+                            </span>
+                            <span>Sinistros Securitários</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="gestor_compliance_susep" id="check-compliance-susep">
+                          <label class="form-check-label d-flex align-items-center" for="check-compliance-susep">
+                            <span class="btn-success btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-check"></i>
+                            </span>
+                            <span>Compliance SUSEP</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="gestor_contencioso_securitario" id="check-contencioso-securitario">
+                          <label class="form-check-label d-flex align-items-center" for="check-contencioso-securitario">
+                            <span class="btn-success btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-gavel"></i>
+                            </span>
+                            <span>Contencioso Securitário</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Seção de Agentes Personalizados para múltiplos agentes removida para evitar duplicação -->
+              </div>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <button type="submit" class="btn btn-primary btn-lg btn-action" id="btn-analisar">
+                  <i class="fas fa-robot me-2"></i> Executar análise
+                </button>
+                <button type="reset" class="btn btn-secondary btn-action ms-2">
+                  <i class="fas fa-eraser me-1"></i> Limpar
+                </button>
+              </div>
+              
+              <!-- Botão de Demonstração Multi-Agente -->
+              <div class="demo-section mt-3">
+                <button type="button" class="btn btn-success btn-lg btn-action" onclick="iniciarDemonstracaoMultiAgente()">
+                  <i class="fas fa-users me-2"></i> Demonstração Multi-Agente
+                </button>
+                <div class="mt-2">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Teste a validação multi-agente com contrato de marketing digital
+                  </small>
+                </div>
+              </div>
+              
+              <a href="/historico" class="btn btn-link text-decoration-none" style="color: #ffffff !important;">
+                Ver histórico completo <i class="fas fa-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Tab de Validação Multi-Agente -->
+        <div class="tab-pane fade" id="multiagente-tab-pane" role="tabpanel" aria-labelledby="multiagente-tab" tabindex="0">
+          <form id="form-validacao-multi" action="/validacao-multi-agente-expandida" method="POST" enctype="multipart/form-data">
+            <!-- Área de Texto e Upload (reutilizando a mesma estrutura) -->
+            <div class="row mb-4 g-4">
+              <div class="col-lg-7">
+                <div class="mb-3">
+                  <label for="texto-multi" class="form-label fw-bold">Texto para validação multi-agente</label>
+                  <div id="drag-drop-area-multi" class="mb-3">
+                    <div id="dropzone-multi" class="dropzone">
+                      <div class="dz-message">
+                        <i class="fas fa-file-upload fa-3x mb-3 text-primary"></i>
+                        <h5>Arraste e solte arquivos aqui</h5>
+                        <p>ou clique para selecionar</p>
+                        <small class="text-muted">(Arquivos suportados: .txt, .pdf, .docx, .html, .csv, .xlsx, .xls, .md)</small>
+                      </div>
+                    </div>
+                  </div>
+                  <textarea class="form-control" id="texto-multi" name="texto" rows="8" required placeholder="Cole ou digite aqui o texto que deseja validar com múltiplos agentes..."></textarea>
+                  <div class="form-text">O texto extraído do arquivo será exibido no campo acima</div>
+                </div>
+              </div>
+              
+              <div class="col-lg-5">
+                <div class="card h-100">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">Configurações de Análise</h5>
+                  </div>
+                  <div class="card-body">
+                    <!-- Modo de Validação -->
+                    <div class="mb-3">
+                      <label class="form-label fw-bold">Modo de validação</label>
+                      <div class="d-flex gap-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="modo_validacao" id="modo-manual-multi" value="manual" checked>
+                          <label class="form-check-label" for="modo-manual-multi">
+                            <i class="fas fa-users me-1"></i> Seleção manual
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Seleção de Formato -->
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="formato-sintese-multi" class="form-label">Formato de síntese</label>
+                        <select class="form-select" id="formato-sintese-multi" name="formato_sintese">
+                          <option value="resumo" selected>Resumo</option>
+                          <option value="pontos">Lista de pontos</option>
+                          <option value="relatorio">Relatório</option>
+                          <option value="narrativa">Narrativa</option>
+                          <option value="resposta">Resposta direta</option>
+                          <option value="json">JSON estruturado</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="formato-saida-multi" class="form-label">Formato de saída</label>
+                        <select class="form-select" id="formato-saida-multi" name="formato_saida">
+                          <option value="html" selected>HTML</option>
+                          <option value="markdown">Markdown</option>
+                          <option value="json">JSON</option>
+                          <option value="texto">Texto simples</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="nivel-detalhe-multi" class="form-label">Nível de detalhe</label>
+                        <select class="form-select" id="nivel-detalhe-multi" name="nivel_detalhe">
+                          <option value="minimo">Mínimo</option>
+                          <option value="baixo">Baixo</option>
+                          <option value="medio" selected>Médio</option>
+                          <option value="alto">Alto</option>
+                          <option value="completo">Completo</option>
+                        </select>
+                      </div>
+                      
+                      <div class="col-md-6">
+                        <label for="provider-multi" class="form-label">Provider de IA</label>
+                        <select class="form-select" id="provider-multi" name="provider">
+                          <option value="openai" selected>OpenAI</option>
+                          <option value="anthropic">Anthropic</option>
+                          <option value="google">Google</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Seleção de agentes para validação -->
+            <div class="mb-4">
+              <!-- Modo automático (seleção de APIs) -->
+              <div id="selecao-automatica-multi" class="mb-4">
+                <h5 class="fw-bold mb-3" style="color: white;">Selecione os agentes para o fluxo</h5>
+                
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Agentes de Processamento</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-3">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="extrator" id="check-extrator-multi" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-extrator-multi">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-search"></i>
+                            </span>
+                            <span>Extrator</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-3">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="classificador" id="check-classificador-multi" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-classificador-multi">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-tags"></i>
+                            </span>
+                            <span>Classificador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-3">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analisador" id="check-analisador-multi" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-analisador-multi">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-chart-line"></i>
+                            </span>
+                            <span>Analisador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-3">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="sintetizador" id="check-sintetizador-multi" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-sintetizador-multi">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-compress-alt"></i>
+                            </span>
+                            <span>Sintetizador</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-3">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="formatador" id="check-formatador-multi" checked>
+                          <label class="form-check-label d-flex align-items-center" for="check-formatador-multi">
+                            <span class="btn-primary btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-paint-brush"></i>
+                            </span>
+                            <span>Formatador</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Orquestradores Jurídicos Especializados -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Orquestradores Jurídicos Especializados</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_trabalhista" id="check-trabalhista-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-trabalhista-multi">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-balance-scale"></i>
+                            </span>
+                            <span>Direito Trabalhista</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="consultor_direito_previdenciario" id="check-previdenciario-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-previdenciario-multi">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-alt"></i>
+                            </span>
+                            <span>Direito Previdenciário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analista_riscos_juridicos" id="check-riscos-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-riscos-multi">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-exclamation-triangle"></i>
+                            </span>
+                            <span>Riscos Jurídicos</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Agentes Bancários e Securitários -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h6 class="mb-0">Agentes Bancários e Securitários</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_bancario" id="check-bancario-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-bancario-multi">
+                            <span class="btn-info btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-university"></i>
+                            </span>
+                            <span>Direito Bancário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="especialista_direito_securitario" id="check-securitario-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-securitario-multi">
+                            <span class="btn-success btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-shield-alt"></i>
+                            </span>
+                            <span>Direito Securitário</span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="col-md-4">
+                        <div class="form-check mb-3">
+                          <input class="form-check-input" type="checkbox" name="agentes[]" value="analista_coberturas" id="check-coberturas-multi">
+                          <label class="form-check-label d-flex align-items-center" for="check-coberturas-multi">
+                            <span class="btn-success btn-sm rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                              <i class="fas fa-umbrella"></i>
+                            </span>
+                            <span>Análise de Coberturas</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Modo manual (seleção expandida de agentes) -->
+              <div id="selecao-manual-multi" class="d-none">
+                <div class="text-center py-4">
+                  <h5 class="mb-3" style="color: white;">Seleção Manual de Agentes Especializados</h5>
+                  <p class="text-muted mb-4">Escolha entre mais de 135 agentes especializados organizados por categorias</p>
+                  <a href="/validacao-multi-agente-expandida" class="btn btn-success btn-lg">
+                    <i class="fas fa-users me-2"></i> Acessar Interface de Seleção Expandida
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <button type="submit" class="btn btn-primary btn-lg btn-action" id="btn-validar-multi">
+                  <i class="fas fa-users me-2"></i> Executar análise
+                </button>
+                <button type="reset" class="btn btn-secondary btn-action ms-2">
+                  <i class="fas fa-eraser me-1"></i> Limpar
+                </button>
+              </div>
+              
+              <!-- Botão de Demonstração Multi-Agente -->
+              <div class="demo-section">
+                <button type="button" class="btn btn-success btn-lg btn-action" onclick="iniciarDemonstracaoMultiAgente()">
+                  <i class="fas fa-play me-2"></i> Demonstração Multi-Agente
+                </button>
+                <div class="mt-2">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Teste a validação multi-agente com contrato de marketing digital
+                  </small>
+                </div>
+              </div>
+              
+              <a href="/historico" class="btn btn-link text-decoration-none" style="color: #ffffff !important;">
+                Ver histórico completo <i class="fas fa-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Tab de Histórico Recente -->
+        <div class="tab-pane fade" id="historico-tab-pane" role="tabpanel" aria-labelledby="historico-tab" tabindex="0">
+          {% if historico %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle table-history">
+                <thead class="table-dark">
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Data</th>
+                    <th scope="col">Tags</th>
+                    <th scope="col">Tempo</th>
+                    <th scope="col" class="text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in historico %}
+                  <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.executado_em }}</td>
+                    <td>
+                      {% for tag in item.tags %}
+                        <span class="badge bg-secondary history-badge">{{ tag }}</span>
+                      {% endfor %}
+                    </td>
+                    <td>{{ item.tempo_execucao }}s</td>
+                    <td class="text-center">
+                      <div class="d-flex justify-content-center gap-2">
+                        <a href="/resultado/{{ item.id }}" class="btn btn-info btn-action-icon" title="Visualizar">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="#" class="btn btn-danger btn-action-icon btn-excluir" title="Excluir"
+                           data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#confirmarExclusao">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="alert alert-info text-center py-5">
+              <i class="fas fa-info-circle fa-3x mb-3"></i>
+              <h4>Nenhuma análise realizada ainda</h4>
+              <p class="mb-0">Comece criando sua primeira análise na aba "Nova Análise".</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="confirmarExclusao" tabindex="-1" aria-labelledby="confirmarExclusaoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmarExclusaoLabel">Confirmar Exclusão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="form-excluir" method="POST" action="/historico/excluir">
+          <input type="hidden" id="execucao-id" name="execucao_id" value="">
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Loading -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center p-5">
+        <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
+          <span class="visually-hidden">Analisando...</span>
+        </div>
+        <h4 class="mb-3">Analisando seu texto...</h4>
+        <p class="mb-4">Os agentes estão processando sua solicitação. Isso pode levar alguns instantes.</p>
+        <div class="progress mb-3" style="height: 10px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+        </div>
+        <div id="agent-status" class="mt-3 text-start"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('form-analise');
+    const progressBar = document.querySelector('.progress-bar');
+    const agentStatus = document.getElementById('agent-status');
+    
+    // Inicialização do dropzone
+    const dropzone = document.getElementById('dropzone');
+    const textarea = document.getElementById('texto');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+      dropzone.classList.add('border-primary');
+    }
+    
+    function unhighlight() {
+      dropzone.classList.remove('border-primary');
+    }
+    
+    dropzone.addEventListener('drop', handleDrop, false);
+    dropzone.addEventListener('click', function() {
+      // Simula o clique em um input file oculto
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.txt,.pdf,.docx,.html,.csv,.xlsx,.xls,.md';
+      fileInput.click();
+      
+      fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+          handleFiles(fileInput.files);
+        }
+      });
+    });
+    
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+    
+    function handleFiles(files, targetTextarea = textarea) {
+      if (files.length === 0) return;
+      
+      const file = files[0];
+      const validTypes = [
+        'text/plain', 'application/pdf', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/html', 'text/csv', 
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel', 'text/markdown'
+      ];
+      
+      if (!validTypes.includes(file.type) && 
+          !file.name.match(/\.(txt|pdf|docx|html|csv|xlsx|xls|md)$/i)) {
+        alert('Formato de arquivo não suportado. Por favor, envie arquivos nos formatos: .txt, .pdf, .docx, .html, .csv, .xlsx, .xls, .md');
+        return;
+      }
+      
+      // Cria um FormData e envia para o endpoint de extração
+      const formData = new FormData();
+      formData.append('file', file);  // Nome 'file' conforme esperado pelo backend
+      
+      // Mostra um indicador de carregamento
+      targetTextarea.value = 'Extraindo texto do arquivo, aguarde...';
+      targetTextarea.disabled = true;
+      
+      fetch('/extrair-texto', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.sucesso) {
+          targetTextarea.value = data.texto;
+        } else {
+          targetTextarea.value = 'Erro ao extrair texto: ' + data.erro;
+        }
+      })
+      .catch(error => {
+        console.error('Erro na requisição:', error);
+        targetTextarea.value = 'Erro ao processar arquivo: ' + (error.message || "Erro na comunicação com o servidor");
+      })
+      .finally(() => {
+        targetTextarea.disabled = false;
+      });
+    }
+    
+    // Referências aos elementos de seleção de modo
+    const modoAgenteUnico = document.getElementById('modo-agente-unico');
+    const modoMultiplosAgentes = document.getElementById('modo-multiplos-agentes');
+    const selecaoAgenteUnico = document.getElementById('selecao-agente-unico');
+    const selecaoMultiplosAgentes = document.getElementById('selecao-multiplos-agentes');
+    
+    // Referências aos elementos da aba multi-agente
+    const modoAutoMulti = document.getElementById('modo-auto-multi');
+    const modoManualMulti = document.getElementById('modo-manual-multi');
+    const selecaoAutomaticaMulti = document.getElementById('selecao-automatica-multi');
+    const selecaoManualMulti = document.getElementById('selecao-manual-multi');
+    
+    // Função para alternar entre os modos de análise
+    function toggleModoAnalise() {
+      // Na aba Nova Análise, sempre mostra apenas agente único
+      if (selecaoAgenteUnico) {
+        selecaoAgenteUnico.classList.remove('d-none');
+      }
+      if (selecaoMultiplosAgentes) {
+        selecaoMultiplosAgentes.classList.add('d-none');
+      }
+    }
+    
+    // Função para alternar entre os modos de validação multi-agente
+    function toggleModoValidacaoMulti() {
+      // Na aba Validação Multi-Agente, sempre mostra apenas seleção manual
+      if (selecaoManualMulti) {
+        selecaoManualMulti.classList.remove('d-none');
+      }
+      if (selecaoAutomaticaMulti) {
+        selecaoAutomaticaMulti.classList.add('d-none');
+      }
+    }
+    
+    // Configura os listeners para os radios de modo (apenas se existirem)
+    if (modoAgenteUnico) {
+      modoAgenteUnico.addEventListener('change', toggleModoAnalise);
+    }
+    if (modoMultiplosAgentes) {
+      modoMultiplosAgentes.addEventListener('change', toggleModoAnalise);
+    }
+    
+    // Configura os listeners para os radios de modo multi-agente (apenas se existirem)
+    if (modoAutoMulti) {
+      modoAutoMulti.addEventListener('change', toggleModoValidacaoMulti);
+    }
+    if (modoManualMulti) {
+      modoManualMulti.addEventListener('change', toggleModoValidacaoMulti);
+    }
+    
+    // Configura os botões de exclusão no histórico
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        document.getElementById('execucao-id').value = id;
+      });
+    });
+    
+    // Inicializa o estado do formulário
+    toggleModoAnalise();
+    toggleModoValidacaoMulti();
+    
+    // Configuração do dropzone da aba multi-agente
+    const dropzoneMulti = document.getElementById('dropzone-multi');
+    const textareaMulti = document.getElementById('texto-multi');
+    
+    if (dropzoneMulti && textareaMulti) {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzoneMulti.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzoneMulti.addEventListener(eventName, function() {
+          dropzoneMulti.classList.add('border-primary');
+        }, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzoneMulti.addEventListener(eventName, function() {
+          dropzoneMulti.classList.remove('border-primary');
+        }, false);
+      });
+      
+      dropzoneMulti.addEventListener('drop', function(e) {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFiles(files, textareaMulti);
+        }
+      }, false);
+      
+      dropzoneMulti.addEventListener('click', function() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.txt,.pdf,.docx,.html,.csv,.xlsx,.xls,.md';
+        fileInput.click();
+        
+        fileInput.addEventListener('change', function() {
+          if (fileInput.files.length > 0) {
+            handleFiles(fileInput.files, textareaMulti);
+          }
+        });
+      });
+    }
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Verifica se um agente especializado foi selecionado no modo especializado
+      if (modoAgenteUnico.checked) {
+        const agenteSelecionado = document.querySelector('input[name="agente_especializado"]:checked');
+        if (!agenteSelecionado) {
+          alert('Por favor, selecione um agente especializado.');
+          return;
+        }
+      }
+      
+      // Abre modal de loading
+      const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+      loadingModal.show();
+      
+      // Determina o modo de análise selecionado
+      const modoEspecializado = modoAgenteUnico.checked;
+      
+      // Simula progresso
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 5;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = `${progress}%`;
+        
+        // Atualiza status do agente conforme o modo selecionado
+        agentStatus.innerHTML = '';
+        
+        if (modoEspecializado) {
+          // Modo agente único especializado
+          const agenteSelect = document.querySelector('input[name="agente_especializado"]:checked');
+          let agenteNome = 'Agente especializado';
+          
+          if (agenteSelect) {
+            const agenteLabel = agenteSelect.closest('.form-check').querySelector('.form-check-label').textContent.trim();
+            if (agenteLabel) agenteNome = agenteLabel;
+          }
+          
+          let icon = '<i class="fas fa-spinner fa-spin text-primary"></i>';
+          let className = 'text-primary';
+          
+          // Exibe apenas o agente selecionado
+          agentStatus.innerHTML = `<div class="${className} mb-2 d-flex align-items-center">
+            ${icon} <span class="ms-2">${agenteNome}</span>
+          </div>`;
+          
+          // Quando o progresso estiver completo
+          if (progress >= 95) {
+            icon = '<i class="fas fa-check-circle text-success"></i>';
+            className = 'text-success';
+            agentStatus.innerHTML = `<div class="${className} mb-2 d-flex align-items-center">
+              ${icon} <span class="ms-2">${agenteNome}</span>
+            </div>`;
+          }
+        } else {
+          // Modo múltiplos agentes sequenciais
+          const agents = ['Extrator', 'Classificador', 'Analisador', 'Sintetizador', 'Formatador'];
+          // Atualiza status do agente atual
+          const agentIndex = Math.min(Math.floor(progress / 20), 4);
+          
+          for (let i = 0; i < agents.length; i++) {
+            let icon, className;
+            
+            if (i < agentIndex) {
+              icon = '<i class="fas fa-check-circle text-success"></i>';
+              className = 'text-success';
+            } else if (i === agentIndex) {
+              icon = '<i class="fas fa-spinner fa-spin text-primary"></i>';
+              className = 'text-primary';
+            } else {
+              icon = '<i class="far fa-circle text-secondary"></i>';
+              className = 'text-secondary';
+            }
+            
+            agentStatus.innerHTML += `<div class="${className} mb-2 d-flex align-items-center">
+              ${icon} <span class="ms-2">${agents[i]}</span>
+            </div>`;
+          }
+        }
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          // Processa o formulário via AJAX quando a animação terminar
+          setTimeout(() => {
+            processarFormulario();
+          }, 500);
+        }
+      }, 300);
+    });
+    
+    // Função para processar o formulário via AJAX
+    function processarFormulario() {
+      console.log('=== DEBUG: Iniciando processamento via AJAX ===');
+      const formData = new FormData(form);
+      
+      // Log dos dados do formulário
+      for (let [key, value] of formData.entries()) {
+        console.log('FormData:', key, '=', value);
+      }
+      
+      fetch('/executar_analise_ajax', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response Content-Type:', response.headers.get('Content-Type'));
+        
+        if (response.ok) {
+          const contentType = response.headers.get('Content-Type');
+          if (contentType && contentType.includes('application/json')) {
+            return response.json();
+          } else {
+            return response.text();
+          }
+        }
+        throw new Error('Erro na requisição: ' + response.status);
+      })
+      .then(data => {
+        // Fecha o modal de loading
+        const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+        if (loadingModal) {
+          loadingModal.hide();
+        }
+        
+        // Verifica se é resposta JSON (AJAX) ou HTML (redirecionamento)
+        if (typeof data === 'object' && data.success) {
+          console.log('Resposta JSON recebida:', data);
+          // Navega para a página de resultado usando a URL fornecida
+          window.location.href = data.redirect_url;
+        } else if (typeof data === 'string') {
+          // Resposta HTML - verifica se é página de resultado
+          if (data.includes('class="resultado-container"') || data.includes('resultado_analise')) {
+            const newWindow = window.open('', '_blank');
+            newWindow.document.open();
+            newWindow.document.write(data);
+            newWindow.document.close();
+            
+            form.reset();
+            toggleModoAnalise();
+          } else {
+            window.location.href = '/resultado_analise';
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao processar análise:', error);
+        
+        // Fecha o modal de loading
+        const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+        if (loadingModal) {
+          loadingModal.hide();
+        }
+        
+        // Exibe erro ao usuário
+        alert('Erro ao processar análise: ' + error.message);
+      });
+    }
+  });
+
+  // Função para iniciar demonstração multi-agente
+  function iniciarDemonstracaoMultiAgente() {
+    // Texto do contrato de demonstração
+    const textoContrato = `
+INSTRUMENTO PARTICULAR DE CONTRATO DE PRESTAÇÃO DE SERVIÇOS, QUE ENTRE SI FAZEM STEINMETZ & QUIQUIO SERVIÇOS E MARKETING E MAYMIDIA
+
+com sede à Rua xxxxxxxxxx,xxxx, Porto Alegre/RS, inscrita no CNPJ/MF sob nº xx.xxx.xxx/xxxxxx neste ato representada por xxxxxxxx inscrita no CPF xxx.xxx.xxx-xx, doravante denominada CONTRATANTE, e a MAYMIDIA, com sede à Rua Furriel Luiz Antônio de Vargas, 250, Conj 403, Bairro Bela Vista, CEP 90.470-130, Porto Alegre/RS, inscrita no CNPJ/MF sob nº 47.856.359/0001-29, neste ato representada por Karina Ribeiro Guazzelli May, brasileira, empresária, CPF 824.714.360-72, doravante denominada CONTRATADA, têm entre si, justo e acertado, o presente CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE MARKETING DIGITAL, de acordo com as seguintes cláusulas e condições:
+
+DO OBJETO
+É objeto do presente contrato a PRESTAÇÃO DE SERVIÇOS DE MARKETING DIGITAL por parte da CONTRATADA para promover os serviços da CONTRATANTE.
+
+DAS OBRIGAÇÕES DA CONTRATADA
+Durante a vigência desse contrato, a CONTRATADA obriga-se a:
+- Realizar reuniões presenciais ou virtuais previamente agendadas para realização das atividades necessárias à prestação de serviços;
+- Executar os serviços contratados com observância das normas legais aplicáveis;
+- Adquirir e configurar o provedor de hospedagem contratado (contrato de 12 meses do provedor) conforme proposta comercial anexa a este contrato;
+- Criação do Site e página de blog entregue ajustados para SEO (incluindo Políticas de Privacidade, Termos de Uso e Cookie Banner adequado as normas da LGPD conforme proposta comercial anexa a este contrato;
+
+DAS OBRIGAÇÕES DA CONTRATANTE
+Durante a vigência desse contrato, a CONTRATANTE obriga-se a:
+- Realizar reuniões presenciais ou virtuais previamente agendadas, para realização das atividades necessárias à prestação de serviços;
+- Cumprir com as atribuições que lhe forem destinadas pela CONTRATADA para a adequada prestação dos serviços;
+- Fornecer o material (textos, imagens, vídeos e demais informações) necessário para o adequado desenvolvimento dos serviços contratados;
+- Efetuar os pagamentos devidos à CONTRATADA nos prazos e condições estabelecidas neste instrumento. Em caso de atraso superior a 10 dias no pagamento, a CONTRATADA pode optar por suspender a prestação dos serviços, retomando-a após a regularização.
+
+DA CONFIDENCIALIDADE
+O objeto deste contrato, a CONTRATANTE e os resultados obtidos farão parte do portifólio da CONTRATADA, com o intuito de servirem como referência para serviços já prestados, podendo ser divulgados com o uso de marcas da CONTRATANTE, seja durante ou após o término/rescisão deste CONTRATO.
+
+DO PREÇO 
+Pela prestação de serviços objeto deste contrato, a CONTRATANTE deverá pagar à CONTRATADA o valor de R$ 12.678,00 (doze mil seiscentos e setenta e oito reais), sendo entrada de R$ 4.226.00 (quatro mil duzentos e vinte e seis reais) mediante a assinatura deste contrato e mais uma parcela de R$ 4.226.00 (quatro mil duzentos e vinte e seis reais) em 30 dias.
+
+DO CRONOGRAMA
+O planejamento dos serviços constantes na proposta comercial, está previsto para ser realizado em até 20 (vinte) dias úteis após o recebimento das informações e materiais necessários.
+
+DO PRAZO E RESCISÃO
+Este contrato tem vigência de 1 (mês) ou até a total entrega dos serviços contratados, podendo ser rescindido conforme itens 7.2, 7.3
+
+DO FORO
+Fica eleito o FORO da Porto Alegre, estado do Rio Grande do Sul, com expressa renúncia a qualquer outro por mais privilegiado que seja ou venha ser, para dirimir e solucionar eventuais dúvidas, questões ou litígios oriundos do presente instrumento.
+`;
+
+    // Enviar texto para sessão e redirecionar para validação multi-agente
+    fetch('/processar-contrato-exemplo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        texto_contrato: textoContrato
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = '/validacao-multi-agente';
+      } else {
+        alert('Erro ao carregar demonstração: ' + (data.error || 'Erro desconhecido'));
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      alert('Erro ao processar demonstração');
+    });
+  }
+</script>
+{% endblock %}

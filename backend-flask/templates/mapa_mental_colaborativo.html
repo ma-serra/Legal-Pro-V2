@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental Colaborativo - Sistema Multi-Agente</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+    body {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+    .container-fluid {
+        padding: 20px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .header-title {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5em 0.75em;
+    }
+
+    #mapa-mental {
+        min-height: 500px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .area-central {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .area-central:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .agente-externo {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 3px solid rgba(255, 255, 255, 0.4);
+        font-size: 0.85rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .agente-externo:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .conexao {
+        position: absolute;
+        height: 3px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+        transform-origin: left center;
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .tooltip-agente {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .estrategia-salva {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .estrategia-salva:hover {
+        background: #e9ecef;
+        border-color: #007bff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .blink {
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0.3; }
+    }
+
+    .btn-home {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        padding: 12px 24px;
+        font-weight: 600;
+        color: #2a5298;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-home:hover {
+        background: white;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+        color: #1e3c72;
+        border-color: rgba(30, 60, 114, 0.2);
+    }
+
+    .btn-home i {
+        margin-right: 8px;
+        font-size: 1.1em;
+    }
+
+    .info-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .recording-indicator {
+        width: 12px;
+        height: 12px;
+        background: #dc3545;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        animation: blink 1s infinite;
+    }
+    </style>
+</head>
+<body>
+    <!-- Botão Home -->
+    <a href="/home" class="btn-home">
+        <i class="fas fa-home"></i>Home
+    </a>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-0 header-title">🧠 Mapa Mental Colaborativo</h2>
+                        <p class="text-white-50">
+                            Powered by <strong>GPT-4o</strong> + <strong>Whisper</strong> - Estratégias jurídicas inteligentes
+                        </p>
+                        <div class="d-flex gap-2 mt-2">
+                            <span class="badge bg-success">Áudio → Whisper → GPT-4o</span>
+                            <span class="badge bg-primary">Texto → GPT-4o direto</span>
+                            <span class="badge bg-warning text-dark">PDF/DOCX → GPT-4o</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Painel de Controle -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-cog"></i> Controles do Mapa</h6>
+                    </div>
+                    <div class="card-body">
+
+
+                        <!-- Controles de Ação -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="gerarMapaMental()">
+                                <i class="fas fa-magic"></i> Gerar Mapa Mental
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="limparMapa()">
+                                <i class="fas fa-trash"></i> Limpar Mapa
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="salvarEstrategia()">
+                                <i class="fas fa-save"></i> Salvar Estratégia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel Whisper -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-brain"></i> Input Inteligente</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tabs para diferentes tipos de input -->
+                        <ul class="nav nav-pills nav-sm mb-3">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="audio-tab" data-bs-toggle="pill" href="#audio-panel">
+                                    <i class="fas fa-microphone"></i> Áudio
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="arquivo-tab" data-bs-toggle="pill" href="#arquivo-panel">
+                                    <i class="fas fa-file"></i> Arquivo
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="texto-tab" data-bs-toggle="pill" href="#texto-panel">
+                                    <i class="fas fa-keyboard"></i> Texto
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <!-- Painel de Áudio -->
+                            <div class="tab-pane fade show active" id="audio-panel">
+                                <button id="btn-whisper" class="btn btn-success btn-sm" onclick="iniciarGravacao()">
+                                    <i class="fas fa-microphone"></i> Gravar Comando
+                                </button>
+                                <div id="status-gravacao" class="mt-2" style="display: none;">
+                                    <div class="alert alert-danger">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-record-vinyl text-danger blink"></i>
+                                                <strong>Gravando:</strong> <span id="cronometro-tempo">00:00</span>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-light" onclick="pararGravacao()">
+                                                <i class="fas fa-stop"></i> Parar
+                                            </button>
+                                        </div>
+                                        <small class="d-block mt-1">Descreva a estratégia jurídica desejada</small>
+                                    </div>
+                                </div>
+                                <div id="resultado-whisper" class="mt-2"></div>
+                            </div>
+                            
+                            <!-- Painel de Arquivo -->
+                            <div class="tab-pane fade" id="arquivo-panel">
+                                <div class="mb-2">
+                                    <label class="form-label small">Upload de Áudio:</label>
+                                    <input type="file" id="audio-upload" class="form-control form-control-sm mb-2" 
+                                           accept=".mp3,.wav,.m4a,.ogg,.webm" onchange="processarAudioUpload()">
+                                    <small class="text-muted">Aceita MP3, WAV, M4A, OGG, WebM</small>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Upload de Documento:</label>
+                                    <input type="file" id="arquivo-upload" class="form-control form-control-sm" 
+                                           accept=".pdf,.docx,.doc,.txt" onchange="processarArquivo()">
+                                    <small class="text-muted">Aceita PDF, DOCX, DOC e TXT</small>
+                                </div>
+                                <div id="status-arquivo" class="mt-2"></div>
+                            </div>
+                            
+                            <!-- Painel de Texto -->
+                            <div class="tab-pane fade" id="texto-panel">
+                                <div class="mb-2">
+                                    <textarea id="texto-estrategia" class="form-control form-control-sm" rows="3" 
+                                              placeholder="Descreva sua estratégia jurídica..."></textarea>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="processarTexto()">
+                                    <i class="fas fa-brain"></i> Processar com GPT-4o
+                                </button>
+                                <div id="resultado-texto" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações do Mapa -->
+                <div class="info-panel">
+                    <h6><i class="fas fa-info-circle"></i> Informações</h6>
+                    <div class="small">
+                        <div><strong>Área Central:</strong> <span id="info-area-central">Nenhuma área selecionada</span></div>
+                        <div><strong>Conexões:</strong> <span id="info-conexoes">0 conexões</span></div>
+                        <div><strong>Agentes Externos:</strong> <span id="info-agentes-externos">0 agentes</span></div>
+                    </div>
+                </div>
+
+                <!-- Estratégias Salvas -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bookmark"></i> Estratégias Salvas</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="estrategias-lista"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Área do Mapa Mental -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6><i class="fas fa-project-diagram"></i> Mapa Mental Interativo</h6>
+                        <div class="d-flex gap-2 align-items-center">
+                            <!-- Controles de Zoom (apenas visíveis quando há mapa) -->
+                            <div class="btn-group btn-group-sm" id="zoom-controls" style="display: none;">
+                                <button class="btn btn-outline-secondary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="zoomIn()" title="Zoom In">
+                                    <i class="fas fa-search-plus" style="font-size: 10px;"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="zoomOut()" title="Zoom Out">
+                                    <i class="fas fa-search-minus" style="font-size: 10px;"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" style="padding: 2px 6px; font-size: 0.7rem;" onclick="resetZoom()" title="Reset Zoom">
+                                    <i class="fas fa-expand-arrows-alt" style="font-size: 10px;"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Exportar -->
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="exportarPNG()">
+                                    <i class="fas fa-image"></i> PNG
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" onclick="exportarPDF()">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="exportarHTML()">
+                                    <i class="fas fa-code"></i> HTML
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="mapa-mental-container" class="canvas-container" style="height: 500px; position: relative; overflow: hidden; background: #f8f9fa; border: 2px dashed #dee2e6; cursor: crosshair;">
+                            <svg id="mapa-mental-svg" width="100%" height="100%" class="canvas-svg">
+                                <!-- Aqui será renderizado o mapa mental -->
+                            </svg>
+                            <div id="mapa-empty-state" class="d-flex align-items-center justify-content-center h-100 canvas-empty">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-palette fa-3x mb-3 opacity-50"></i>
+                                    <h5>Canvas Criativo</h5>
+                                    <p>Sua área de trabalho para mapas mentais</p>
+                                    <small>Use os controles à esquerda para começar</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legenda Detalhada -->
+                <div class="card mt-3" id="legenda-mapa" style="display: none;">
+                    <div class="card-body py-2">
+                        <h6 class="mb-2"><i class="fas fa-info-circle"></i> Legenda do Mapa Mental</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="small">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded-circle me-2" style="width: 16px; height: 16px; background: #4a90e2; border: 2px solid rgba(255,255,255,0.3);"></div>
+                                        <span>Assistente Central (Área Principal)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded-circle me-2" style="width: 12px; height: 12px; background: #28a745; border: 2px solid rgba(255,255,255,0.4);"></div>
+                                        <span>Agentes Especializados</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="me-2" style="width: 16px; height: 2px; background: #7fc7ff;"></div>
+                                        <span>Conexões e Relacionamentos</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small">
+                                    <div class="mb-1"><i class="fas fa-brain text-info me-2"></i>Processamento GPT-4o</div>
+                                    <div class="mb-1"><i class="fas fa-microphone text-primary me-2"></i>Transcrição Whisper</div>
+                                    <div class="mb-1"><i class="fas fa-file text-warning me-2"></i>Análise de Documentos</div>
+                                    <div class="mb-1"><i class="fas fa-search-plus text-secondary me-2"></i>Controles de Zoom</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <div class="small text-muted text-center">
+                                    <strong>Interações:</strong> Clique nos elementos para expandir | Use zoom para navegar | Hover para detalhes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip para agentes -->
+    <div id="tooltip-agente" class="tooltip-agente"></div>
+
+    <!-- Modal de Seleção de Pasta para Salvar Áudio -->
+    <div class="modal fade" id="modalSelecionarPasta" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-folder"></i> Selecionar Pasta para Salvar Áudio
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Gravação concluída com duração de <strong id="duracao-gravacao">--</strong>.</p>
+                    <p>Selecione a pasta onde deseja salvar o arquivo de áudio:</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Pasta de Destino:</label>
+                        <select id="pasta-destino" class="form-select">
+                            <option value="estrategias">📁 Estratégias Jurídicas</option>
+                            <option value="audiencias">📁 Audiências e Reuniões</option>
+                            <option value="consultas">📁 Consultas Internas</option>
+                            <option value="pareceres">📁 Pareceres e Análises</option>
+                            <option value="contratos">📁 Análises Contratuais</option>
+                            <option value="litigios">📁 Casos Litigiosos</option>
+                            <option value="tributario">📁 Planejamento Tributário</option>
+                            <option value="trabalhista">📁 Questões Trabalhistas</option>
+                            <option value="outros">📁 Outros Documentos</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Arquivo:</label>
+                        <input type="text" id="nome-arquivo" class="form-control" 
+                               placeholder="Ex: estrategia_civil_2025">
+                        <small class="text-muted">Será salvo como: [nome].wav</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="salvarAudioNaPasta()">
+                        <i class="fas fa-save"></i> Salvar Áudio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Dados das 18 áreas jurídicas completas
+    const AREAS_JURIDICAS = [
+        { id: 'civil', nome: 'Civil', cor: '#3498db', agentes: 25 },
+        { id: 'penal', nome: 'Penal', cor: '#e74c3c', agentes: 22 },
+        { id: 'trabalhista', nome: 'Trabalhista', cor: '#f39c12', agentes: 20 },
+        { id: 'tributario', nome: 'Tributário', cor: '#2ecc71', agentes: 18 },
+        { id: 'empresarial', nome: 'Empresarial', cor: '#9b59b6', agentes: 16 },
+        { id: 'administrativo', nome: 'Administrativo', cor: '#1abc9c', agentes: 15 },
+        { id: 'constitucional', nome: 'Constitucional', cor: '#34495e', agentes: 14 },
+        { id: 'consumidor', nome: 'Consumidor', cor: '#e67e22', agentes: 13 },
+        { id: 'ambiental', nome: 'Ambiental', cor: '#27ae60', agentes: 12 },
+        { id: 'familia', nome: 'Família', cor: '#8e44ad', agentes: 15 },
+        { id: 'previdenciario', nome: 'Previdenciário', cor: '#16a085', agentes: 11 },
+        { id: 'internacional', nome: 'Internacional', cor: '#2980b9', agentes: 10 },
+        { id: 'propriedade_intelectual', nome: 'Propriedade Intelectual', cor: '#d35400', agentes: 9 },
+        { id: 'agrario', nome: 'Agrário', cor: '#7f8c8d', agentes: 8 },
+        { id: 'digital', nome: 'Digital', cor: '#9b59b6', agentes: 14 },
+        { id: 'eleitoral', nome: 'Eleitoral', cor: '#c0392b', agentes: 7 },
+        { id: 'securitario', nome: 'Securitário', cor: '#f1c40f', agentes: 9 },
+        { id: 'saude', nome: 'Saúde', cor: '#e91e63', agentes: 12 }
+    ];
+
+    let areaCentralAtual = null;
+    let agentesExternos = [];
+    let conexoes = [];
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let estrategiasSalvas = JSON.parse(localStorage.getItem('estrategias-mapas') || '[]');
+
+    // Variáveis do cronômetro de gravação
+    let tempoInicio = null;
+    let intervaloCronometro = null;
+    let gravacaoAtiva = false;
+    let audioBlobAtual = null;
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+        inicializarInterface();
+        carregarEstrategiasSalvas();
+    });
+
+    function inicializarInterface() {
+        const selectAreaCentral = document.getElementById('area-central');
+        const selectAreaExterna = document.getElementById('area-externa');
+        
+        if (selectAreaCentral && selectAreaExterna) {
+            AREAS_JURIDICAS.forEach(area => {
+                const option1 = new Option(area.nome, area.id);
+                const option2 = new Option(area.nome, area.id);
+                selectAreaCentral.add(option1);
+                selectAreaExterna.add(option2);
+            });
+        }
+        
+        atualizarInformacoes();
+    }
+
+    function carregarAreaCentral() {
+        const selectArea = document.getElementById('area-central');
+        if (!selectArea) return;
+        
+        const areaId = selectArea.value;
+        if (!areaId) {
+            limparMapa();
+            return;
+        }
+        
+        areaCentralAtual = AREAS_JURIDICAS.find(a => a.id === areaId);
+        if (!areaCentralAtual) return;
+        
+        const mapaContainer = document.getElementById('mapa-mental');
+        if (!mapaContainer) return;
+        
+        mapaContainer.innerHTML = '';
+        
+        // Criar assistente central
+        const assistenteCentral = document.createElement('div');
+        assistenteCentral.className = 'area-central';
+        assistenteCentral.style.backgroundColor = areaCentralAtual.cor;
+        assistenteCentral.onclick = () => mostrarDetalhesAssistente(areaCentralAtual);
+        assistenteCentral.innerHTML = `
+            <i class="fas fa-crown mb-2" style="font-size: 2rem;"></i>
+            <div style="font-size: 0.9rem;">${areaCentralAtual.nome}</div>
+            <div style="font-size: 0.7rem; opacity: 0.8;">${areaCentralAtual.agentes} agentes</div>
+        `;
+        
+        mapaContainer.appendChild(assistenteCentral);
+        atualizarInformacoes();
+    }
+
+    function adicionarAgenteAleatorio() {
+        const selectAreaExterna = document.getElementById('area-externa');
+        if (!selectAreaExterna || !areaCentralAtual) return;
+        
+        const areaExternaId = selectAreaExterna.value;
+        if (!areaExternaId) return;
+        
+        const areaExterna = AREAS_JURIDICAS.find(a => a.id === areaExternaId);
+        if (!areaExterna) return;
+        
+        const agenteId = Math.floor(Math.random() * areaExterna.agentes) + 1;
+        adicionarAgenteExterno(areaExterna, agenteId);
+        
+        selectAreaExterna.value = '';
+    }
+
+    function adicionarAgenteExterno(area, agenteId) {
+        if (!areaCentralAtual) return;
+        
+        const mapaContainer = document.getElementById('mapa-mental');
+        if (!mapaContainer) return;
+        
+        const angulo = (agentesExternos.length * 360 / 8) * (Math.PI / 180);
+        const raio = 250;
+        const centerX = mapaContainer.offsetWidth / 2;
+        const centerY = mapaContainer.offsetHeight / 2;
+        
+        const x = centerX + Math.cos(angulo) * raio - 60;
+        const y = centerY + Math.sin(angulo) * raio - 60;
+        
+        const agenteDiv = document.createElement('div');
+        agenteDiv.className = 'agente-externo';
+        agenteDiv.style.backgroundColor = area.cor;
+        agenteDiv.style.left = x + 'px';
+        agenteDiv.style.top = y + 'px';
+        agenteDiv.innerHTML = `
+            <i class="fas fa-user-tie mb-1"></i>
+            <div style="font-size: 0.7rem;">${area.nome}</div>
+            <div style="font-size: 0.6rem; opacity: 0.8;">Agente ${agenteId}</div>
+        `;
+        
+        agenteDiv.onclick = () => removerAgenteExterno(agentesExternos.length);
+        
+        // Tooltip
+        agenteDiv.addEventListener('mouseenter', (e) => {
+            mostrarTooltip(e, `${area.nome} - Agente ${agenteId}\\nClique para remover`);
+        });
+        agenteDiv.addEventListener('mouseleave', esconderTooltip);
+        
+        mapaContainer.appendChild(agenteDiv);
+        
+        // Criar conexão
+        criarConexao(centerX, centerY, x + 60, y + 60);
+        
+        agentesExternos.push({ area: area, agenteId: agenteId, elemento: agenteDiv });
+        atualizarInformacoes();
+    }
+
+    function criarConexao(x1, y1, x2, y2) {
+        const mapaContainer = document.getElementById('mapa-mental');
+        if (!mapaContainer) return;
+        
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const comprimento = Math.sqrt(dx * dx + dy * dy);
+        const angulo = Math.atan2(dy, dx) * (180 / Math.PI);
+        
+        const conexaoDiv = document.createElement('div');
+        conexaoDiv.className = 'conexao';
+        conexaoDiv.style.left = x1 + 'px';
+        conexaoDiv.style.top = y1 + 'px';
+        conexaoDiv.style.width = comprimento + 'px';
+        conexaoDiv.style.transform = `rotate(${angulo}deg)`;
+        
+        mapaContainer.appendChild(conexaoDiv);
+        conexoes.push(conexaoDiv);
+    }
+
+    function removerAgenteExterno(index) {
+        if (index >= 0 && index < agentesExternos.length) {
+            const agente = agentesExternos[index];
+            if (agente.elemento && agente.elemento.parentNode) {
+                agente.elemento.parentNode.removeChild(agente.elemento);
+            }
+            agentesExternos.splice(index, 1);
+            
+            // Remover conexões e recriar mapa
+            carregarAreaCentral();
+            agentesExternos.forEach((a, i) => {
+                adicionarAgenteExterno(a.area, a.agenteId);
+            });
+            
+            atualizarInformacoes();
+        }
+    }
+
+    function mostrarTooltip(event, texto) {
+        const tooltip = document.getElementById('tooltip-agente');
+        if (!tooltip) return;
+        
+        tooltip.textContent = texto;
+        tooltip.style.left = event.pageX + 10 + 'px';
+        tooltip.style.top = event.pageY - 10 + 'px';
+        tooltip.style.display = 'block';
+    }
+
+    function esconderTooltip() {
+        const tooltip = document.getElementById('tooltip-agente');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    }
+
+    function mostrarDetalhesAssistente(area) {
+        alert(`Assistente Orquestrador - ${area.nome}\\n\\n✨ Coordena ${area.agentes} agentes especializados\\n🔗 ${conexoes.length} conexões ativas\\n🎯 Status: Operacional`);
+    }
+
+    function atualizarInformacoes() {
+        const infoAreaCentral = document.getElementById('info-area-central');
+        const infoConexoes = document.getElementById('info-conexoes');
+        const infoAgentesExternos = document.getElementById('info-agentes-externos');
+        
+        if (infoAreaCentral) {
+            infoAreaCentral.textContent = areaCentralAtual ? `${areaCentralAtual.nome} (${areaCentralAtual.agentes} agentes)` : 'Nenhuma área selecionada';
+        }
+        if (infoConexoes) {
+            infoConexoes.textContent = `${conexoes.length} conexões`;
+        }
+        if (infoAgentesExternos) {
+            infoAgentesExternos.textContent = `${agentesExternos.length} agentes`;
+        }
+    }
+
+    function limparMapa() {
+        const mapaContainer = document.getElementById('mapa-mental');
+        if (mapaContainer) {
+            mapaContainer.innerHTML = '<div class="text-center pt-5 mt-5"><h4 class="text-white">Selecione uma área central para começar</h4><p class="text-white-50">O assistente aparecerá no centro com seus agentes ao redor</p></div>';
+        }
+        agentesExternos = [];
+        conexoes = [];
+        areaCentralAtual = null;
+        atualizarInformacoes();
+    }
+
+    function salvarEstrategia() {
+        if (!areaCentralAtual) {
+            alert('Crie um mapa antes de salvar');
+            return;
+        }
+        
+        const nome = prompt('Nome da estratégia:');
+        if (!nome) return;
+        
+        const estrategia = {
+            id: Date.now(),
+            nome: nome,
+            areaCentral: areaCentralAtual,
+            agentesExternos: agentesExternos.map(a => ({ area: a.area, agenteId: a.agenteId })),
+            conexoes: conexoes.length,
+            dataCreated: new Date().toISOString()
+        };
+        
+        estrategiasSalvas.push(estrategia);
+        localStorage.setItem('estrategias-mapas', JSON.stringify(estrategiasSalvas));
+        carregarEstrategiasSalvas();
+        
+        alert('Estratégia salva com sucesso!');
+    }
+
+    function carregarEstrategiasSalvas() {
+        const container = document.getElementById('estrategias-lista');
+        if (!container) return;
+        
+        if (estrategiasSalvas.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nenhuma estratégia salva ainda</p>';
+            return;
+        }
+        
+        container.innerHTML = estrategiasSalvas.map(e => `
+            <div class="estrategia-salva" onclick="carregarEstrategia(${e.id})">
+                <strong>${e.nome}</strong><br>
+                <small>${e.areaCentral.nome} • ${e.agentesExternos.length} agentes externos • ${e.conexoes} conexões</small>
+            </div>
+        `).join('');
+    }
+
+    function carregarEstrategia(id) {
+        const estrategia = estrategiasSalvas.find(e => e.id === id);
+        if (!estrategia) return;
+        
+        // Carregar área central
+        const selectAreaCentral = document.getElementById('area-central');
+        if (selectAreaCentral) {
+            selectAreaCentral.value = estrategia.areaCentral.id;
+            carregarAreaCentral();
+        }
+        
+        // Recriar agentes externos
+        estrategia.agentesExternos.forEach(ae => {
+            adicionarAgenteExterno(ae.area, ae.agenteId);
+        });
+        
+        console.log('Estratégia carregada:', estrategia.nome);
+    }
+
+    // Funções de cronômetro
+    function iniciarCronometro() {
+        tempoInicio = Date.now();
+        intervaloCronometro = setInterval(atualizarCronometro, 1000);
+    }
+
+    function atualizarCronometro() {
+        if (!tempoInicio) return;
+        
+        const agora = Date.now();
+        const duracao = Math.floor((agora - tempoInicio) / 1000);
+        const minutos = Math.floor(duracao / 60).toString().padStart(2, '0');
+        const segundos = (duracao % 60).toString().padStart(2, '0');
+        
+        const cronometroElement = document.getElementById('cronometro-tempo');
+        if (cronometroElement) {
+            cronometroElement.textContent = `${minutos}:${segundos}`;
+        }
+    }
+
+    function pararCronometro() {
+        if (intervaloCronometro) {
+            clearInterval(intervaloCronometro);
+            intervaloCronometro = null;
+        }
+        gravacaoAtiva = false;
+    }
+
+    function formatarDuracao(segundos) {
+        const mins = Math.floor(segundos / 60);
+        const secs = segundos % 60;
+        return `${mins}m ${secs}s`;
+    }
+
+    // Funções Whisper
+    async function iniciarGravacao() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                pararCronometro();
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                mostrarModalSelecionarPasta(audioBlob);
+            };
+            
+            mediaRecorder.start();
+            gravacaoAtiva = true;
+            iniciarCronometro();
+            
+            const btnWhisper = document.getElementById('btn-whisper');
+            const statusGravacao = document.getElementById('status-gravacao');
+            
+            if (btnWhisper) {
+                btnWhisper.textContent = 'Parar Gravação';
+                btnWhisper.onclick = pararGravacao;
+            }
+            
+            if (statusGravacao) {
+                statusGravacao.style.display = 'block';
+            }
+            
+        } catch (error) {
+            alert('Erro ao acessar microfone: ' + error.message);
+        }
+    }
+
+    function pararGravacao() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            
+            // Parar todas as faixas de mídia
+            const stream = mediaRecorder.stream;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            const btnWhisper = document.getElementById('btn-whisper');
+            const statusGravacao = document.getElementById('status-gravacao');
+            
+            if (btnWhisper) {
+                btnWhisper.textContent = 'Gravar Comando';
+                btnWhisper.onclick = iniciarGravacao;
+            }
+            
+            if (statusGravacao) {
+                statusGravacao.style.display = 'none';
+            }
+        }
+    }
+
+    function mostrarModalSelecionarPasta(audioBlob) {
+        audioBlobAtual = audioBlob;
+        
+        // Calcular duração aproximada
+        const duracaoSegundos = Math.floor((Date.now() - tempoInicio) / 1000);
+        const duracaoElement = document.getElementById('duracao-gravacao');
+        if (duracaoElement) {
+            duracaoElement.textContent = formatarDuracao(duracaoSegundos);
+        }
+        
+        // Gerar nome padrão para o arquivo
+        const agora = new Date();
+        const nomeDefault = `mapa_mental_${agora.getFullYear()}${(agora.getMonth()+1).toString().padStart(2,'0')}${agora.getDate().toString().padStart(2,'0')}_${agora.getHours().toString().padStart(2,'0')}${agora.getMinutes().toString().padStart(2,'0')}`;
+        
+        const nomeArquivoElement = document.getElementById('nome-arquivo');
+        if (nomeArquivoElement) {
+            nomeArquivoElement.value = nomeDefault;
+        }
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('modalSelecionarPasta'));
+        modal.show();
+    }
+
+    function salvarAudioNaPasta() {
+        if (!audioBlobAtual) {
+            alert('Nenhum áudio para salvar');
+            return;
+        }
+        
+        const pastaDestino = document.getElementById('pasta-destino').value;
+        const nomeArquivo = document.getElementById('nome-arquivo').value;
+        
+        if (!nomeArquivo.trim()) {
+            alert('Por favor, insira um nome para o arquivo');
+            return;
+        }
+        
+        // Criar URL do blob e fazer download
+        const url = URL.createObjectURL(audioBlobAtual);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${nomeArquivo.trim()}.wav`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Fechar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalSelecionarPasta'));
+        modal.hide();
+        
+        // Processar áudio com Whisper
+        enviarAudioParaWhisper(audioBlobAtual);
+        
+        alert(`Áudio salvo como: ${nomeArquivo.trim()}.wav\\nPasta: ${pastaDestino}`);
+    }
+
+    async function enviarAudioParaWhisper(audioBlob) {
+        try {
+            const resultadoDiv = document.getElementById('resultado-whisper');
+            if (resultadoDiv) {
+                resultadoDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Processando áudio com Whisper...</div>';
+            }
+            
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'audio.wav');
+            
+            const response = await fetch('/api/whisper/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                if (resultadoDiv) {
+                    resultadoDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Transcrição:</strong><br>
+                            ${data.transcricao}
+                        </div>
+                    `;
+                }
+                
+                // Processar comando
+                processarComandoVoz(data.transcricao);
+            } else {
+                if (resultadoDiv) {
+                    resultadoDiv.innerHTML = `<div class="alert alert-danger">Erro: ${data.error}</div>`;
+                }
+            }
+        } catch (error) {
+            const resultadoDiv = document.getElementById('resultado-whisper');
+            if (resultadoDiv) {
+                resultadoDiv.innerHTML = `<div class="alert alert-danger">Erro na transcrição: ${error.message}</div>`;
+            }
+        }
+    }
+
+    async function processarComandoVoz(transcricao) {
+        try {
+            const response = await fetch('/api/mapa-mental/processar-comando', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ comando: transcricao })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.comando_reconhecido) {
+                executarComando(data.acao, data.parametros);
+            } else {
+                // Se não reconheceu comando específico, processar com GPT-4o
+                processarEstrategiaComGPT4o(transcricao, 'audio');
+            }
+        } catch (error) {
+            console.error('Erro ao processar comando:', error);
+            processarEstrategiaComGPT4o(transcricao, 'audio');
+        }
+    }
+
+    function executarComando(acao, parametros) {
+        switch (acao) {
+            case 'adicionar_agente':
+                const area = AREAS_JURIDICAS.find(a => a.id === parametros.area);
+                if (area) {
+                    adicionarAgenteExterno(area, parametros.agente_id);
+                }
+                break;
+            case 'limpar_mapa':
+                limparMapa();
+                break;
+            case 'mudar_nucleo_central':
+                const novaArea = AREAS_JURIDICAS.find(a => a.id === parametros.nova_area);
+                if (novaArea) {
+                    const selectArea = document.getElementById('area-central');
+                    if (selectArea) {
+                        selectArea.value = novaArea.id;
+                        carregarAreaCentral();
+                    }
+                }
+                break;
+        }
+    }
+
+    async function processarEstrategiaComGPT4o(texto, fonte) {
+        try {
+            const response = await fetch('/api/mapa-mental/gerar-hierarquico', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    texto: texto,
+                    fonte: fonte 
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                gerarMapaVisual(data.mapa_hierarquico);
+                console.log('Mapa hierárquico gerado com sucesso:', data.mapa_hierarquico);
+            } else {
+                alert('Erro ao gerar mapa hierárquico: ' + data.error);
+            }
+        } catch (error) {
+            alert('Erro ao processar com GPT-4o: ' + error.message);
+        }
+    }
+
+    function aplicarEstrategia(estrategia) {
+        // Implementar aplicação da estratégia gerada pelo GPT-4o
+        console.log('Aplicando estratégia:', estrategia);
+        
+        // Verificação de segurança
+        if (!estrategia || typeof estrategia !== 'object') {
+            console.warn('Estratégia inválida ou nula');
+            return;
+        }
+        
+        if (estrategia.nucleo_central && estrategia.nucleo_central.area_juridica) {
+            const area = AREAS_JURIDICAS.find(a => a.nome.toLowerCase().includes(estrategia.nucleo_central.area_juridica.toLowerCase()));
+            if (area) {
+                const selectArea = document.getElementById('area-central');
+                if (selectArea) {
+                    selectArea.value = area.id;
+                    carregarAreaCentral();
+                }
+            }
+        }
+        
+        if (estrategia.agentes_recomendados) {
+            estrategia.agentes_recomendados.forEach(agente => {
+                const area = AREAS_JURIDICAS.find(a => a.nome.toLowerCase().includes(agente.toLowerCase()));
+                if (area) {
+                    adicionarAgenteExterno(area, Math.floor(Math.random() * area.agentes) + 1);
+                }
+            });
+        }
+    }
+
+    function mostrarResultadoEstrategia(estrategia, fonte) {
+        const sourceMap = {
+            'audio': 'resultado-whisper',
+            'texto': 'resultado-texto',
+            'arquivo': 'status-arquivo'
+        };
+        
+        const resultadoDiv = document.getElementById(sourceMap[fonte] || 'resultado-whisper');
+        if (resultadoDiv) {
+            resultadoDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-lightbulb"></i> Estratégia Gerada pelo GPT-4o</h6>
+                    <p><strong>Título:</strong> ${estrategia.titulo || 'Não especificado'}</p>
+                    <p><strong>Descrição:</strong> ${estrategia.descricao}</p>
+                    <p><strong>Área Central:</strong> ${estrategia.nucleo_central ? estrategia.nucleo_central.area_juridica : 'Não especificada'}</p>
+                    <p><strong>Agentes Recomendados:</strong> ${estrategia.agentes_recomendados?.join(', ')}</p>
+                    <p><strong>Complexidade:</strong> <span class="badge bg-${estrategia.complexidade === 'alta' ? 'danger' : estrategia.complexidade === 'média' ? 'warning' : 'success'}">${estrategia.complexidade}</span></p>
+                </div>
+            `;
+        }
+    }
+
+    async function processarTexto() {
+        const textarea = document.getElementById('texto-estrategia');
+        if (!textarea || !textarea.value.trim()) {
+            alert('Digite um texto para processar');
+            return;
+        }
+        
+        await processarEstrategiaComGPT4o(textarea.value, 'texto');
+    }
+
+    async function processarArquivo() {
+        const fileInput = document.getElementById('arquivo-upload');
+        if (!fileInput || !fileInput.files.length) return;
+        
+        const arquivo = fileInput.files[0];
+        const statusDiv = document.getElementById('status-arquivo');
+        
+        if (statusDiv) {
+            statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Processando arquivo...</div>';
+        }
+        
+        const formData = new FormData();
+        formData.append('arquivo', arquivo);
+        
+        try {
+            const response = await fetch('/api/mapa-mental/processar-arquivo', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                aplicarEstrategia(data.estrategia);
+                mostrarResultadoEstrategia(data.estrategia, 'arquivo');
+            } else {
+                if (statusDiv) {
+                    statusDiv.innerHTML = `<div class="alert alert-danger">Erro: ${data.error}</div>`;
+                }
+            }
+        } catch (error) {
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Erro ao processar arquivo: ${error.message}</div>`;
+            }
+        }
+    }
+
+    // Variáveis de zoom (apenas para mapas gerados)
+    let zoomLevel = 1;
+    let hasMapGenerated = false;
+    const MIN_ZOOM = 0.3;
+    const MAX_ZOOM = 3;
+    const ZOOM_STEP = 0.2;
+
+    // Funções de zoom (funcionam apenas com mapa gerado)
+    function zoomIn() {
+        if (!hasMapGenerated) return;
+        if (zoomLevel < MAX_ZOOM) {
+            zoomLevel += ZOOM_STEP;
+            aplicarZoom();
+        }
+    }
+
+    function zoomOut() {
+        if (!hasMapGenerated) return;
+        if (zoomLevel > MIN_ZOOM) {
+            zoomLevel -= ZOOM_STEP;
+            aplicarZoom();
+        }
+    }
+
+    function resetZoom() {
+        if (!hasMapGenerated) return;
+        zoomLevel = 1;
+        aplicarZoom();
+    }
+
+    function aplicarZoom() {
+        const svg = document.getElementById('mapa-mental-svg');
+        if (svg && hasMapGenerated) {
+            svg.style.transform = `scale(${zoomLevel})`;
+            svg.style.transformOrigin = 'center center';
+        }
+    }
+
+    function mostrarControlesZoom() {
+        const zoomControls = document.getElementById('zoom-controls');
+        if (zoomControls) {
+            zoomControls.style.display = 'block';
+        }
+        hasMapGenerated = true;
+    }
+
+    function mostrarLegenda() {
+        const legenda = document.getElementById('legenda-mapa');
+        if (legenda) {
+            legenda.style.display = 'block';
+        }
+    }
+
+    function esconderLegenda() {
+        const legenda = document.getElementById('legenda-mapa');
+        if (legenda) {
+            legenda.style.display = 'none';
+        }
+    }
+
+    function esconderControlesZoom() {
+        const zoomControls = document.getElementById('zoom-controls');
+        if (zoomControls) {
+            zoomControls.style.display = 'none';
+        }
+        hasMapGenerated = false;
+        zoomLevel = 1;
+        const svg = document.getElementById('mapa-mental-svg');
+        if (svg) {
+            svg.style.transform = 'scale(1)';
+        }
+        esconderLegenda();
+    }
+
+    // Função para gerar mapa mental automaticamente
+    async function gerarMapaMental() {
+        // Verificar se há conteúdo para processar
+        const audioUpload = document.getElementById('audio-upload');
+        const arquivoUpload = document.getElementById('arquivo-upload');
+        const textoEstrategia = document.getElementById('texto-estrategia');
+        
+        let conteudoParaProcessar = null;
+        let tipoConteudo = null;
+        
+        // Prioridade: Áudio > Arquivo > Texto
+        if (audioUpload && audioUpload.files.length > 0) {
+            conteudoParaProcessar = audioUpload.files[0];
+            tipoConteudo = 'audio';
+        } else if (arquivoUpload && arquivoUpload.files.length > 0) {
+            conteudoParaProcessar = arquivoUpload.files[0];
+            tipoConteudo = 'arquivo';
+        } else if (textoEstrategia && textoEstrategia.value.trim()) {
+            conteudoParaProcessar = textoEstrategia.value.trim();
+            tipoConteudo = 'texto';
+        }
+        
+        if (!conteudoParaProcessar) {
+            alert('Por favor, forneça um áudio, arquivo ou texto para gerar o mapa mental.');
+            return;
+        }
+        
+        // Mostrar loading
+        const mapaMental = document.getElementById('mapa-mental');
+        if (mapaMental) {
+            mapaMental.innerHTML = `
+                <div class="text-center pt-5 mt-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <h4 class="text-white mt-3">Gerando Mapa Mental...</h4>
+                    <p class="text-white-50">Processando com ${tipoConteudo === 'audio' ? 'Whisper + GPT-4o' : 'GPT-4o'}</p>
+                </div>
+            `;
+        }
+        
+        try {
+            if (tipoConteudo === 'audio') {
+                await processarAudioParaMapa(conteudoParaProcessar);
+            } else if (tipoConteudo === 'arquivo') {
+                await processarArquivoParaMapa(conteudoParaProcessar);
+            } else {
+                await processarTextoParaMapa(conteudoParaProcessar);
+            }
+        } catch (error) {
+            console.error('Erro ao gerar mapa mental:', error);
+            if (mapaMental) {
+                mapaMental.innerHTML = `
+                    <div class="text-center pt-5 mt-5">
+                        <h4 class="text-danger">Erro ao gerar mapa mental</h4>
+                        <p class="text-white-50">${error.message}</p>
+                        <button class="btn btn-primary" onclick="limparMapa()">Tentar Novamente</button>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Processar áudio para mapa mental
+    async function processarAudioParaMapa(audioFile) {
+        const formData = new FormData();
+        formData.append('audio', audioFile);
+        
+        const response = await fetch('/api/mapa-mental/processar-audio', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gerarMapaVisual(data.mapa);
+        } else {
+            throw new Error(data.error || 'Erro ao processar áudio');
+        }
+    }
+
+    // Processar arquivo para mapa mental
+    async function processarArquivoParaMapa(arquivo) {
+        const formData = new FormData();
+        formData.append('arquivo', arquivo);
+        
+        const response = await fetch('/api/mapa-mental/processar-arquivo', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gerarMapaVisual(data.mapa);
+        } else {
+            throw new Error(data.error || 'Erro ao processar arquivo');
+        }
+    }
+
+    // Processar texto para mapa mental
+    async function processarTextoParaMapa(texto) {
+        const response = await fetch('/api/mapa-mental/processar-texto', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ texto: texto })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            gerarMapaVisual(data.mapa);
+        } else {
+            throw new Error(data.error || 'Erro ao processar texto');
+        }
+    }
+
+    // Gerar visualização do mapa mental hierárquico
+    function gerarMapaVisual(dadosMapa) {
+        const container = document.getElementById('mapa-mental-container');
+        const svg = document.getElementById('mapa-mental-svg');
+        const emptyState = document.getElementById('mapa-empty-state');
+        
+        // Verificações de segurança robustas
+        if (!container || !svg) {
+            console.error('Elementos DOM não encontrados');
+            return;
+        }
+        
+        if (!dadosMapa || typeof dadosMapa !== 'object') {
+            console.error('Dados do mapa inválidos:', dadosMapa);
+            return;
+        }
+        
+        // Esconder estado vazio e mostrar SVG
+        if (emptyState) emptyState.style.display = 'none';
+        
+        // Limpar SVG atual
+        svg.innerHTML = '';
+        
+        // Configurar SVG com estilo canvas
+        svg.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+        svg.style.border = '1px solid #dee2e6';
+        
+        // Estrutura hierárquica do mapa mental jurídico
+        const estrutura = processarEstrutura(dadosMapa);
+        
+        // 1. NÚCLEO CENTRAL - Tema Principal
+        criarNucleoCentral(svg, estrutura.nucleo);
+        
+        // 2. RAMOS PRINCIPAIS (1º Nível) - Subtemas principais
+        criarRamosPrincipais(svg, estrutura.ramosPrincipais);
+        
+        // 3. RAMOS SECUNDÁRIOS (2º Nível) - Detalhamento técnico
+        criarRamosSecundarios(svg, estrutura.ramosSecundarios);
+        
+        // 4. RAMOS TERCIÁRIOS (3º Nível) - Exemplos práticos
+        criarRamosTerciarios(svg, estrutura.ramosTerciarios);
+        
+        // 5. RAMOS COMPLEMENTARES - Estudos adicionais
+        criarRamosComplementares(svg, estrutura.ramosComplementares);
+        
+        // Mudar cursor do container para normal
+        container.style.cursor = 'default';
+        
+        // Mostrar controles de zoom, legenda e atualizar informações
+        mostrarControlesZoom();
+        mostrarLegenda();
+        atualizarInformacoesMapa(dadosMapa);
+    }
+
+    // Processar dados para estrutura hierárquica
+    function processarEstrutura(dadosMapa) {
+        // Verificação de segurança inicial
+        if (!dadosMapa || typeof dadosMapa !== 'object') {
+            console.error('Dados do mapa inválidos para processamento:', dadosMapa);
+            return {
+                nucleo: { titulo: 'Erro nos Dados', area: 'Sistema' },
+                ramosPrincipais: [],
+                ramosSecundarios: {},
+                ramosTerciarios: {},
+                ramosComplementares: []
+            };
+        }
+        
+        // Compatibilidade com diferentes formatos de dados
+        let nucleo, ramosPrincipais, ramosSecundarios, ramosTerciarios, ramosComplementares;
+        
+        if (dadosMapa.nucleo_central && typeof dadosMapa.nucleo_central === 'object') {
+            // Novo formato hierárquico
+            nucleo = {
+                titulo: dadosMapa.nucleo_central.tema_principal || 'Tema Jurídico',
+                area: dadosMapa.nucleo_central.area_juridica || 'Área Jurídica'
+            };
+            ramosPrincipais = dadosMapa.ramos_principais || [];
+            ramosSecundarios = dadosMapa.ramos_secundarios || {};
+            ramosTerciarios = dadosMapa.ramos_terciarios || {};
+            ramosComplementares = dadosMapa.ramos_complementares || [];
+        } else {
+            // Formato antigo de estratégia ou fallback
+            nucleo = {
+                titulo: dadosMapa.titulo || dadosMapa.tema_principal || dadosMapa.assistente_central || 'Tema Jurídico',
+                area: dadosMapa.area_juridica || 'Área Jurídica'
+            };
+            ramosPrincipais = dadosMapa.agentes_recomendados || dadosMapa.ramos_principais || [
+                'Conceitos Jurídicos Fundamentais',
+                'Fundamentação Legal', 
+                'Jurisprudência Aplicável',
+                'Aplicações Práticas',
+                'Pontos Controversos'
+            ];
+            ramosSecundarios = dadosMapa.ramos_secundarios || {};
+            ramosTerciarios = dadosMapa.ramos_terciarios || {};
+            ramosComplementares = dadosMapa.ramos_complementares || [
+                'Dúvidas Relevantes',
+                'Tarefas a Realizar',
+                'Relacionamento com outros ramos'
+            ];
+        }
+        
+        return {
+            nucleo: nucleo,
+            ramosPrincipais: ramosPrincipais,
+            ramosSecundarios: ramosSecundarios,
+            ramosTerciarios: ramosTerciarios,
+            ramosComplementares: ramosComplementares
+        };
+    }
+
+    // 1. Criar núcleo central (tema principal)
+    function criarNucleoCentral(svg, nucleo) {
+        // Verificação de segurança
+        if (!nucleo || typeof nucleo !== 'object') {
+            console.error('Núcleo inválido:', nucleo);
+            nucleo = { titulo: 'Tema Jurídico', area: 'Área Jurídica' };
+        }
+        
+        const centroX = 400;
+        const centroY = 250;
+        const raio = 70;
+        
+        // Círculo central com gradiente
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+        gradient.setAttribute('id', 'nucleo-gradient');
+        gradient.innerHTML = `
+            <stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2171b5;stop-opacity:1" />
+        `;
+        defs.appendChild(gradient);
+        svg.appendChild(defs);
+        
+        const nucleoCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        nucleoCircle.setAttribute('cx', centroX);
+        nucleoCircle.setAttribute('cy', centroY);
+        nucleoCircle.setAttribute('r', raio);
+        nucleoCircle.setAttribute('fill', 'url(#nucleo-gradient)');
+        nucleoCircle.setAttribute('stroke', '#ffffff');
+        nucleoCircle.setAttribute('stroke-width', '4');
+        nucleoCircle.setAttribute('filter', 'drop-shadow(3px 3px 6px rgba(0,0,0,0.3))');
+        svg.appendChild(nucleoCircle);
+        
+        // Texto do tema principal
+        const temaText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        temaText.setAttribute('x', centroX);
+        temaText.setAttribute('y', centroY - 5);
+        temaText.setAttribute('text-anchor', 'middle');
+        temaText.setAttribute('fill', 'white');
+        temaText.setAttribute('font-size', '12');
+        temaText.setAttribute('font-weight', 'bold');
+        const tituloNucleo = (nucleo && nucleo.titulo) || (nucleo && nucleo.tema_principal) || 'Tema Jurídico';
+        temaText.textContent = quebrarTexto(tituloNucleo, 12);
+        svg.appendChild(temaText);
+        
+        // Área jurídica
+        const areaText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        areaText.setAttribute('x', centroX);
+        areaText.setAttribute('y', centroY + 15);
+        areaText.setAttribute('text-anchor', 'middle');
+        areaText.setAttribute('fill', 'white');
+        areaText.setAttribute('font-size', '10');
+        const areaNucleo = (nucleo && nucleo.area) || (nucleo && nucleo.area_juridica) || 'Área Jurídica';
+        areaText.textContent = areaNucleo;
+        svg.appendChild(areaText);
+    }
+
+    // 2. Criar ramos principais (1º nível)
+    function criarRamosPrincipais(svg, ramos) {
+        const centroX = 400;
+        const centroY = 250;
+        const raioDistancia = 160;
+        const ramoTamanho = 40;
+        
+        ramos.forEach((ramo, index) => {
+            const angulo = (2 * Math.PI * index) / ramos.length;
+            const ramoX = centroX + raioDistancia * Math.cos(angulo);
+            const ramoY = centroY + raioDistancia * Math.sin(angulo);
+            
+            // Linha de conexão principal
+            const linha = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            linha.setAttribute('x1', centroX + 70 * Math.cos(angulo));
+            linha.setAttribute('y1', centroY + 70 * Math.sin(angulo));
+            linha.setAttribute('x2', ramoX - ramoTamanho * Math.cos(angulo));
+            linha.setAttribute('y2', ramoY - ramoTamanho * Math.sin(angulo));
+            linha.setAttribute('stroke', '#2171b5');
+            linha.setAttribute('stroke-width', '3');
+            svg.appendChild(linha);
+            
+            // Retângulo do ramo principal
+            const ramoRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            ramoRect.setAttribute('x', ramoX - ramoTamanho);
+            ramoRect.setAttribute('y', ramoY - 15);
+            ramoRect.setAttribute('width', ramoTamanho * 2);
+            ramoRect.setAttribute('height', 30);
+            ramoRect.setAttribute('fill', '#ffa726');
+            ramoRect.setAttribute('stroke', '#ffffff');
+            ramoRect.setAttribute('stroke-width', '2');
+            ramoRect.setAttribute('rx', '8');
+            ramoRect.setAttribute('filter', 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))');
+            svg.appendChild(ramoRect);
+            
+            // Texto do ramo principal
+            const ramoText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            ramoText.setAttribute('x', ramoX);
+            ramoText.setAttribute('y', ramoY + 4);
+            ramoText.setAttribute('text-anchor', 'middle');
+            ramoText.setAttribute('fill', 'white');
+            ramoText.setAttribute('font-size', '9');
+            ramoText.setAttribute('font-weight', 'bold');
+            ramoText.textContent = quebrarTexto(ramo, 15);
+            svg.appendChild(ramoText);
+        });
+    }
+
+    // 3. Criar ramos secundários (2º nível)
+    function criarRamosSecundarios(svg, ramosSecundarios) {
+        const centroX = 400;
+        const centroY = 250;
+        const raioBase = 160;
+        const raioSecundario = 220;
+        
+        Object.entries(ramosSecundarios).forEach((entry, index) => {
+            const [ramoPrincipal, detalhes] = entry;
+            
+            detalhes.forEach((detalhe, detIndex) => {
+                // Calcular posição baseada no ramo principal
+                const anguloBase = (2 * Math.PI * index) / Object.keys(ramosSecundarios).length;
+                const anguloOffset = (detIndex - (detalhes.length - 1) / 2) * 0.3;
+                const anguloFinal = anguloBase + anguloOffset;
+                
+                const secX = centroX + raioSecundario * Math.cos(anguloFinal);
+                const secY = centroY + raioSecundario * Math.sin(anguloFinal);
+                
+                // Linha de conexão secundária
+                const linha = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                linha.setAttribute('x1', centroX + raioBase * Math.cos(anguloBase));
+                linha.setAttribute('y1', centroY + raioBase * Math.sin(anguloBase));
+                linha.setAttribute('x2', secX);
+                linha.setAttribute('y2', secY);
+                linha.setAttribute('stroke', '#66bb6a');
+                linha.setAttribute('stroke-width', '2');
+                linha.setAttribute('stroke-dasharray', '3,3');
+                linha.setAttribute('opacity', '0.8');
+                svg.appendChild(linha);
+                
+                // Círculo secundário
+                const secCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                secCircle.setAttribute('cx', secX);
+                secCircle.setAttribute('cy', secY);
+                secCircle.setAttribute('r', '25');
+                secCircle.setAttribute('fill', '#66bb6a');
+                secCircle.setAttribute('stroke', '#ffffff');
+                secCircle.setAttribute('stroke-width', '2');
+                secCircle.setAttribute('filter', 'drop-shadow(1px 1px 2px rgba(0,0,0,0.2))');
+                svg.appendChild(secCircle);
+                
+                // Texto secundário
+                const secText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                secText.setAttribute('x', secX);
+                secText.setAttribute('y', secY + 3);
+                secText.setAttribute('text-anchor', 'middle');
+                secText.setAttribute('fill', 'white');
+                secText.setAttribute('font-size', '7');
+                secText.setAttribute('font-weight', 'bold');
+                secText.textContent = quebrarTexto(detalhe, 10);
+                svg.appendChild(secText);
+            });
+        });
+    }
+
+    // 4. Criar ramos terciários (3º nível)
+    function criarRamosTerciarios(svg, ramosTerciarios) {
+        const centroX = 400;
+        const centroY = 250;
+        const raioTerciario = 280;
+        
+        Object.entries(ramosTerciarios).forEach((entry, index) => {
+            const [ramoPrincipal, exemplos] = entry;
+            
+            exemplos.forEach((exemplo, exIndex) => {
+                // Calcular posição nas extremidades
+                const anguloBase = (2 * Math.PI * index) / Object.keys(ramosTerciarios).length;
+                const anguloOffset = (exIndex - (exemplos.length - 1) / 2) * 0.4;
+                const anguloFinal = anguloBase + anguloOffset;
+                
+                const terX = centroX + raioTerciario * Math.cos(anguloFinal);
+                const terY = centroY + raioTerciario * Math.sin(anguloFinal);
+                
+                // Linha de conexão terciária
+                const linha = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                linha.setAttribute('x1', centroX + 220 * Math.cos(anguloBase));
+                linha.setAttribute('y1', centroY + 220 * Math.sin(anguloBase));
+                linha.setAttribute('x2', terX);
+                linha.setAttribute('y2', terY);
+                linha.setAttribute('stroke', '#ab47bc');
+                linha.setAttribute('stroke-width', '1');
+                linha.setAttribute('stroke-dasharray', '2,4');
+                linha.setAttribute('opacity', '0.6');
+                svg.appendChild(linha);
+                
+                // Losango terciário
+                const losango = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                const tamanho = 15;
+                const pontos = [
+                    `${terX},${terY - tamanho}`,
+                    `${terX + tamanho},${terY}`,
+                    `${terX},${terY + tamanho}`,
+                    `${terX - tamanho},${terY}`
+                ].join(' ');
+                losango.setAttribute('points', pontos);
+                losango.setAttribute('fill', '#ab47bc');
+                losango.setAttribute('stroke', '#ffffff');
+                losango.setAttribute('stroke-width', '1');
+                losango.setAttribute('opacity', '0.9');
+                svg.appendChild(losango);
+                
+                // Texto terciário
+                const terText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                terText.setAttribute('x', terX);
+                terText.setAttribute('y', terY + 2);
+                terText.setAttribute('text-anchor', 'middle');
+                terText.setAttribute('fill', 'white');
+                terText.setAttribute('font-size', '6');
+                terText.setAttribute('font-weight', 'bold');
+                terText.textContent = quebrarTexto(exemplo, 8);
+                svg.appendChild(terText);
+            });
+        });
+    }
+
+    // 5. Criar ramos complementares
+    function criarRamosComplementares(svg, ramosComplementares) {
+        const centroX = 400;
+        const centroY = 250;
+        const posicoes = [
+            { x: centroX - 200, y: centroY + 150 },
+            { x: centroX, y: centroY + 180 },
+            { x: centroX + 200, y: centroY + 150 }
+        ];
+        
+        ramosComplementares.forEach((ramo, index) => {
+            if (index >= posicoes.length) return;
+            
+            const pos = posicoes[index];
+            
+            // Elipse complementar
+            const complementarRect = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            complementarRect.setAttribute('cx', pos.x);
+            complementarRect.setAttribute('cy', pos.y);
+            complementarRect.setAttribute('rx', '60');
+            complementarRect.setAttribute('ry', '20');
+            complementarRect.setAttribute('fill', '#26a69a');
+            complementarRect.setAttribute('stroke', '#ffffff');
+            complementarRect.setAttribute('stroke-width', '2');
+            complementarRect.setAttribute('opacity', '0.8');
+            svg.appendChild(complementarRect);
+            
+            // Texto complementar
+            const complementarText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            complementarText.setAttribute('x', pos.x);
+            complementarText.setAttribute('y', pos.y + 4);
+            complementarText.setAttribute('text-anchor', 'middle');
+            complementarText.setAttribute('fill', 'white');
+            complementarText.setAttribute('font-size', '8');
+            complementarText.setAttribute('font-weight', 'bold');
+            complementarText.textContent = quebrarTexto(ramo, 12);
+            svg.appendChild(complementarText);
+        });
+    }
+
+    // Função auxiliar para quebrar texto
+    function quebrarTexto(texto, maxLen) {
+        if (texto.length <= maxLen) return texto;
+        return texto.substring(0, maxLen - 3) + '...';
+    }
+
+    // Atualizar informações do mapa
+    function atualizarInformacoesMapa(dadosMapa) {
+        const infoAreaCentral = document.getElementById('info-area-central');
+        const infoConexoes = document.getElementById('info-conexoes');
+        const infoAgentesExternos = document.getElementById('info-agentes-externos');
+        
+        if (infoAreaCentral) {
+            infoAreaCentral.textContent = dadosMapa.area_juridica || 'Nenhuma área selecionada';
+        }
+        
+        if (infoConexoes) {
+            infoConexoes.textContent = `${dadosMapa.agentes?.length || 0} conexões`;
+        }
+        
+        if (infoAgentesExternos) {
+            infoAgentesExternos.textContent = `${dadosMapa.agentes?.length || 0} agentes`;
+        }
+    }
+
+    // Limpar mapa e resetar canvas
+    function limparMapa() {
+        const container = document.getElementById('mapa-mental-container');
+        const svg = document.getElementById('mapa-mental-svg');
+        const emptyState = document.getElementById('mapa-empty-state');
+        
+        if (svg) {
+            svg.innerHTML = '';
+            svg.style.background = 'transparent';
+            svg.style.border = 'none';
+            svg.style.transform = 'scale(1)';
+        }
+        
+        if (emptyState) {
+            emptyState.style.display = 'flex';
+        }
+        
+        if (container) {
+            container.style.cursor = 'crosshair';
+        }
+        
+        // Esconder controles de zoom e resetar informações
+        esconderControlesZoom();
+        
+        // Resetar informações
+        const infoAreaCentral = document.getElementById('info-area-central');
+        const infoConexoes = document.getElementById('info-conexoes');
+        const infoAgentesExternos = document.getElementById('info-agentes-externos');
+        
+        if (infoAreaCentral) infoAreaCentral.textContent = 'Nenhuma área selecionada';
+        if (infoConexoes) infoConexoes.textContent = '0 conexões';
+        if (infoAgentesExternos) infoAgentesExternos.textContent = '0 agentes';
+        
+        // Limpar campos de input
+        const audioUpload = document.getElementById('audio-upload');
+        const arquivoUpload = document.getElementById('arquivo-upload');
+        const textoEstrategia = document.getElementById('texto-estrategia');
+        
+        if (audioUpload) audioUpload.value = '';
+        if (arquivoUpload) arquivoUpload.value = '';
+        if (textoEstrategia) textoEstrategia.value = '';
+        
+        console.log('Canvas limpo e resetado');
+    }
+
+    // Processar upload de áudio
+    async function processarAudioUpload() {
+        const audioInput = document.getElementById('audio-upload');
+        if (!audioInput || !audioInput.files.length) return;
+        
+        const arquivo = audioInput.files[0];
+        const statusDiv = document.getElementById('status-arquivo');
+        
+        if (statusDiv) {
+            statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Transcrevendo áudio com Whisper...</div>';
+        }
+        
+        try {
+            await processarAudioParaMapa(arquivo);
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="alert alert-success"><i class="fas fa-check"></i> Áudio processado com sucesso!</div>';
+            }
+        } catch (error) {
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="alert alert-danger">Erro ao processar áudio: ${error.message}</div>`;
+            }
+        }
+    }
+
+    // Funções de exportação
+    function exportarPNG() {
+        html2canvas(document.getElementById('mapa-mental')).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'mapa-mental.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+
+    function exportarPDF() {
+        const { jsPDF } = window.jspdf;
+        html2canvas(document.getElementById('mapa-mental')).then(canvas => {
+            const pdf = new jsPDF();
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 10, 10, 190, 100);
+            pdf.save('mapa-mental.pdf');
+        });
+    }
+
+    function exportarHTML() {
+        const mapaHTML = document.getElementById('mapa-mental').outerHTML;
+        const blob = new Blob([mapaHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mapa-mental.html';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- html2canvas para exportação PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF para exportação PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>

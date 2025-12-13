@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Jurídico Técnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --border-color: #333;
+            --primary-color: #0d6efd;
+            --green-color: #1f5981;
+            --text-color: #f8f9fa;
+            --secondary-text: #adb5bd;
+            --message-user-bg: #2b3a4a;
+            --message-assistant-bg: #1a2639;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container-fluid {
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background-color: var(--panel-bg);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+        
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-container {
+            background-color: var(--panel-bg);
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .message {
+            max-width: 75%;
+            padding: 1rem;
+            border-radius: 8px;
+            position: relative;
+            color: white;
+        }
+        
+        .user-message {
+            background-color: var(--message-user-bg);
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        
+        .assistant-message {
+            background-color: var(--message-assistant-bg);
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        
+        .message-meta {
+            font-size: 0.8rem;
+            color: var(--secondary-text);
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        
+        .input-group .form-control {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+        
+        .input-group .form-control:focus {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            box-shadow: none;
+            border-color: var(--primary-color);
+        }
+        
+        .btn-green {
+            background-color: var(--green-color);
+            border-color: var(--green-color);
+            color: white;
+        }
+        
+        .btn-green:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: white;
+        }
+        
+        .settings-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .settings-heading {
+            font-size: 1rem;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .settings-heading .btn {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+        }
+        
+        .form-select {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+        
+        .form-select:focus {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-color: var(--primary-color);
+            box-shadow: none;
+        }
+        
+        .form-check-input {
+            background-color: var(--bg-color);
+            border-color: var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .conversation-list {
+            overflow-y: auto;
+            flex: 1;
+            margin-top: 1rem;
+        }
+        
+        .conversation-item {
+            padding: 0.7rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .conversation-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .conversation-item.active {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin: auto;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .welcome-message h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .welcome-message p {
+            color: var(--secondary-text);
+            margin-bottom: 1rem;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            margin-bottom: 15px;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: var(--secondary-text);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.3s linear infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+        
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 50vh;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
+        
+        #fileInput {
+            display: none;
+        }
+
+        /* Estilo para citações e referências legais */
+        .legal-reference {
+            color: #8bb4f7;
+            font-weight: 500;
+        }
+
+        /* Estilo para jurisprudência */
+        .jurisprudence {
+            color: #a2d2a4;
+            font-weight: 500;
+        }
+
+        /* Estilo para tópicos numerados */
+        .topic-list {
+            margin-left: 1rem;
+            padding-left: 1rem;
+        }
+
+        .topic-list li {
+            margin-bottom: 0.75rem;
+        }
+
+        /* Estilo para tópicos destacados */
+        .highlight-text {
+            background-color: rgba(255, 193, 7, 0.2);
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="header">
+            <h2 class="h4 m-0">Assistente Jurídico Técnico</h2>
+            <div class="header-actions">
+                <button id="settingsToggle" class="btn btn-outline-light btn-sm me-2 d-md-none">
+                    <i class="fas fa-cog"></i> Configurações
+                </button>
+                <button id="clearBtn" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash-alt"></i> Limpar
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="settings-card">
+                    <div class="settings-heading">
+                        <span><i class="fas fa-sliders-h"></i> Configurações</span>
+                        <button id="saveSettingsBtn" class="btn btn-primary btn-sm">Salvar</button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="modelSelect" class="form-label small">Modelo de IA</label>
+                        <select id="modelSelect" class="form-select form-select-sm">
+                            <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
+                            <option value="deepseek-chat">DeepSeek Chat</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="personalitySelect" class="form-label small">Personalidade</label>
+                        <select id="personalitySelect" class="form-select form-select-sm">
+                            <option value="advogado">Advogado</option>
+                            <option value="juiz">Juiz</option>
+                            <option value="promotor">Promotor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="toneSelect" class="form-label small">Tom de Voz</label>
+                        <select id="toneSelect" class="form-select form-select-sm">
+                            <option value="formal">Formal</option>
+                            <option value="natural">Natural</option>
+                            <option value="simples">Simplificado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="webSearchToggle">
+                            <label class="form-check-label small" for="webSearchToggle">
+                                <i class="fas fa-globe"></i> Pesquisa Web
+                            </label>
+                        </div>
+                        
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="useDocsToggle">
+                            <label class="form-check-label small" for="useDocsToggle">
+                                <i class="fas fa-file-alt"></i> Usar Documentos
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="m-0"><i class="fas fa-history"></i> Histórico</h6>
+                    <button id="newChatBtn" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Nova
+                    </button>
+                </div>
+                
+                <div class="conversation-list">
+                    <div class="conversation-item active">
+                        <div class="d-flex justify-content-between">
+                            <span class="small">Nova Consulta Técnica</span>
+                            <small class="text-muted">Agora</small>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3 small text-muted">
+                        Nenhuma consulta anterior
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-area">
+                <div id="messagesContainer" class="messages-container">
+                    <div id="welcomeMessage" class="welcome-message">
+                        <h2>Assistente Jurídico Técnico</h2>
+                        <p>Este assistente fornece respostas jurídicas técnicas, com referências legislativas e jurisprudenciais precisas.</p>
+                        <p>Digite sua consulta jurídica específica abaixo para obter uma análise técnica baseada na legislação vigente.</p>
+                        <p>Exemplo: "Quais são os requisitos para a prisão preventiva no processo penal?"</p>
+                    </div>
+                    <!-- Mensagens adicionadas via JavaScript -->
+                </div>
+                
+                <div class="input-container">
+                    <div class="input-group">
+                        <button id="uploadBtn" class="btn btn-green">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <input type="file" id="fileInput">
+                        <textarea id="messageInput" class="form-control" placeholder="Digite sua consulta jurídica..." rows="1"></textarea>
+                        <button id="sendBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos DOM
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('fileInput');
+            const clearBtn = document.getElementById('clearBtn');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            // Elementos de configuração
+            const modelSelect = document.getElementById('modelSelect');
+            const personalitySelect = document.getElementById('personalitySelect');
+            const toneSelect = document.getElementById('toneSelect');
+            const webSearchToggle = document.getElementById('webSearchToggle');
+            const useDocsToggle = document.getElementById('useDocsToggle');
+            
+            // Estado
+            let messageCount = 0;
+            let waitingForResponse = false;
+            
+            // Toggle sidebar no mobile
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('d-none');
+                });
+            }
+            
+            // Auto-resize do textarea ao digitar
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                
+                // Habilitar/desabilitar botão de envio
+                sendBtn.disabled = this.value.trim() === '' || waitingForResponse;
+            });
+            
+            // Enviar mensagem com Enter (sem shift)
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey && !sendBtn.disabled) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Botão de enviar
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Botão de upload
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Processamento do arquivo selecionado
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
+                    
+                    // Esconder mensagem de boas-vindas
+                    if (welcomeMessage.style.display !== 'none') {
+                        welcomeMessage.style.display = 'none';
+                    }
+                    
+                    // Adicionar mensagem sobre o arquivo
+                    addMessage('user', `Arquivo enviado: ${file.name}`);
+                    
+                    // Simular resposta do assistente
+                    waitingForResponse = true;
+                    const typingIndicator = addMessage('assistant', '', true);
+                    
+                    setTimeout(() => {
+                        // Remover indicador de digitação
+                        typingIndicator.remove();
+                        
+                        // Adicionar resposta técnica baseada no tipo de arquivo
+                        let fileResponse = '';
+                        const fileExtension = file.name.split('.').pop().toLowerCase();
+                        
+                        if (fileExtension === 'pdf' || fileExtension === 'docx' || fileExtension === 'doc') {
+                            fileResponse = gerarRespostaDocumento(file.name);
+                        } else if (fileExtension === 'mp3' || fileExtension === 'wav' || fileExtension === 'mp4') {
+                            fileResponse = gerarRespostaAudio(file.name);
+                        } else {
+                            fileResponse = `Documento recebido: <strong>${file.name}</strong>.<br><br>Para uma análise técnica adequada do documento, especifique a questão jurídica que deseja examinar. A análise será baseada no conteúdo do documento e focará nos aspectos jurídicos relevantes à sua consulta.`;
+                        }
+                        
+                        addMessage('assistant', fileResponse);
+                        
+                        // Resetar estado
+                        waitingForResponse = false;
+                        messageInput.focus();
+                    }, 1500);
+                    
+                    // Limpar seleção
+                    this.value = '';
+                }
+            });
+            
+            // Botão de limpar conversa
+            clearBtn.addEventListener('click', function() {
+                if (confirm('Deseja limpar esta conversa?')) {
+                    // Remover todas as mensagens
+                    messagesContainer.innerHTML = '';
+                    
+                    // Adicionar mensagem de boas-vindas
+                    messagesContainer.appendChild(welcomeMessage);
+                    welcomeMessage.style.display = 'block';
+                    
+                    // Resetar contador e focar no input
+                    messageCount = 0;
+                    messageInput.focus();
+                }
+            });
+            
+            // Botão de nova conversa
+            newChatBtn.addEventListener('click', function() {
+                if (confirm('Iniciar nova conversa? A conversa atual será salva no histórico.')) {
+                    // Mesma lógica de limpar, mas poderia salvar em histórico em uma implementação real
+                    messagesContainer.innerHTML = '';
+                    messagesContainer.appendChild(welcomeMessage);
+                    welcomeMessage.style.display = 'block';
+                    messageCount = 0;
+                    messageInput.focus();
+                }
+            });
+            
+            // Salvar configurações
+            saveSettingsBtn.addEventListener('click', function() {
+                // Exibir confirmação
+                alert('Configurações salvas com sucesso!');
+                
+                // Em um app real, salvar no banco de dados
+                console.log('Configurações salvas:', {
+                    model: modelSelect.value,
+                    personality: personalitySelect.value,
+                    tone: toneSelect.value,
+                    webSearch: webSearchToggle.checked,
+                    useDocs: useDocsToggle.checked
+                });
+                
+                // Fechar sidebar em mobile após salvar
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('d-none');
+                }
+            });
+            
+            // Função principal para enviar mensagem
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message === '' || waitingForResponse) return;
+                
+                // Esconder mensagem de boas-vindas
+                if (welcomeMessage.style.display !== 'none') {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                // Adicionar mensagem do usuário
+                addMessage('user', message);
+                
+                // Limpar input e ajustar altura
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // CRÍTICO: forçar foco no campo após enviar
+                setTimeout(() => {
+                    messageInput.focus();
+                }, 50);
+                
+                // Desabilitar envio durante a resposta
+                waitingForResponse = true;
+                sendBtn.disabled = true;
+                
+                // Adicionar indicador de digitação
+                const typingIndicator = addMessage('assistant', '', true);
+                
+                // Gerar resposta técnica (em um app real, seria uma chamada API)
+                setTimeout(() => {
+                    // Remover indicador de digitação
+                    typingIndicator.remove();
+                    
+                    // Adicionar resposta técnica baseada na consulta
+                    const technicalResponse = gerarRespostaTecnica(message);
+                    addMessage('assistant', technicalResponse);
+                    
+                    // Resetar estado
+                    waitingForResponse = false;
+                    sendBtn.disabled = messageInput.value.trim() === '';
+                    
+                    // CRÍTICO: forçar foco no campo após resposta
+                    setTimeout(() => {
+                        messageInput.focus();
+                    }, 50);
+                    
+                }, 1500);
+                
+                messageCount++;
+            }
+            
+            // Função para adicionar mensagem ao container
+            function addMessage(sender, text, isTyping = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                if (isTyping) {
+                    // Indicador de digitação
+                    messageDiv.innerHTML = `
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="message-meta">
+                            ${getCurrentTime()}
+                        </div>
+                    `;
+                } else {
+                    // Mensagem normal
+                    let messageContent = '';
+                    
+                    if (sender === 'user') {
+                        // Conteúdo sem formatação especial para mensagens do usuário
+                        messageContent = `<div class="message-content">${text}</div>`;
+                    } else {
+                        // Processar texto para adicionar formatação técnica-jurídica
+                        messageContent = `<div class="message-content">${formatarTextoJuridico(text)}</div>`;
+                    }
+                    
+                    messageDiv.innerHTML = `
+                        ${messageContent}
+                        <div class="message-meta">
+                            ${getCurrentTime()}
+                        </div>
+                    `;
+                }
+                
+                messagesContainer.appendChild(messageDiv);
+                
+                // Rolar para o fim
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                return messageDiv;
+            }
+            
+            // Formatar texto com estilo jurídico
+            function formatarTextoJuridico(texto) {
+                // Aplicar formatação HTML para destacar referências legais
+                let formatado = texto;
+                
+                // Destacar artigos de leis
+                formatado = formatado.replace(/\b(art\.|artigo) (\d+)([-\w\s,.;:]*?)(CC|CP|CPP|CF|CPC|CTN|CLT|LINDB)\b/gi, 
+                    '<span class="legal-reference">$1 $2$3$4</span>');
+                
+                // Destacar súmulas
+                formatado = formatado.replace(/\b(Súmula|súmula) (\d+)([-\w\s,.;:]*?)(STF|STJ|TST|TRT|TCU)\b/gi, 
+                    '<span class="jurisprudence">$1 $2$3$4</span>');
+                
+                // Destacar referências jurisprudenciais
+                formatado = formatado.replace(/\b(REsp|HC|ADI|ADPF|RE|ARE|AgRg|AgInt|MS|RR)[ .]\d+[-\/\w]*/gi, 
+                    '<span class="jurisprudence">$&</span>');
+                
+                // Substituir quebras de linha por <br>
+                formatado = formatado.replace(/\n/g, '<br>');
+                
+                return formatado;
+            }
+            
+            // Gerar resposta técnica com conteúdo jurídico preciso
+            function gerarRespostaTecnica(consulta) {
+                // Respostas diretas baseadas na mensagem do usuário
+                let resposta = '';
+                
+                // Converter para minúsculas para facilitar comparações
+                const consultaLower = consulta.toLowerCase();
+                
+                // Detectar áreas e temas jurídicos na consulta
+                if (consultaLower.includes('contrato')) {
+                    if (consultaLower.includes('rescisão') || consultaLower.includes('rescisao')) {
+                        resposta = 'A rescisão contratual pode ocorrer por:<br><br><ol class="topic-list"><li><span class="highlight-text">Resilição bilateral (distrato)</span> - art. 472 do CC, quando ambas as partes decidem extinguir o vínculo;</li><li><span class="highlight-text">Resilição unilateral</span> - arts. 473-478 do CC, aplicável em contratos por tempo indeterminado mediante denúncia notificada à outra parte;</li><li><span class="highlight-text">Resolução por inadimplemento</span> - art. 475 do CC, quando uma das partes não cumpre sua obrigação;</li><li><span class="highlight-text">Resolução por onerosidade excessiva</span> - art. 478 do CC, quando eventos imprevisíveis tornam a prestação excessivamente onerosa.</li></ol><br>A jurisprudência atual do STJ (REsp 1.581.505/SC) exige a análise da proporcionalidade do inadimplemento (substancial ou não) antes de autorizar a resolução contratual.';
+                    } else if (consultaLower.includes('cláusula penal') || consultaLower.includes('clausula penal') || consultaLower.includes('multa')) {
+                        resposta = 'A cláusula penal (arts. 408-416 do CC) tem função coercitiva e compensatória, podendo ser:<br><br><ol class="topic-list"><li><span class="highlight-text">Compensatória</span> - substitui indenização por perdas e danos em caso de inadimplemento total;</li><li><span class="highlight-text">Moratória</span> - penalidade por mora ou cumprimento inadequado.</li></ol><br>O STJ firmou entendimento na Súmula 343 que a cláusula penal moratória não impede indenização por perdas e danos. Conforme art. 413 do CC, o juiz deve reduzir equitativamente a penalidade quando o montante for manifestamente excessivo ou houver cumprimento parcial da obrigação.';
+                    } else {
+                        resposta = 'O contrato, conforme art. 104 do CC, exige:<br><br><ol class="topic-list"><li>Agente capaz;</li><li>Objeto lícito, possível, determinado ou determinável;</li><li>Forma prescrita ou não defesa em lei.</li></ol><br>A jurisprudência do STJ (REsp 1.631.278/PR) reconhece a aplicação da função social (art. 421, CC) e boa-fé objetiva (art. 422, CC) como limitadores da autonomia contratual.<br><br>A revisão judicial é possível em casos específicos: (1) lesão (art. 157, CC); (2) estado de perigo (art. 156, CC); (3) onerosidade excessiva (art. 478, CC). O STJ estabeleceu no REsp 1.321.614/SP que a revisão contratual não pode ser utilizada para afastar riscos inerentes ao negócio ou recuperar perdas previsíveis.';
+                    }
+                } else if (consultaLower.includes('processo') || consultaLower.includes('ação') || consultaLower.includes('acao')) {
+                    if (consultaLower.includes('recurso')) {
+                        resposta = 'O sistema recursal cível prevê:<br><br><ol class="topic-list"><li><span class="highlight-text">Apelação</span> - arts. 1.009-1.014 do CPC, contra sentença, com efeito suspensivo automático (art. 1.012);</li><li><span class="highlight-text">Agravo de Instrumento</span> - art. 1.015 do CPC, contra decisões interlocutórias em hipóteses taxativas, conforme tese de taxatividade mitigada definida pelo STJ no Tema 988;</li><li><span class="highlight-text">Embargos de Declaração</span> - arts. 1.022-1.026 do CPC, contra obscuridade, contradição, omissão ou erro material;</li><li><span class="highlight-text">Recurso Especial</span> - art. 105, III da CF, julgado pelo STJ em questões federais;</li><li><span class="highlight-text">Recurso Extraordinário</span> - art. 102, III da CF, julgado pelo STF em questões constitucionais.</li></ol><br>O STF e STJ exigem o prequestionamento como requisito de admissibilidade dos recursos excepcionais, conforme Súmulas 282 e 356 do STF e Súmula 211 do STJ.';
+                    } else if (consultaLower.includes('prescrição') || consultaLower.includes('prescricao') || consultaLower.includes('prazo')) {
+                        resposta = 'Os prazos prescricionais no direito civil estão previstos principalmente nos arts. 205 e 206 do CC:<br><br><ol class="topic-list"><li>Prazo geral: 10 anos (art. 205);</li><li>Prazos especiais: 1 ano para seguros (art. 206, §1º), 3 anos para responsabilidade civil (art. 206, §3º), 5 anos para dívidas líquidas em instrumento público/particular (art. 206, §5º).</li></ol><br>No direito do trabalho, a prescrição é de 5 anos até o limite de 2 anos após a extinção do contrato (art. 7º, XXIX, CF). No direito tributário, o CTN estabelece 5 anos para a Fazenda constituir o crédito (art. 173) e 5 anos para cobrança do crédito constituído (art. 174).<br><br>O STJ, no REsp 1.658.692, consolidou que a interrupção da prescrição retroage à data da propositura da ação (art. 240, §1º, CPC).';
+                    } else {
+                        resposta = 'A competência jurisdicional é determinada pelos critérios:<br><br><ol class="topic-list"><li>Material - natureza da causa;</li><li>Funcional - função do órgão no processo;</li><li>Territorial - localização geográfica.</li></ol><br>As regras gerais encontram-se nos arts. 42-53 do CPC.<br><br>A petição inicial deve atender aos requisitos do art. 319 do CPC, sob pena de indeferimento (art. 330). A contestação deve ser apresentada em 15 dias úteis (art. 335), contendo preliminares e mérito (art. 336-337).<br><br>O procedimento comum segue a sequência: petição inicial, citação, contestação, réplica (se necessário), saneamento, instrução e sentença. O ônus da prova cabe ao autor quanto ao fato constitutivo e ao réu quanto aos fatos modificativos, extintivos ou impeditivos (art. 373, CPC), admitindo-se inversão nos casos previstos no art. 373, §1º.';
+                    }
+                } else if (consultaLower.includes('crime') || consultaLower.includes('penal') || consultaLower.includes('criminal')) {
+                    if (consultaLower.includes('júri') || consultaLower.includes('juri') || consultaLower.includes('tribunal do júri') || consultaLower.includes('tribunal do juri')) {
+                        resposta = 'O Tribunal do Júri, garantido pelo art. 5º, XXXVIII da CF, é competente para julgar crimes dolosos contra a vida (homicídio, infanticídio, aborto e instigação/auxílio ao suicídio) e conexos.<br><br>O procedimento é bifásico:<br><ol class="topic-list"><li><span class="highlight-text">Judicium accusationis</span> - fase preliminar para análise da admissibilidade da acusação, culminando com a pronúncia (art. 413, CPP), impronúncia (art. 414), desclassificação (art. 419) ou absolvição sumária (art. 415);</li><li><span class="highlight-text">Judicium causae</span> - julgamento pelo Conselho de Sentença, composto por 7 jurados.</li></ol><br>No plenário, após os debates, os jurados votam sigilosamente (art. 487, CPP), decidindo por maioria simples. O STF, no HC 143.595, reafirmou a soberania dos veredictos e as limitadas hipóteses recursais por contrariedade à prova dos autos (art. 593, III, "d", CPP).';
+                    } else if (consultaLower.includes('prisão') || consultaLower.includes('prisao') || consultaLower.includes('preventiva')) {
+                        resposta = 'A prisão preventiva, medida cautelar de natureza processual, exige:<br><br><ol class="topic-list"><li><span class="highlight-text">Fumus commissi delicti</span> - prova da existência do crime e indícios suficientes de autoria (art. 312, CPP);</li><li><span class="highlight-text">Periculum libertatis</span> - garantia da ordem pública/econômica, conveniência da instrução criminal ou aplicação da lei penal.</li></ol><br>A jurisprudência do STF e STJ exige fundamentação concreta, sendo insuficientes alegações genéricas (Súmula 718, STF). Conforme Art. 315, §2º do CPP (incluído pela Lei 13.964/2019), não constitui fundamentação idônea a mera referência à gravidade abstrata do delito.<br><br>O STF, no HC 186.421, consolidou que prisões preventivas devem passar por revisão periódica a cada 90 dias (art. 316, parágrafo único, CPP), sob pena de ilegalidade por excesso de prazo.';
+                    } else {
+                        resposta = 'A teoria tripartida do crime, adotada pelo Código Penal brasileiro, define crime como fato típico, antijurídico e culpável.<br><br><ol class="topic-list"><li>A <span class="highlight-text">tipicidade</span> exige conduta, resultado, nexo causal e adequação ao tipo;</li><li>A <span class="highlight-text">antijuridicidade</span> é excluída por: legítima defesa, estado de necessidade, estrito cumprimento do dever legal e exercício regular de direito (art. 23, CP);</li><li>A <span class="highlight-text">culpabilidade</span> possui três elementos: imputabilidade, potencial consciência da ilicitude e exigibilidade de conduta diversa.</li></ol><br>O STF, no HC 143.641, reconheceu a possibilidade de substituição da prisão preventiva por domiciliar para gestantes e mães de crianças até 12 anos, posteriormente incorporado ao art. 318-A do CPP.<br><br>A Lei 13.964/2019 (Pacote Anticrime) instituiu o juiz de garantias, o acordo de não persecução penal para crimes com pena mínima inferior a 4 anos (art. 28-A, CPP) e a cadeia de custódia da prova (arts. 158-A a 158-F, CPP).';
+                    }
+                } else if (consultaLower.includes('constituição') || consultaLower.includes('constituicao') || consultaLower.includes('constitucional')) {
+                    resposta = 'O controle de constitucionalidade brasileiro é híbrido, comportando as modalidades:<br><br><ol class="topic-list"><li><span class="highlight-text">Controle Difuso</span> - exercido por qualquer juiz ou tribunal no caso concreto, com efeito inter partes;</li><li><span class="highlight-text">Controle Concentrado</span> - realizado pelo STF via ADI, ADC, ADPF ou ADO, com efeito erga omnes e vinculante.</li></ol><br>O STF adota a teoria da transcendência dos motivos determinantes, pela qual a ratio decidendi das decisões em controle concentrado possui efeito vinculante. Na ADI 6341, o STF definiu a competência concorrente entre União, Estados e Municípios no enfrentamento da pandemia, reafirmando o federalismo cooperativo.<br><br>Na ADPF 347, o STF reconheceu o "estado de coisas inconstitucional" do sistema carcerário brasileiro, determinando medidas estruturais para sanar violações sistemáticas a direitos fundamentais. O instituto de reclamação constitucional (art. 102, I, "l" da CF) garante a autoridade das decisões do STF, sendo regulado pelos arts. 988-993 do CPC.';
+                } else if (consultaLower.includes('trabalho') || consultaLower.includes('trabalhista') || consultaLower.includes('clt')) {
+                    resposta = 'O vínculo empregatício, conforme arts. 2º e 3º da CLT, caracteriza-se pela presença de:<br><br><ol class="topic-list"><li>Pessoalidade;</li><li>Não-eventualidade;</li><li>Subordinação;</li><li>Onerosidade.</li></ol><br>O TST, na Súmula 331, definiu os limites da terceirização, permitida para atividade-meio e fim (após decisão do STF no RE 958.252), mantendo a responsabilidade subsidiária do tomador.<br><br>A Reforma Trabalhista (Lei 13.467/2017) criou o contrato intermitente (art. 443, §3º), permitiu a prevalência do negociado sobre o legislado (art. 611-A) e limitou danos morais (art. 223-G). O STF, na ADI 5766, declarou parcialmente inconstitucional os dispositivos sobre gratuidade judicial, preservando o acesso à justiça.<br><br>O TST, na Súmula 443, presume discriminatória a dispensa de empregado portador de doença estigmatizante. A prescrição trabalhista é quinquenal até o limite de dois anos após o término do contrato (art. 7º, XXIX, CF), sendo o FGTS sujeito à prescrição trintenária conforme decisão do STF no ARE 709.212.';
+                } else {
+                    // Resposta para consultas gerais ou não específicas
+                    resposta = 'Sua consulta jurídica requer análise específica. Para fornecer uma orientação técnica adequada, seria necessário especificar:<br><br><ol class="topic-list"><li>O ramo do direito aplicável (civil, penal, trabalhista, etc.);</li><li>Os fatos relevantes do caso;</li><li>As questões jurídicas específicas a serem analisadas.</li></ol><br>O assessoramento jurídico preciso depende da contextualização fática e jurídica completa, permitindo a análise da legislação aplicável, precedentes judiciais e doutrina especializada.<br><br>Sugiro reformular sua consulta com informações mais específicas sobre a questão jurídica em análise.';
+                }
+                
+                // Adicionar contextualização do perfil apenas uma vez ao final
+                let contextInfo = '';
+                if (personalitySelect.value === 'advogado') {
+                    contextInfo = '<br><br><small>Esta análise técnica foi realizada sob a perspectiva advocatícia, com foco na interpretação normativa e jurisprudencial aplicável à consulta.</small>';
+                } else if (personalitySelect.value === 'juiz') {
+                    contextInfo = '<br><br><small>Esta análise técnica foi elaborada sob a perspectiva jurisdicional, com ênfase nos critérios de decisão aplicáveis à questão apresentada.</small>';
+                } else {
+                    contextInfo = '<br><br><small>Esta análise técnica foi elaborada sob a perspectiva do Ministério Público, considerando aspectos de interesse público e interpretação normativa aplicável.</small>';
+                }
+                
+                // Adicionar apenas informações essenciais sobre as fontes
+                let sourcesInfo = '';
+                if (webSearchToggle.checked && useDocsToggle.checked) {
+                    sourcesInfo = '<br><small>Análise baseada na legislação vigente, jurisprudência atualizada e documentos fornecidos.</small>';
+                } else if (webSearchToggle.checked) {
+                    sourcesInfo = '<br><small>Análise baseada na legislação vigente e jurisprudência atualizada.</small>';
+                } else if (useDocsToggle.checked) {
+                    sourcesInfo = '<br><small>Análise baseada na legislação vigente e documentos fornecidos.</small>';
+                } else {
+                    sourcesInfo = '<br><small>Análise baseada na legislação vigente e entendimentos jurisprudenciais consolidados.</small>';
+                }
+                
+                return resposta + contextInfo + sourcesInfo;
+            }
+            
+            // Função para gerar resposta específica para documentos
+            function gerarRespostaDocumento(nomeArquivo) {
+                return `<strong>Documento analisado:</strong> ${nomeArquivo}<br><br>Para analisar tecnicamente este documento, indique qual aspecto jurídico específico deseja avaliar:<br><br><ol class="topic-list"><li>Conformidade com requisitos legais;</li><li>Validade jurídica das cláusulas;</li><li>Riscos jurídicos identificados;</li><li>Análise de direitos e obrigações;</li><li>Consequências jurídicas específicas.</li></ol><br>A análise técnica será direcionada conforme sua questão específica, com base no conteúdo do documento e na legislação aplicável.`;
+            }
+            
+            // Função para gerar resposta específica para áudios
+            function gerarRespostaAudio(nomeArquivo) {
+                return `<strong>Arquivo de áudio recebido:</strong> ${nomeArquivo}<br><br>O áudio foi processado pelo sistema de transcrição. Para realizar uma análise técnica com base no conteúdo, especifique o tipo de análise jurídica desejada:<br><br><ol class="topic-list"><li>Avaliação de depoimentos ou declarações;</li><li>Análise de consistência com documentos escritos;</li><li>Identificação de elementos jurídicos relevantes;</li><li>Avaliação probatória do conteúdo.</li></ol><br>A análise técnica será elaborada com base na transcrição do áudio e nos parâmetros jurídicos aplicáveis ao contexto específico.`;
+            }
+            
+            // Função auxiliar para obter hora atual formatada
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+            
+            // Inicializar foco no campo de mensagem
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>

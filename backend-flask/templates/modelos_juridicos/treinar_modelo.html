@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinar Modelo de Defesa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #3b576f !important;
+            color: white !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        .card-header {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .alert-info {
+            background: rgba(91, 192, 222, 0.2) !important;
+            border: 1px solid rgba(91, 192, 222, 0.3) !important;
+            color: white !important;
+        }
+        .form-label {
+            color: white !important;
+        }
+        .form-control {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+        }
+        .form-select {
+            background: #778a9b !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+        }
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            color: white !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+        }
+        .form-select:focus {
+            background: #778a9b !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            color: white !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+        }
+        .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        .text-primary {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .text-success, .text-warning, .text-info {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .btn-success {
+            background: rgba(40, 167, 69, 0.8) !important;
+            border: 1px solid rgba(40, 167, 69, 0.9) !important;
+        }
+        .btn-success:hover {
+            background: rgba(40, 167, 69, 1) !important;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/modelos_juridicos_nav.html' %}
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h4><i class="fas fa-play"></i> Treinamento do Modelo de Predição de Vitória</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Sobre o Modelo</h6>
+                            <p class="mb-0">Este modelo utiliza <strong>Regressão Logística</strong> para prever a probabilidade de vitória em processos jurídicos baseado em estratégias de defesa, contexto (foro/área) e características do processo.</p>
+                        </div>
+
+                        <!-- Indicador de Progresso -->
+                        <div id="progress-container" class="alert alert-warning" style="display: none;">
+                            <div class="d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                                <div>
+                                    <h6 class="mb-1"><i class="fas fa-cog fa-spin"></i> Treinando Modelo...</h6>
+                                    <div id="progress-text">Carregando dados...</div>
+                                    <div class="progress mt-2" style="height: 10px;">
+                                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="POST" id="training-form">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="test_size" class="form-label">Tamanho do Conjunto de Teste (%)</label>
+                                    <input type="range" class="form-range" id="test_size" name="test_size" 
+                                           min="0.1" max="0.4" step="0.05" value="0.2" 
+                                           oninput="document.getElementById('test_size_value').textContent = (this.value * 100).toFixed(0) + '%'">
+                                    <small class="form-text text-muted">
+                                        Valor atual: <span id="test_size_value">20%</span>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-database"></i> Dados de Treinamento</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-primary">2.000</h4>
+                                                <small>Casos Base</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-success">6</h4>
+                                                <small>Estratégias</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-warning">4</h4>
+                                                <small>Foros</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-info">4</h4>
+                                                <small>Áreas</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fonte de Dados PostgreSQL -->
+                            <div class="card mb-4 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-server me-2"></i>Fonte de Dados PostgreSQL</h6>
+                                    <small>Selecione tabelas e colunas específicas do banco de dados para análise</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="tabelaPostgreSQLTreino" class="form-label">
+                                                <i class="fas fa-table me-1"></i>Tabela do Banco
+                                            </label>
+                                            <select id="tabelaPostgreSQLTreino" class="form-select" onchange="carregarColunasPostgreSQLTreino()">
+                                                <option value="" style="color: white;">📋 Carregando tabelas...</option>
+                                            </select>
+                                            <div class="form-text text-white">Selecione a tabela que contém os dados para análise</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-white">Variáveis Dependentes</label>
+                                            <div class="input-group">
+                                                <select class="form-select" id="colunaVariavelDependenteTreino">
+                                                    <option value="" style="color: white;">Primeiro selecione uma tabela</option>
+                                                </select>
+                                                <button type="button" class="btn btn-primary" onclick="adicionarVariavelDependente()" disabled id="btnAdicionarVariavel">
+                                                    <i class="fas fa-plus"></i> Adicionar
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Lista de variáveis selecionadas -->
+                                            <div class="mt-3" id="containerVariaveisSelecionadas" style="display: none;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small class="text-white">Variáveis Selecionadas:</small>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="limparTodasVariaveis()">
+                                                        <i class="fas fa-trash"></i> Limpar Todas
+                                                    </button>
+                                                </div>
+                                                <div id="listaVariaveisSelecionadas" class="d-flex flex-wrap gap-2">
+                                                    <!-- Variáveis serão adicionadas aqui dinamicamente -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview dos Dados PostgreSQL -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div id="previewDadosPostgreSQLTreino">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Selecione uma tabela acima para visualizar os dados disponíveis
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Base Vetorial Qdrant -->
+                            <div class="card mb-4 border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-vector-square me-2"></i><span class="text-white">Base Vetorial Qdrant</span>
+                                    </h6>
+                                    <small class="text-white">Selecione uma collection vetorial para análise de regressão com machine learning</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="collectionQdrantTreino" class="form-label">
+                                                <i class="fas fa-database me-1"></i>Collection Qdrant
+                                            </label>
+                                            <select id="collectionQdrantTreino" class="form-select" onchange="carregarInfoCollectionTreino()">
+                                                <option value="" style="color: white;">📦 Carregando collections...</option>
+                                            </select>
+                                            <div class="form-text text-white">Selecione a collection com dados vetoriais para regressão</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-white">Informações da Collection</label>
+                                            <select class="form-select" id="infoCollectionQdrantTreino">
+                                                <option value="" style="color: white;">Primeiro selecione uma collection</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Informações da Collection Qdrant -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div id="infoCollectionQdrantTreino">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Selecione uma collection acima para visualizar informações vetoriais detalhadas
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seleção de Pontos Específicos -->
+                            <div class="row mb-4" id="selecaoPontosSectionTreino" style="display: none;">
+                                <div class="col-12">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-search-plus me-2"></i>Seleção de Pontos Vetoriais
+                                            </h6>
+                                            <small>Escolha pontos específicos da collection para análise</small>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">
+                                                        <i class="fas fa-filter me-1"></i>Buscar Pontos
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="buscaPontosInputTreino" class="form-control" placeholder="Digite para buscar pontos..." style="color: white;">
+                                                        <button class="btn btn-outline-success" type="button" onclick="buscarPontosTreino()">
+                                                            <i class="fas fa-search"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Limite de Resultados</label>
+                                                    <select id="limitePontosSelectTreino" class="form-select">
+                                                        <option value="10">10 pontos</option>
+                                                        <option value="25">25 pontos</option>
+                                                        <option value="50" selected>50 pontos</option>
+                                                        <option value="100">100 pontos</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Score Mínimo</label>
+                                                    <input type="number" id="scoreMinimoTreino" class="form-control" value="0.7" min="0" max="1" step="0.1">
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Lista de Pontos -->
+                                            <div id="listaPontosTreino">
+                                                <div class="alert alert-secondary">
+                                                    <i class="fas fa-lightbulb me-2"></i>
+                                                    Use a busca acima para encontrar pontos específicos da collection selecionada
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Configurações de Balanceamento -->
+                            <div class="card mb-4 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Balanceamento de Classes</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="balanceamento" id="oversampling" value="smote" checked>
+                                                <label class="form-check-label" for="oversampling">
+                                                    <strong>Oversampling (SMOTE)</strong><br>
+                                                    <small>Gera casos sintéticos para classes minoritárias</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="balanceamento" id="undersampling" value="undersampling">
+                                                <label class="form-check-label" for="undersampling">
+                                                    <strong>Undersampling</strong><br>
+                                                    <small>Remove casos das classes majoritárias</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="balanceamento" id="class_weights" value="class_weights">
+                                                <label class="form-check-label" for="class_weights">
+                                                    <strong>Class Weights Automático</strong><br>
+                                                    <small>Ajusta pesos automaticamente</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pré-processamento -->
+                            <div class="card mb-4 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Configurações de Pré-processamento</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Codificação Categórica</label>
+                                            <select class="form-select" id="codificacao_categorica">
+                                                <option value="onehot">One-Hot Encoding</option>
+                                                <option value="label">Label Encoding</option>
+                                                <option value="embeddings">Embeddings Jurídicos</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Normalização</label>
+                                            <select class="form-select" id="normalizacao">
+                                                <option value="standard">StandardScaler</option>
+                                                <option value="minmax">MinMaxScaler</option>
+                                                <option value="none">Sem Normalização</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Seleção de Features</label>
+                                            <select class="form-select" id="selecao_features">
+                                                <option value="variance">Variance Threshold</option>
+                                                <option value="rfe">Recursive Feature Elimination</option>
+                                                <option value="none">Todas as Features</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tratamento de Missing Values</label>
+                                            <select class="form-select" id="missing_values">
+                                                <option value="mean">Imputação Média</option>
+                                                <option value="mode">Imputação Moda</option>
+                                                <option value="knn">KNN Imputer</option>
+                                                <option value="drop">Remover Linhas</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hiperparâmetros do Modelo -->
+                            <div class="card mb-4 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Hiperparâmetros - Regressão Logística</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Solver</label>
+                                            <select class="form-select" id="solver">
+                                                <option value="lbfgs" selected>lbfgs (robusto)</option>
+                                                <option value="saga">saga (escalável)</option>
+                                                <option value="liblinear">liblinear (binário)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Regularização</label>
+                                            <select class="form-select" id="regularizacao">
+                                                <option value="l2" selected>L2 (Ridge)</option>
+                                                <option value="l1">L1 (Lasso)</option>
+                                                <option value="elasticnet">Elastic Net</option>
+                                                <option value="none">Sem Regularização</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">C (Força Regularização)</label>
+                                            <input type="number" class="form-control" id="regularizacao_c" 
+                                                   min="0.001" max="100" step="0.001" value="1.0"
+                                                   placeholder="Ex: 1.0">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Max Iterations</label>
+                                            <input type="number" class="form-control" id="max_iter" 
+                                                   min="100" max="5000" step="100" value="1000"
+                                                   placeholder="Ex: 1000">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Tolerance</label>
+                                            <select class="form-select" id="tolerance">
+                                                <option value="1e-4" selected>1e-4 (padrão)</option>
+                                                <option value="1e-5">1e-5 (mais preciso)</option>
+                                                <option value="1e-6">1e-6 (muito preciso)</option>
+                                                <option value="1e-8">1e-8 (extremo)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Threshold Classificação</label>
+                                            <input type="number" class="form-control" id="threshold" 
+                                                   min="0.1" max="0.9" step="0.01" value="0.5"
+                                                   placeholder="Ex: 0.5">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" id="penalizacao_auto" checked>
+                                                <label class="form-check-label" for="penalizacao_auto">
+                                                    Penalização Automática
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Meta-Configurações -->
+                            <div class="card mb-4 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Meta-Configurações de Treinamento</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Validação Cruzada</label>
+                                            <select class="form-select" id="validacao_cruzada">
+                                                <option value="kfold_5" selected>K-Fold (5 folds)</option>
+                                                <option value="kfold_10">K-Fold (10 folds)</option>
+                                                <option value="stratified_5">Stratified K-Fold (5)</option>
+                                                <option value="stratified_10">Stratified K-Fold (10)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Seed Reprodutibilidade</label>
+                                            <input type="number" class="form-control" id="random_seed" 
+                                                   min="1" max="9999" value="42"
+                                                   placeholder="Ex: 42">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" id="early_stopping">
+                                                <label class="form-check-label" for="early_stopping">
+                                                    Parada Antecipada (Early Stopping)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tensorboard">
+                                                <label class="form-check-label" for="tensorboard">
+                                                    Monitoramento TensorBoard/MLflow
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="explicabilidade" checked>
+                                                <label class="form-check-label" for="explicabilidade">
+                                                    Explicabilidade (SHAP + Feature Importance)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Configurações Avançadas -->
+                            <div class="card mb-4 border-warning">
+                                <div class="card-header bg-warning text-white">
+                                    <h6 class="mb-0"><i class="fas fa-brain me-2"></i>Configurações Avançadas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Otimização Hiperparâmetros</label>
+                                            <select class="form-select" id="otimizacao">
+                                                <option value="none">Manual</option>
+                                                <option value="grid">Grid Search</option>
+                                                <option value="random">Random Search</option>
+                                                <option value="bayesian">Bayesian Optimization</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" id="regularizacao_dinamica">
+                                                <label class="form-check-label" for="regularizacao_dinamica">
+                                                    Regularização Dinâmica
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" id="pipeline_automl">
+                                                <label class="form-check-label" for="pipeline_automl">
+                                                    Pipeline AutoML
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Features Futuras Implementadas -->
+                            <div class="card mb-4 border-dark">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0"><i class="fas fa-rocket me-2"></i>Features Futuras - Implementação Experimental</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <small><i class="fas fa-info-circle"></i> Estas features representam avanços futuros do modelo de predição jurídica</small>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Grau de Complexidade</label>
+                                            <select class="form-select" id="grau_complexidade">
+                                                <option value="1">Baixa - Casos simples e diretos</option>
+                                                <option value="2">Média-Baixa - Casos com algumas variáveis</option>
+                                                <option value="3" selected>Média - Casos padrão de complexidade</option>
+                                                <option value="4">Média-Alta - Casos com múltiplas questões</option>
+                                                <option value="5">Alta - Casos complexos multifacetados</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Número de Recursos</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="numero_recursos" 
+                                                       min="0" max="10" value="1" placeholder="Ex: 2">
+                                                <span class="input-group-text">recursos</span>
+                                            </div>
+                                            <small class="form-text text-muted">Quantidade de recursos interpostos no processo</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Perfil Tribunal/Vara</label>
+                                            <select class="form-select" id="perfil_tribunal">
+                                                <option value="conservador">Conservador - Decisões tradicionais</option>
+                                                <option value="moderado" selected>Moderado - Equilíbrio jurisprudencial</option>
+                                                <option value="progressista">Progressista - Interpretações inovadoras</option>
+                                                <option value="especializado">Especializado - Vara específica</option>
+                                                <option value="superior">Superior - Tribunal superior</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Embeddings Jurisprudência</label>
+                                            <div class="input-group">
+                                                <select class="form-select" id="embedding_jurisprudencia">
+                                                    <option value="desabilitado">Desabilitado</option>
+                                                    <option value="basico">Básico - Similaridade textual</option>
+                                                    <option value="avancado" selected>Avançado - Análise semântica</option>
+                                                    <option value="especializado">Especializado - Embedding jurídico</option>
+                                                </select>
+                                                <button type="button" class="btn btn-outline-info" onclick="carregarEmbeddings()">
+                                                    <i class="fas fa-sync"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Indicadores das Features -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <span class="badge bg-success" id="indicator-complexidade">
+                                                    <i class="fas fa-layer-group"></i> Complexidade: Ativa
+                                                </span>
+                                                <span class="badge bg-info" id="indicator-recursos">
+                                                    <i class="fas fa-gavel"></i> Recursos: Configurado
+                                                </span>
+                                                <span class="badge bg-warning" id="indicator-tribunal">
+                                                    <i class="fas fa-balance-scale"></i> Tribunal: Mapeado
+                                                </span>
+                                                <span class="badge bg-primary" id="indicator-embeddings">
+                                                    <i class="fas fa-brain"></i> Embeddings: Carregados
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success btn-lg" id="train-btn">
+                                    <i class="fas fa-play"></i> Iniciar Treinamento
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-chart-line"></i> Métricas Esperadas</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>AUC-ROC</span>
+                                        <span class="badge bg-primary">0.75 - 0.85</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Acurácia</span>
+                                        <span class="badge bg-success">70% - 80%</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>F1-Score</span>
+                                        <span class="badge bg-warning">0.72 - 0.82</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Precision/Recall</span>
+                                        <span class="badge bg-info">Balanceado</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Log-Loss</span>
+                                        <span class="badge bg-secondary">< 0.6</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Tempo</span>
+                                        <span class="badge bg-info">< 30s</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-cogs"></i> Features do Modelo</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>6 Estratégias de Defesa</span>
+                                        <span class="badge bg-success">Ativo</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Contexto Foro (4 categorias)</span>
+                                        <span class="badge bg-success">Ativo</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Área Jurídica (4 categorias)</span>
+                                        <span class="badge bg-success">Ativo</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Valor da Causa (contínua)</span>
+                                        <span class="badge bg-success">Ativo</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Ano do Processo (temporal)</span>
+                                        <span class="badge bg-success">Ativo</span>
+                                    </li>
+                                </ul>
+                                <h6 class="mt-3"><i class="fas fa-rocket"></i> Features Futuras</h6>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Grau de Complexidade</span>
+                                        <span class="badge bg-warning">Experimental</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Número de Recursos</span>
+                                        <span class="badge bg-warning">Experimental</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Perfil Tribunal/Vara</span>
+                                        <span class="badge bg-warning">Experimental</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Embeddings Jurisprudência</span>
+                                        <span class="badge bg-primary">Avançado</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Inicialização do acesso a PostgreSQL e Qdrant
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Inicializando acesso a bases de dados...');
+            
+            // Carregar tabelas PostgreSQL
+            carregarTabelasPostgreSQLTreino();
+            
+            // Carregar collections Qdrant
+            carregarCollectionsQdrantTreino();
+            
+            console.log('✅ Bases de dados inicializadas com sucesso!');
+            
+            // Event listener para o formulário de treinamento
+            document.getElementById('training-form').addEventListener('submit', function(e) {
+                e.preventDefault(); // Evita o reload da página
+                
+                const progressContainer = document.getElementById('progress-container');
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                const trainBtn = document.getElementById('train-btn');
+                
+                // Mostrar progresso
+                progressContainer.style.display = 'block';
+                trainBtn.disabled = true;
+                trainBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Treinando...';
+                
+                // Simular etapas do treinamento
+                const steps = [
+                    { text: '🔄 Carregando dados...', width: 20 },
+                    { text: '🔄 Preparando features...', width: 40 },
+                    { text: '🔄 Dividindo dados...', width: 60 },
+                    { text: '🔄 Normalizando features...', width: 80 },
+                    { text: '🔄 Treinando modelo...', width: 100 }
+                ];
+                
+                let currentStep = 0;
+                
+                function updateProgress() {
+                    if (currentStep < steps.length) {
+                        const step = steps[currentStep];
+                        progressText.textContent = step.text;
+                        progressBar.style.width = step.width + '%';
+                        currentStep++;
+                        setTimeout(updateProgress, 2000);
+                    } else {
+                        // Enviar formulário real após animação
+                        submitForm();
+                    }
+                }
+                
+                function submitForm() {
+                    const form = document.getElementById('training-form');
+                    const formData = new FormData(form);
+                    
+                    fetch('/modelos-juridicos/treinar-modelo', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Atualizar apenas o conteúdo necessário
+                        document.querySelector('.container').innerHTML = 
+                            new DOMParser().parseFromString(html, 'text/html').querySelector('.container').innerHTML;
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        progressText.textContent = '❌ Erro no treinamento';
+                        progressContainer.className = 'alert alert-danger';
+                    })
+                    .finally(() => {
+                        trainBtn.disabled = false;
+                        trainBtn.innerHTML = '<i class="fas fa-play"></i> Iniciar Treinamento';
+                    });
+                }
+                
+                // Iniciar animação
+                updateProgress();
+            });
+        });
+
+        // Funções para PostgreSQL
+        function carregarTabelasPostgreSQLTreino() {
+            fetch('/api/database/tabelas')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('tabelaPostgreSQLTreino');
+                    select.innerHTML = '<option value="">Selecione uma tabela...</option>';
+                    
+                    if (data.success && data.tabelas && data.tabelas.length > 0) {
+                        data.tabelas.forEach(tabela => {
+                            const option = document.createElement('option');
+                            option.value = tabela.nome;
+                            option.textContent = `${tabela.nome} (${tabela.tipo})`;
+                            select.appendChild(option);
+                        });
+                        console.log(`✅ ${data.tabelas.length} tabelas carregadas no select tabelaPostgreSQLTreino`);
+                    } else {
+                        console.error('❌ Nenhuma tabela encontrada ou erro na resposta');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar tabelas:', error);
+                    const select = document.getElementById('tabelaPostgreSQLTreino');
+                    select.innerHTML = '<option value="">Erro ao carregar tabelas</option>';
+                });
+        }
+
+        // Array para armazenar variáveis dependentes selecionadas
+        let variaveisDependentesSelecionadas = [];
+
+        function carregarColunasPostgreSQLTreino() {
+            const tabela = document.getElementById('tabelaPostgreSQLTreino').value;
+            const selectDependente = document.getElementById('colunaVariavelDependenteTreino');
+            const selectIndependentes = document.getElementById('colunasVariaveisIndependentesTreino');
+            
+            if (!tabela) {
+                selectDependente.innerHTML = '<option value="">Primeiro selecione uma tabela</option>';
+                selectDependente.disabled = true;
+                selectIndependentes.innerHTML = '<option value="">Primeiro selecione uma tabela</option>';
+                selectIndependentes.disabled = true;
+                return;
+            }
+            
+            console.log(`🔄 Carregando colunas da tabela: ${tabela}`);
+            
+            fetch(`/api/database/colunas/${tabela}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.colunas && data.colunas.length > 0) {
+                        // Popular variável dependente
+                        selectDependente.innerHTML = '<option value="">📋 Selecione uma coluna</option>';
+                        selectIndependentes.innerHTML = '';
+                        
+                        data.colunas.forEach(coluna => {
+                            // Variável dependente
+                            const optionDep = document.createElement('option');
+                            optionDep.value = coluna.nome;
+                            optionDep.textContent = `${coluna.nome} (${coluna.tipo})`;
+                            selectDependente.appendChild(optionDep);
+                            
+                            // Variáveis independentes
+                            const optionInd = document.createElement('option');
+                            optionInd.value = coluna.nome;
+                            optionInd.textContent = `${coluna.nome} (${coluna.tipo})`;
+                            selectIndependentes.appendChild(optionInd);
+                        });
+                        
+                        // Habilitar selects
+                        selectDependente.disabled = false;
+                        selectIndependentes.disabled = false;
+                        
+                        console.log(`✅ ${data.colunas.length} colunas carregadas para tabela ${tabela}`);
+                        
+                        // Carregar preview da tabela
+                        carregarPreviewTabelaTreino(tabela);
+                    } else {
+                        selectDependente.innerHTML = '<option value="">❌ Erro ao carregar colunas</option>';
+                        selectIndependentes.innerHTML = '<option value="">❌ Erro ao carregar colunas</option>';
+                        console.error('❌ Erro nos dados das colunas:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar colunas:', error);
+                    selectDependente.innerHTML = '<option value="">❌ Erro ao carregar colunas</option>';
+                    selectIndependentes.innerHTML = '<option value="">❌ Erro ao carregar colunas</option>';
+                });
+        }
+        
+        function carregarPreviewTabelaTreino(tabela) {
+            const previewContainer = document.getElementById('previewDadosPostgreSQLTreino');
+            
+            fetch(`/api/database/preview/${tabela}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.dados) {
+                        let html = `
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-table me-2"></i>📊 Preview da Tabela: ${tabela}
+                                    </h6>
+                                    <small>Mostrando ${data.dados.length} primeiros registros</small>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped mb-0">
+                        `;
+                        
+                        if (data.dados.length > 0) {
+                            // Cabeçalho
+                            html += '<thead class="table-dark"><tr>';
+                            Object.keys(data.dados[0]).forEach(col => {
+                                html += `<th style="min-width: 120px; font-size: 0.8rem;">${col}</th>`;
+                            });
+                            html += '</tr></thead>';
+                            
+                            // Dados
+                            html += '<tbody>';
+                            data.dados.forEach(row => {
+                                html += '<tr>';
+                                Object.values(row).forEach(value => {
+                                    let displayValue = value;
+                                    if (typeof value === 'string' && value.length > 50) {
+                                        displayValue = value.substring(0, 50) + '...[Truncated]';
+                                    }
+                                    html += `<td style="font-size: 0.75rem;">${displayValue || 'null'}</td>`;
+                                });
+                                html += '</tr>';
+                            });
+                            html += '</tbody>';
+                        }
+                        
+                        html += `
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        previewContainer.innerHTML = html;
+                        console.log(`✅ Preview da tabela ${tabela} carregado com ${data.dados.length} registros`);
+                    } else {
+                        previewContainer.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ❌ Erro ao carregar dados: ${data.error || 'Erro desconhecido'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar preview:', error);
+                    previewContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times me-2"></i>
+                            Erro ao visualizar dados da tabela ${tabela}
+                        </div>
+                    `;
+                });
+        }
+
+        function adicionarVariavelDependente() {
+            const selectColunas = document.getElementById('colunaVariavelDependenteTreino');
+            const colunaValue = selectColunas.value;
+            const colunaText = selectColunas.options[selectColunas.selectedIndex].text;
+            const tabelaSelecionada = document.getElementById('tabelaPostgreSQLTreino').value;
+            
+            if (!colunaValue || !tabelaSelecionada) {
+                alert('Selecione uma tabela e uma coluna');
+                return;
+            }
+            
+            // Verificar se a variável já foi adicionada
+            const variaveisExistente = variaveisDependentesSelecionadas.find(v => 
+                v.tabela === tabelaSelecionada && v.coluna === colunaValue
+            );
+            
+            if (variaveisExistente) {
+                alert('Esta variável já foi adicionada');
+                return;
+            }
+            
+            // Adicionar à lista
+            const novaVariavel = {
+                tabela: tabelaSelecionada,
+                coluna: colunaValue,
+                nome_display: `${tabelaSelecionada}.${colunaValue}`
+            };
+            
+            variaveisDependentesSelecionadas.push(novaVariavel);
+            atualizarListaVariaveis();
+            
+            // Resetar select
+            selectColunas.selectedIndex = 0;
+            
+            console.log(`✅ Variável adicionada: ${novaVariavel.nome_display}`);
+        }
+
+        function atualizarListaVariaveis() {
+            const container = document.getElementById('containerVariaveisSelecionadas');
+            const lista = document.getElementById('listaVariaveisSelecionadas');
+            
+            if (variaveisDependentesSelecionadas.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            lista.innerHTML = '';
+            
+            variaveisDependentesSelecionadas.forEach((variavel, index) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary d-flex align-items-center gap-2';
+                badge.innerHTML = `
+                    <span>${variavel.nome_display}</span>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Remover" 
+                            onclick="removerVariavelDependente(${index})" style="font-size: 0.7em;"></button>
+                `;
+                lista.appendChild(badge);
+            });
+            
+            // Atualizar contador
+            const contador = variaveisDependentesSelecionadas.length;
+            console.log(`📊 Total de variáveis selecionadas: ${contador}`);
+        }
+
+        function removerVariavelDependente(index) {
+            const variavel = variaveisDependentesSelecionadas[index];
+            variaveisDependentesSelecionadas.splice(index, 1);
+            atualizarListaVariaveis();
+            console.log(`❌ Variável removida: ${variavel.nome_display}`);
+        }
+
+        function limparTodasVariaveis() {
+            variaveisDependentesSelecionadas = [];
+            atualizarListaVariaveis();
+            console.log('🗑️ Todas as variáveis foram removidas');
+        }
+
+        function obterVariaveisSelecionadas() {
+            return variaveisDependentesSelecionadas;
+        }
+
+        // ==================== FUNÇÕES PARA FEATURES FUTURAS ====================
+        
+        function carregarEmbeddings() {
+            const btnCarregar = document.querySelector('button[onclick="carregarEmbeddings()"]');
+            const selectEmbedding = document.getElementById('embedding_jurisprudencia');
+            const indicator = document.getElementById('indicator-embeddings');
+            
+            // Animação de carregamento
+            btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btnCarregar.disabled = true;
+            
+            // Simular carregamento de embeddings
+            setTimeout(() => {
+                const nivelEmbedding = selectEmbedding.value;
+                
+                switch(nivelEmbedding) {
+                    case 'desabilitado':
+                        indicator.className = 'badge bg-secondary';
+                        indicator.innerHTML = '<i class="fas fa-times"></i> Embeddings: Desabilitado';
+                        break;
+                    case 'basico':
+                        indicator.className = 'badge bg-info';
+                        indicator.innerHTML = '<i class="fas fa-brain"></i> Embeddings: Básico (1.2k vetores)';
+                        break;
+                    case 'avancado':
+                        indicator.className = 'badge bg-primary';
+                        indicator.innerHTML = '<i class="fas fa-brain"></i> Embeddings: Avançado (5.7k vetores)';
+                        break;
+                    case 'especializado':
+                        indicator.className = 'badge bg-success';
+                        indicator.innerHTML = '<i class="fas fa-brain"></i> Embeddings: Especializado (12.3k vetores)';
+                        break;
+                }
+                
+                btnCarregar.innerHTML = '<i class="fas fa-sync"></i>';
+                btnCarregar.disabled = false;
+                
+                console.log(`🧠 Embeddings carregados: ${nivelEmbedding}`);
+            }, 2000);
+        }
+
+        function atualizarIndicadores() {
+            // Atualizar indicador de complexidade
+            const complexidade = document.getElementById('grau_complexidade').value;
+            const indicatorComplexidade = document.getElementById('indicator-complexidade');
+            const niveis = ['', 'Baixa', 'Média-Baixa', 'Média', 'Média-Alta', 'Alta'];
+            indicatorComplexidade.innerHTML = `<i class="fas fa-layer-group"></i> Complexidade: ${niveis[complexidade]}`;
+            
+            // Atualizar indicador de recursos
+            const recursos = document.getElementById('numero_recursos').value;
+            const indicatorRecursos = document.getElementById('indicator-recursos');
+            indicatorRecursos.innerHTML = `<i class="fas fa-gavel"></i> Recursos: ${recursos} configurado(s)`;
+            
+            // Atualizar indicador de tribunal
+            const tribunal = document.getElementById('perfil_tribunal').value;
+            const indicatorTribunal = document.getElementById('indicator-tribunal');
+            const tribunalFormatado = tribunal.charAt(0).toUpperCase() + tribunal.slice(1);
+            indicatorTribunal.innerHTML = `<i class="fas fa-balance-scale"></i> Tribunal: ${tribunalFormatado}`;
+        }
+
+        function obterFeaturesFuturas() {
+            return {
+                grau_complexidade: document.getElementById('grau_complexidade').value,
+                numero_recursos: parseInt(document.getElementById('numero_recursos').value),
+                perfil_tribunal: document.getElementById('perfil_tribunal').value,
+                embedding_jurisprudencia: document.getElementById('embedding_jurisprudencia').value
+            };
+        }
+
+        // Event listeners para atualizar indicadores em tempo real
+        document.addEventListener('DOMContentLoaded', function() {
+            // Adicionar listeners após o DOM estar carregado
+            setTimeout(() => {
+                document.getElementById('grau_complexidade').addEventListener('change', atualizarIndicadores);
+                document.getElementById('numero_recursos').addEventListener('input', atualizarIndicadores);
+                document.getElementById('perfil_tribunal').addEventListener('change', atualizarIndicadores);
+                
+                // Atualizar indicadores iniciais
+                atualizarIndicadores();
+                
+                console.log('🚀 Features Futuras inicializadas');
+            }, 1000);
+        });
+
+        // Funções para Qdrant
+        function carregarCollectionsQdrantTreino() {
+            fetch('/api/qdrant/collections')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('collectionQdrantTreino');
+                    select.innerHTML = '<option value="">Selecione uma collection...</option>';
+                    
+                    if (data.collections && data.collections.length > 0) {
+                        data.collections.forEach(collection => {
+                            const option = document.createElement('option');
+                            option.value = collection.name;
+                            option.textContent = `${collection.name} (${collection.area} - ${collection.pontos.toLocaleString()} pontos)`;
+                            select.appendChild(option);
+                        });
+                        console.log(`✅ ${data.collections.length} collections carregadas do Qdrant`);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar collections:', error);
+                });
+        }
+
+        function carregarInfoCollectionTreino() {
+            const collection = document.getElementById('collectionQdrantTreino').value;
+            const infoContainer = document.getElementById('infoCollectionQdrantTreino');
+            const selecaoPontosSection = document.getElementById('selecaoPontosSectionTreino');
+            
+            if (!collection) {
+                infoContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Selecione uma collection acima para visualizar informações vetoriais detalhadas
+                    </div>
+                `;
+                selecaoPontosSection.style.display = 'none';
+                return;
+            }
+            
+            console.log(`🔍 Buscando informações da collection: ${collection}`);
+            
+            fetch(`/api/qdrant/collection/${collection}/info`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let html = `
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>Informações da Collection: ${collection}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-primary">📊 Pontos Vetoriais:</h4>
+                                                <h3>${data.pontos_count ? data.pontos_count.toLocaleString() : 'N/A'}</h3>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-success">🎯 Dimensões:</h4>
+                                                <h3>${data.vector_size || 'N/A'}D</h3>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-info">📏 Distância:</h4>
+                                                <h3>${data.distance || 'COSINE'}</h3>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <h4 class="text-warning">⚡ Status:</h4>
+                                                <h3 style="color: ${data.status === 'green' ? 'green' : 'orange'}">${data.status || 'green'}</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                        `;
+                        
+                        if (data.exemplos && data.exemplos.length > 0) {
+                            html += `
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <h6>🔍 Exemplos de Dados:</h6>
+                                            <div class="alert alert-light">
+                            `;
+                            
+                            data.exemplos.slice(0, 2).forEach((exemplo, index) => {
+                                html += `
+                                    <div class="mb-2">
+                                        <strong>Exemplo ${index + 1}</strong><br>
+                                        <small class="text-muted">${JSON.stringify(exemplo).substring(0, 200)}...</small>
+                                    </div>
+                                `;
+                            });
+                            
+                            html += `
+                                            </div>
+                                        </div>
+                                    </div>
+                            `;
+                        }
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                        
+                        infoContainer.innerHTML = html;
+                        
+                        // Mostrar seção de seleção de pontos
+                        selecaoPontosSection.style.display = 'block';
+                        
+                        console.log(`✅ Informações da collection ${collection} carregadas`);
+                    } else {
+                        infoContainer.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Erro ao carregar informações da collection: ${data.error || 'Erro desconhecido'}
+                            </div>
+                        `;
+                        selecaoPontosSection.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao carregar informações da collection:', error);
+                    infoContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times me-2"></i>
+                            Erro ao conectar com a collection ${collection}
+                        </div>
+                    `;
+                    selecaoPontosSection.style.display = 'none';
+                });
+        }
+        
+        function buscarPontosTreino() {
+            const collection = document.getElementById('collectionQdrantTreino').value;
+            const query = document.getElementById('buscaPontosInputTreino').value.trim();
+            const limite = document.getElementById('limitePontosSelectTreino').value;
+            const scoreMinimo = document.getElementById('scoreMinimoTreino').value;
+            const listaPontos = document.getElementById('listaPontosTreino');
+            
+            if (!collection) {
+                alert('Selecione uma collection primeiro');
+                return;
+            }
+            
+            if (!query) {
+                alert('Digite um termo para buscar');
+                return;
+            }
+            
+            console.log(`🔍 Buscando pontos na collection ${collection} com query: "${query}"`);
+            
+            listaPontos.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Buscando...</span>
+                    </div>
+                    <p class="mt-2">Buscando pontos...</p>
+                </div>
+            `;
+            
+            fetch(`/api/qdrant/collection/${collection}/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    limit: parseInt(limite),
+                    score_threshold: parseFloat(scoreMinimo)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.pontos && data.pontos.length > 0) {
+                    let html = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check me-2"></i>
+                            Encontrados ${data.pontos.length} pontos para "${query}"
+                        </div>
+                        <div class="row">
+                    `;
+                    
+                    data.pontos.forEach((ponto, index) => {
+                        html += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-success">
+                                    <div class="card-header">
+                                        <small class="text-muted">
+                                            <strong>ID:</strong> ${ponto.id} | 
+                                            <strong>Score:</strong> ${(ponto.score || 0).toFixed(3)}
+                                        </small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="${ponto.id}" id="ponto${index}">
+                                            <label class="form-check-label" for="ponto${index}">
+                                                ${JSON.stringify(ponto.payload || {}).substring(0, 150)}...
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-primary" onclick="selecionarPontosMarcadosTreino()">
+                                <i class="fas fa-check me-1"></i>Usar Pontos Selecionados
+                            </button>
+                        </div>
+                    `;
+                    
+                    listaPontos.innerHTML = html;
+                } else {
+                    listaPontos.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-search me-2"></i>
+                            Nenhum ponto encontrado para "${query}" com score mínimo ${scoreMinimo}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erro ao buscar pontos:', error);
+                listaPontos.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times me-2"></i>
+                        Erro ao buscar pontos: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        function selecionarPontosMarcadosTreino() {
+            const checkboxes = document.querySelectorAll('#listaPontosTreino input[type="checkbox"]:checked');
+            const pontosSelecionados = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (pontosSelecionados.length === 0) {
+                alert('Selecione pelo menos um ponto');
+                return;
+            }
+            
+            console.log(`✅ Selecionados ${pontosSelecionados.length} pontos:`, pontosSelecionados);
+            
+            // Atualizar interface para mostrar quantos pontos foram selecionados
+            const alertSuccess = document.createElement('div');
+            alertSuccess.className = 'alert alert-success mt-3';
+            alertSuccess.innerHTML = `
+                <i class="fas fa-check me-2"></i>
+                ${pontosSelecionados.length} pontos selecionados para treinamento
+            `;
+            
+            document.getElementById('listaPontosTreino').appendChild(alertSuccess);
+        }
+    </script>
+</body>
+</html>

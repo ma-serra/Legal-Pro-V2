@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Busca Semântica Penal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .card { box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
+        .resultado-item { border-left: 4px solid #dc3545; background: #f8f9fa; }
+        .score-badge { background: linear-gradient(45deg, #dc3545, #c82333); }
+        .contexto-info { background: linear-gradient(45deg, #17a2b8, #138496); }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-gavel me-2"></i>
+                            Teste - Busca Semântica Avançada para Direito Penal
+                        </h4>
+                        <p class="mb-0 small">Sistema baseado no Código Penal e Código de Processo Penal</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Formulário de Busca -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label for="consulta" class="form-label fw-bold">Consulta Jurídica:</label>
+                                <div class="input-group">
+                                    <input type="text" id="consulta" class="form-control" 
+                                           placeholder="Ex: homicídio qualificado, prisão preventiva, tribunal do júri..."
+                                           value="">
+                                    <button class="btn btn-danger" onclick="executarBusca()">
+                                        <i class="fas fa-search me-1"></i> Buscar
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <strong>Exemplos:</strong> 
+                                    <span class="badge bg-secondary me-1" onclick="exemploConsulta('homicídio qualificado art 121')">homicídio qualificado</span>
+                                    <span class="badge bg-secondary me-1" onclick="exemploConsulta('prisão preventiva artigo 312')">prisão preventiva</span>
+                                    <span class="badge bg-secondary me-1" onclick="exemploConsulta('tribunal do júri procedimento')">tribunal do júri</span>
+                                    <span class="badge bg-secondary me-1" onclick="exemploConsulta('furto qualificado noturno')">furto qualificado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de Loading -->
+                        <div id="loading" class="text-center d-none">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Buscando...</span>
+                            </div>
+                            <p class="mt-2">Executando busca semântica avançada...</p>
+                        </div>
+
+                        <!-- Contexto Identificado -->
+                        <div id="contexto-area" class="d-none mb-4">
+                            <div class="card contexto-info text-white">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-brain me-1"></i> Contexto Identificado
+                                    </h6>
+                                    <div id="contexto-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resultados -->
+                        <div id="resultados-area" class="d-none">
+                            <h5 class="mb-3">
+                                <i class="fas fa-list-alt me-2"></i>
+                                Resultados da Busca
+                                <span id="total-resultados" class="badge bg-danger ms-2"></span>
+                            </h5>
+                            <div id="resultados-content"></div>
+                        </div>
+
+                        <!-- Sugestões -->
+                        <div id="sugestoes-area" class="d-none mt-4">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6 class="card-title text-warning">
+                                        <i class="fas fa-lightbulb me-1"></i> Sugestões para Refinar a Busca
+                                    </h6>
+                                    <div id="sugestoes-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estatísticas -->
+                        <div id="stats-area" class="d-none mt-4">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">
+                                        <i class="fas fa-chart-bar me-1"></i> Estatísticas da Busca
+                                    </h6>
+                                    <div id="stats-content"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function exemploConsulta(texto) {
+            document.getElementById('consulta').value = texto;
+        }
+
+        async function executarBusca() {
+            const consulta = document.getElementById('consulta').value.trim();
+            
+            if (!consulta) {
+                alert('Por favor, digite uma consulta');
+                return;
+            }
+
+            // Mostra loading
+            document.getElementById('loading').classList.remove('d-none');
+            document.getElementById('resultados-area').classList.add('d-none');
+            document.getElementById('contexto-area').classList.add('d-none');
+            document.getElementById('sugestoes-area').classList.add('d-none');
+            document.getElementById('stats-area').classList.add('d-none');
+
+            try {
+                const response = await fetch('/api/busca-penal/buscar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        consulta: consulta,
+                        limite: 15
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Esconde loading
+                document.getElementById('loading').classList.add('d-none');
+
+                if (data.erro) {
+                    alert('Erro na busca: ' + data.erro);
+                    return;
+                }
+
+                // Mostra contexto
+                mostrarContexto(data.contexto);
+                
+                // Mostra resultados
+                mostrarResultados(data.resultados, data.total_encontrados);
+                
+                // Mostra sugestões
+                if (data.sugestoes_refinamento && data.sugestoes_refinamento.length > 0) {
+                    mostrarSugestoes(data.sugestoes_refinamento);
+                }
+                
+                // Mostra estatísticas
+                if (data.fontes_consultadas) {
+                    mostrarEstatisticas(data.fontes_consultadas);
+                }
+
+            } catch (error) {
+                document.getElementById('loading').classList.add('d-none');
+                alert('Erro na requisição: ' + error.message);
+            }
+        }
+
+        function mostrarContexto(contexto) {
+            const area = document.getElementById('contexto-area');
+            const content = document.getElementById('contexto-content');
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Categoria:</strong><br>
+                        <span class="badge bg-light text-dark">${contexto.categoria_principal}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Código Fonte:</strong><br>
+                        <span class="badge bg-light text-dark">${contexto.codigo_fonte}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Urgência:</strong><br>
+                        <span class="badge bg-light text-dark">${contexto.urgencia}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Artigos:</strong><br>
+                        ${contexto.artigos_relevantes.length > 0 ? 
+                            contexto.artigos_relevantes.map(art => `<span class="badge bg-light text-dark">${art}</span>`).join(' ') :
+                            '<span class="text-muted small">Nenhum</span>'
+                        }
+                    </div>
+                </div>
+            `;
+            
+            if (contexto.subcategorias && contexto.subcategorias.length > 0) {
+                html += `
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Termos Identificados:</strong><br>
+                            ${contexto.subcategorias.map(term => `<span class="badge bg-light text-dark me-1">${term}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
+            area.classList.remove('d-none');
+        }
+
+        function mostrarResultados(resultados, total) {
+            const area = document.getElementById('resultados-area');
+            const content = document.getElementById('resultados-content');
+            const totalBadge = document.getElementById('total-resultados');
+            
+            totalBadge.textContent = total;
+            
+            if (resultados.length === 0) {
+                content.innerHTML = '<div class="alert alert-warning">Nenhum resultado encontrado.</div>';
+                area.classList.remove('d-none');
+                return;
+            }
+            
+            let html = '';
+            resultados.forEach((doc, index) => {
+                const score = doc.score_final || doc.relevancia || 0;
+                const scorePercent = Math.round(score * 100);
+                
+                html += `
+                    <div class="resultado-item p-3 mb-3 rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">
+                                <span class="badge bg-danger me-2">${index + 1}</span>
+                                ${doc.fonte} - Art. ${doc.artigo}
+                            </h6>
+                            <span class="badge score-badge text-white">${scorePercent}%</span>
+                        </div>
+                        <h6 class="text-primary">${doc.titulo}</h6>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary me-1">${doc.categoria}</span>
+                            <span class="badge bg-info text-white">${doc.tipo || 'busca'}</span>
+                        </div>
+                        <div class="conteudo-artigo">
+                            <p class="mb-0 small">${doc.conteudo.substring(0, 500)}${doc.conteudo.length > 500 ? '...' : ''}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+            area.classList.remove('d-none');
+        }
+
+        function mostrarSugestoes(sugestoes) {
+            const area = document.getElementById('sugestoes-area');
+            const content = document.getElementById('sugestoes-content');
+            
+            const html = sugestoes.map(sugestao => 
+                `<div class="alert alert-warning mb-2 py-2">
+                    <i class="fas fa-arrow-right me-1"></i> ${sugestao}
+                </div>`
+            ).join('');
+            
+            content.innerHTML = html;
+            area.classList.remove('d-none');
+        }
+
+        function mostrarEstatisticas(fontes) {
+            const area = document.getElementById('stats-area');
+            const content = document.getElementById('stats-content');
+            
+            const html = `
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <div class="border-end">
+                            <h5 class="text-primary">${fontes.postgresql || 0}</h5>
+                            <small>PostgreSQL (Busca Textual)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-success">${fontes.qdrant || 0}</h5>
+                        <small>Qdrant (Busca Semântica)</small>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            area.classList.remove('d-none');
+        }
+
+        // Busca quando Enter é pressionado
+        document.getElementById('consulta').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                executarBusca();
+            }
+        });
+    </script>
+</body>
+</html>

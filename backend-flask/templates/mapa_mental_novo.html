@@ -1,0 +1,3009 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental Colaborativo - Legal Design Pro V2</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-accent: #0f4c75;
+            --text-primary: #ffffff;
+            --text-secondary: #b8c5d1;
+            --border-color: #3b4d66;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: white;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-fluid {
+            padding: 2rem;
+        }
+
+        .card {
+            background: rgba(22, 33, 62, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--bg-accent), #1e3a8a);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #357abd, #2171b5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 8px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Controles de zoom no canto inferior esquerdo */
+        .zoom-controls-bottom {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(22, 33, 62, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px !important;
+            padding: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(74, 144, 226, 0.3) !important;
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.4);
+        }
+
+        /* Garantir que todos os textos sejam brancos */
+        h1, h2, h3, h4, h5, h6, p, span, div, label, .form-label, .nav-link, .card-title, .text-muted, small {
+            color: white !important;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .nav-link.active {
+            color: white !important;
+            background-color: rgba(74, 144, 226, 0.3) !important;
+        }
+
+        #canvas-container {
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #mapa-canvas {
+            width: 100%;
+            height: 500px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.1);
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #4a90e2, #28a745);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background-color: var(--success-color); }
+        .status-warning { background-color: var(--warning-color); }
+        .status-danger { background-color: var(--danger-color); }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: #4a90e2;
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--success-color);
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .zoom-controls .btn {
+            margin: 0;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .export-buttons .btn {
+            min-width: 120px;
+        }
+
+        .mermaid {
+            background: transparent !important;
+        }
+
+        /* Personalização do SVG do Mermaid - Layout radial hierárquico */
+        #mapa-canvas svg .edge-path path,
+        #mapa-canvas svg .flowchart-link,
+        #mapa-canvas svg .mindmap-edge {
+            stroke-width: 2px !important;
+            stroke: #9B8563 !important;
+        }
+
+        /* Centro principal - Nó raiz */
+        #mapa-canvas svg .mindmap-node0 rect,
+        #mapa-canvas svg .root rect {
+            fill: #4A90E2 !important;
+            stroke: #357ABD !important;
+            stroke-width: 3px !important;
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.3));
+        }
+
+        /* Nós principais (primeiro nível) - Hexágonos */
+        #mapa-canvas svg .mindmap-node1 rect,
+        #mapa-canvas svg .mindmap-node2 rect,
+        #mapa-canvas svg .mindmap-node3 rect {
+            fill: #7ED321 !important;
+            stroke: #5CB85C !important;
+            stroke-width: 2px !important;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* Nós secundários (retângulos) */
+        #mapa-canvas svg .mindmap-node4 rect,
+        #mapa-canvas svg .mindmap-node5 rect,
+        #mapa-canvas svg .mindmap-node6 rect,
+        #mapa-canvas svg .mindmap-node7 rect {
+            fill: #D0021B !important;
+            stroke: #A02622 !important;
+            stroke-width: 2px !important;
+        }
+
+        /* Subtópicos (círculos) */
+        #mapa-canvas svg .mindmap-node circle {
+            fill: #50E3C2 !important;
+            stroke: #3BAFB5 !important;
+            stroke-width: 2px !important;
+        }
+
+        /* Texto sempre branco para contraste */
+        #mapa-canvas svg .node .label,
+        #mapa-canvas svg .mindmap-node .label {
+            fill: white !important;
+            font-size: 15px !important;
+            font-weight: bold !important;
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+        }
+
+        #mapa-canvas svg .mindmap-node0 .label,
+        #mapa-canvas svg .root .label {
+            fill: white !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+        }
+
+        /* Legenda posicionada no canto inferior direito do canvas */
+        .mapa-legenda-canvas {
+            position: absolute !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 1000 !important;
+            background: #3291d1 !important;
+            border: 1px solid #2980b9 !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            color: white !important;
+            font-size: 12px !important;
+            min-width: 200px !important;
+            max-width: 250px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* Document status e modais de alerta com cor customizada */
+        .alert-info, 
+        #document-status .alert-info,
+        .modal .alert-info {
+            background-color: #121a31 !important;
+            border-color: #1e2a4a !important;
+            color: #ffffff !important;
+        }
+
+        #document-status {
+            background-color: #121a31;
+            border: 1px solid #1e2a4a;
+            border-radius: 10px;
+            padding: 15px;
+            color: #ffffff;
+        }
+
+        #document-status .alert {
+            background-color: #121a31 !important;
+            border-color: #1e2a4a !important;
+            color: #ffffff !important;
+            margin-bottom: 0;
+        }
+
+        /* Template cards styling */
+        .template-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .template-card:hover {
+            background: rgba(74, 144, 226, 0.2);
+            border-color: #4a90e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .template-card.selected {
+            background: rgba(74, 144, 226, 0.3);
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.5);
+        }
+
+        .template-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .template-card h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .template-card small {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.75rem;
+        }
+
+        .nav-tabs .nav-link {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--bg-accent);
+            color: var(--text-primary);
+            border-bottom-color: transparent;
+        }
+
+        .tab-content {
+            background: rgba(22, 33, 62, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 0 8px 8px 8px;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 1rem;
+            }
+            
+            .export-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-0">
+                                    <i class="fas fa-brain me-2"></i>
+                                    Mapa Mental Colaborativo - Legal Design Pro V2
+                                </h2>
+                                <p class="mb-0 text-light">Sistema de análise jurídica com IA | Pipeline: Áudio → Whisper → GPT-4o → Mapa Mental</p>
+                            </div>
+                            <div>
+                                <a href="/home" class="btn btn-sm d-flex align-items-center" style="background-color: #0f4595; color: white; border: 1px solid #0f4595;">
+                                    <i class="fas fa-home me-2" style="color: white;"></i>
+                                    Home
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Painel de Controle -->
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Entrada de Dados</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Tabs para diferentes tipos de entrada -->
+                        <ul class="nav nav-tabs mb-3" id="inputTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="audio-tab" data-bs-toggle="tab" data-bs-target="#audio-panel" type="button" role="tab">
+                                    <i class="fas fa-microphone me-1"></i>Áudio
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-panel" type="button" role="tab">
+                                    <i class="fas fa-keyboard me-1"></i>Texto
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="document-tab" data-bs-toggle="tab" data-bs-target="#document-panel" type="button" role="tab">
+                                    <i class="fas fa-file-alt me-1"></i>Documento
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="template-tab" data-bs-toggle="tab" data-bs-target="#template-panel" type="button" role="tab">
+                                    <i class="fas fa-layer-group me-1"></i>Templates
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="inputTabContent">
+                            <!-- Painel de Áudio -->
+                            <div class="tab-pane fade show active" id="audio-panel" role="tabpanel">
+                                <div class="upload-zone" id="audio-upload-zone">
+                                    <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
+                                    <h6>Arraste um arquivo de áudio ou clique para selecionar</h6>
+                                    <p class="text-muted small">Suporte: Todos os formatos de áudio (.mp3, .wav, .m4a, .ogg, .opus, .aac, .flac, .wma, .aiff, .au, .amr, .3gp, .webm) (máx. 25MB)</p>
+                                    <input type="file" id="audio-input" accept=".mp3,.wav,.m4a,.ogg,.aac,.flac,.wma,.aiff,.au,.amr,.3gp,.webm,.mp4,.avi,.mov,.mkv,.wmv,.mpeg,.mpg" style="display: none;">
+                                </div>
+                                <div id="audio-status" class="mt-3"></div>
+                            </div>
+
+                            <!-- Painel de Texto -->
+                            <div class="tab-pane fade" id="text-panel" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="text-input" class="form-label">Digite ou cole o texto jurídico para análise:</label>
+                                    <textarea class="form-control" id="text-input" rows="8" placeholder="Digite aqui o conteúdo jurídico para gerar o mapa mental..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Painel de Documentos -->
+                            <div class="tab-pane fade" id="document-panel" role="tabpanel">
+                                <div class="upload-zone" id="document-upload-zone">
+                                    <i class="fas fa-file-upload fa-3x mb-3 text-primary"></i>
+                                    <h6>Arraste um documento ou clique para selecionar</h6>
+                                    <p class="text-muted small">Suporte: .docx, .txt, .pdf (máx. 10MB)</p>
+                                    <input type="file" id="document-input" accept=".docx,.txt,.pdf" style="display: none;">
+                                </div>
+                                <div id="document-status" class="mt-3"></div>
+                            </div>
+
+                            <!-- Painel de Templates -->
+                            <div class="tab-pane fade" id="template-panel" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label">Selecione um template pré-definido:</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="peticao_inicial">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-file-signature text-primary"></i>
+                                                </div>
+                                                <h6>Petição Inicial</h6>
+                                                <small>Estrutura completa: qualificação, fatos, direito, pedidos</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="contestacao">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-shield-alt text-warning"></i>
+                                                </div>
+                                                <h6>Contestação</h6>
+                                                <small>Defesa processual e de mérito, exceções e preliminares</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="recurso_apelacao">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-arrow-up text-success"></i>
+                                                </div>
+                                                <h6>Recurso de Apelação</h6>
+                                                <small>Razões recursais, fundamentos e requerimentos</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="habeas_corpus">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-unlock text-info"></i>
+                                                </div>
+                                                <h6>Habeas Corpus</h6>
+                                                <small>Liberdade de locomoção, coação ilegal, autoridade coatora</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="mandado_seguranca">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-certificate text-danger"></i>
+                                                </div>
+                                                <h6>Mandado de Segurança</h6>
+                                                <small>Direito líquido e certo, ato ilegal, autoridade pública</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="acao_civil_publica">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-users text-secondary"></i>
+                                                </div>
+                                                <h6>Ação Civil Pública</h6>
+                                                <small>Interesses difusos, coletivos e individuais homogêneos</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="adi_acao_direta">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-balance-scale text-primary"></i>
+                                                </div>
+                                                <h6>ADI - Ação Direta de Inconstitucionalidade</h6>
+                                                <small>Controle concentrado, vício de inconstitucionalidade</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="contrato_civil">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-handshake text-warning"></i>
+                                                </div>
+                                                <h6>Contrato Civil</h6>
+                                                <small>Elementos essenciais, cláusulas, vícios e extinção</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="sucessao_heranca">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-home text-success"></i>
+                                                </div>
+                                                <h6>Sucessão e Herança</h6>
+                                                <small>Inventário, partilha, herdeiros e legítima</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="direito_trabalho">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-briefcase text-info"></i>
+                                                </div>
+                                                <h6>Direito do Trabalho</h6>
+                                                <small>Relação de emprego, rescisão, direitos trabalhistas</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="tributario_fiscal">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-calculator text-danger"></i>
+                                                </div>
+                                                <h6>Direito Tributário</h6>
+                                                <small>Tributos, lançamento, execução fiscal, defesas</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="template-card" data-template="direito_penal">
+                                                <div class="template-icon">
+                                                    <i class="fas fa-gavel text-secondary"></i>
+                                                </div>
+                                                <h6>Direito Penal</h6>
+                                                <small>Crime, tipicidade, culpabilidade, penas e medidas</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="template-preview" class="mt-3" style="display: none;">
+                                    <h6>Preview do Template:</h6>
+                                    <div id="template-description" class="alert alert-info"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controles de Processamento -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100" id="btn-processar" disabled>
+                                    <i class="fas fa-magic me-2"></i>Gerar Mapa Mental
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status do Processamento -->
+                        <div id="processing-status" class="mt-3" style="display: none;">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <span class="status-indicator status-warning"></span>
+                                        Processando...
+                                    </h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="status-text">Preparando análise...</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exportação -->
+                        <div id="export-section" style="display: none;" class="mt-4">
+                            <h6><i class="fas fa-download me-2"></i>Exportar Mapa</h6>
+                            <div class="export-buttons d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-light btn-sm" onclick="exportarMapa('png')">
+                                    <i class="fas fa-image me-1"></i>PNG
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="exportarMapa('pdf')">
+                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="exportarMapa('html')">
+                                    <i class="fas fa-code me-1"></i>HTML
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="exportarMapa('json')">
+                                    <i class="fas fa-database me-1"></i>JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Área do Mapa Mental -->
+            <div class="col-lg-8 col-md-12">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Mapa Mental Hierárquico</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="canvas-container" style="position: relative;">
+                            <div id="mapa-canvas" style="height: 500px; position: relative; overflow: hidden;">
+                                <div class="text-center">
+                                    <i class="fas fa-brain fa-5x text-primary mb-3 opacity-50"></i>
+                                    <h4 class="text-muted">Aguardando conteúdo para análise</h4>
+                                    <p class="text-muted">Faça upload de um áudio ou digite um texto para começar</p>
+                                </div>
+                                
+                                <!-- Auto-Hiding Legend with Hover Reveal -->
+                                <div id="legend-trigger" style="
+                                    position: absolute;
+                                    bottom: 20px;
+                                    right: 20px;
+                                    width: 40px;
+                                    height: 40px;
+                                    background: rgba(53, 93, 105, 0.8);
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    cursor: pointer;
+                                    z-index: 1000;
+                                    transition: all 0.3s ease;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                                ">
+                                    <i class="fas fa-info" style="color: white; font-size: 16px;"></i>
+                                </div>
+                                
+                                <div id="hover-legend" style="
+                                    position: absolute;
+                                    bottom: 70px;
+                                    right: 20px;
+                                    background: rgba(22, 33, 62, 0.95);
+                                    border: 2px solid #357abd;
+                                    border-radius: 12px;
+                                    padding: 16px;
+                                    color: white;
+                                    font-family: 'Segoe UI', sans-serif;
+                                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                                    backdrop-filter: blur(10px);
+                                    z-index: 1001;
+                                    min-width: 280px;
+                                    opacity: 0;
+                                    visibility: hidden;
+                                    transform: translateY(10px);
+                                    transition: all 0.3s ease;
+                                    pointer-events: none;
+                                ">
+                                    <div style="
+                                        display: flex;
+                                        align-items: center;
+                                        margin-bottom: 12px;
+                                        border-bottom: 1px solid #357abd;
+                                        padding-bottom: 8px;
+                                    ">
+                                        <i class="fas fa-sitemap" style="margin-right: 8px; color: #50E3C2;"></i>
+                                        <h4 style="margin: 0; font-size: 14px; font-weight: 600;">
+                                            Estrutura do Mapa Mental
+                                        </h4>
+                                    </div>
+                                    <div id="legend-content">
+                                        <!-- Content will be dynamically updated -->
+                                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                            <div style="
+                                                width: 16px; height: 16px; 
+                                                background: #4A90E2; 
+                                                border-radius: 50%; 
+                                                margin-right: 10px;
+                                                border: 2px solid white;
+                                            "></div>
+                                            <span style="font-size: 12px;">Centro (1)</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                            <div style="
+                                                width: 14px; height: 14px; 
+                                                background: #7ED321; 
+                                                border-radius: 4px; 
+                                                margin-right: 10px;
+                                                border: 1px solid white;
+                                            "></div>
+                                            <span style="font-size: 12px;">Tópicos Principais</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                            <div style="
+                                                width: 12px; height: 12px; 
+                                                background: #D0021B; 
+                                                border-radius: 3px; 
+                                                margin-right: 10px;
+                                                border: 1px solid white;
+                                            "></div>
+                                            <span style="font-size: 12px;">Subtópicos</span>
+                                        </div>
+                                    </div>
+                                    <div style="
+                                        margin-top: 12px;
+                                        padding-top: 8px;
+                                        border-top: 1px solid #357abd;
+                                        font-size: 10px;
+                                        color: #b8c5d1;
+                                        text-align: center;
+                                    ">
+                                        Passe o mouse para visualizar
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Controles de Zoom no canto inferior esquerdo -->
+                            <div class="zoom-controls-bottom" id="zoom-controls" style="display: none;">
+                                <button class="btn btn-outline-light btn-sm zoom-btn" onclick="zoomIn()" title="Ampliar">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button class="btn btn-outline-light btn-sm zoom-btn" onclick="zoomOut()" title="Reduzir">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button class="btn btn-outline-light btn-sm zoom-btn" onclick="resetZoom()" title="Ajustar à tela">
+                                    <i class="fas fa-expand-arrows-alt"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Loading overlay -->
+                            <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                                <div class="spinner-border text-primary mb-3"></div>
+                                <h5 id="loading-title">Processando áudio...</h5>
+                                <p id="loading-subtitle" class="text-muted">Aguarde enquanto analisamos o conteúdo</p>
+                                <div class="progress" style="width: 300px;">
+                                    <div class="progress-bar" id="loading-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Legenda Detalhada do Mapa Mental -->
+                <div class="card mt-3" id="legenda-mapa" style="display: none;">
+                    <div class="card-body py-2">
+                        <h6 class="mb-2"><i class="fas fa-info-circle text-primary"></i> Legenda do Mapa Mental</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="small">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded-circle me-2" style="width: 16px; height: 16px; background: #2c3e50; border: 1px solid #ecf0f1;"></div>
+                                        <span>Tema Central (1 elemento)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded-circle me-2" style="width: 12px; height: 12px; background: #3498db; border: 1px solid #ecf0f1;"></div>
+                                        <span>Tópicos Principais (7 elementos)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #95a5a6; border: 1px solid #ecf0f1;"></div>
+                                        <span>Subtópicos (21 elementos)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="rounded me-2" style="width: 12px; height: 6px; background: #e74c3c; border: 1px solid #ecf0f1; border-radius: 3px;"></div>
+                                        <span>Palavras-Chave (14 elementos, 2 por tópico)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-search me-2 text-muted"></i>
+                                        <span>Linhas tracejadas = palavras-chave</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-plus me-2 text-success"></i>
+                                        <span>Use zoom para navegar</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-download me-2 text-info"></i>
+                                        <span>Exporte em múltiplos formatos</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        const AppState = {
+            currentMap: null,
+            zoomLevel: 1,
+            isProcessing: false,
+            currentInput: null,
+            inputType: null
+        };
+
+        // Configuração do Mermaid
+        mermaid.initialize({
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#4a90e2',
+                primaryTextColor: '#ffffff',
+                primaryBorderColor: '#357abd',
+                lineColor: '#b8c5d1',
+                secondaryColor: '#16213e',
+                tertiaryColor: '#1a1a2e',
+                background: 'transparent',
+                mainBkg: '#16213e',
+                secondBkg: '#1a1a2e',
+                fontSize: '16px',
+                fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+            },
+            mindmap: {
+                padding: 20,
+                maxNodeSize: 300,
+                fontSize: 16
+            }
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            setupUploadZone();
+        });
+
+        function initializeEventListeners() {
+            // Botão processar
+            document.getElementById('btn-processar').addEventListener('click', processarConteudo);
+            
+            // Input de áudio
+            document.getElementById('audio-input').addEventListener('change', handleAudioFile);
+            
+            // Input de texto
+            document.getElementById('text-input').addEventListener('input', handleTextInput);
+            
+            // Input de documento
+            document.getElementById('document-input').addEventListener('change', handleDocumentFile);
+            
+            // Template cards
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', handleTemplateSelection);
+            });
+            
+            // Tabs
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', handleTabChange);
+            });
+        }
+
+        function setupUploadZone() {
+            // Setup para áudio
+            const audioUploadZone = document.getElementById('audio-upload-zone');
+            const audioFileInput = document.getElementById('audio-input');
+
+            audioUploadZone.addEventListener('click', () => audioFileInput.click());
+            
+            audioUploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                audioUploadZone.classList.add('dragover');
+            });
+            
+            audioUploadZone.addEventListener('dragleave', () => {
+                audioUploadZone.classList.remove('dragover');
+            });
+            
+            audioUploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                audioUploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    audioFileInput.files = files;
+                    handleAudioFile({ target: audioFileInput });
+                }
+            });
+
+            // Setup para documentos
+            const docUploadZone = document.getElementById('document-upload-zone');
+            const docFileInput = document.getElementById('document-input');
+
+            docUploadZone.addEventListener('click', () => docFileInput.click());
+            
+            docUploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                docUploadZone.classList.add('dragover');
+            });
+            
+            docUploadZone.addEventListener('dragleave', () => {
+                docUploadZone.classList.remove('dragover');
+            });
+            
+            docUploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                docUploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    docFileInput.files = files;
+                    handleDocumentFile({ target: docFileInput });
+                }
+            });
+        }
+
+        function handleAudioFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const allowedTypes = [
+                'audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/ogg', 'audio/aac', 
+                'audio/flac', 'audio/wma', 'audio/aiff', 'audio/au', 'audio/amr',
+                'audio/3gpp', 'audio/webm', 'audio/opus', 'application/ogg', 'audio/vorbis',
+                'video/mp4', 'video/avi', 'video/quicktime', 'video/ogg',
+                'video/x-msvideo', 'video/x-ms-wmv', 'video/mpeg', 'video/x-matroska'
+            ];
+            const maxSize = 25 * 1024 * 1024; // 25MB
+
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|ogg|aac|flac|wma|aiff|au|amr|3gp|webm|mp4|avi|mov|mkv|wmv|mpeg|mpg)$/i)) {
+                showError('Formato de arquivo não suportado. Use qualquer formato de áudio ou vídeo comum.');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                showError('Arquivo muito grande. Tamanho máximo: 25MB.');
+                return;
+            }
+
+            AppState.currentInput = file;
+            AppState.inputType = 'audio';
+            
+            const statusDiv = document.getElementById('audio-status');
+            statusDiv.innerHTML = `
+                <div class="alert alert-success" style="background-color: #3291d1 !important; border-color: #3291d1 !important;">
+                    <i class="fas fa-file-audio me-2"></i>
+                    <strong>${file.name}</strong><br>
+                    <small>Tamanho: ${(file.size / (1024 * 1024)).toFixed(2)} MB</small>
+                </div>
+            `;
+            
+            document.getElementById('btn-processar').disabled = false;
+        }
+
+        function handleTextInput(event) {
+            const text = event.target.value.trim();
+            
+            if (text.length > 10) {
+                AppState.currentInput = text;
+                AppState.inputType = 'text';
+                document.getElementById('btn-processar').disabled = false;
+            } else {
+                AppState.currentInput = null;
+                AppState.inputType = null;
+                document.getElementById('btn-processar').disabled = true;
+            }
+        }
+
+        function handleDocumentFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const allowedTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/pdf'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(docx|txt|pdf)$/i)) {
+                showToast('Formato de arquivo não suportado. Use .docx, .txt ou .pdf', 'error');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                showToast('Arquivo muito grande. Máximo 10MB permitido.', 'error');
+                return;
+            }
+
+            AppState.currentInput = file;
+            AppState.inputType = 'document';
+            document.getElementById('btn-processar').disabled = false;
+            
+            const statusDiv = document.getElementById('document-status');
+            statusDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-file-check me-2"></i>
+                    Documento selecionado: <strong>${file.name}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+            `;
+            
+            showToast('Documento carregado com sucesso!', 'success');
+        }
+
+        function handleTemplateSelection(event) {
+            const templateCard = event.currentTarget;
+            const templateType = templateCard.dataset.template;
+            
+            // Remove seleção anterior
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Adiciona seleção atual
+            templateCard.classList.add('selected');
+            
+            // Configura o template selecionado
+            AppState.currentInput = getTemplateData(templateType);
+            AppState.inputType = 'template';
+            document.getElementById('btn-processar').disabled = false;
+            
+            // Mostra preview do template
+            showTemplatePreview(templateType);
+            
+            showToast(`Template "${getTemplateName(templateType)}" selecionado!`, 'success');
+        }
+
+        function getTemplateData(templateType) {
+            const templates = {
+                'peticao_inicial': {
+                    tema_principal: 'Petição Inicial',
+                    area_juridica: 'Direito Processual Civil',
+                    tipo_documento: 'Petição Inicial',
+                    estrutura: {
+                        'Qualificação das Partes': ['Autor', 'Réu', 'Representação Legal', 'Endereços'],
+                        'Dos Fatos': ['Cronologia', 'Documentos Comprobatórios', 'Circunstâncias', 'Danos Sofridos'],
+                        'Do Direito': ['Fundamentos Legais', 'Jurisprudência Aplicável', 'Doutrina', 'Aplicação ao Caso'],
+                        'Dos Pedidos': ['Pedido Principal', 'Pedidos Subsidiários', 'Tutela Antecipada', 'Liminar'],
+                        'Do Valor da Causa': ['Cálculo Fundamentado', 'Critérios Legais', 'Atualização Monetária', 'Custas Processuais'],
+                        'Requerimentos Finais': ['Citação', 'Produção de Provas', 'Julgamento Procedente', 'Custas e Honorários']
+                    }
+                },
+                'contestacao': {
+                    tema_principal: 'Contestação',
+                    area_juridica: 'Direito Processual Civil',
+                    tipo_documento: 'Contestação',
+                    estrutura: {
+                        'Preliminares': ['Ilegitimidade de Parte', 'Inépcia da Inicial', 'Prescrição', 'Decadência'],
+                        'Mérito': ['Negativa dos Fatos', 'Interpretação Jurídica Diversa', 'Excludentes de Responsabilidade', 'Contraprovas'],
+                        'Provas': ['Documentais', 'Testemunhais', 'Periciais', 'Inversão do Ônus'],
+                        'Pedidos Finais': ['Improcedência Total', 'Pedidos Subsidiários', 'Condenação em Custas', 'Honorários Advocatícios']
+                    }
+                },
+                'recurso_apelacao': {
+                    tema_principal: 'Recurso de Apelação',
+                    area_juridica: 'Direito Processual Civil',
+                    tipo_documento: 'Recurso de Apelação',
+                    estrutura: {
+                        'Cabimento': ['Prazo Legal', 'Legitimidade Recursal', 'Interesse de Recorrer', 'Preparo'],
+                        'Razões Recursais': ['Erro de Fato', 'Erro de Direito', 'Omissão', 'Contradição'],
+                        'Fundamentos': ['Legislação Aplicável', 'Jurisprudência Superior', 'Doutrina Especializada', 'Precedentes'],
+                        'Pedidos': ['Provimento Total', 'Reforma da Sentença', 'Anulação', 'Substituição do Julgado']
+                    }
+                },
+                'habeas_corpus': {
+                    tema_principal: 'Habeas Corpus',
+                    area_juridica: 'Direito Processual Penal',
+                    tipo_documento: 'Writ Constitucional',
+                    estrutura: {
+                        'Paciente': ['Identificação Completa', 'Situação Atual', 'Localização', 'Representação Legal'],
+                        'Coação': ['Ilegalidade do Ato', 'Abuso de Poder', 'Constrangimento Ilegal', 'Ameaça à Liberdade'],
+                        'Autoridade Coatora': ['Identificação', 'Competência', 'Ato Impugnado', 'Notificação Necessária'],
+                        'Direito Violado': ['Liberdade de Locomoção', 'Garantias Constitucionais', 'Devido Processo Legal', 'Direitos Fundamentais']
+                    }
+                },
+                'mandado_seguranca': {
+                    tema_principal: 'Mandado de Segurança',
+                    area_juridica: 'Direito Constitucional',
+                    tipo_documento: 'Ação Constitucional',
+                    estrutura: {
+                        'Direito Líquido e Certo': ['Definição Legal', 'Comprovação Documental', 'Certeza Jurídica', 'Liquidez'],
+                        'Ato Ilegal ou Abusivo': ['Caracterização', 'Violação de Direito', 'Omissão Administrativa', 'Excesso de Poder'],
+                        'Autoridade Coatora': ['Competência Administrativa', 'Identificação Precisa', 'Responsabilidade', 'Hierarquia'],
+                        'Prova Pré-constituída': ['Documentos Oficiais', 'Certidões', 'Atos Administrativos', 'Registros Públicos']
+                    }
+                },
+                'acao_civil_publica': {
+                    tema_principal: 'Ação Civil Pública',
+                    area_juridica: 'Direito Coletivo',
+                    tipo_documento: 'Ação Coletiva',
+                    estrutura: {
+                        'Legitimidade Ativa': ['Ministério Público', 'Defensoria Pública', 'Associações Civis', 'Entes Federativos'],
+                        'Interesses Protegidos': ['Direitos Difusos', 'Direitos Coletivos', 'Individuais Homogêneos', 'Patrimônio Público'],
+                        'Dano Coletivo': ['Ambiental', 'Consumidor', 'Patrimônio Histórico', 'Ordem Urbanística'],
+                        'Reparação': ['Indenização por Danos', 'Obrigação de Fazer', 'Obrigação de Não Fazer', 'Reconstituição de Bens']
+                    }
+                },
+                'adi_acao_direta': {
+                    tema_principal: 'ADI - Ação Direta de Inconstitucionalidade',
+                    area_juridica: 'Direito Constitucional',
+                    tipo_documento: 'Controle Concentrado',
+                    estrutura: {
+                        'Parâmetro Constitucional': ['Constituição Federal', 'Normas Constitucionais', 'Princípios Fundamentais', 'Direitos e Garantias'],
+                        'Objeto Impugnado': ['Lei Federal', 'Lei Estadual', 'Ato Normativo', 'Emenda Constitucional'],
+                        'Vício de Inconstitucionalidade': ['Formal', 'Material', 'Orgânico', 'Procedimental'],
+                        'Efeitos da Decisão': ['Erga Omnes', 'Efeito Vinculante', 'Ex Tunc', 'Modulação Temporal']
+                    }
+                },
+                'contrato_civil': {
+                    tema_principal: 'Contrato Civil',
+                    area_juridica: 'Direito Civil',
+                    tipo_documento: 'Contrato',
+                    estrutura: {
+                        'Elementos Essenciais': ['Agente Capaz', 'Objeto Lícito e Possível', 'Forma Prescrita em Lei', 'Consentimento Livre'],
+                        'Formação Contratual': ['Proposta', 'Aceitação', 'Lugar da Formação', 'Momento da Formação'],
+                        'Execução': ['Cumprimento das Obrigações', 'Mora', 'Inadimplemento', 'Resolução por Descumprimento'],
+                        'Extinção': ['Cumprimento Integral', 'Rescisão', 'Resilição', 'Resolução']
+                    }
+                },
+                'sucessao_heranca': {
+                    tema_principal: 'Sucessão e Herança',
+                    area_juridica: 'Direito Civil',
+                    tipo_documento: 'Sucessões',
+                    estrutura: {
+                        'Abertura da Sucessão': ['Morte do De Cujus', 'Ausência Presumida', 'Comoriência', 'Transmissão da Herança'],
+                        'Herdeiros': ['Legítimos', 'Testamentários', 'Ordem de Vocação Hereditária', 'Legítima e Disponível'],
+                        'Inventário': ['Arrolamento de Bens', 'Dívidas do Espólio', 'Avaliação', 'Sonegados'],
+                        'Partilha': ['Divisão dos Bens', 'Adjudicação', 'Sobrepartilha', 'Colação']
+                    }
+                },
+                'direito_trabalho': {
+                    tema_principal: 'Direito do Trabalho',
+                    area_juridica: 'Direito Trabalhista',
+                    tipo_documento: 'Relação de Emprego',
+                    estrutura: {
+                        'Relação de Emprego': ['Pessoa Física', 'Pessoalidade', 'Não Eventualidade', 'Subordinação', 'Onerosidade'],
+                        'Contrato de Trabalho': ['Formação', 'Modalidades', 'Cláusulas Contratuais', 'Alteração Contratual'],
+                        'Direitos Trabalhistas': ['Salário', 'Jornada de Trabalho', 'Férias', 'FGTS', '13º Salário'],
+                        'Rescisão Contratual': ['Causas da Rescisão', 'Aviso Prévio', 'Verbas Rescisórias', 'Homologação']
+                    }
+                },
+                'tributario_fiscal': {
+                    tema_principal: 'Direito Tributário',
+                    area_juridica: 'Direito Tributário',
+                    tipo_documento: 'Tributos',
+                    estrutura: {
+                        'Sistema Tributário': ['Impostos', 'Taxas', 'Contribuições de Melhoria', 'Empréstimos Compulsórios'],
+                        'Obrigação Tributária': ['Principal', 'Acessória', 'Fato Gerador', 'Sujeitos Ativo e Passivo'],
+                        'Lançamento Tributário': ['De Ofício', 'Por Declaração', 'Por Homologação', 'Misto'],
+                        'Execução Fiscal': ['Certidão de Dívida Ativa', 'Citação', 'Penhora', 'Embargos à Execução']
+                    }
+                },
+                'direito_penal': {
+                    tema_principal: 'Direito Penal',
+                    area_juridica: 'Direito Penal',
+                    tipo_documento: 'Crime e Pena',
+                    estrutura: {
+                        'Teoria do Crime': ['Conduta', 'Resultado', 'Nexo de Causalidade', 'Tipicidade'],
+                        'Tipicidade': ['Adequação Típica', 'Dolo', 'Culpa', 'Excludentes de Tipicidade'],
+                        'Culpabilidade': ['Imputabilidade', 'Potencial Consciência', 'Exigibilidade', 'Causas de Exclusão'],
+                        'Aplicação da Pena': ['Penas Privativas de Liberdade', 'Restritivas de Direitos', 'Multa', 'Medidas de Segurança']
+                    }
+                }
+            };
+            
+            return templates[templateType];
+        }
+
+        function getTemplateName(templateType) {
+            const names = {
+                'peticao_inicial': 'Petição Inicial',
+                'contestacao': 'Contestação',
+                'recurso_apelacao': 'Recurso de Apelação',
+                'habeas_corpus': 'Habeas Corpus',
+                'mandado_seguranca': 'Mandado de Segurança',
+                'acao_civil_publica': 'Ação Civil Pública',
+                'adi_acao_direta': 'ADI - Ação Direta de Inconstitucionalidade',
+                'contrato_civil': 'Contrato Civil',
+                'sucessao_heranca': 'Sucessão e Herança',
+                'direito_trabalho': 'Direito do Trabalho',
+                'tributario_fiscal': 'Direito Tributário',
+                'direito_penal': 'Direito Penal'
+            };
+            return names[templateType] || templateType;
+        }
+
+        function showTemplatePreview(templateType) {
+            const preview = document.getElementById('template-preview');
+            const description = document.getElementById('template-description');
+            const templateData = getTemplateData(templateType);
+            
+            const estruturaHtml = Object.entries(templateData.estrutura)
+                .map(([categoria, itens]) => 
+                    `<strong>${categoria}:</strong> ${itens.join(', ')}`
+                ).join('<br>');
+            
+            description.innerHTML = `
+                <strong>Área:</strong> ${templateData.area_juridica}<br>
+                <strong>Tipo:</strong> ${templateData.tipo_documento}<br><br>
+                <strong>Estrutura do Template:</strong><br>
+                ${estruturaHtml}
+            `;
+            
+            preview.style.display = 'block';
+        }
+
+        function handleTabChange(event) {
+            // Reset estado quando trocar aba
+            AppState.currentInput = null;
+            AppState.inputType = null;
+            document.getElementById('btn-processar').disabled = true;
+            
+            // Limpar status
+            document.getElementById('audio-status').innerHTML = '';
+            document.getElementById('document-status').innerHTML = '';
+            document.getElementById('text-input').value = '';
+            
+            // Limpar seleção de templates
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('template-preview').style.display = 'none';
+        }
+
+        async function processarConteudo() {
+            if (!AppState.currentInput || AppState.isProcessing) return;
+
+            AppState.isProcessing = true;
+            showLoading();
+            
+            try {
+                let resultado;
+                
+                console.log('🎯 Tipo de input:', AppState.inputType);
+                console.log('📋 Input atual:', AppState.currentInput);
+                
+                if (AppState.inputType === 'text') {
+                    console.log('📝 Processando texto...');
+                    resultado = await processarTexto(AppState.currentInput);
+                } else if (AppState.inputType === 'document') {
+                    console.log('📄 Processando documento...');
+                    resultado = await processarDocumento(AppState.currentInput);
+                } else if (AppState.inputType === 'audio') {
+                    console.log('🎵 Processando áudio...');
+                    resultado = await processarAudio(AppState.currentInput);
+                } else if (AppState.inputType === 'template') {
+                    console.log('📋 Processando template...');
+                    resultado = await processarTemplate(AppState.currentInput);
+                } else {
+                    throw new Error('Tipo de entrada não suportado: ' + AppState.inputType);
+                }
+                
+                console.log('🔍 Resultado recebido:', resultado);
+                
+                if (resultado && resultado.success) {
+                    const mapaData = resultado.mapa || resultado.mapa_hierarquico || resultado.data;
+                    console.log('📊 Dados do mapa extraídos:', mapaData);
+                    
+                    AppState.currentMap = mapaData;
+                    renderizarMapaMental(mapaData);
+                    showExportOptions();
+                } else {
+                    console.error('❌ Resultado sem sucesso:', resultado);
+                    throw new Error(resultado?.error || 'Erro desconhecido no processamento');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao processar:', error);
+                showError('Erro ao processar: ' + error.message);
+            } finally {
+                AppState.isProcessing = false;
+                hideLoading();
+            }
+        }
+
+        async function processarAudio(audioFile) {
+            updateLoadingStatus('Fazendo upload do áudio...', 20);
+            
+            const formData = new FormData();
+            formData.append('audio', audioFile);
+            
+            updateLoadingStatus('Transcrevendo com Whisper...', 40);
+            
+            const response = await fetch('/api/mapa-mental/processar-audio', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            
+            updateLoadingStatus('Analisando com GPT-4o...', 70);
+            
+            const result = await response.json();
+            updateLoadingStatus('Finalizando...', 90);
+            
+            return result;
+        }
+
+        async function processarTexto(texto) {
+            updateLoadingStatus('Analisando texto com GPT-4o...', 30);
+            
+            const response = await fetch('/api/mapa-mental/processar-texto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    texto: texto
+                })
+            });
+            
+            console.log('📤 Requisição enviada para:', '/api/mapa-mental/processar-texto');
+            console.log('📋 Dados enviados:', { texto: texto.substring(0, 100) + '...' });
+            
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            
+            updateLoadingStatus('Estruturando mapa mental...', 70);
+            
+            const result = await response.json();
+            updateLoadingStatus('Finalizando...', 90);
+            
+            return result;
+        }
+
+        async function processarDocumento(file) {
+            updateLoadingStatus('Enviando documento...', 10);
+            
+            const formData = new FormData();
+            formData.append('arquivo', file);
+            
+            updateLoadingStatus('Analisando documento com IA...', 30);
+            
+            // Processar documento diretamente
+            const response = await fetch('/api/mapa-mental/processar-documento', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Erro ao processar documento: ${response.status}`);
+            }
+            
+            updateLoadingStatus('Gerando mapa mental do documento...', 85);
+            
+            const result = await response.json();
+            console.log('📥 Resposta da API de documento:', result);
+            updateLoadingStatus('Finalizando...', 95);
+            
+            return result;
+        }
+
+        async function processarTemplate(templateData) {
+            updateLoadingStatus('Gerando mapa mental baseado no template...', 30);
+            
+            // Converter estrutura do template para formato de mapa mental
+            const mapaEstruturado = {
+                nucleo_central: {
+                    tema_principal: templateData.tema_principal,
+                    area_juridica: templateData.area_juridica,
+                    tipo_documento: templateData.tipo_documento
+                },
+                ramos_principais: Object.keys(templateData.estrutura),
+                ramos_secundarios: {},
+                detalhes_especificos: {},
+                conexoes_conceituais: []
+            };
+            
+            // Estruturar ramos secundários
+            Object.entries(templateData.estrutura).forEach(([categoria, itens]) => {
+                mapaEstruturado.ramos_secundarios[categoria] = itens;
+                
+                // Criar detalhes específicos para cada item
+                mapaEstruturado.detalhes_especificos[categoria] = itens.map(item => ({
+                    conceito: item,
+                    definicao: `${item} relacionado a ${categoria} em ${templateData.area_juridica}`,
+                    relevancia: 'Alta',
+                    fonte: 'Template Pré-definido'
+                }));
+                
+                // Criar conexões conceituais entre categorias relacionadas
+                Object.keys(templateData.estrutura).forEach(outraCategoria => {
+                    if (categoria !== outraCategoria) {
+                        mapaEstruturado.conexoes_conceituais.push({
+                            origem: categoria,
+                            destino: outraCategoria,
+                            tipo_relacao: 'complementar',
+                            descricao: `${categoria} se relaciona com ${outraCategoria} no contexto de ${templateData.tipo_documento}`
+                        });
+                    }
+                });
+            });
+            
+            updateLoadingStatus('Estruturando template...', 60);
+            
+            // Simular processamento para manter consistência de UX
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            updateLoadingStatus('Finalizando mapa mental...', 90);
+            
+            return {
+                success: true,
+                mapa_hierarquico: mapaEstruturado,
+                fonte: 'template',
+                template_usado: templateData.tema_principal
+            };
+        }
+
+        function renderizarMapaMental(mapaData) {
+            console.log('🚀 RENDERIZAÇÃO MERMAID RESTAURADA');
+            
+            if (!mapaData) {
+                showError('Dados do mapa inválidos');
+                return;
+            }
+
+            const container = document.getElementById('mapa-canvas');
+            if (!container) {
+                console.error('Container não encontrado');
+                return;
+            }
+            
+            // Preserve legend elements before clearing
+            const existingLegendTrigger = container.querySelector('#legend-trigger');
+            const existingHoverLegend = container.querySelector('#hover-legend');
+            
+            // Limpar container
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Gerando mapa mental...</div>';
+            
+            // Restore legend elements if they existed
+            if (existingLegendTrigger) container.appendChild(existingLegendTrigger);
+            if (existingHoverLegend) container.appendChild(existingHoverLegend);
+            
+            // Configurar Mermaid com layout radial hierárquico
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'base',
+                themeVariables: {
+                    // Centro (root) - Azul da paleta
+                    primaryColor: '#4A90E2',
+                    primaryTextColor: '#ffffff',
+                    primaryBorderColor: '#357ABD',
+                    
+                    // Tópicos principais - Verde da paleta
+                    secondaryColor: '#7ED321',
+                    
+                    // Subtópicos - Vermelho da paleta
+                    tertiaryColor: '#D0021B',
+                    
+                    // Palavras-chave - Turquesa da paleta
+                    quaternaryColor: '#50E3C2',
+                    
+                    // Configurações gerais para layout radial
+                    lineColor: '#9B8563',
+                    fontSize: '16px',
+                    fontFamily: 'Segoe UI, Arial, sans-serif',
+                    background: '#f8f9fa'
+                },
+                mindmap: {
+                    padding: 20,
+                    maxNodeWidth: 200,
+                    useMaxWidth: true
+                },
+                securityLevel: 'loose'
+            });
+            
+            // Gerar código Mermaid mindmap com cores hierárquicas
+            const titulo = mapaData.tema_central?.titulo || 'Documento Jurídico';
+            const topicos = mapaData.topicos || [];
+            
+            // Centro com cor específica (azul escuro)
+            let mermaidCode = `mindmap\n  root)${titulo}(\n`;
+            
+            // Cores da paleta hierárquica conforme anexo
+            const coresTopicos = '#7ED321'; // Verde da paleta para todos os tópicos
+            const corSubtopicos = '#D0021B'; // Vermelho da paleta para subtópicos
+            const corPalavrasChave = '#50E3C2'; // Turquesa da paleta para palavras-chave
+            
+            // Adicionar tópicos (máximo 7) com cor verde uniforme
+            topicos.slice(0, 7).forEach((topico, index) => {
+                const tituloTopico = typeof topico === 'string' ? topico : topico.titulo;
+                if (tituloTopico) {
+                    mermaidCode += `    ${tituloTopico}\n`;
+                    
+                    // Adicionar subtópicos se existirem
+                    if (topico.subtopicos && Array.isArray(topico.subtopicos)) {
+                        topico.subtopicos.slice(0, 3).forEach(sub => {
+                            mermaidCode += `      ${sub}\n`;
+                        });
+                    }
+                    
+                    // Adicionar palavras-chave se existirem
+                    if (topico.palavras_chave && Array.isArray(topico.palavras_chave)) {
+                        topico.palavras_chave.slice(0, 2).forEach(palavra => {
+                            mermaidCode += `        ${palavra}\n`;
+                        });
+                    }
+                }
+            });
+            
+            console.log('🔄 Código Mermaid gerado:', mermaidCode);
+            console.log('📊 Dados do mapa completos:', JSON.stringify(mapaData, null, 2));
+            
+            // Debug: verificar se a sanitização está funcionando
+            console.log('🧹 Título sanitizado:', sanitizarTextoMermaid(mapaData.tema_central?.titulo));
+            if (mapaData.topicos && mapaData.topicos[0]) {
+                console.log('🧹 Primeiro tópico sanitizado:', sanitizarTextoMermaid(mapaData.topicos[0].titulo));
+                if (mapaData.topicos[0].subtopicos && mapaData.topicos[0].subtopicos[0]) {
+                    console.log('🧹 Primeiro subtópico sanitizado:', sanitizarTextoMermaid(mapaData.topicos[0].subtopicos[0]));
+                }
+            }
+            
+            // Store map data globally for legend updates
+            window.currentMapaData = mapaData;
+            
+            // Renderizar Mermaid mindmap
+            try {
+                const element = document.createElement('div');
+                element.className = 'mermaid-mindmap';
+                element.textContent = mermaidCode;
+                
+                container.innerHTML = '';
+                container.appendChild(element);
+                
+                mermaid.run({
+                    nodes: [element]
+                }).then(() => {
+                    console.log('✅ Mermaid mindmap renderizado com sucesso');
+                    
+                    // Aplicar estilos customizados e cores hierárquicas
+                    const svgElement = container.querySelector('svg');
+                    if (svgElement) {
+                        svgElement.style.width = '100%';
+                        svgElement.style.height = '1040px';
+                        svgElement.style.maxWidth = '100%';
+                        
+                        // Aplicar cores hierárquicas via CSS
+                        aplicarCoresHierarquicas(svgElement);
+                    }
+                    
+                    setTimeout(() => {
+                        // Skip premature legend initialization - will be handled by ensureLegendPresent
+                        console.log('🔍 DEBUG: Skipping legend initialization in setTimeout');
+                        
+                        showSuccess('Mapa mental com cores hierárquicas gerado!');
+                    }, 100);
+                }).catch(error => {
+                    console.error('❌ Erro ao renderizar Mermaid:', error);
+                    showError('Erro ao gerar mapa mental');
+                });
+                
+            } catch (error) {
+                console.error('❌ Erro no Mermaid:', error);
+                showError('Erro ao processar diagrama');
+            }
+            
+            return;
+            const uniqueId = 'mapa-' + Date.now();
+            
+            try {
+                container.innerHTML = '';
+                
+                // Método 1: Tentar renderização direta
+                mermaid.render(uniqueId, mermaidCode)
+                    .then(({svg}) => {
+                        container.innerHTML = svg;
+                        aplicarEstilosEAjustes();
+                    })
+                    .catch(error => {
+                        console.log('Método 1 falhou, tentando método 2:', error);
+                        
+                        // Método 2: Usar callback
+                        try {
+                            mermaid.render(uniqueId + '-2', mermaidCode, (svgCode) => {
+                                container.innerHTML = svgCode;
+                                aplicarEstilosEAjustes();
+                            });
+                        } catch (error2) {
+                            console.log('Método 2 falhou, tentando método 3:', error2);
+                            
+                            // Método 3: Usar mermaid.init
+                            container.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
+                            mermaid.init(undefined, container.querySelector('.mermaid'));
+                            
+                            setTimeout(() => {
+                                aplicarEstilosEAjustes();
+                            }, 500);
+                        }
+                    });
+                
+            } catch (error) {
+                console.error('Todos os métodos falharam:', error);
+                container.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Erro ao gerar mapa mental</div>';
+            }
+            
+            function aplicarEstilosEAjustes() {
+                setTimeout(() => {
+                    const svg = container.querySelector('svg');
+                    if (svg) {
+                        // Ajustar para tamanho completo
+                        svg.setAttribute('width', '100%');
+                        svg.setAttribute('height', '700px');
+                        svg.style.width = '100%';
+                        svg.style.height = '700px';
+                        svg.style.maxWidth = '100%';
+                        svg.style.display = 'block';
+                        
+                        // Aplicar linhas finas
+                        const lines = svg.querySelectorAll('line, path, .mindmap-edge, .edge-path');
+                        lines.forEach(line => {
+                            line.style.strokeWidth = '0.5px';
+                            line.setAttribute('stroke-width', '0.5');
+                        });
+                        
+                        console.log('✅ Mapa Mermaid renderizado com sucesso');
+                        
+                        // Force immediate legend creation - no timeout delays
+                        console.log('🔍 DEBUG: Creating legend IMMEDIATELY after map render');
+                        try {
+                            ensureLegendPresent();
+                        } catch (error) {
+                            console.error('❌ DEBUG: Error in immediate legend creation:', error);
+                        }
+                        
+                        // Backup with timeouts
+                        setTimeout(() => {
+                            console.log('⏰ DEBUG: 100ms backup attempt');
+                            try {
+                                ensureLegendPresent();
+                            } catch (error) {
+                                console.error('❌ DEBUG: Error in 100ms attempt:', error);
+                            }
+                        }, 100);
+                        
+                        setTimeout(() => {
+                            console.log('⏰ DEBUG: 1000ms final attempt');
+                            try {
+                                ensureLegendPresent();
+                            } catch (error) {
+                                console.error('❌ DEBUG: Error in 1000ms attempt:', error);
+                            }
+                        }, 1000);
+                        
+                        showSuccess('Mapa mental gerado com sucesso!');
+                    } else {
+                        console.error('SVG não encontrado após renderização');
+                    }
+                }, 200);
+            }
+        }
+        
+        // Aplicar cores hierárquicas conforme paleta do anexo
+        function aplicarCoresHierarquicas(svgElement) {
+            try {
+                // Cores da paleta hierárquica do anexo
+                const cores = {
+                    centro: '#4A90E2',      // Azul da paleta
+                    topicos: '#7ED321',     // Verde da paleta
+                    subtopicos: '#D0021B',  // Vermelho da paleta
+                    palavrasChave: '#50E3C2' // Turquesa da paleta
+                };
+                
+                // Selecionar nós do mindmap
+                const nodes = svgElement.querySelectorAll('.mindmap-node');
+                
+                nodes.forEach((node, index) => {
+                    const rect = node.querySelector('rect');
+                    const circle = node.querySelector('circle');
+                    const text = node.querySelector('text');
+                    
+                    if (index === 0) {
+                        // Nó central (root)
+                        if (rect) rect.setAttribute('fill', cores.centro);
+                        if (circle) circle.setAttribute('fill', cores.centro);
+                        if (text) text.setAttribute('fill', '#ffffff');
+                    } else {
+                        // Determinar nível baseado na estrutura
+                        const nivel = determinarNivelNo(node);
+                        
+                        switch (nivel) {
+                            case 1: // Tópicos principais - Verde uniforme
+                                if (rect) rect.setAttribute('fill', cores.topicos);
+                                if (circle) circle.setAttribute('fill', cores.topicos);
+                                if (text) text.setAttribute('fill', '#ffffff');
+                                break;
+                            case 2: // Subtópicos
+                                if (rect) rect.setAttribute('fill', cores.subtopicos);
+                                if (circle) circle.setAttribute('fill', cores.subtopicos);
+                                if (text) text.setAttribute('fill', '#ffffff');
+                                break;
+                            case 3: // Palavras-chave
+                                if (rect) rect.setAttribute('fill', cores.palavrasChave);
+                                if (circle) circle.setAttribute('fill', cores.palavrasChave);
+                                if (text) text.setAttribute('fill', '#ffffff');
+                                break;
+                        }
+                    }
+                });
+                
+                console.log('🎨 Cores hierárquicas aplicadas com sucesso');
+                
+            } catch (error) {
+                console.error('❌ Erro ao aplicar cores hierárquicas:', error);
+            }
+        }
+        
+        function determinarNivelNo(node) {
+            // Determinar nível baseado na classe ou posição
+            const classList = node.getAttribute('class') || '';
+            
+            if (classList.includes('level-0') || classList.includes('root')) {
+                return 0; // Centro
+            } else if (classList.includes('level-1')) {
+                return 1; // Tópicos
+            } else if (classList.includes('level-2')) {
+                return 2; // Subtópicos
+            } else if (classList.includes('level-3')) {
+                return 3; // Palavras-chave
+            }
+            
+            // Fallback: determinar por posição na DOM
+            const parentNodes = node.parentElement.querySelectorAll('.mindmap-node');
+            const index = Array.from(parentNodes).indexOf(node);
+            
+            if (index === 0) return 0;
+            if (index <= 7) return 1;
+            if (index <= 28) return 2;
+            return 3;
+        }
+        
+        // Auto-Hiding Legend with Hover Reveal
+        function initializeAutoHidingLegend() {
+            console.log('🔍 DEBUG: initializeAutoHidingLegend() called');
+            const trigger = document.getElementById('legend-trigger');
+            const legend = document.getElementById('hover-legend');
+            
+            console.log('🔍 DEBUG: Elements found - trigger:', trigger, 'legend:', legend);
+            
+            if (!trigger || !legend) {
+                console.error('❌ DEBUG: Legend elements not found during initialization');
+                console.log('🔍 DEBUG: Available elements with legend in ID:', 
+                    Array.from(document.querySelectorAll('[id*="legend"]')).map(el => el.id));
+                console.log('🔍 DEBUG: All elements in container:', 
+                    Array.from(document.getElementById('mapa-canvas')?.children || []).map(el => el.id || el.tagName));
+                return;
+            }
+            
+            let hoverTimeout;
+            
+            // Show legend on hover
+            trigger.addEventListener('mouseenter', () => {
+                clearTimeout(hoverTimeout);
+                legend.style.opacity = '1';
+                legend.style.visibility = 'visible';
+                legend.style.transform = 'translateY(0)';
+                legend.style.pointerEvents = 'auto';
+                
+                // Scale trigger slightly
+                trigger.style.transform = 'scale(1.1)';
+                trigger.style.background = 'rgba(53, 93, 105, 1)';
+            });
+            
+            // Hide legend when mouse leaves both elements
+            function hideLegend() {
+                hoverTimeout = setTimeout(() => {
+                    legend.style.opacity = '0';
+                    legend.style.visibility = 'hidden';
+                    legend.style.transform = 'translateY(10px)';
+                    legend.style.pointerEvents = 'none';
+                    
+                    // Reset trigger scale
+                    trigger.style.transform = 'scale(1)';
+                    trigger.style.background = 'rgba(53, 93, 105, 0.8)';
+                }, 300);
+            }
+            
+            trigger.addEventListener('mouseleave', hideLegend);
+            
+            // Keep legend visible when hovering over it
+            legend.addEventListener('mouseenter', () => {
+                clearTimeout(hoverTimeout);
+            });
+            
+            legend.addEventListener('mouseleave', hideLegend);
+            
+            console.log('✅ DEBUG: Auto-hiding legend initialized successfully');
+        }
+        
+        // Update legend content dynamically based on map data
+        function updateLegendContent(mapaData) {
+            const legendContent = document.getElementById('legend-content');
+            if (!legendContent || !mapaData) return;
+            
+            const temaCentral = mapaData?.tema_central?.titulo || 'Tema Principal';
+            const topicos = mapaData?.topicos || [];
+            
+            // Count subtopics
+            let totalSubtopicos = 0;
+            topicos.forEach(topico => {
+                if (topico.subtopicos && Array.isArray(topico.subtopicos)) {
+                    totalSubtopicos += topico.subtopicos.length;
+                }
+            });
+            
+            legendContent.innerHTML = `
+                <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                    <div style="
+                        width: 16px; height: 16px; 
+                        background: #4A90E2; 
+                        border-radius: 50%; 
+                        margin-right: 10px;
+                        border: 2px solid white;
+                    "></div>
+                    <span style="font-size: 12px;">Centro (1)</span>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                    <div style="
+                        width: 14px; height: 14px; 
+                        background: #7ED321; 
+                        border-radius: 4px; 
+                        margin-right: 10px;
+                        border: 1px solid white;
+                    "></div>
+                    <span style="font-size: 12px;">Tópicos (${topicos.length})</span>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                    <div style="
+                        width: 12px; height: 12px; 
+                        background: #D0021B; 
+                        border-radius: 3px; 
+                        margin-right: 10px;
+                        border: 1px solid white;
+                    "></div>
+                    <span style="font-size: 12px;">Subtópicos (${totalSubtopicos})</span>
+                </div>
+            `;
+            
+            console.log(`✅ Legend updated: ${topicos.length} tópicos, ${totalSubtopicos} subtópicos`);
+        }
+        
+        // Ensure legend elements are present in the container
+        function ensureLegendPresent() {
+            console.log('🔍 DEBUG: ensureLegendPresent() called');
+            const container = document.getElementById('mapa-canvas');
+            if (!container) {
+                console.error('❌ DEBUG: Container mapa-canvas not found');
+                return;
+            }
+            
+            console.log('✅ DEBUG: Container found:', container);
+            console.log('🔍 DEBUG: Container current position:', window.getComputedStyle(container).position);
+            
+            // Check if legend elements exist
+            let trigger = container.querySelector('#legend-trigger');
+            let legend = container.querySelector('#hover-legend');
+            
+            console.log('🔍 DEBUG: Existing elements - trigger:', trigger, 'legend:', legend);
+            console.log('🔍 DEBUG: Container position:', container.style.position);
+            console.log('🔍 DEBUG: Container children before creation:', Array.from(container.children).map(c => c.id || c.tagName));
+            
+            // If legend elements don't exist, create them
+            if (!trigger || !legend) {
+                console.log('🚀 DEBUG: Creating new legend elements');
+                // Remove any existing legend elements first
+                const existingTrigger = container.querySelector('#legend-trigger');
+                const existingLegend = container.querySelector('#hover-legend');
+                if (existingTrigger) existingTrigger.remove();
+                if (existingLegend) existingLegend.remove();
+                
+                // Create legend trigger
+                trigger = document.createElement('div');
+                trigger.id = 'legend-trigger';
+                trigger.style.cssText = `
+                    position: absolute;
+                    bottom: 20px;
+                    right: 20px;
+                    width: 40px;
+                    height: 40px;
+                    background: rgba(53, 93, 105, 0.8);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 1000;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                `;
+                trigger.innerHTML = '<i class="fas fa-info" style="color: white; font-size: 16px;"></i>';
+                
+                // Create hover legend
+                legend = document.createElement('div');
+                legend.id = 'hover-legend';
+                legend.style.cssText = `
+                    position: absolute;
+                    bottom: 70px;
+                    right: 20px;
+                    background: rgba(22, 33, 62, 0.95);
+                    border: 2px solid #357abd;
+                    border-radius: 12px;
+                    padding: 16px;
+                    color: white;
+                    font-family: 'Segoe UI', sans-serif;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                    backdrop-filter: blur(10px);
+                    z-index: 1001;
+                    min-width: 280px;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(10px);
+                    transition: all 0.3s ease;
+                    pointer-events: none;
+                `;
+                legend.innerHTML = `
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 12px;
+                        border-bottom: 1px solid #357abd;
+                        padding-bottom: 8px;
+                    ">
+                        <i class="fas fa-sitemap" style="margin-right: 8px; color: #50E3C2;"></i>
+                        <h4 style="margin: 0; font-size: 14px; font-weight: 600;">
+                            Estrutura do Mapa Mental
+                        </h4>
+                    </div>
+                    <div id="legend-content">
+                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                            <div style="
+                                width: 16px; height: 16px; 
+                                background: #4A90E2; 
+                                border-radius: 50%; 
+                                margin-right: 10px;
+                                border: 2px solid white;
+                            "></div>
+                            <span style="font-size: 12px;">Centro (1)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                            <div style="
+                                width: 14px; height: 14px; 
+                                background: #7ED321; 
+                                border-radius: 4px; 
+                                margin-right: 10px;
+                                border: 1px solid white;
+                            "></div>
+                            <span style="font-size: 12px;">Tópicos Principais</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                            <div style="
+                                width: 12px; height: 12px; 
+                                background: #D0021B; 
+                                border-radius: 3px; 
+                                margin-right: 10px;
+                                border: 1px solid white;
+                            "></div>
+                            <span style="font-size: 12px;">Subtópicos</span>
+                        </div>
+                    </div>
+                    <div style="
+                        margin-top: 12px;
+                        padding-top: 8px;
+                        border-top: 1px solid #357abd;
+                        font-size: 10px;
+                        color: #b8c5d1;
+                        text-align: center;
+                    ">
+                        Passe o mouse para visualizar
+                    </div>
+                `;
+                
+                // Add elements to container
+                container.appendChild(trigger);
+                container.appendChild(legend);
+                
+                console.log('✅ DEBUG: Legend elements added to container');
+                console.log('🔍 DEBUG: Container children count:', container.children.length);
+                console.log('🔍 DEBUG: Container children after creation:', Array.from(container.children).map(c => c.id || c.tagName));
+                console.log('🔍 DEBUG: Trigger element styles:', trigger.style.cssText);
+                console.log('🔍 DEBUG: Legend element styles:', legend.style.cssText);
+                
+                // Force visibility check and ensure container position is relative
+                if (container) {
+                    container.style.position = 'relative';
+                    container.style.overflow = 'visible';
+                    console.log('🔍 DEBUG: Set container position to relative and overflow visible');
+                }
+                
+                setTimeout(() => {
+                    const checkTrigger = document.getElementById('legend-trigger');
+                    const checkLegend = document.getElementById('hover-legend');
+                    console.log('🔍 DEBUG: Post-creation check - trigger visible:', checkTrigger?.offsetParent !== null);
+                    console.log('🔍 DEBUG: Post-creation check - legend visible:', checkLegend?.offsetParent !== null);
+                    console.log('🔍 DEBUG: Trigger computed style:', checkTrigger ? window.getComputedStyle(checkTrigger).display : 'not found');
+                    
+                    if (checkTrigger) {
+                        checkTrigger.style.zIndex = '9999';
+                        console.log('🔍 DEBUG: Forced trigger z-index to 9999');
+                    }
+                }, 100);
+            } else {
+                console.log('✅ DEBUG: Legend elements already exist');
+            }
+            
+            // Initialize hover functionality
+            console.log('🔍 DEBUG: Initializing hover functionality...');
+            setTimeout(() => {
+                console.log('🔍 DEBUG: Delayed initialization of hover functionality');
+                initializeAutoHidingLegend();
+            }, 100);
+            
+            // Update content if map data is available
+            if (window.currentMapaData) {
+                console.log('🔍 DEBUG: Updating legend content with map data');
+                updateLegendContent(window.currentMapaData);
+            } else {
+                console.log('⚠️ DEBUG: No map data available for legend update');
+            }
+        }
+        
+        function quebrarTextoCustom(texto, maxChars) {
+            if (texto.length <= maxChars) return [texto];
+            
+            const palavras = texto.split(' ');
+            const linhas = [];
+            let linhaAtual = '';
+            
+            palavras.forEach(palavra => {
+                if ((linhaAtual + palavra).length <= maxChars) {
+                    linhaAtual += (linhaAtual ? ' ' : '') + palavra;
+                } else {
+                    if (linhaAtual) linhas.push(linhaAtual);
+                    linhaAtual = palavra;
+                }
+            });
+            
+            if (linhaAtual) linhas.push(linhaAtual);
+            return linhas;
+        }
+
+        function sanitizarTextoMermaid(texto) {
+            if (!texto) return '';
+            return texto
+                .replace(/\{\{.*?\}\}/g, '') // Remove {{ templates }}
+                .replace(/[(){}[\]"'`]/g, '') // Remove caracteres especiais
+                .replace(/[:.]/g, '') // Remove dois pontos e pontos
+                .replace(/[^\w\s]/g, '') // Remove caracteres especiais, mantém palavras e espaços
+                .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
+                .trim()
+                .substring(0, 25); // Limita tamanho
+        }
+
+        function gerarCodigoMermaid(mapaData) {
+            // Estrutura simplificada para mapa mental radial
+            const temaCentral = mapaData.tema_central || {};
+            const titulo = sanitizarTextoMermaid(temaCentral.titulo || 'Documento Jurídico');
+            const topicos = mapaData.topicos || [];
+            
+            console.log('🔍 Dados recebidos:', mapaData);
+            
+            // Mindmap radial hierárquico com estrutura simplificada
+            let mermaidCode = `mindmap\n  root)${titulo}(\n`;
+            
+            // Processar tópicos principais - máximo 7
+            topicos.slice(0, 7).forEach((topico, index) => {
+                const tituloTopico = topico.titulo || '';
+                
+                if (tituloTopico) {
+                    // Sanitizar título
+                    const tituloLimpo = sanitizarTextoMermaid(tituloTopico);
+                    
+                    // Estrutura simples sem formas especiais
+                    mermaidCode += `    ${tituloLimpo}\n`;
+                    
+                    // Processar subtópicos de forma mais simples
+                    if (topico.subtopicos && Array.isArray(topico.subtopicos)) {
+                        topico.subtopicos.slice(0, 2).forEach((subtopico, subIndex) => {
+                            if (typeof subtopico === 'string' && subtopico.trim()) {
+                                const subtopicoLimpo = sanitizarTextoMermaid(subtopico);
+                                if (subtopicoLimpo.length > 3) { // Só adiciona se tiver conteúdo
+                                    mermaidCode += `      ${subtopicoLimpo}\n`;
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+            
+            // Debug: verificar se a sanitização está funcionando
+            console.log('🧹 Título sanitizado:', sanitizarTextoMermaid(temaCentral.titulo));
+            console.log('✅ Código Mermaid gerado:', mermaidCode);
+            return mermaidCode;
+        }
+
+        function renderizarMapaSVGSemSobreposicao(mapaData) {
+            // Delegar para a função principal limpa
+            renderizarMapaMental(mapaData);
+            
+            const container = document.getElementById('mapa-canvas');
+            const titulo = 'Legítima Defesa e Armas de Fogo no Tribunal do Júri';
+            
+            // Dimensões amplas para evitar sobreposição
+            const svgWidth = 1400;
+            const svgHeight = 1170;
+            const centerX = svgWidth / 2;
+            const centerY = svgHeight / 2;
+            
+            let svg = `
+                <svg width="100%" height="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#2c3e50;stop-opacity:1" />
+                        </radialGradient>
+                        <linearGradient id="topicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="subtopicGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#e74c3c;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#c0392b;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="keywordGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#1abc9c;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#16a085;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+            `;
+            
+            // FORÇAR TEXTO BRANCO NO NÓ CENTRAL
+            svg += `
+                <circle cx="${centerX}" cy="${centerY}" r="100" fill="url(#centerGradient)" stroke="#ecf0f1" stroke-width="0.3"/>
+                <text x="${centerX}" y="${centerY-20}" text-anchor="middle" dominant-baseline="central" 
+                      font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF" stroke="none">
+                    Legítima Defesa e
+                </text>
+                <text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="central" 
+                      font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF" stroke="none">
+                    Armas de Fogo no
+                </text>
+                <text x="${centerX}" y="${centerY+20}" text-anchor="middle" dominant-baseline="central" 
+                      font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF" stroke="none">
+                    Tribunal do Júri
+                </text>
+            `;
+            
+            // Tópicos principais (exatamente 7)
+            const topicos = ['Conceito Legal', 'Requisitos', 'Excludentes', 'Jurisprudência', 'Legislação', 'Provas', 'Defesa'];
+            const raioTopicos = 320;
+            
+            for (let i = 0; i < 7; i++) {
+                const angulo = (i * 2 * Math.PI) / 7 - Math.PI / 2;
+                const x = centerX + raioTopicos * Math.cos(angulo);
+                const y = centerY + raioTopicos * Math.sin(angulo);
+                
+                const tituloTopico = topicos[i];
+                
+                // Linha de conexão MUITO FINA - 0.5px
+                svg += `<line x1="${centerX}" y1="${centerY}" x2="${x}" y2="${y}" stroke="#95a5a6" stroke-width="0.5" opacity="0.8"/>`;
+                
+                // FORÇAR TEXTO BRANCO NOS TÓPICOS
+                svg += `
+                    <circle cx="${x}" cy="${y}" r="60" fill="url(#topicGradient)" stroke="#ecf0f1" stroke-width="0.3"/>
+                    <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" 
+                          font-family="Arial, sans-serif" font-size="18" font-weight="600" fill="#FFFFFF" stroke="none">
+                        ${tituloTopico}
+                    </text>
+                `;
+                
+                // 3 subtópicos por tópico (total 21)
+                const raioSubtopicos = 120;
+                
+                for (let j = 0; j < 3; j++) {
+                    const anguloSub = angulo + (j - 1) * (Math.PI / 10);
+                    const subX = x + raioSubtopicos * Math.cos(anguloSub);
+                    const subY = y + raioSubtopicos * Math.sin(anguloSub);
+                    
+                    const tituloSub = `${tituloTopico.substring(0,4)} ${j + 1}`;
+                    
+                    // Linha de conexão MUITO FINA - 0.3px
+                    svg += `<line x1="${x}" y1="${y}" x2="${subX}" y2="${subY}" stroke="#bdc3c7" stroke-width="0.3" opacity="0.6"/>`;
+                    
+                    // FORÇAR TEXTO BRANCO NOS SUBTÓPICOS
+                    svg += `
+                        <circle cx="${subX}" cy="${subY}" r="28" fill="#95a5a6" stroke="#ecf0f1" stroke-width="0.3"/>
+                        <text x="${subX}" y="${subY}" text-anchor="middle" dominant-baseline="central" 
+                              font-family="Arial, sans-serif" font-size="12" fill="#FFFFFF" stroke="none">
+                            ${tituloSub}
+                        </text>
+                    `;
+                }
+                
+                // 2 palavras-chave por tópico (total 14)
+                for (let k = 0; k < 2; k++) {
+                    const anguloPalavra = angulo + (k - 0.5) * (Math.PI / 15);
+                    const palavraX = x + 180 * Math.cos(anguloPalavra);
+                    const palavraY = y + 180 * Math.sin(anguloPalavra);
+                    
+                    // FORÇAR TEXTO BRANCO NAS PALAVRAS-CHAVE
+                    svg += `
+                        <rect x="${palavraX-25}" y="${palavraY-10}" width="50" height="20" fill="#e74c3c" stroke="#ecf0f1" stroke-width="0.2" rx="4"/>
+                        <text x="${palavraX}" y="${palavraY}" text-anchor="middle" dominant-baseline="central" 
+                              font-family="Arial, sans-serif" font-size="10" fill="#FFFFFF" stroke="none">
+                            Palavra ${k + 1}
+                        </text>
+                    `;
+                }
+            }
+            
+            svg += '</svg>';
+            
+            container.innerHTML = svg;
+            
+            // GARANTIR LEGENDA VISÍVEL - MÚLTIPLAS TENTATIVAS
+            // Chamadas de legenda removidas
+            
+            showZoomControls();
+            showSuccess('✅ Mapa gerado com texto branco e legenda fixa');
+        }
+
+        function renderizarMapaSVG(mapaData) {
+            // Delegar para a função principal limpa
+            renderizarMapaMental(mapaData);
+        }
+        
+        function renderizarMapa(mapaData) {
+            // Delegar para a função principal limpa
+            renderizarMapaMental(mapaData);
+            const temaCentral = mapaData.tema_central || mapaData.nucleo_central || {};
+            const titulo = temaCentral.titulo || temaCentral.tema_principal || 'Tema Jurídico';
+            const topicos = mapaData.topicos || mapaData.ramos_principais || [];
+            
+            let svgContent = `
+                <svg width="100%" height="700" viewBox="0 0 1200 700" style="background: transparent; cursor: grab;" 
+                     onmousedown="startDrag(event)" onmousemove="drag(event)" onmouseup="endDrag()" onmouseleave="endDrag()">
+                    <!-- Tema central -->
+                    <circle cx="600" cy="350" r="80" fill="#2c3e50" stroke="#ecf0f1" stroke-width="0.3"/>
+                    <text x="600" y="340" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial, sans-serif">
+                        <tspan x="600" dy="0">${titulo.length > 25 ? titulo.substring(0, 25) : titulo}</tspan>
+                        <tspan x="600" dy="15">${titulo.length > 25 ? '...' : ''}</tspan>
+                    </text>`;
+            
+            // Renderizar tópicos (exatamente 7) com estilo limpo
+            const numTopicos = Math.min(topicos.length, 7);
+            for (let i = 0; i < numTopicos; i++) {
+                const topico = topicos[i];
+                const tituloTopico = topico.titulo || topico;
+                const angle = (i * 2 * Math.PI) / 7;
+                const x = 600 + 180 * Math.cos(angle);
+                const y = 350 + 180 * Math.sin(angle);
+                
+                svgContent += `
+                    <!-- Linha conectora MUITO fina -->
+                    <line x1="600" y1="350" x2="${x}" y2="${y}" stroke="#95a5a6" stroke-width="0.5"/>
+                    <!-- Nó do tópico -->
+                    <ellipse cx="${x}" cy="${y}" rx="60" ry="25" fill="#3498db" stroke="#ecf0f1" stroke-width="0.3"/>
+                    <text x="${x}" y="${y}" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="normal" font-family="Arial, sans-serif">
+                        ${tituloTopico.length > 10 ? tituloTopico.substring(0, 10) + '...' : tituloTopico}
+                    </text>`;
+                
+                // Adicionar subtópicos
+                if (topico.subtopicos && Array.isArray(topico.subtopicos)) {
+                    topico.subtopicos.slice(0, 3).forEach((subtopico, subIndex) => {
+                        const subAngle = angle + (subIndex - 1) * 0.4;
+                        const subX = x + 70 * Math.cos(subAngle);
+                        const subY = y + 70 * Math.sin(subAngle);
+                        
+                        svgContent += `
+                            <!-- Linha para subtópico MUITO fina -->
+                            <line x1="${x}" y1="${y}" x2="${subX}" y2="${subY}" stroke="#bdc3c7" stroke-width="0.3"/>
+                            <!-- Subtópico -->
+                            <circle cx="${subX}" cy="${subY}" r="18" fill="#95a5a6" stroke="#ecf0f1" stroke-width="0.3"/>
+                            <text x="${subX}" y="${subY}" text-anchor="middle" fill="#ffffff" font-size="8" font-family="Arial, sans-serif">
+                                ${subtopico.length > 6 ? subtopico.substring(0, 6) + '...' : subtopico}
+                            </text>`;
+                    });
+                }
+                
+                // Adicionar palavras-chave conectadas após subtópicos
+                if (topico.palavras_chave && Array.isArray(topico.palavras_chave)) {
+                    topico.palavras_chave.slice(0, 2).forEach((palavra, palavraIndex) => {
+                        const palavraAngle = angle + (palavraIndex - 0.5) * 0.6;
+                        const palavraX = x + 110 * Math.cos(palavraAngle);
+                        const palavraY = y + 110 * Math.sin(palavraAngle);
+                        
+                        svgContent += `
+                            <!-- Linha para palavra-chave MUITO fina -->
+                            <line x1="${x}" y1="${y}" x2="${palavraX}" y2="${palavraY}" stroke="#e74c3c" stroke-width="0.2" stroke-dasharray="1,1"/>
+                            <!-- Palavra-chave -->
+                            <rect x="${palavraX - 15}" y="${palavraY - 8}" width="30" height="16" rx="8" fill="#e74c3c" stroke="#ecf0f1" stroke-width="0.2"/>
+                            <text x="${palavraX}" y="${palavraY + 2}" text-anchor="middle" fill="#ffffff" font-size="7" font-family="Arial, sans-serif">
+                                ${palavra.length > 8 ? palavra.substring(0, 8) + '...' : palavra}
+                            </text>`;
+                    });
+                }
+            }
+            
+            // Título do mapa no topo
+            const areaJuridica = mapaData.tema_central?.area_juridica || mapaData.metadados?.area_juridica || 'Jurídico';
+            svgContent += `
+                <!-- Título e área jurídica -->
+                <text x="600" y="40" text-anchor="middle" fill="#2c3e50" font-size="16" font-weight="bold" font-family="Arial, sans-serif">
+                    ${titulo}
+                </text>
+                <text x="600" y="60" text-anchor="middle" fill="#7f8c8d" font-size="11" font-family="Arial, sans-serif">
+                    Área: ${areaJuridica} • Estrutura: 1+7+21+14 elementos
+                </text>`;
+            
+            svgContent += `</svg>`;
+            container.innerHTML = svgContent;
+            
+            showZoomControls();
+            showLegenda();
+            showSuccess(`Mapa mental gerado: ${titulo}`);
+        }
+
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('processing-status').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('processing-status').style.display = 'none';
+        }
+
+        function updateLoadingStatus(message, progress) {
+            document.getElementById('loading-subtitle').textContent = message;
+            document.getElementById('status-text').textContent = message;
+            document.getElementById('loading-progress').style.width = progress + '%';
+            document.getElementById('progress-bar').style.width = progress + '%';
+        }
+
+        function showZoomControls() {
+            const mapCard = document.querySelector('.col-lg-8 .card');
+            const controls = document.createElement('div');
+            controls.id = 'zoom-controls-mini';
+            controls.className = 'position-absolute';
+            controls.style.cssText = `
+                top: 15px;
+                right: 15px;
+                z-index: 1001;
+                background: rgba(52, 73, 94, 0.9);
+                border-radius: 20px;
+                padding: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                display: flex;
+                gap: 2px;
+                backdrop-filter: blur(10px);
+            `;
+            
+            const zoomIn = document.createElement('button');
+            zoomIn.innerHTML = '<i class="fas fa-plus"></i>';
+            zoomIn.className = 'btn btn-sm';
+            zoomIn.style.cssText = `
+                width: 24px;
+                height: 24px;
+                border: none;
+                background: transparent;
+                color: white;
+                font-size: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+            `;
+            zoomIn.onmouseover = () => zoomIn.style.background = 'rgba(255,255,255,0.2)';
+            zoomIn.onmouseout = () => zoomIn.style.background = 'transparent';
+            zoomIn.onclick = () => {
+                AppState.zoomLevel = Math.min(AppState.zoomLevel * 1.2, 3);
+                applyZoom();
+            };
+            
+            const zoomOut = document.createElement('button');
+            zoomOut.innerHTML = '<i class="fas fa-minus"></i>';
+            zoomOut.className = 'btn btn-sm';
+            zoomOut.style.cssText = `
+                width: 24px;
+                height: 24px;
+                border: none;
+                background: transparent;
+                color: white;
+                font-size: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+            `;
+            zoomOut.onmouseover = () => zoomOut.style.background = 'rgba(255,255,255,0.2)';
+            zoomOut.onmouseout = () => zoomOut.style.background = 'transparent';
+            zoomOut.onclick = () => {
+                AppState.zoomLevel = Math.max(AppState.zoomLevel / 1.2, 0.3);
+                applyZoom();
+            };
+            
+            const resetZoom = document.createElement('button');
+            resetZoom.innerHTML = '<i class="fas fa-expand-arrows-alt"></i>';
+            resetZoom.className = 'btn btn-sm';
+            resetZoom.style.cssText = `
+                width: 24px;
+                height: 24px;
+                border: none;
+                background: transparent;
+                color: white;
+                font-size: 9px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s;
+            `;
+            resetZoom.onmouseover = () => resetZoom.style.background = 'rgba(255,255,255,0.2)';
+            resetZoom.onmouseout = () => resetZoom.style.background = 'transparent';
+            resetZoom.onclick = () => {
+                AppState.zoomLevel = 1;
+                applyZoom();
+            };
+            
+            controls.appendChild(zoomIn);
+            controls.appendChild(zoomOut);
+            controls.appendChild(resetZoom);
+            
+            // Remove controles existentes
+            const existing = document.getElementById('zoom-controls-mini');
+            if (existing) existing.remove();
+            
+            mapCard.appendChild(controls);
+        }
+
+        // Função de legenda removida
+
+        // Funções de legenda removidas
+
+        function showLegenda() {
+            // Função removida
+        }
+
+        function hideLegenda() {
+            document.getElementById('legenda-mapa').style.display = 'none';
+        }
+
+        // Funções de zoom
+        function zoomIn() {
+            if (currentZoom < maxZoom) {
+                currentZoom += 0.2;
+                updateMapTransform();
+            }
+        }
+
+        function zoomOut() {
+            if (currentZoom > minZoom) {
+                currentZoom -= 0.2;
+                updateMapTransform();
+            }
+        }
+
+        function updateMapTransform() {
+            const svg = document.querySelector('#mapa-canvas svg');
+            if (svg) {
+                svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+                svg.style.transformOrigin = 'center center';
+            }
+        }
+
+        // Funções para arrastar o mapa
+        function startDrag(event) {
+            isDragging = true;
+            startX = event.clientX - translateX;
+            startY = event.clientY - translateY;
+            
+            const svg = document.querySelector('#mapa-canvas svg');
+            if (svg) {
+                svg.style.cursor = 'grabbing';
+            }
+            
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            if (!isDragging) return;
+            
+            translateX = event.clientX - startX;
+            translateY = event.clientY - startY;
+            
+            updateMapTransform();
+            event.preventDefault();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            
+            const svg = document.querySelector('#mapa-canvas svg');
+            if (svg) {
+                svg.style.cursor = 'grab';
+            }
+        }
+
+        // Reset posição e zoom do mapa
+        function resetMapPosition() {
+            translateX = 0;
+            translateY = 0;
+            currentZoom = 1;
+            updateMapTransform();
+        }
+
+        function showExportOptions() {
+            document.getElementById('export-section').style.display = 'block';
+        }
+
+        function showError(message) {
+            const container = document.getElementById('mapa-canvas');
+            container.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                        <h5 class="text-danger">Erro no Processamento</h5>
+                        <p class="text-muted">${message}</p>
+                        <button class="btn btn-primary" onclick="location.reload()">Tentar Novamente</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showSuccess(message) {
+            // Criar toast de sucesso
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; background-color: #3291d1 !important; border-color: #3291d1 !important;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Remover após 5 segundos
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // Funções de zoom
+        function zoomIn() {
+            AppState.zoomLevel = Math.min(AppState.zoomLevel * 1.2, 3);
+            applyZoom();
+        }
+
+        function zoomOut() {
+            AppState.zoomLevel = Math.max(AppState.zoomLevel / 1.2, 0.3);
+            applyZoom();
+        }
+
+        function resetZoom() {
+            AppState.zoomLevel = 1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            const canvas = document.getElementById('mapa-canvas');
+            canvas.style.transform = `scale(${AppState.zoomLevel})`;
+            canvas.style.transformOrigin = 'center center';
+        }
+
+        // Funções de exportação
+        async function exportarMapa(formato) {
+            if (!AppState.currentMap) {
+                showError('Nenhum mapa disponível para exportação');
+                return;
+            }
+
+            try {
+                const mapId = Date.now(); // ID temporário
+                
+                if (formato === 'json') {
+                    // Download direto do JSON
+                    const dataStr = JSON.stringify(AppState.currentMap, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `mapa_mental_${mapId}.json`;
+                    link.click();
+                    
+                    URL.revokeObjectURL(url);
+                    showSuccess('Mapa exportado em JSON');
+                    return;
+                }
+                
+                if (formato === 'html') {
+                    // Exportar HTML completo
+                    const htmlContent = gerarHTMLCompleto();
+                    const dataBlob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = URL.createObjectURL(dataBlob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `mapa_mental_${mapId}.html`;
+                    link.click();
+                    
+                    URL.revokeObjectURL(url);
+                    showSuccess('Mapa exportado em HTML');
+                    return;
+                }
+                
+                if (formato === 'png') {
+                    // Exportar PNG usando canvas
+                    await exportarPNG(mapId);
+                    return;
+                }
+                
+                if (formato === 'pdf') {
+                    // Exportar PDF usando jsPDF
+                    await exportarPDF(mapId);
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('Erro na exportação:', error);
+                showError('Erro ao exportar: ' + error.message);
+            }
+        }
+
+        function gerarHTMLCompleto() {
+            const nucleoCentral = AppState.currentMap.nucleo_central || {};
+            const titulo = nucleoCentral.tema_principal || nucleoCentral.titulo || 'Mapa Mental Jurídico';
+            const canvasContent = document.getElementById('mapa-canvas').innerHTML;
+            
+            return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${titulo} - Mapa Mental</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(22, 33, 62, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #4a90e2;
+        }
+        .mapa-container {
+            width: 100%;
+            min-height: 600px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            overflow: auto;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${titulo}</h1>
+        <div class="mapa-container">
+            ${canvasContent}
+        </div>
+        <footer style="text-align: center; margin-top: 20px; color: #b8c5d1;">
+            <small>Gerado pelo Legal Design Pro V2 - ${new Date().toLocaleString('pt-BR')}</small>
+        </footer>
+    </div>
+</body>
+</html>`;
+        }
+
+        function exportarPNG() {
+            try {
+                const svgElement = document.querySelector('#mapa-canvas svg');
+                
+                if (!svgElement) {
+                    showError('Nenhum mapa mental encontrado para exportar. Gere um mapa primeiro.');
+                    return;
+                }
+                
+                console.log('🖼️ Iniciando exportação PNG...');
+                
+                // Clonar SVG para não afetar o original
+                const svgClone = svgElement.cloneNode(true);
+                svgClone.setAttribute('width', '1400');
+                svgClone.setAttribute('height', '900');
+                
+                // Serializar SVG
+                const svgData = new XMLSerializer().serializeToString(svgClone);
+                const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                
+                // Criar canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1400;
+                canvas.height = 900;
+                
+                // Fundo branco
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Carregar e desenhar SVG
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Converter para blob e fazer download
+                        canvas.toBlob(function(blob) {
+                            if (blob) {
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `mapa_mental_legitima_defesa_${new Date().getTime()}.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                                showSuccess('✅ PNG exportado com sucesso!');
+                            } else {
+                                showError('Erro ao gerar arquivo PNG');
+                            }
+                        }, 'image/png', 0.95);
+                        
+                    } catch (error) {
+                        console.error('Erro no canvas:', error);
+                        showError('Erro ao processar imagem: ' + error.message);
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.error('Erro ao carregar SVG como imagem');
+                    showError('Erro ao carregar SVG. Tente regenerar o mapa.');
+                };
+                
+                img.src = svgDataUrl;
+                
+            } catch (error) {
+                console.error('Erro geral na exportação PNG:', error);
+                showError('Erro na exportação PNG: ' + error.message);
+            }
+        }
+
+        function exportarPDF() {
+            try {
+                const svgElement = document.querySelector('#mapa-canvas svg');
+                
+                if (!svgElement) {
+                    showError('Nenhum mapa mental encontrado para exportar. Gere um mapa primeiro.');
+                    return;
+                }
+                
+                // Usar window.print() como fallback se jsPDF não estiver disponível
+                if (typeof jsPDF === 'undefined') {
+                    console.log('📄 jsPDF não disponível, usando window.print...');
+                    
+                    // Criar nova janela com o SVG para impressão
+                    const printWindow = window.open('', '_blank');
+                    const svgData = new XMLSerializer().serializeToString(svgElement);
+                    
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Mapa Mental - Legítima Defesa</title>
+                            <style>
+                                body { margin: 0; padding: 20px; }
+                                svg { width: 100%; height: auto; }
+                                @media print {
+                                    body { margin: 0; }
+                                    svg { width: 100vw; height: 100vh; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${svgData}
+                        </body>
+                        </html>
+                    `);
+                    
+                    printWindow.document.close();
+                    setTimeout(() => {
+                        printWindow.print();
+                        showSuccess('✅ Janela de impressão aberta! Salve como PDF.');
+                    }, 500);
+                    return;
+                }
+                
+                console.log('📄 Iniciando exportação PDF com jsPDF...');
+                
+                // Usar jsPDF se disponível
+                const svgClone = svgElement.cloneNode(true);
+                svgClone.setAttribute('width', '1400');
+                svgClone.setAttribute('height', '900');
+                
+                const svgData = new XMLSerializer().serializeToString(svgClone);
+                const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1400;
+                canvas.height = 900;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        ctx.drawImage(img, 0, 0);
+                        
+                        const pdf = new jsPDF('l', 'mm', 'a4');
+                        const imgData = canvas.toDataURL('image/png', 0.95);
+                        
+                        // A4 paisagem: 297mm x 210mm
+                        pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+                        pdf.save(`mapa_mental_legitima_defesa_${new Date().getTime()}.pdf`);
+                        
+                        showSuccess('✅ PDF exportado com sucesso!');
+                        
+                    } catch (error) {
+                        console.error('Erro no PDF:', error);
+                        showError('Erro ao gerar PDF: ' + error.message);
+                    }
+                };
+                
+                img.onerror = function() {
+                    showError('Erro ao carregar SVG para PDF. Tente regenerar o mapa.');
+                };
+                
+                img.src = svgDataUrl;
+                
+            } catch (error) {
+                console.error('Erro geral na exportação PDF:', error);
+                showError('Erro na exportação PDF: ' + error.message);
+            }
+        }
+
+        async function loadExternalScript(src, globalVarName) {
+            return new Promise((resolve, reject) => {
+                if (window[globalVarName]) {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Falha ao carregar ${src}`));
+                document.head.appendChild(script);
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            // Criar ou obter container de toasts
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+
+            // Criar toast
+            const toast = document.createElement('div');
+            const colorClass = type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info';
+            toast.className = `alert alert-${colorClass} alert-dismissible fade show`;
+            
+            let customStyles = `
+                margin-bottom: 10px;
+                min-width: 300px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            // Aplicar cor personalizada para success
+            if (type === 'success') {
+                customStyles += `
+                    background-color: #3291d1 !important;
+                    border-color: #3291d1 !important;
+                `;
+            }
+            
+            toast.style.cssText = customStyles;
+            
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+    <title>{% if fluxo and fluxo.id %}Editar {{ fluxo.nome }}{% else %}Novo Fluxo{% endif %} | Editor de Fluxos</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: #0a0e1a;
+            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: auto;
+        }
+        
+        .editor-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            background: #323749;
+            border-bottom: 1px solid #4a5568;
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .flow-info {
+            background: #1a1d29;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0;
+        }
+        
+        .flow-title {
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .flow-meta {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background-color: #22c55e20;
+            color: #22c55e;
+            border: 1px solid #22c55e40;
+        }
+        
+        .status-inactive {
+            background-color: #ef444420;
+            color: #ef4444;
+            border: 1px solid #ef444440;
+        }
+        
+        .priority-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .priority-alta {
+            background-color: #f59e0b20;
+            color: #f59e0b;
+            border: 1px solid #f59e0b40;
+        }
+        
+        .priority-normal {
+            background-color: #3b82f620;
+            color: #3b82f6;
+            border: 1px solid #3b82f640;
+        }
+        
+        .priority-baixa {
+            background-color: #6b728020;
+            color: #6b7280;
+            border: 1px solid #6b728040;
+        }
+        
+        /* Sistema de Notificações Modernas */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+            pointer-events: none;
+        }
+        
+        .notification {
+            background: rgba(20, 25, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            pointer-events: auto;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-left: 4px solid #22c55e;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            border-left-color: #22c55e;
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .notification.info {
+            border-left-color: #3b82f6;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .notification-icon {
+            font-size: 18px;
+        }
+        
+        .notification.success .notification-icon {
+            color: #22c55e;
+        }
+        
+        .notification.error .notification-icon {
+            color: #ef4444;
+        }
+        
+        .notification.warning .notification-icon {
+            color: #f59e0b;
+        }
+        
+        .notification.info .notification-icon {
+            color: #3b82f6;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .notification-message {
+            font-size: 13px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .notification-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 16px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        /* Modal Moderno para Confirmações */
+        .modern-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modern-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: #1a1d29;
+            border: 1px solid #4a5568;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9) translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .modern-modal.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .modal-icon.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        
+        .modal-title {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-message {
+            color: #a0aec0;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .modal-btn.secondary {
+            background: #4a5568;
+            color: #ffffff;
+        }
+        
+        .modal-btn.secondary:hover {
+            background: #5a6578;
+        }
+        
+        .modal-btn.primary {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+        
+        .modal-btn.primary:hover {
+            background: #2563eb;
+        }
+        
+        .modal-btn.danger {
+            background: #ef4444;
+            color: #ffffff;
+        }
+        
+        .modal-btn.danger:hover {
+            background: #dc2626;
+        }
+        
+        .home-btn {
+            background-color: #47b6b5;
+            border-color: #47b6b5;
+            color: #ffffff;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .home-btn:hover {
+            background-color: #3a9695;
+            border-color: #3a9695;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+        
+        .editor-title {
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .editor-main {
+            display: flex;
+            flex: 1;
+            overflow: auto;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .sidebar-left {
+            width: 280px;
+            background: #323749;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-right {
+            width: 280px;
+            background: #323749;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: #323749;
+            border-right: 1px solid #4a5568;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .section-title {
+            color: #47b6b5;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .form-control {
+            background: #404556;
+            border: 1px solid #4a5568;
+            color: #ffffff;
+            border-radius: 8px;
+        }
+        
+        .form-control:focus {
+            background: #404556;
+            border-color: #47b6b5;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(71, 182, 181, 0.1);
+        }
+        
+        .component-category {
+            margin-bottom: 2rem;
+        }
+        
+        .category-header {
+            color: #47b6b5;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #47b6b5;
+            text-transform: uppercase;
+        }
+        
+        .component-item {
+            background: #404556;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: grab;
+            transition: all 0.3s ease;
+            user-select: none;
+            position: relative;
+        }
+        
+        .component-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+        }
+        
+        .component-name {
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .component-desc {
+            color: #a0a0a0;
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        /* Cores específicas por tipo */
+        .component-item[data-type="extrator"] {
+            border-left: 4px solid #1f5981;
+            background: linear-gradient(135deg, rgba(31, 89, 129, 0.15), #404556);
+        }
+        
+        .component-item[data-type="classificador"] {
+            border-left: 4px solid #ffc107;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), #404556);
+        }
+        
+        .component-item[data-type="analisador"] {
+            border-left: 4px solid #17a2b8;
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.15), #404556);
+        }
+        
+        .component-item[data-type="especialista"] {
+            border-left: 4px solid #dc3545;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.15), #404556);
+        }
+        
+        .component-item[data-type="transformador"] {
+            border-left: 4px solid #fd7e14;
+            background: linear-gradient(135deg, rgba(253, 126, 20, 0.15), #404556);
+        }
+        
+        .component-item[data-type="gerador"] {
+            border-left: 4px solid #20c997;
+            background: linear-gradient(135deg, rgba(32, 201, 151, 0.15), #404556);
+        }
+        
+        .component-item[data-type="agregador"] {
+            border-left: 4px solid #007bff;
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.15), #404556);
+        }
+        
+        .component-item[data-type="conector"] {
+            border-left: 4px solid #6f42c1;
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.15), #404556);
+        }
+        
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: #0a0e1a;
+            overflow: auto;
+        }
+        
+        .canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-image: 
+                linear-gradient(rgba(71, 182, 181, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(71, 182, 181, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow: auto;
+        }
+        
+        .canvas.drag-over {
+            background-color: rgba(71, 182, 181, 0.05);
+        }
+        
+        .canvas-component {
+            position: absolute;
+            width: 220px;
+            background: #323749;
+            border: 2px solid #4a5568;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            cursor: move;
+            user-select: none;
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+        
+        .canvas-component:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .canvas-component.selected {
+            border-color: #47b6b5;
+            box-shadow: 0 0 0 3px rgba(71, 182, 181, 0.3), 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .canvas-component.dragging {
+            opacity: 0.8;
+            transform: rotate(2deg);
+            z-index: 1000;
+        }
+        
+        .component-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+            /* Cor será aplicada dinamicamente pelo JavaScript */
+        }
+        
+        .component-body {
+            padding: 1rem;
+            color: #e1e5f0;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            background: #323749;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .component-close {
+            background: rgba(220, 53, 69, 0.8);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .component-close:hover {
+            background: #dc3545;
+            transform: scale(1.1);
+        }
+        
+        .connection-point {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            z-index: 15;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+        }
+        
+        .connection-point:hover {
+            opacity: 1;
+            transform: scale(1.2);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        
+        .connection-point.input-1 {
+            left: -9px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #28a745;
+        }
+        
+        .connection-point.input-2 {
+            left: 50%;
+            top: -9px;
+            transform: translateX(-50%);
+            background: #28a745;
+        }
+        
+        .connection-point.output-1 {
+            right: -9px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #dc3545;
+        }
+        
+        .connection-point.output-2 {
+            left: 50%;
+            bottom: -9px;
+            transform: translateX(-50%);
+            background: #dc3545;
+        }
+        
+        .canvas-component:hover .connection-point,
+        .canvas-component.connecting .connection-point,
+        .canvas.connecting .connection-point {
+            opacity: 1;
+        }
+        
+        .connecting-mode .connection-point {
+            opacity: 1;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .connection-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, #47b6b5, rgba(71, 182, 181, 0.6));
+            z-index: 5;
+            pointer-events: none;
+            border-radius: 2px;
+        }
+        
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid #47b6b5;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        
+        .sequence-number {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            background: #47b6b5;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 20;
+            border: 3px solid #0a0e1a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary {
+            background-color: #47b6b5;
+            border-color: #47b6b5;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a9a9a;
+            border-color: #3a9a9a;
+        }
+        
+        .btn.active {
+            background-color: #47b6b5;
+            border-color: #47b6b5;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #404556;
+            border-radius: 8px;
+            border: 1px solid #4a5568;
+        }
+        
+        .stat-value {
+            color: #47b6b5;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Header -->
+        <div class="editor-header">
+            <div class="header-top">
+                <div class="header-left">
+                    <a href="/" class="btn btn-outline-light home-btn">
+                        <i class="fas fa-home"></i>
+                        Home
+                    </a>
+                    <h1 class="editor-title">
+                        {% if fluxo and fluxo.id %}Editar Fluxo{% else %}Novo Fluxo{% endif %}
+                    </h1>
+                </div>
+                
+                <div class="editor-actions">
+                    <a href="/fluxos" class="btn btn-outline-info">
+                        <i class="fas fa-list"></i>
+                        Lista
+                    </a>
+                    <button id="btn-conectar" class="btn btn-outline-light">
+                        <i class="fas fa-link"></i>
+                        Conectar
+                    </button>
+                    <button id="btn-sequencia" class="btn btn-outline-light">
+                        <i class="fas fa-list-ol"></i>
+                        Sequência
+                    </button>
+                    <button id="btn-limpar" class="btn btn-outline-light">
+                        <i class="fas fa-trash"></i>
+                        Limpar Tudo
+                    </button>
+                    <button id="btn-limpar-conectores" class="btn btn-outline-warning">
+                        <i class="fas fa-unlink"></i>
+                        Limpar Conectores
+                    </button>
+                    <button id="btn-salvar" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Salvar
+                    </button>
+                    <a href="/fluxos" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Informações do Fluxo -->
+            <div class="flow-info">
+                <h2 class="flow-title">
+                    <i class="fas fa-sitemap me-2"></i>
+                    {{ fluxo.nome if fluxo and fluxo.nome else 'Novo Fluxo' }}
+                </h2>
+                
+                <div class="flow-meta">
+                    {% if fluxo and fluxo.descricao %}
+                    <div class="meta-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>{{ fluxo.descricao }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>Categoria: {{ fluxo.categoria if fluxo and fluxo.categoria else 'Geral' }}</span>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <i class="fas fa-circle"></i>
+                        {% if fluxo and fluxo.ativo %}
+                            <span class="status-badge status-active">Ativo</span>
+                        {% elif fluxo %}
+                            <span class="status-badge status-inactive">Inativo</span>
+                        {% else %}
+                            <span class="status-badge status-active">Ativo</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="meta-item">
+                        <i class="fas fa-flag"></i>
+                        {% set prioridade = fluxo.prioridade if fluxo and fluxo.prioridade else 'normal' %}
+                        <span class="priority-badge priority-{{ prioridade }}">
+                            Prioridade {{ prioridade.title() }}
+                        </span>
+                    </div>
+                    
+                    {% if fluxo and fluxo.id %}
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>ID: #{{ fluxo.id }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if fluxo and fluxo.data_criacao %}
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Criado em {{ fluxo.data_criacao.strftime('%d/%m/%Y às %H:%M') if fluxo.data_criacao else 'Data não disponível' }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="editor-main">
+            <!-- Sidebar Esquerda - Entrada e Análise -->
+            <div class="sidebar-left">
+                <!-- Propriedades do Fluxo -->
+                <div class="sidebar-section">
+                    <div class="section-title">Propriedades</div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Fluxo</label>
+                        <input type="text" id="fluxo-nome" class="form-control" 
+                               value="{% if fluxo %}{{ fluxo.nome }}{% else %}Novo Fluxo{% endif %}" 
+                               placeholder="Digite o nome do fluxo">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea id="fluxo-descricao" class="form-control" rows="3" 
+                                  placeholder="Descreva o objetivo deste fluxo">{% if fluxo %}{{ fluxo.descricao }}{% endif %}</textarea>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="total-components">0</div>
+                            <div class="stat-label">Componentes</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="total-connections">0</div>
+                            <div class="stat-label">Conexões</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Componentes de Entrada e Análise -->
+                <div class="sidebar-section">
+                    <div class="section-title">
+                        <i class="fas fa-arrow-right"></i>
+                        Entrada e Análise
+                    </div>
+                    
+                    <!-- Extratores -->
+                    <div class="component-category">
+                        <div class="category-header">Extratores</div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Texto">
+                            <div class="component-name">Extrator de Texto</div>
+                            <div class="component-desc">Extrai texto de documentos PDF, DOCX e TXT</div>
+                        </div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Metadados">
+                            <div class="component-name">Extrator de Metadados</div>
+                            <div class="component-desc">Extrai metadados de arquivos como autor, data e propriedades</div>
+                        </div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Citações">
+                            <div class="component-name">Extrator de Citações</div>
+                            <div class="component-desc">Identifica citações legais e jurisprudências</div>
+                        </div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Entidades">
+                            <div class="component-name">Extrator de Entidades</div>
+                            <div class="component-desc">Identifica pessoas, lugares, organizações e datas</div>
+                        </div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Cláusulas">
+                            <div class="component-name">Extrator de Cláusulas</div>
+                            <div class="component-desc">Extrai cláusulas específicas de contratos</div>
+                        </div>
+                        <div class="component-item" data-type="extrator" data-name="Extrator de Artigos Legais">
+                            <div class="component-name">Extrator de Artigos Legais</div>
+                            <div class="component-desc">Identifica referências a artigos de códigos e leis</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Classificadores -->
+                    <div class="component-category">
+                        <div class="category-header">Classificadores</div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Documentos">
+                            <div class="component-name">Classificador de Documentos</div>
+                            <div class="component-desc">Classifica tipos de documentos jurídicos por categoria</div>
+                        </div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Argumentos">
+                            <div class="component-name">Classificador de Argumentos</div>
+                            <div class="component-desc">Identifica e classifica argumentos jurídicos por força</div>
+                        </div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Urgência">
+                            <div class="component-name">Classificador de Urgência</div>
+                            <div class="component-desc">Classifica prioridade e urgência de processos</div>
+                        </div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Área Jurídica">
+                            <div class="component-name">Classificador de Área Jurídica</div>
+                            <div class="component-desc">Determina área jurídica do documento ou caso</div>
+                        </div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Risco">
+                            <div class="component-name">Classificador de Risco</div>
+                            <div class="component-desc">Avalia nível de risco legal do documento</div>
+                        </div>
+                        <div class="component-item" data-type="classificador" data-name="Classificador de Confidencialidade">
+                            <div class="component-name">Classificador de Confidencialidade</div>
+                            <div class="component-desc">Determina nível de confidencialidade necessário</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analisadores -->
+                    <div class="component-category">
+                        <div class="category-header">Analisadores</div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Sentimento">
+                            <div class="component-name">Analisador de Sentimento</div>
+                            <div class="component-desc">Analisa o sentimento e tom do texto jurídico</div>
+                        </div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Complexidade">
+                            <div class="component-name">Analisador de Complexidade</div>
+                            <div class="component-desc">Avalia complexidade e relevância jurídica do documento</div>
+                        </div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Precedentes">
+                            <div class="component-name">Analisador de Precedentes</div>
+                            <div class="component-desc">Busca e analisa precedentes jurisprudenciais</div>
+                        </div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Conformidade">
+                            <div class="component-name">Analisador de Conformidade</div>
+                            <div class="component-desc">Verifica conformidade com normas e regulamentos</div>
+                        </div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Prazos">
+                            <div class="component-name">Analisador de Prazos</div>
+                            <div class="component-desc">Identifica e analisa prazos legais e processuais</div>
+                        </div>
+                        <div class="component-item" data-type="analisador" data-name="Analisador de Consistência">
+                            <div class="component-name">Analisador de Consistência</div>
+                            <div class="component-desc">Verifica consistência interna de documentos</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Especialistas -->
+                    <div class="component-category">
+                        <div class="category-header">Especialistas</div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Agrário">
+                            <div class="component-name">Direito Agrário</div>
+                            <div class="component-desc">Reforma agrária, propriedade rural e contratos agrários</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Bancário">
+                            <div class="component-name">Direito Bancário</div>
+                            <div class="component-desc">Consultivo e contencioso bancário, regulatório</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Empresarial">
+                            <div class="component-name">Direito Empresarial</div>
+                            <div class="component-desc">Contratos empresariais, cessão de crédito, sociedades</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito do Consumidor">
+                            <div class="component-name">Direito do Consumidor</div>
+                            <div class="component-desc">Proteção consumidor, relações consumo</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Penal">
+                            <div class="component-name">Direito Penal</div>
+                            <div class="component-desc">Crimes, processo penal e defesa criminal</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Trabalhista">
+                            <div class="component-name">Direito Trabalhista</div>
+                            <div class="component-desc">Relações trabalhistas, processos CLT</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Recuperação de Crédito">
+                            <div class="component-name">Recuperação de Crédito</div>
+                            <div class="component-desc">Localização devedores, acordos, execuções</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Digital">
+                            <div class="component-name">Direito Digital</div>
+                            <div class="component-desc">LGPD, proteção de dados e crimes cibernéticos</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Previdenciário">
+                            <div class="component-name">Direito Previdenciário</div>
+                            <div class="component-desc">Benefícios INSS, aposentadorias e pensões</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Tributário">
+                            <div class="component-name">Direito Tributário</div>
+                            <div class="component-desc">Impostos, tributos e planejamento fiscal</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Imobiliário">
+                            <div class="component-name">Direito Imobiliário</div>
+                            <div class="component-desc">Compra e venda, locações e regularização imobiliária</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Securitário">
+                            <div class="component-name">Direito Securitário</div>
+                            <div class="component-desc">Contratos de seguro, sinistros e SUSEP</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Negociação e Conflitos">
+                            <div class="component-name">Negociação e Conflitos</div>
+                            <div class="component-desc">Mediação, conciliação e resolução de conflitos</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Direito Ambiental">
+                            <div class="component-name">Direito Ambiental</div>
+                            <div class="component-desc">Licenciamento ambiental, crimes ambientais e sustentabilidade</div>
+                        </div>
+                        <div class="component-item" data-type="especialista" data-name="Análise de Riscos Jurídicos">
+                            <div class="component-name">Análise de Riscos Jurídicos</div>
+                            <div class="component-desc">Avaliação de riscos legais e compliance empresarial</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Canvas Central -->
+            <div class="canvas-container">
+                <div id="canvas" class="canvas"></div>
+            </div>
+            
+            <!-- Sidebar Direita - Processamento e Saída -->
+            <div class="sidebar-right">
+                <!-- Componentes de Processamento e Saída -->
+                <div class="sidebar-section">
+                    <div class="section-title">
+                        <i class="fas fa-arrow-left"></i>
+                        Processamento e Saída
+                    </div>
+                    
+                    <!-- Transformadores -->
+                    <div class="component-category">
+                        <div class="category-header">Transformadores</div>
+                        <div class="component-item" data-type="transformador" data-name="Transformador de Formato">
+                            <div class="component-name">Transformador de Formato</div>
+                            <div class="component-desc">Converte entre formatos PDF, DOCX, TXT e HTML</div>
+                        </div>
+                        <div class="component-item" data-type="transformador" data-name="Padronizador de Texto">
+                            <div class="component-name">Padronizador de Texto</div>
+                            <div class="component-desc">Padroniza formatação, estrutura e estilos</div>
+                        </div>
+                        <div class="component-item" data-type="transformador" data-name="Tradutor Jurídico">
+                            <div class="component-name">Tradutor Jurídico</div>
+                            <div class="component-desc">Traduz documentos jurídicos mantendo terminologia</div>
+                        </div>
+                        <div class="component-item" data-type="transformador" data-name="Normalizador de Dados">
+                            <div class="component-name">Normalizador de Dados</div>
+                            <div class="component-desc">Normaliza e estrutura dados não organizados</div>
+                        </div>
+                        <div class="component-item" data-type="transformador" data-name="Redator Automático">
+                            <div class="component-name">Redator Automático</div>
+                            <div class="component-desc">Reformula textos seguindo padrões jurídicos</div>
+                        </div>
+                        <div class="component-item" data-type="transformador" data-name="Anonimizador">
+                            <div class="component-name">Anonimizador</div>
+                            <div class="component-desc">Remove informações pessoais sensíveis</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Geradores -->
+                    <div class="component-category">
+                        <div class="category-header">Geradores</div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Relatório">
+                            <div class="component-name">Gerador de Relatório</div>
+                            <div class="component-desc">Gera relatórios técnicos e de análise detalhados</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Resumo">
+                            <div class="component-name">Gerador de Resumo</div>
+                            <div class="component-desc">Cria resumos executivos e sínteses</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Contratos">
+                            <div class="component-name">Gerador de Contratos</div>
+                            <div class="component-desc">Gera minutas de contratos personalizados</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Petições">
+                            <div class="component-name">Gerador de Petições</div>
+                            <div class="component-desc">Cria petições iniciais e recursos</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Pareceres">
+                            <div class="component-name">Gerador de Pareceres</div>
+                            <div class="component-desc">Elabora pareceres jurídicos fundamentados</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Notificações">
+                            <div class="component-name">Gerador de Notificações</div>
+                            <div class="component-desc">Cria notificações extrajudiciais</div>
+                        </div>
+                        <div class="component-item" data-type="gerador" data-name="Gerador de Timeline">
+                            <div class="component-name">Gerador de Timeline</div>
+                            <div class="component-desc">Cria cronogramas de prazos processuais</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Agregadores -->
+                    <div class="component-category">
+                        <div class="category-header">Agregadores</div>
+                        <div class="component-item" data-type="agregador" data-name="Agregador de Dados">
+                            <div class="component-name">Agregador de Dados</div>
+                            <div class="component-desc">Combina múltiplas fontes de dados e documentos</div>
+                        </div>
+                        <div class="component-item" data-type="agregador" data-name="Consolidador de Resultados">
+                            <div class="component-name">Consolidador de Resultados</div>
+                            <div class="component-desc">Consolida resultados de análises múltiplas</div>
+                        </div>
+                        <div class="component-item" data-type="agregador" data-name="Fusão de Documentos">
+                            <div class="component-name">Fusão de Documentos</div>
+                            <div class="component-desc">Mescla informações de documentos relacionados</div>
+                        </div>
+                        <div class="component-item" data-type="agregador" data-name="Compilador de Evidências">
+                            <div class="component-name">Compilador de Evidências</div>
+                            <div class="component-desc">Agrupa evidências e provas correlacionadas</div>
+                        </div>
+                        <div class="component-item" data-type="agregador" data-name="Consolidador de Jurisprudência">
+                            <div class="component-name">Consolidador de Jurisprudência</div>
+                            <div class="component-desc">Agrega precedentes e decisões similares</div>
+                        </div>
+                        <div class="component-item" data-type="agregador" data-name="Unificador de Análises">
+                            <div class="component-name">Unificador de Análises</div>
+                            <div class="component-desc">Unifica resultados de especialistas diferentes</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Conectores -->
+                    <div class="component-category">
+                        <div class="category-header">Conectores</div>
+                        <div class="component-item" data-type="conector" data-name="Conector de API">
+                            <div class="component-name">Conector de API</div>
+                            <div class="component-desc">Conecta com APIs externas</div>
+                        </div>
+                        <div class="component-item" data-type="conector" data-name="Conector de Banco de Dados">
+                            <div class="component-name">Conector de Banco de Dados</div>
+                            <div class="component-desc">Conecta com bases de dados relacionais</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Container para Notificações -->
+    <div class="notification-container" id="notification-container"></div>
+    
+    <!-- Modal Moderno -->
+    <div class="modern-modal" id="modern-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon" id="modal-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <div class="modal-title" id="modal-title">Confirmação</div>
+            </div>
+            <div class="modal-message" id="modal-message">
+                Tem certeza que deseja continuar?
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="modal-cancel">Cancelar</button>
+                <button class="modal-btn primary" id="modal-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sistema de Notificações Modernas
+        let notificationId = 0;
+        
+        function showNotification(type, title, message, duration = 5000) {
+            const container = document.getElementById('notification-container');
+            const id = ++notificationId;
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-times-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.id = `notification-${id}`;
+            
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <i class="notification-icon ${icons[type]}"></i>
+                    <div class="notification-title">${title}</div>
+                </div>
+                <div class="notification-message">${message}</div>
+                <button class="notification-close" onclick="closeNotification(${id})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto remover
+            if (duration > 0) {
+                setTimeout(() => closeNotification(id), duration);
+            }
+            
+            return id;
+        }
+        
+        function closeNotification(id) {
+            const notification = document.getElementById(`notification-${id}`);
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 400);
+            }
+        }
+        
+        function showModernConfirm(title, message, onConfirm, onCancel = null, type = 'warning') {
+            const modal = document.getElementById('modern-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalIcon = document.getElementById('modal-icon');
+            const confirmBtn = document.getElementById('modal-confirm');
+            const cancelBtn = document.getElementById('modal-cancel');
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            
+            // Configurar ícone e botão baseado no tipo
+            modalIcon.className = `modal-icon ${type}`;
+            confirmBtn.className = `modal-btn ${type === 'warning' ? 'danger' : 'primary'}`;
+            
+            const icons = {
+                warning: 'fas fa-exclamation-triangle',
+                danger: 'fas fa-trash',
+                info: 'fas fa-info-circle'
+            };
+            
+            modalIcon.innerHTML = `<i class="${icons[type] || icons.warning}"></i>`;
+            
+            // Mostrar modal
+            modal.classList.add('show');
+            
+            // Configurar eventos
+            const handleConfirm = () => {
+                modal.classList.remove('show');
+                if (onConfirm) onConfirm();
+                cleanup();
+            };
+            
+            const handleCancel = () => {
+                modal.classList.remove('show');
+                if (onCancel) onCancel();
+                cleanup();
+            };
+            
+            const cleanup = () => {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+                modal.removeEventListener('click', handleBackdropClick);
+            };
+            
+            const handleBackdropClick = (e) => {
+                if (e.target === modal) {
+                    handleCancel();
+                }
+            };
+            
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
+            modal.addEventListener('click', handleBackdropClick);
+        }
+        
+        // Variáveis globais
+        let components = [];
+        let connections = [];
+        let connectingMode = false;
+        let connectingFrom = null;
+        let draggedComponent = null;
+        let componentIdCounter = 1;
+        let connectionIdCounter = 1;
+        
+        // Cores por categoria de componente seguindo a classificação do sistema
+        const categoryColors = {
+            // Tipos básicos do fluxo
+            'entrada': '#47b6b5',
+            'saida': '#47b6b5',
+            'agente': '#c4414f',
+            'processamento': '#47b6b5',
+            
+            // Categorias do sistema de componentes
+            'Extração': '#20597f',      // Extratores - azul escuro
+            'Classificação': '#fec208', // Classificadores - amarelo dourado
+            'Análise': '#17a2b7',       // Analisadores - azul ciano
+            'Especialização': '#c4414f', // Especialistas - vermelho
+            'Transformação': '#e98132', // Transformadores - laranja
+            'Geração': '#36bf9c',       // Geradores - verde água
+            'Agregação': '#1175e5',     // Agregadores - azul
+            'Conexão': '#6d47b3',       // Conectores - roxo
+            
+            // Mapeamento por tipo (compatibilidade)
+            'extrator': '#20597f',
+            'classificador': '#fec208',
+            'analisador': '#17a2b7',
+            'especialista': '#c4414f',
+            'transformador': '#e98132',
+            'gerador': '#36bf9c',
+            'agregador': '#1175e5',
+            'conector': '#6d47b3'
+        };
+        
+        function getComponentColor(type, categoria = null) {
+            // Priorizar categoria se fornecida
+            if (categoria && categoryColors[categoria]) {
+                return categoryColors[categoria];
+            }
+            // Senão usar tipo
+            return categoryColors[type] || '#47b6b5';
+        }
+        
+        // Elementos DOM
+        const canvas = document.getElementById('canvas');
+        const btnConectar = document.getElementById('btn-conectar');
+        const btnSequencia = document.getElementById('btn-sequencia');
+        const btnLimpar = document.getElementById('btn-limpar');
+        const btnLimparConectores = document.getElementById('btn-limpar-conectores');
+        const btnSalvar = document.getElementById('btn-salvar');
+        const totalComponents = document.getElementById('total-components');
+        const totalConnections = document.getElementById('total-connections');
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+            setupCanvasEvents();
+            setupButtonEvents();
+            // Aguardar scripts carregarem antes de carregar componentes existentes
+            setTimeout(() => {
+                loadExistingComponents();
+                updateStats();
+            }, 100);
+            
+            // Re-inicializar drag and drop após 500ms para garantir que todos elementos sejam carregados
+            setTimeout(() => {
+                initializeDragAndDrop();
+                console.log('🔄 Drag and drop reinicializado');
+            }, 500);
+        });
+        
+        // Inicializar drag and drop
+        function initializeDragAndDrop() {
+            const componentItems = document.querySelectorAll('.component-item');
+            
+            componentItems.forEach(item => {
+                // Remover listeners antigos se existirem
+                item.removeEventListener('dragstart', handleDragStart);
+                
+                // Adicionar novo listener
+                item.addEventListener('dragstart', handleDragStart);
+                
+                // Garantir que é arrastável
+                item.draggable = true;
+            });
+        }
+        
+        // Handler unificado para dragstart
+        function handleDragStart(e) {
+            const item = e.target.closest('.component-item');
+            if (!item) return;
+            
+            draggedComponent = {
+                type: item.dataset.type,
+                name: item.dataset.name,
+                desc: item.querySelector('.component-desc').textContent,
+                id: item.dataset.id,
+                color: item.dataset.color,
+                icon: item.dataset.icon
+            };
+            
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', JSON.stringify(draggedComponent));
+            
+            console.log('🎯 Arrastando componente:', draggedComponent.name);
+        }
+        
+        // Setup eventos do canvas
+        function setupCanvasEvents() {
+            canvas.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+            
+            canvas.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+            
+            canvas.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                
+                if (draggedComponent) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    createCanvasComponent(draggedComponent, x, y);
+                    draggedComponent = null;
+                }
+            });
+        }
+        
+        // Setup eventos dos botões
+        function setupButtonEvents() {
+            btnConectar.addEventListener('click', toggleConnectingMode);
+            btnSequencia.addEventListener('click', showSequence);
+            btnLimpar.addEventListener('click', clearCanvas);
+            btnLimparConectores.addEventListener('click', clearConnections);
+            btnSalvar.addEventListener('click', saveFluxo);
+        }
+        
+        // Criar componente no canvas
+        function createCanvasComponent(componentData, x, y) {
+            const component = {
+                id: componentIdCounter++,
+                type: componentData.type,
+                name: componentData.name,
+                desc: componentData.desc,
+                x: x,
+                y: y,
+                connections: []
+            };
+            
+            components.push(component);
+            renderComponent(component);
+            updateStats();
+        }
+        
+        // Renderizar componente
+        function renderComponent(component) {
+            const div = document.createElement('div');
+            div.className = 'canvas-component';
+            div.dataset.id = component.id;
+            div.style.left = component.x + 'px';
+            div.style.top = component.y + 'px';
+            
+            // Aplicar cor específica da categoria
+            const categoryColor = getComponentColor(component.type, component.categoria);
+            console.log(`Mapeamento de cores:`, categoryColors);
+            console.log(`Tipo do componente: "${component.type}"`);
+            console.log(`Aplicando cor ${categoryColor} para componente ${component.type}: ${component.name}`);
+            
+            div.innerHTML = `
+                <div class="component-header">
+                    <div class="component-info">
+                        <div class="component-title">${component.name}</div>
+                        <div class="component-type-badge" style="background: rgba(255,255,255,0.2);">${component.type}</div>
+                    </div>
+                    <button class="component-close" onclick="removeComponent('${component.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="component-body">
+                    ${component.desc}
+                </div>
+                <div class="connection-point input-1" data-component-id="${component.id}" data-point-type="input-1">E</div>
+                <div class="connection-point input-2" data-component-id="${component.id}" data-point-type="input-2">E</div>
+                <div class="connection-point output-1" data-component-id="${component.id}" data-point-type="output-1">S</div>
+                <div class="connection-point output-2" data-component-id="${component.id}" data-point-type="output-2">S</div>
+                <div class="sequence-number">${components.length}</div>
+            `;
+            
+            // Aguardar inserção no DOM para aplicar cores
+            canvas.appendChild(div);
+            
+            // Aplicar cores após inserção no DOM
+            setTimeout(() => {
+                const header = div.querySelector('.component-header');
+                const body = div.querySelector('.component-body');
+                const inputPoint = div.querySelector('.connection-point.input');
+                const outputPoint = div.querySelector('.connection-point.output');
+                const sequenceNumber = div.querySelector('.sequence-number');
+                
+                if (header) {
+                    header.style.setProperty('background', `linear-gradient(135deg, ${categoryColor}, ${categoryColor}dd)`, 'important');
+                    header.style.setProperty('border-color', categoryColor, 'important');
+                }
+                
+                if (body) {
+                    body.style.setProperty('border-color', categoryColor, 'important');
+                }
+                
+                if (inputPoint) {
+                    inputPoint.style.setProperty('background', categoryColor, 'important');
+                }
+                
+                if (outputPoint) {
+                    outputPoint.style.setProperty('background', categoryColor, 'important');
+                }
+                
+                if (sequenceNumber) {
+                    sequenceNumber.style.setProperty('background', categoryColor, 'important');
+                }
+                
+                console.log(`Cores aplicadas para ${component.name} com cor ${categoryColor}`);
+                
+                // Adicionar event listeners para todos os pontos de conexão
+                div.querySelectorAll('.connection-point').forEach(point => {
+                    point.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const componentId = point.getAttribute('data-component-id');
+                        const pointType = point.getAttribute('data-point-type');
+                        handleConnectionClick(componentId, pointType);
+                    });
+                });
+            }, 10);
+            
+            // Tornar arrastável
+            makeDraggable(div, component);
+        }
+        
+        // Tornar componente arrastável
+        function makeDraggable(element, component) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            
+            element.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.component-close') || e.target.closest('.connection-point')) {
+                    return;
+                }
+                
+                isDragging = true;
+                element.classList.add('dragging');
+                
+                startX = e.clientX;
+                startY = e.clientY;
+                initialX = component.x;
+                initialY = component.y;
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                
+                e.preventDefault();
+            });
+            
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                component.x = Math.max(0, initialX + deltaX);
+                component.y = Math.max(0, initialY + deltaY);
+                
+                element.style.left = component.x + 'px';
+                element.style.top = component.y + 'px';
+                
+                updateConnections();
+            }
+            
+            function onMouseUp() {
+                isDragging = false;
+                element.classList.remove('dragging');
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        }
+        
+        // Toggle modo de conexão
+        function toggleConnectingMode() {
+            connectingMode = !connectingMode;
+            btnConectar.classList.toggle('active', connectingMode);
+            
+            if (connectingMode) {
+                btnConectar.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                canvas.classList.add('connecting');
+                console.log('Modo de conexão ativado');
+                
+                // Mostrar toast de instrução
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = 'Clique nos pontos de conexão (E/S) dos componentes para conectá-los';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #17a2b8;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    z-index: 1000;
+                    font-size: 14px;
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 4000);
+                
+            } else {
+                btnConectar.innerHTML = '<i class="fas fa-link"></i> Conectar';
+                canvas.classList.remove('connecting');
+                connectingFrom = null;
+                console.log('Modo de conexão desativado');
+                
+                // Remover classe connecting de todos os componentes
+                document.querySelectorAll('.canvas-component.connecting').forEach(el => {
+                    el.classList.remove('connecting');
+                });
+            }
+        }
+        
+        // Nova função para lidar com cliques nos pontos de conexão
+        function handleConnectionClick(componentId, pointType) {
+            console.log(`Clique no ponto de conexão: componente ${componentId}, tipo ${pointType}`);
+            
+            // Manter componentId como string para IDs de componentes como "comp_1"
+            if (!isNaN(componentId)) {
+                componentId = parseInt(componentId);
+            }
+            
+            if (!connectingMode) {
+                // Ativar modo de conexão automaticamente
+                toggleConnectingMode();
+            }
+            
+            if (!connectingFrom) {
+                // Primeiro clique - selecionar componente de origem
+                connectingFrom = { id: componentId, type: pointType };
+                const component = document.querySelector(`[data-id="${componentId}"]`);
+                if (component) {
+                    component.classList.add('connecting');
+                }
+                
+                // Feedback visual
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = `Componente selecionado. Clique no ponto de destino para conectar.`;
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    z-index: 1000;
+                    font-size: 14px;
+                    max-width: 300px;
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 3000);
+                
+            } else {
+                // Segundo clique - criar conexão
+                if (connectingFrom.id !== componentId) {
+                    // Validar tipos de conexão (output -> input)
+                    const isValidOutputToInput = (connectingFrom.type === 'output-1' || connectingFrom.type === 'output-2') && 
+                                                 (pointType === 'input-1' || pointType === 'input-2');
+                    
+                    const isValidInputToOutput = (connectingFrom.type === 'input-1' || connectingFrom.type === 'input-2') && 
+                                                 (pointType === 'output-1' || pointType === 'output-2');
+                    
+                    if (isValidOutputToInput) {
+                        createConnection(connectingFrom, { id: componentId, type: pointType });
+                        showToast('Conexão criada com sucesso!', 'success');
+                        
+                    } else if (isValidInputToOutput) {
+                        createConnection({ id: componentId, type: pointType }, connectingFrom);
+                        showToast('Conexão criada com sucesso!', 'success');
+                        
+                    } else {
+                        // Erro de conexão inválida
+                        showToast('Conecte saída (S) → entrada (E) ou entrada (E) ← saída (S)', 'error');
+                    }
+                } else {
+                    showToast('Não é possível conectar um componente a si mesmo.', 'error');
+                }
+                
+                // Limpar estado de conexão
+                document.querySelectorAll('.canvas-component').forEach(comp => {
+                    comp.classList.remove('connecting');
+                });
+                connectingFrom = null;
+                toggleConnectingMode();
+            }
+        }
+        
+        // Função auxiliar para mostrar toasts
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            
+            let backgroundColor = '#17a2b8'; // info
+            if (type === 'success') backgroundColor = '#28a745';
+            if (type === 'error') backgroundColor = '#dc3545';
+            if (type === 'warning') backgroundColor = '#ffc107';
+            
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${backgroundColor};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 1000;
+                font-size: 14px;
+                max-width: 300px;
+                word-wrap: break-word;
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, type === 'error' ? 4000 : 2000);
+        }
+        
+        // Função legacy para compatibilidade
+        function connectComponent(componentId, type) {
+            handleConnectionClick(componentId, type);
+        }
+        
+        // Criar conexão
+        function createConnection(from, to) {
+            console.log('Criando conexão entre:', from, 'e', to);
+            
+            // Verificar se já existe conexão
+            const existingConnection = connections.find(c => 
+                c.from === from.id && c.to === to.id
+            );
+            
+            if (existingConnection) {
+                showNotification('warning', 'Conexão já existe', 'Já existe uma conexão entre estes componentes.');
+                return;
+            }
+            
+            // Verificar se não está tentando conectar o mesmo componente
+            if (from.id === to.id) {
+                showNotification('error', 'Conexão inválida', 'Não é possível conectar um componente a si mesmo.');
+                return;
+            }
+            
+            const connection = {
+                id: connections.length + 1,
+                from: from.id,
+                to: to.id,
+                fromType: from.type,
+                toType: to.type
+            };
+            
+            connections.push(connection);
+            console.log('Conexão adicionada:', connection);
+            
+            // Adicionar à lista de conexões do componente
+            const fromComponent = components.find(c => c.id === from.id);
+            const toComponent = components.find(c => c.id === to.id);
+            
+            if (fromComponent) {
+                if (!fromComponent.connections) {
+                    fromComponent.connections = [];
+                }
+                fromComponent.connections.push(to.id);
+            }
+            
+            // Desenhar conexão imediatamente
+            const fromElement = document.querySelector(`[data-id="${from.id}"]`);
+            const toElement = document.querySelector(`[data-id="${to.id}"]`);
+            
+            if (fromElement && toElement) {
+                drawConnection(fromElement, toElement, from, to);
+            }
+            
+            updateStats();
+        }
+        
+        // Atualizar conexões visuais
+        function updateConnections() {
+            console.log('✅ updateConnections() chamada - redesenhando conexões');
+            // Remover linhas existentes
+            document.querySelectorAll('.connection-line').forEach(line => line.remove());
+            
+            // Redesenhar todas as conexões
+            connections.forEach(connection => {
+                const fromElement = document.querySelector(`.canvas-component[data-id="${connection.from}"]`);
+                const toElement = document.querySelector(`.canvas-component[data-id="${connection.to}"]`);
+                
+                console.log(`🔍 Procurando elementos para conexão ${connection.from} → ${connection.to}`);
+                console.log(`   fromElement:`, fromElement);
+                console.log(`   toElement:`, toElement);
+                
+                if (fromElement && toElement) {
+                    console.log(`   HTML do fromElement:`, fromElement.innerHTML.substring(0, 200));
+                    
+                    const fromPoint = fromElement.querySelector('.connection-point.output-1') || fromElement.querySelector('.connection-point[data-point-type="output-1"]');
+                    const toPoint = toElement.querySelector('.connection-point.input-1') || toElement.querySelector('.connection-point[data-point-type="input-1"]');
+                    
+                    console.log(`   fromPoint:`, fromPoint);
+                    console.log(`   toPoint:`, toPoint);
+                    
+                    if (fromPoint && toPoint) {
+                        drawConnectionLine(fromPoint, toPoint);
+                        console.log(`✅ Conexão atualizada: ${connection.from} → ${connection.to}`);
+                    } else {
+                        console.warn(`❌ Pontos não encontrados em updateConnections: ${connection.from} → ${connection.to}`);
+                        console.warn(`   Todos pontos no fromElement:`, fromElement.querySelectorAll('.connection-point'));
+                    }
+                } else {
+                    console.warn(`❌ Elementos não encontrados em updateConnections: ${connection.from} → ${connection.to}`);
+                }
+            });
+        }
+        
+        // Desenhar conexão
+        function drawConnection(fromElement, toElement, fromPoint = null, toPoint = null) {
+            const fromRect = fromElement.getBoundingClientRect();
+            const toRect = toElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            let fromX, fromY, toX, toY;
+            
+            // Calcular posição baseada no tipo de ponto de origem
+            if (fromPoint && fromPoint.type) {
+                if (fromPoint.type === 'output-1') {
+                    // Saída lateral direita
+                    fromX = fromRect.right - canvasRect.left;
+                    fromY = fromRect.top + fromRect.height / 2 - canvasRect.top;
+                } else if (fromPoint.type === 'output-2') {
+                    // Saída inferior
+                    fromX = fromRect.left + fromRect.width / 2 - canvasRect.left;
+                    fromY = fromRect.bottom - canvasRect.top;
+                } else {
+                    fromX = fromRect.right - canvasRect.left;
+                    fromY = fromRect.top + fromRect.height / 2 - canvasRect.top;
+                }
+            } else {
+                fromX = fromRect.right - canvasRect.left;
+                fromY = fromRect.top + fromRect.height / 2 - canvasRect.top;
+            }
+            
+            // Calcular posição baseada no tipo de ponto de destino
+            if (toPoint && toPoint.type) {
+                if (toPoint.type === 'input-1') {
+                    // Entrada lateral esquerda
+                    toX = toRect.left - canvasRect.left;
+                    toY = toRect.top + toRect.height / 2 - canvasRect.top;
+                } else if (toPoint.type === 'input-2') {
+                    // Entrada superior
+                    toX = toRect.left + toRect.width / 2 - canvasRect.left;
+                    toY = toRect.top - canvasRect.top;
+                } else {
+                    toX = toRect.left - canvasRect.left;
+                    toY = toRect.top + toRect.height / 2 - canvasRect.top;
+                }
+            } else {
+                toX = toRect.left - canvasRect.left;
+                toY = toRect.top + toRect.height / 2 - canvasRect.top;
+            }
+            
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            
+            const length = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+            const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+            
+            line.style.width = length + 'px';
+            line.style.left = fromX + 'px';
+            line.style.top = fromY + 'px';
+            line.style.transform = `rotate(${angle}deg)`;
+            line.style.transformOrigin = '0 50%';
+            line.style.background = '#4a90e2';
+            line.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            line.style.zIndex = '1';
+            
+            canvas.appendChild(line);
+        }
+        
+        // Mostrar sequência
+        function showSequence() {
+            // Remover numerações existentes
+            document.querySelectorAll('.sequence-number').forEach(num => num.remove());
+            
+            if (connections.length === 0) {
+                showNotification('info', 'Sequência vazia', 'Adicione conexões entre os componentes para ver a sequência.');
+                return;
+            }
+            
+            // Calcular ordem topológica
+            const sequence = calculateTopologicalOrder();
+            
+            sequence.forEach((componentId, index) => {
+                const element = document.querySelector(`[data-id="${componentId}"]`);
+                if (element) {
+                    const numberDiv = document.createElement('div');
+                    numberDiv.className = 'sequence-number';
+                    numberDiv.textContent = index + 1;
+                    element.appendChild(numberDiv);
+                }
+            });
+        }
+        
+        // Calcular ordem topológica
+        function calculateTopologicalOrder() {
+            const visited = new Set();
+            const result = [];
+            
+            // Encontrar componentes sem entrada (pontos de início)
+            const hasIncoming = new Set(connections.map(c => c.to));
+            const startNodes = components.filter(c => !hasIncoming.has(c.id));
+            
+            function dfs(componentId) {
+                if (visited.has(componentId)) return;
+                visited.add(componentId);
+                
+                const outgoing = connections.filter(c => c.from === componentId);
+                outgoing.forEach(connection => {
+                    dfs(connection.to);
+                });
+                
+                result.unshift(componentId);
+            }
+            
+            startNodes.forEach(node => dfs(node.id));
+            
+            return result;
+        }
+        
+        // Remover componente
+        function removeComponent(componentId) {
+            console.log('🗑️ Removendo componente:', componentId);
+            
+            // Remover das listas
+            components = components.filter(c => c.id !== componentId);
+            connections = connections.filter(c => c.from !== componentId && c.to !== componentId);
+            
+            // Remover do DOM
+            const element = document.querySelector(`[data-id="${componentId}"]`);
+            if (element) {
+                element.remove();
+                console.log('✅ Componente removido do DOM:', componentId);
+            } else {
+                console.warn('⚠️ Elemento não encontrado para remoção:', componentId);
+            }
+            
+            updateConnections();
+            updateStats();
+            
+            console.log('📊 Componentes restantes:', components.length);
+        }
+        
+        // Limpar canvas
+        function clearCanvas() {
+            if (components.length === 0) return;
+            
+            showModernConfirm(
+                'Limpar Canvas', 
+                'Tem certeza que deseja limpar o canvas? Esta ação não pode ser desfeita.',
+                function() {
+                    components = [];
+                    connections = [];
+                    canvas.innerHTML = '';
+                    updateStats();
+                    showNotification('success', 'Canvas limpo', 'Todos os componentes foram removidos com sucesso.');
+                }
+            );
+        }
+        
+        // Limpar apenas conectores
+        function clearConnections() {
+            if (connections.length === 0) {
+                showNotification('info', 'Nenhuma conexão', 'Não há conexões para limpar.');
+                return;
+            }
+            
+            showModernConfirm(
+                'Limpar Conexões', 
+                'Tem certeza que deseja limpar todas as conexões? Os componentes serão mantidos.',
+                function() {
+                    connections = [];
+                    
+                    // Limpar conexões dos componentes
+                    components.forEach(component => {
+                        component.connections = [];
+                    });
+                    
+                    // Remover linhas de conexão do DOM
+                    document.querySelectorAll('.connection-line').forEach(line => line.remove());
+                    
+                    updateStats();
+                    showNotification('success', 'Conexões removidas', 'Todas as conexões foram removidas com sucesso!');
+                }
+            );
+        }
+        
+        // Salvar fluxo
+        function saveFluxo() {
+            const nome = document.getElementById('fluxo-nome').value;
+            const descricao = document.getElementById('fluxo-descricao').value;
+            
+            if (!nome.trim()) {
+                showNotification('warning', 'Nome obrigatório', 'Por favor, digite um nome para o fluxo.');
+                return;
+            }
+            
+            if (components.length === 0) {
+                showNotification('info', 'Fluxo vazio', 'Adicione pelo menos um componente ao fluxo.');
+                return;
+            }
+            
+            const fluxoData = {
+                {% if fluxo and fluxo.id %}
+                fluxo_id: {{ fluxo.id }},
+                {% endif %}
+                nome: nome,
+                descricao: descricao,
+                components: components,
+                connections: connections
+            };
+            
+            // Enviar para o servidor
+            fetch('/api/fluxos/salvar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(fluxoData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', '🎉 Fluxo Salvo!', 'Redirecionando para a página de teste...', 3000);
+                    // Redirecionar para a página de teste do fluxo
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        window.location.href = `/fluxos/${data.fluxo_id}`;
+                    }
+                } else {
+                    showNotification('error', 'Erro ao salvar', 'Erro ao salvar o fluxo: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                showNotification('error', 'Erro inesperado', 'Erro ao salvar o fluxo.');
+            });
+        }
+        
+        // Carregar componentes existentes do fluxo
+        function loadExistingComponents() {
+            {% if fluxo and fluxo.id %}
+            try {
+                console.log('🔄 Carregando dados do fluxo existente...');
+                
+                // Dados do fluxo passados do backend
+                const fluxoData = {
+                    id: {{ fluxo.id or 0 }},
+                    nome: "{{ fluxo.nome or '' | e }}",
+                    descricao: "{{ fluxo.descricao or '' | e }}",
+                    agentes: {{ (fluxo.agentes | tojson) if fluxo.agentes else '[]' }},
+                    conexoes: {{ (fluxo.conexoes | tojson) if fluxo.conexoes else '[]' }},
+                    prioridade: "{{ fluxo.prioridade or 'normal' }}",
+                    ativo: {{ 'true' if fluxo.ativo else 'false' }}
+                };
+                
+                console.log('📄 Dados do fluxo carregados:', fluxoData);
+                
+                // Atualizar campos do formulário
+                if (document.getElementById('fluxo-nome')) {
+                    document.getElementById('fluxo-nome').value = fluxoData.nome;
+                }
+                if (document.getElementById('fluxo-descricao')) {
+                    document.getElementById('fluxo-descricao').value = fluxoData.descricao;
+                }
+                
+                // Carregar componentes no canvas
+                if (fluxoData.agentes && fluxoData.agentes.length > 0) {
+                    console.log(`🎯 Carregando ${fluxoData.agentes.length} componentes...`);
+                    
+                    // Resetar contadores
+                    componentIdCounter = 1;
+                    components = [];
+                    
+                    fluxoData.agentes.forEach((agente, index) => {
+                        const component = {
+                            id: agente.id,
+                            type: agente.tipo || 'processamento',
+                            name: agente.config?.titulo || agente.config?.nome || agente.nome || `Componente ${index + 1}`,
+                            desc: agente.config?.descricao || agente.descricao || 'Componente do fluxo',
+                            x: agente.posicao?.x || (100 + (index * 120)),
+                            y: agente.posicao?.y || (100 + (index * 80)),
+                            connections: agente.connections || [],
+                            config: agente.config || {}
+                        };
+                        
+                        components.push(component);
+                        // Usar a função de renderização disponível
+                        if (typeof renderComponent === 'function') {
+                            renderComponent(component);
+                        } else if (typeof window.renderComponent === 'function') {
+                            window.renderComponent(component);
+                        } else {
+                            console.warn('⚠️ Função renderComponent não disponível para:', component.name);
+                        }
+                        console.log(`✅ Componente carregado: ${component.name}`);
+                    });
+                }
+                
+                // Carregar conexões
+                if (fluxoData.conexoes && fluxoData.conexoes.length > 0) {
+                    console.log(`🔗 Carregando ${fluxoData.conexoes.length} conexões...`);
+                    
+                    connections = [];
+                    fluxoData.conexoes.forEach(conexao => {
+                        connections.push({
+                            id: conexao.id || connectionIdCounter++,
+                            from: conexao.origem || conexao.from,
+                            to: conexao.destino || conexao.to,
+                            fromType: conexao.fromType || conexao.tipo_origem || 'output-1',
+                            toType: conexao.toType || conexao.tipo_destino || 'input-1'
+                        });
+                        console.log(`🔗 Conexão carregada: ${conexao.origem || conexao.from} → ${conexao.destino || conexao.to}`);
+                    });
+                    
+                    // Redesenhar conexões após um pequeno delay para garantir que os componentes foram renderizados
+                    setTimeout(() => {
+                        try {
+                            if (typeof redrawConnections === 'function') {
+                                redrawConnections();
+                            }
+                            // Removido updateConnections() - redrawConnections já faz tudo
+                        } catch (redrawError) {
+                            console.warn('⚠️ Erro ao redesenhar conexões:', redrawError);
+                        }
+                    }, 500);
+                }
+                
+                // Atualizar estatísticas
+                try {
+                    if (typeof updateStats === 'function') {
+                        updateStats();
+                    }
+                } catch (statsError) {
+                    console.warn('⚠️ Erro ao atualizar estatísticas:', statsError);
+                }
+                
+                console.log('✅ Fluxo carregado com sucesso!');
+                console.log(`📊 Resumo: ${components.length} componentes, ${connections.length} conexões`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados do fluxo:', error);
+            }
+            {% else %}
+            console.log('📝 Novo fluxo - iniciando com canvas vazio');
+            {% endif %}
+        }
+        
+        // Função para redesenhar conexões
+        function redrawConnections() {
+            console.log('⚠️ redrawConnections() chamada - removendo linhas existentes');
+            console.log('📋 Conexões a redesenhar:', connections);
+            console.log('📋 Componentes no DOM:', document.querySelectorAll('.canvas-component').length);
+            
+            // Listar todos os data-id disponíveis
+            const allIds = Array.from(document.querySelectorAll('.canvas-component')).map(el => el.dataset.id);
+            console.log('📋 IDs disponíveis no DOM:', allIds);
+            
+            // Remover linhas existentes
+            document.querySelectorAll('.connection-line').forEach(line => line.remove());
+            
+            // Redesenhar todas as conexões
+            connections.forEach(connection => {
+                console.log(`🔍 Procurando: from=${connection.from}, to=${connection.to}`);
+                const fromElement = document.querySelector(`.canvas-component[data-id="${connection.from}"]`);
+                const toElement = document.querySelector(`.canvas-component[data-id="${connection.to}"]`);
+                
+                console.log(`🔍 Elementos encontrados:`, {fromElement, toElement});
+                
+                if (fromElement && toElement) {
+                    const fromPoint = fromElement.querySelector('.connection-point.output-1') || fromElement.querySelector('.connection-point[data-point-type="output-1"]');
+                    const toPoint = toElement.querySelector('.connection-point.input-1') || toElement.querySelector('.connection-point[data-point-type="input-1"]');
+                    
+                    console.log(`🔍 Pontos encontrados:`, {fromPoint, toPoint});
+                    
+                    if (fromPoint && toPoint) {
+                        drawConnectionLine(fromPoint, toPoint);
+                        console.log(`✅ Conexão redesenhada: ${connection.from} → ${connection.to}`);
+                    } else {
+                        console.warn(`❌ Pontos de conexão não encontrados para: ${connection.from} → ${connection.to}`, {fromPoint, toPoint});
+                    }
+                } else {
+                    console.warn(`❌ Elemento não encontrado para conexão: ${connection.from} → ${connection.to}`, {fromElement, toElement});
+                }
+            });
+        }
+        
+        // Função para desenhar linha de conexão entre dois pontos
+        function drawConnectionLine(fromPoint, toPoint) {
+            const fromRect = fromPoint.getBoundingClientRect();
+            const toRect = toPoint.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left + canvas.scrollLeft;
+            const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top + canvas.scrollTop;
+            const x2 = toRect.left + toRect.width / 2 - canvasRect.left + canvas.scrollLeft;
+            const y2 = toRect.top + toRect.height / 2 - canvasRect.top + canvas.scrollTop;
+            
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            
+            const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            console.log('📏 Desenhando linha:', {x1, y1, x2, y2, length, angle});
+            
+            line.style.cssText = `
+                position: absolute;
+                left: ${x1}px;
+                top: ${y1}px;
+                width: ${length}px;
+                height: 8px;
+                background: #47b6b5;
+                transform-origin: 0 50%;
+                transform: rotate(${angle}deg);
+                z-index: 999;
+                pointer-events: none;
+                box-shadow: 0 0 12px rgba(71, 182, 181, 1), 0 0 20px rgba(71, 182, 181, 0.8);
+                border: 2px solid #fff;
+                border-radius: 4px;
+            `;
+            
+            canvas.appendChild(line);
+            console.log('✅ Linha adicionada ao canvas, total de linhas:', canvas.querySelectorAll('.connection-line').length);
+        }
+        
+
+        
+        // Limpar canvas
+        function clearCanvas() {
+            if (confirm('Tem certeza que deseja limpar todos os componentes?')) {
+                components = [];
+                connections = [];
+                canvas.innerHTML = '';
+                updateStats();
+            }
+        }
+        
+        
+        // Atualizar estatísticas
+        function updateStats() {
+            try {
+                if (typeof totalComponents !== 'undefined' && totalComponents) {
+                    totalComponents.textContent = components.length;
+                }
+                if (typeof totalConnections !== 'undefined' && totalConnections) {
+                    totalConnections.textContent = connections.length;
+                }
+            } catch (error) {
+                console.warn('⚠️ Erro ao atualizar estatísticas:', error);
+            }
+        }
+    </script>
+    
+    <!-- Script de limpeza automática de avisos -->
+    <script src="{{ url_for('static', filename='js/dom-cleaner.js') }}"></script>
+    
+    <!-- Script de integração com banco de dados de componentes -->
+    <script src="{{ url_for('static', filename='js/fluxos-database-integration.js') }}"></script>
+    
+    <script>
+        // Integração com componentes do banco de dados
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔄 Iniciando integração editor-database...');
+            
+            // Substituir componentes hardcoded por componentes do banco
+            setTimeout(async function() {
+                try {
+                    // Carregar componentes reais do banco
+                    const componentesReais = await window.fluxosDatabaseIntegration.carregarComponentesShared();
+                    
+                    if (componentesReais && componentesReais.length > 0) {
+                        console.log(`✅ ${componentesReais.length} componentes do banco carregados no editor`);
+                        
+                        // Atualizar sidebars com componentes reais
+                        atualizarSidebarsComponentes(componentesReais);
+                        
+                        console.log('✅ Sidebars atualizadas com componentes do banco');
+                        
+                    } else {
+                        console.warn('⚠️ Nenhum componente encontrado no banco, mantendo componentes padrão');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erro na integração database:', error);
+                    console.log('🔄 Mantendo componentes padrão do template');
+                }
+                
+                // Configurar eventos de duplo clique para configuração
+                document.addEventListener('dblclick', function(e) {
+                    const componentElement = e.target.closest('.canvas-component');
+                    if (componentElement) {
+                        const databaseId = componentElement.getAttribute('data-database-id');
+                        if (databaseId) {
+                            window.fluxosDatabaseIntegration.configurarComponente(databaseId);
+                        }
+                    }
+                });
+                
+            }, 1500); // Aguardar carregamento completo
+        });
+        
+        // Função para adicionar componente do banco ao canvas (integração)
+        function adicionarComponenteBanco(componenteId, x = null, y = null) {
+            const componente = window.fluxosDatabaseIntegration.componentesCarregados().find(c => c.id == componenteId);
+            if (!componente) {
+                console.error('❌ Componente não encontrado:', componenteId);
+                return;
+            }
+            
+            // Posição padrão se não especificada
+            if (x === null || y === null) {
+                const canvas = document.getElementById('canvas');
+                const rect = canvas.getBoundingClientRect();
+                x = x || (50 + Math.random() * (rect.width - 200));
+                y = y || (50 + Math.random() * (rect.height - 100));
+            }
+            
+            const componentData = {
+                id: componentIdCounter++,
+                type: componente.tipo,
+                name: componente.nome,
+                desc: componente.descricao,
+                x: x,
+                y: y,
+                color: componente.cor,
+                icon: componente.icone,
+                database_id: componente.id
+            };
+            
+            components.push(componentData);
+            renderComponent(componentData);
+            updateStats();
+            
+            console.log(`✅ Componente ${componente.nome} adicionado do banco`);
+            return componentData;
+        }
+        
+        // Função para atualizar sidebars com componentes da biblioteca
+        function atualizarSidebarsComponentes(componentes) {
+            console.log('🔄 Atualizando sidebars com', componentes.length, 'componentes');
+            
+            // Separar componentes por categoria
+            const componentesPorCategoria = {};
+            componentes.forEach(comp => {
+                if (!componentesPorCategoria[comp.categoria]) {
+                    componentesPorCategoria[comp.categoria] = [];
+                }
+                componentesPorCategoria[comp.categoria].push(comp);
+            });
+            
+            // Categorias da sidebar esquerda (entrada e processamento inicial)
+            const categoriasEsquerda = ['Extração', 'Classificação', 'Análise', 'Especialização'];
+            // Categorias da sidebar direita (processamento e saída)
+            const categoriasDireita = ['Transformação', 'Geração', 'Agregação', 'Conexão', 'Validação'];
+            
+            // Atualizar sidebar esquerda
+            atualizarSidebar('left', categoriasEsquerda, componentesPorCategoria);
+            
+            // Atualizar sidebar direita  
+            atualizarSidebar('right', categoriasDireita, componentesPorCategoria);
+            
+            console.log('✅ Ambas sidebars atualizadas com componentes do banco');
+        }
+        
+        function atualizarSidebar(lado, categorias, componentesPorCategoria) {
+            const selectorContainer = lado === 'left' ? '.sidebar-left .sidebar-section:last-child' : '.sidebar-right .sidebar-section:last-child';
+            const container = document.querySelector(selectorContainer);
+            
+            if (!container) {
+                console.warn(`⚠️ Container da sidebar ${lado} não encontrado`);
+                return;
+            }
+            
+            // Limpar categorias existentes, mantendo apenas headers
+            const existingCategories = container.querySelectorAll('.component-category');
+            existingCategories.forEach(cat => cat.remove());
+            
+            // Adicionar categorias com componentes do banco
+            categorias.forEach(categoria => {
+                if (componentesPorCategoria[categoria] && componentesPorCategoria[categoria].length > 0) {
+                    const categoryHtml = criarCategoriaHtml(categoria, componentesPorCategoria[categoria]);
+                    container.insertAdjacentHTML('beforeend', categoryHtml);
+                }
+            });
+            
+            // Reconfigurar eventos de drag and drop usando função unificada
+            container.querySelectorAll('.component-item').forEach(item => {
+                item.removeEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragstart', handleDragStart);
+                item.draggable = true;
+            });
+        }
+        
+        function criarCategoriaHtml(categoria, componentes) {
+            const componentesHtml = componentes.map(comp => `
+                <div class="component-item" 
+                     data-type="${comp.tipo}" 
+                     data-name="${comp.nome}"
+                     data-id="${comp.id}"
+                     data-color="${comp.cor}"
+                     data-icon="${comp.icone}"
+                     draggable="true">
+                    <div class="component-name">${comp.nome}</div>
+                    <div class="component-desc">${comp.descricao}</div>
+                </div>
+            `).join('');
+            
+            return `
+                <div class="component-category">
+                    <div class="category-header">${categoria}</div>
+                    ${componentesHtml}
+                </div>
+            `;
+        }
+        
+        // Função para configurar componente via duplo clique
+        function configurarComponenteCanvas(componentId) {
+            const component = components.find(c => c.id === componentId);
+            if (component && component.database_id) {
+                window.fluxosDatabaseIntegration.configurarComponente(component.database_id);
+            }
+        }
+        
+        // Sobrescrever função renderComponent para incluir data-database-id
+        if (typeof renderComponent === 'function') {
+            const originalRenderComponent = renderComponent;
+            renderComponent = function(component) {
+                const result = originalRenderComponent(component);
+                
+                // Adicionar atributo database_id se existir
+                if (component.database_id) {
+                    const element = document.querySelector(`[data-id="${component.id}"]`);
+                    if (element) {
+                        element.setAttribute('data-database-id', component.database_id);
+                    }
+                }
+                
+                return result;
+            };
+        } else {
+            console.warn('⚠️ Função renderComponent não encontrada - usando fallback');
+            window.renderComponent = function(component) {
+                console.log('🔄 Renderizando componente:', component.name);
+                // Implementação básica de fallback se necessário
+                return component;
+            };
+        }
+        
+        console.log('🔗 Scripts de integração fluxos-database carregados');
+    </script>
+</body>
+</html>

@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block title %}Assistentes Jurídicos Especializados{% endblock %}
+
+{% block head %}
+<style>
+    /* Variáveis de cores para consistência */
+    :root {
+        --card-bg: #1e2531;
+        --card-border: #2d3748;
+        --text-primary: #ffffff;
+        --text-secondary: #a0aec0;
+        --accent-blue: #0066cc;
+        --hover-bg: rgba(0, 102, 204, 0.1);
+    }
+
+    body {
+        background-color: #0a0e1a;
+        color: var(--text-primary);
+    }
+
+    /* Header responsivo */
+    .assistentes-header {
+        background: linear-gradient(135deg, var(--card-bg) 0%, #1a202c 100%);
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .assistentes-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .assistentes-header .lead {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 0;
+    }
+
+    /* Grid de estatísticas responsivo */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 102, 204, 0.15);
+        border-color: var(--accent-blue);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Cards de áreas jurídicas responsivos */
+    .areas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .area-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .area-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-blue);
+    }
+
+    .area-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent-blue), #4fc3f7);
+    }
+
+    .area-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .area-icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(0, 102, 204, 0.1);
+    }
+
+    .area-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        flex: 1;
+    }
+
+    .area-description {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .assistentes-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .assistente-item {
+        background: rgba(0, 102, 204, 0.05);
+        border: 1px solid rgba(0, 102, 204, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .assistente-item:hover {
+        background: rgba(0, 102, 204, 0.1);
+        border-color: var(--accent-blue);
+        transform: translateY(-1px);
+    }
+
+    .assistente-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .assistente-icon {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+        color: var(--accent-blue);
+    }
+
+    .assistente-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    .assistente-desc {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .area-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-area {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary-custom {
+        background: var(--accent-blue);
+        color: white;
+        border: 1px solid var(--accent-blue);
+    }
+
+    .btn-primary-custom:hover {
+        background: #0052a3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-outline-custom {
+        background: transparent;
+        color: var(--accent-blue);
+        border: 1px solid var(--accent-blue);
+    }
+
+    .btn-outline-custom:hover {
+        background: var(--accent-blue);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Responsividade para mobile */
+    @media (max-width: 768px) {
+        .assistentes-header {
+            padding: 1.5rem 0;
+        }
+
+        .assistentes-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .assistentes-header .lead {
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+        }
+
+        .areas-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .area-card {
+            padding: 1.25rem;
+        }
+
+        .area-title {
+            font-size: 1.1rem;
+        }
+
+        .assistentes-list {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .area-actions {
+            flex-direction: column;
+        }
+
+        .btn-area {
+            min-width: auto;
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .assistentes-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .area-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .area-icon {
+            align-self: flex-start;
+        }
+
+        .assistente-item {
+            padding: 0.75rem;
+        }
+    }
+
+    /* Animações suaves */
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Loading states */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3">
+    <!-- Header -->
+    <div class="assistentes-header fade-in">
+        <div class="container">
+            <h1><i class="fas fa-users me-3"></i>Assistentes Jurídicos Especializados</h1>
+            <p class="lead">Acesse assistentes especializados em cada área do direito</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Estatísticas -->
+        <div class="stats-grid fade-in">
+            <div class="stat-card">
+                <div class="stat-number">15</div>
+                <div class="text-white">Áreas Jurídicas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">140+</div>
+                <div class="text-white">Assistentes Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="text-white">Disponibilidade</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="text-white">Precisão Legal</div>
+            </div>
+        </div>
+
+        <!-- Áreas Jurídicas -->
+        <div class="areas-grid fade-in">
+            <!-- Direito Penal -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-gavel" style="color: #dc3545;"></i>
+                    </div>
+                    <h3 class="area-title">Direito Penal</h3>
+                </div>
+                <p class="area-description">
+                    Assistentes especializados em direito penal e processual penal com expertise em defesas, denúncias e recursos criminais.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-shield-alt assistente-icon"></i>
+                            <h6 class="assistente-name">Defensor Criminal</h6>
+                        </div>
+                        <p class="assistente-desc">Especialista em defesas criminais e habeas corpus</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-balance-scale assistente-icon"></i>
+                            <h6 class="assistente-name">Analista Processual</h6>
+                        </div>
+                        <p class="assistente-desc">Análise de processos e estratégias processuais</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_penal" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#criminal" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+
+            <!-- Direito Bancário -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-university" style="color: #fd7e14;"></i>
+                    </div>
+                    <h3 class="area-title">Direito Bancário</h3>
+                </div>
+                <p class="area-description">
+                    Especialistas em contratos bancários, financiamentos e regulação do sistema financeiro nacional.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-chart-line assistente-icon"></i>
+                            <h6 class="assistente-name">Consultor Financeiro</h6>
+                        </div>
+                        <p class="assistente-desc">Análise de contratos e produtos bancários</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-landmark assistente-icon"></i>
+                            <h6 class="assistente-name">Compliance Bancário</h6>
+                        </div>
+                        <p class="assistente-desc">Conformidade regulatória e BACEN</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_bancario" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#bancario" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+
+            <!-- Direito Empresarial -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-building" style="color: #007bff;"></i>
+                    </div>
+                    <h3 class="area-title">Direito Empresarial</h3>
+                </div>
+                <p class="area-description">
+                    Consultores especializados em direito societário, contratos empresariais e governança corporativa.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-handshake assistente-icon"></i>
+                            <h6 class="assistente-name">Consultor Societário</h6>
+                        </div>
+                        <p class="assistente-desc">Constituição e gestão de sociedades</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-chart-bar assistente-icon"></i>
+                            <h6 class="assistente-name">Compliance Corporativo</h6>
+                        </div>
+                        <p class="assistente-desc">Governança e conformidade empresarial</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_empresarial" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#empresarial" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+
+            <!-- Direito Agrário -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-seedling" style="color: #1f5981;"></i>
+                    </div>
+                    <h3 class="area-title">Direito Agrário</h3>
+                </div>
+                <p class="area-description">
+                    Especialistas em propriedade rural, reforma agrária e questões ambientais no campo.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-tractor assistente-icon"></i>
+                            <h6 class="assistente-name">Consultor Rural</h6>
+                        </div>
+                        <p class="assistente-desc">Propriedade rural e regularização fundiária</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-leaf assistente-icon"></i>
+                            <h6 class="assistente-name">Ambiental Rural</h6>
+                        </div>
+                        <p class="assistente-desc">Compliance ambiental e CAR</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_agrario" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#agrario" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+
+            <!-- Direito Trabalhista -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-hard-hat" style="color: #ffc107;"></i>
+                    </div>
+                    <h3 class="area-title">Direito Trabalhista</h3>
+                </div>
+                <p class="area-description">
+                    Assistentes em relações trabalhistas, contratos de trabalho e processo trabalhista.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-briefcase assistente-icon"></i>
+                            <h6 class="assistente-name">Consultor Trabalhista</h6>
+                        </div>
+                        <p class="assistente-desc">Contratos e relações de trabalho</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-gavel assistente-icon"></i>
+                            <h6 class="assistente-name">Processualista Trabalhista</h6>
+                        </div>
+                        <p class="assistente-desc">Processo e recursos trabalhistas</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_trabalhista" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#trabalhista" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+
+            <!-- Direito do Consumidor -->
+            <div class="area-card">
+                <div class="area-header">
+                    <div class="area-icon">
+                        <i class="fas fa-shopping-cart" style="color: #e83e8c;"></i>
+                    </div>
+                    <h3 class="area-title">Direito do Consumidor</h3>
+                </div>
+                <p class="area-description">
+                    Especialistas em defesa do consumidor, CDC e relações de consumo.
+                </p>
+                <div class="assistentes-list">
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-shield-alt assistente-icon"></i>
+                            <h6 class="assistente-name">Defensor Consumidor</h6>
+                        </div>
+                        <p class="assistente-desc">Proteção e defesa de direitos</p>
+                    </div>
+                    <div class="assistente-item">
+                        <div class="assistente-header">
+                            <i class="fas fa-store assistente-icon"></i>
+                            <h6 class="assistente-name">E-commerce Legal</h6>
+                        </div>
+                        <p class="assistente-desc">Comércio eletrônico e LGPD</p>
+                    </div>
+                </div>
+                <div class="area-actions">
+                    <a href="/assistentes/area/direito_consumidor" class="btn-area btn-primary-custom">
+                        <i class="fas fa-comments me-2"></i>Acessar Chat
+                    </a>
+                    <a href="/templates-juridicos#consumidor" class="btn-area btn-outline-custom">
+                        <i class="fas fa-file-alt me-2"></i>Templates
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Adicionar interatividade e animações
+document.addEventListener('DOMContentLoaded', function() {
+    // Animação de entrada para cards
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeIn 0.6s ease-out forwards';
+            }
+        });
+    }, observerOptions);
+
+    // Observar cards de área
+    document.querySelectorAll('.area-card').forEach(card => {
+        observer.observe(card);
+    });
+
+    // Adicionar efeito de clique nos assistentes
+    document.querySelectorAll('.assistente-item').forEach(item => {
+        item.addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+
+    // Loading states para botões
+    document.querySelectorAll('.btn-area').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            if (!this.classList.contains('loading')) {
+                this.classList.add('loading');
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Carregando...';
+                
+                setTimeout(() => {
+                    this.classList.remove('loading');
+                    this.innerHTML = originalText;
+                }, 2000);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

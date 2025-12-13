@@ -1,0 +1,598 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block title %}Gerenciamento de Prompts{% endblock %}
+
+{% block extra_head %}
+    {{ super() }}
+    <style>
+        .prompt-card {
+            margin-bottom: 1rem;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .prompt-header {
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        
+        .prompt-preview {
+            font-size: 0.9rem;
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        
+        .prompt-code {
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 0;
+            padding: 0.5rem;
+            background-color: #f1f1f1;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+        }
+        
+        .modelo-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            margin-left: 0.5rem;
+        }
+        
+        .openai {
+            background-color: #e3f2fd;
+            color: #0d6efd;
+        }
+        
+        .anthropic {
+            background-color: #e3fcf7;
+            color: #20c997;
+        }
+        
+        .deepseek {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .perplexity {
+            background-color: #ffe8d9;
+            color: #fd7e14;
+        }
+        
+        .prompt-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Estilo do editor CodeMirror */
+        .editor-container {
+            margin-bottom: 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        
+        .CodeMirror {
+            height: auto !important;
+            min-height: 100px;
+            max-height: 400px;
+        }
+    </style>
+    <!-- CSS do CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-comment-alt me-2"></i> Gerenciamento de Prompts do Assistente</h1>
+        <button class="btn btn-primary" id="btnNovoPrompt">
+            <i class="fas fa-plus"></i> Novo Prompt
+        </button>
+    </div>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Aqui você pode configurar os prompts de sistema utilizados pelo Assistente para cada modelo de linguagem.
+        Os prompts determinam como o assistente responde às perguntas dos usuários.
+    </div>
+    
+    <div id="promptsList" class="mt-4">
+        <!-- Prompts carregados via AJAX -->
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Carregando prompts...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição/Criação de Prompt -->
+<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="promptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="promptModalLabel">Editar Prompt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="promptForm">
+                    <input type="hidden" id="promptId" name="id">
+                    
+                    <div class="mb-3">
+                        <label for="promptNome" class="form-label">Nome do Prompt</label>
+                        <input type="text" class="form-control" id="promptNome" name="nome" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="promptDescricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="promptDescricao" name="descricao" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="promptModelo" class="form-label">Modelo de Linguagem</label>
+                        <select class="form-select" id="promptModelo" name="modelo_llm" required>
+                            <option value="">Selecione um modelo</option>
+                            <optgroup label="OpenAI">
+                                <option value="openai/gpt-4o">OpenAI - GPT-4o</option>
+                                <option value="openai/gpt-4-turbo">OpenAI - GPT-4 Turbo</option>
+                                <option value="openai/gpt-3.5-turbo">OpenAI - GPT-3.5 Turbo</option>
+                            </optgroup>
+                            <optgroup label="Anthropic">
+                                <option value="anthropic/claude-3-5-sonnet">Anthropic - Claude 3.5 Sonnet</option>
+                                <option value="anthropic/claude-3-opus">Anthropic - Claude 3 Opus</option>
+                                <option value="anthropic/claude-3-sonnet">Anthropic - Claude 3 Sonnet</option>
+                            </optgroup>
+                            <optgroup label="DeepSeek">
+                                <option value="deepseek/deepseek-chat">DeepSeek - Chat</option>
+                            </optgroup>
+                            <optgroup label="Perplexity">
+                                <option value="perplexity/llama-3.1-sonar-large">Perplexity - Llama 3.1 Sonar Large</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editor-sistema" class="form-label">Prompt de Sistema</label>
+                        <div class="editor-container">
+                            <textarea id="editor-sistema"></textarea>
+                        </div>
+                        <div class="form-text">
+                            Este é o prompt principal que define o comportamento do assistente.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editor-contexto" class="form-label">Contexto Padrão</label>
+                        <div class="editor-container">
+                            <textarea id="editor-contexto"></textarea>
+                        </div>
+                        <div class="form-text">
+                            Contexto adicional que será incluído em todas as conversas.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarPrompt">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <!-- Scripts do CodeMirror -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/markdown/markdown.min.js"></script>
+    <!-- SweetAlert2 para alertas personalizados -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Variáveis globais
+        let prompts = [];
+        let editorSistema = null;
+        let editorContexto = null;
+        let modalInstance = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carregar a lista de prompts
+            carregarPrompts();
+            
+            // Configurar eventos dos botões
+            document.getElementById('btnNovoPrompt').addEventListener('click', function() {
+                abrirModal();
+            });
+            
+            document.getElementById('btnSalvarPrompt').addEventListener('click', function() {
+                salvarPrompt();
+            });
+            
+            // Configurar o modal
+            const promptModal = document.getElementById('promptModal');
+            
+            // Quando o modal for completamente mostrado, inicializar os editores
+            promptModal.addEventListener('shown.bs.modal', function() {
+                inicializarEditores();
+            });
+            
+            // Quando o modal for fechado, destruir os editores
+            promptModal.addEventListener('hidden.bs.modal', function() {
+                destruirEditores();
+            });
+        });
+        
+        // Função para carregar a lista de prompts via AJAX
+        function carregarPrompts() {
+            fetch('/assistente/admin/api/prompts/listar')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Falha ao carregar prompts');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        prompts = data.prompts;
+                        renderizarPrompts();
+                    } else {
+                        throw new Error(data.message || 'Erro ao carregar prompts');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    document.getElementById('promptsList').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erro ao carregar prompts: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Função para renderizar a lista de prompts
+        function renderizarPrompts() {
+            const container = document.getElementById('promptsList');
+            
+            if (!prompts || prompts.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Nenhum prompt cadastrado. Clique em "Novo Prompt" para criar o primeiro.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            prompts.forEach(prompt => {
+                // Determinar a classe para o badge do modelo
+                let modeloClasse = 'secondary';
+                if (prompt.modelo_llm.startsWith('openai/')) {
+                    modeloClasse = 'openai';
+                } else if (prompt.modelo_llm.startsWith('anthropic/')) {
+                    modeloClasse = 'anthropic';
+                } else if (prompt.modelo_llm.startsWith('deepseek/')) {
+                    modeloClasse = 'deepseek';
+                } else if (prompt.modelo_llm.startsWith('perplexity/')) {
+                    modeloClasse = 'perplexity';
+                }
+                
+                html += `
+                <div class="card prompt-card mb-3">
+                    <div class="prompt-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                ${prompt.nome}
+                                <span class="badge modelo-badge ${modeloClasse}">${prompt.modelo_llm.split('/')[1]}</span>
+                            </h5>
+                            <div class="prompt-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editarPrompt(${prompt.id})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="confirmarExclusao(${prompt.id}, '${prompt.nome}')">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        ${prompt.descricao ? `<p>${prompt.descricao}</p>` : ''}
+                        <div class="prompt-preview">
+                            <strong>Prompt de Sistema:</strong>
+                            <pre class="prompt-code">${prompt.template_sistema}</pre>
+                            
+                            ${prompt.contexto_padrao ? `
+                            <strong class="mt-2 d-block">Contexto Padrão:</strong>
+                            <pre class="prompt-code">${prompt.contexto_padrao}</pre>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Função para abrir o modal (novo prompt ou edição)
+        function abrirModal(promptData = null) {
+            // Limpar formulário
+            document.getElementById('promptForm').reset();
+            document.getElementById('promptId').value = '';
+            
+            // Configurar título do modal
+            const isEdit = promptData !== null;
+            document.getElementById('promptModalLabel').textContent = isEdit ? 'Editar Prompt' : 'Novo Prompt';
+            
+            // Se for edição, preencher os campos
+            if (isEdit) {
+                document.getElementById('promptId').value = promptData.id;
+                document.getElementById('promptNome').value = promptData.nome || '';
+                document.getElementById('promptDescricao').value = promptData.descricao || '';
+                document.getElementById('promptModelo').value = promptData.modelo_llm || '';
+                
+                // Os valores dos editores serão preenchidos no evento shown.bs.modal
+                window.sistemaValue = promptData.template_sistema || '';
+                window.contextoValue = promptData.contexto_padrao || '';
+            } else {
+                window.sistemaValue = '';
+                window.contextoValue = '';
+            }
+            
+            // Abrir o modal
+            const modal = new bootstrap.Modal(document.getElementById('promptModal'));
+            modal.show();
+            modalInstance = modal;
+        }
+        
+        // Função para editar um prompt existente
+        function editarPrompt(id) {
+            const prompt = prompts.find(p => p.id === id);
+            if (!prompt) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Prompt não encontrado'
+                });
+                return;
+            }
+            
+            abrirModal(prompt);
+        }
+        
+        // Função para inicializar os editores CodeMirror
+        function inicializarEditores() {
+            // Inicializar editor para o prompt de sistema
+            editorSistema = CodeMirror.fromTextArea(document.getElementById('editor-sistema'), {
+                mode: 'markdown',
+                theme: 'monokai',
+                lineNumbers: true,
+                lineWrapping: true,
+                extraKeys: {"Ctrl-Space": "autocomplete"},
+                viewportMargin: Infinity
+            });
+            
+            // Inicializar editor para o contexto padrão
+            editorContexto = CodeMirror.fromTextArea(document.getElementById('editor-contexto'), {
+                mode: 'markdown',
+                theme: 'monokai',
+                lineNumbers: true,
+                lineWrapping: true,
+                extraKeys: {"Ctrl-Space": "autocomplete"},
+                viewportMargin: Infinity
+            });
+            
+            // Definir os valores dos editores
+            if (window.sistemaValue) {
+                editorSistema.setValue(window.sistemaValue);
+            }
+            
+            if (window.contextoValue) {
+                editorContexto.setValue(window.contextoValue);
+            }
+            
+            // Forçar um refresh para garantir que o editor seja renderizado corretamente
+            setTimeout(() => {
+                editorSistema.refresh();
+                editorContexto.refresh();
+            }, 10);
+        }
+        
+        // Função para destruir os editores
+        function destruirEditores() {
+            if (editorSistema) {
+                editorSistema.toTextArea();
+                editorSistema = null;
+            }
+            
+            if (editorContexto) {
+                editorContexto.toTextArea();
+                editorContexto = null;
+            }
+            
+            // Limpar valores temporários
+            window.sistemaValue = null;
+            window.contextoValue = null;
+        }
+        
+        // Função para salvar um prompt
+        function salvarPrompt() {
+            try {
+                // Mostrar indicador de carregamento
+                Swal.fire({
+                    title: 'Salvando...',
+                    text: 'Aguarde enquanto salvamos seu prompt',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Verificar se os editores estão inicializados
+                if (!editorSistema || !editorContexto) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Os editores não foram inicializados corretamente'
+                    });
+                    return;
+                }
+                
+                // Coletar dados do formulário
+                const id = document.getElementById('promptId').value;
+                const nome = document.getElementById('promptNome').value;
+                const descricao = document.getElementById('promptDescricao').value;
+                const modelo_llm = document.getElementById('promptModelo').value;
+                const template_sistema = editorSistema.getValue();
+                const contexto_padrao = editorContexto.getValue();
+                
+                // Validar campos obrigatórios
+                if (!nome || !modelo_llm || !template_sistema) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos obrigatórios',
+                        text: 'Por favor, preencha todos os campos obrigatórios (Nome, Modelo e Prompt de Sistema)'
+                    });
+                    return;
+                }
+                
+                // Construir objeto de dados
+                const promptData = {
+                    nome,
+                    descricao,
+                    modelo_llm,
+                    template_sistema,
+                    contexto_padrao
+                };
+                
+                // Adicionar ID se for edição
+                if (id) {
+                    promptData.id = parseInt(id);
+                }
+                
+                // Enviar para o servidor
+                fetch('/assistente/admin/api/prompts/salvar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(promptData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Fechar modal
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                        
+                        // Recarregar a lista de prompts
+                        carregarPrompts();
+                        
+                        // Exibir mensagem de sucesso
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: 'Prompt salvo com sucesso!'
+                        });
+                    } else {
+                        throw new Error(data.message || 'Erro ao salvar prompt');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro ao salvar',
+                        text: error.message
+                    });
+                });
+            } catch (error) {
+                console.error('Erro ao processar formulário:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Ocorreu um erro ao processar o formulário: ' + error.message
+                });
+            }
+        }
+        
+        // Função para confirmar exclusão
+        function confirmarExclusao(id, nome) {
+            Swal.fire({
+                title: 'Confirmar exclusão',
+                text: `Deseja realmente excluir o prompt "${nome}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sim, excluir',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    excluirPrompt(id);
+                }
+            });
+        }
+        
+        // Função para excluir um prompt
+        function excluirPrompt(id) {
+            Swal.fire({
+                title: 'Excluindo...',
+                text: 'Aguarde enquanto excluímos o prompt',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(`/assistente/admin/api/prompts/excluir/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Recarregar a lista de prompts
+                    carregarPrompts();
+                    
+                    // Exibir mensagem de sucesso
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Excluído!',
+                        text: 'Prompt excluído com sucesso!'
+                    });
+                } else {
+                    throw new Error(data.message || 'Erro ao excluir prompt');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro ao excluir',
+                    text: error.message
+                });
+            });
+        }
+    </script>
+{% endblock %}

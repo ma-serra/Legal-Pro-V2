@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Transcrição</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #4a6c7a 0%, #3b576f 50%, #2d424f 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        /* Botão Home */
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+
+        .home-button i {
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .card-content {
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .transcription-full {
+            grid-column: span 2;
+        }
+
+        .transcription-text {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Estilização personalizada da barra de rolagem */
+        .transcription-text::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .transcription-text::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin: 5px;
+        }
+
+        .transcription-text::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transcription-text::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+        }
+
+        /* Para Firefox */
+        .transcription-text {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+        }
+
+        .timestamp {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .transcript-segment {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid rgba(129, 199, 132, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .transcript-segment:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-left-color: rgba(129, 199, 132, 0.9);
+            transform: translateX(5px);
+        }
+
+        .transcript-segment:last-child {
+            margin-bottom: 0;
+        }
+
+        .segment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .speaker-timestamp {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .confidence-badge {
+            background: rgba(129, 199, 132, 0.2);
+            color: #81c784;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(129, 199, 132, 0.3);
+        }
+
+        .speaker-label i, .timestamp i {
+            margin-right: 6px;
+            opacity: 0.7;
+        }
+
+        /* Estilos para o botão de download personalizado */
+        .btn-download-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-download-custom:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-download-custom:hover:before {
+            left: 100%;
+        }
+
+        .btn-download-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-download-custom .dropdown-toggle::after {
+            margin-left: 12px;
+            border-top-color: white;
+        }
+
+        /* Menu dropdown personalizado */
+        .dropdown-menu {
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            min-width: 220px;
+            margin-top: 8px;
+        }
+
+        .dropdown-item {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .dropdown-item i {
+            margin-right: 12px;
+            width: 20px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .dropdown-item:hover i {
+            opacity: 1;
+        }
+
+        /* Cores específicas por tipo de arquivo */
+        .dropdown-item[onclick*="DOCX"] i {
+            color: #2196F3;
+        }
+
+        .dropdown-item[onclick*="PDF"] i {
+            color: #F44336;
+        }
+
+        .dropdown-item[onclick*="TXT"] i {
+            color: #4CAF50;
+        }
+
+        /* Estilo do botão Compartilhar seguindo o layout da imagem */
+        .btn-share {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-share:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-share i {
+            font-size: 16px;
+        }
+
+        /* Botões de exportação seguindo o mesmo estilo */
+        .btn-export-word, .btn-export-pdf {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-export-word:hover, .btn-export-pdf:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .btn-export-word i {
+            color: #2196F3;
+            font-size: 16px;
+        }
+
+        .btn-export-pdf i {
+            color: #F44336;
+            font-size: 16px;
+        }
+
+        /* Estilo para o botão Extrair Dados */
+        .btn-extract-data {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-extract-data:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-extract-data:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-extract-data i {
+            font-size: 14px;
+        }
+
+        /* Ajustar card-header para comportar o botão */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .transcription-text {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transcription-text::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .transcription-text::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+        }
+
+        .transcription-text::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .transcription-text::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+            background-clip: content-box;
+        }
+
+        /* Estilos para Firefox */
+        .transcription-text {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+        }
+
+        .sentiment-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .sentiment-positive {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .sentiment-negative {
+            background: rgba(244, 67, 54, 0.2);
+            color: #e57373;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .sentiment-neutral {
+            background: rgba(158, 158, 158, 0.2);
+            color: #bdbdbd;
+            border: 1px solid rgba(158, 158, 158, 0.3);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: flex-start;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-buttons .dropdown {
+            position: relative;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2d424f;
+        }
+
+        .btn-primary:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        .speaker-label {
+            font-weight: 600;
+            color: #81c784;
+            margin-bottom: 5px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e57373, #ffb74d, #81c784);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .sentiment-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .sentiment-positive {
+            background: #4caf50;
+            color: white;
+        }
+
+        .sentiment-negative {
+            background: #f44336;
+            color: white;
+        }
+
+        .sentiment-neutral {
+            background: #ff9800;
+            color: white;
+        }
+
+        .speaker-segment {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .transcription-full {
+                grid-column: span 1;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Resultado da Transcrição</h1>
+            <p>Análise completa do seu arquivo de áudio/vídeo</p>
+        </div>
+
+        <div class="results-grid">
+            <!-- Card de Resumo -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="card-title">Resumo Executivo</div>
+                </div>
+                <div class="card-content">
+                    <p id="summary-text">
+                        {% if results and results.summary %}
+                            {{ results.summary }}
+                        {% else %}
+                            Nenhum resumo disponível. Faça upload de um arquivo para ver a análise.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card de Análise de Sentimento -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="card-title">Análise de Sentimento</div>
+                </div>
+                <div class="card-content">
+                    {% if results and results.sentiment_analysis %}
+                        <div id="sentiment-metrics"></div>
+                    {% else %}
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <div class="metric-value" style="color: #bdbdbd;">--</div>
+                                <div class="metric-label">Positivo</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" style="color: #bdbdbd;">--</div>
+                                <div class="metric-label">Neutro</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" style="color: #bdbdbd;">--</div>
+                                <div class="metric-label">Negativo</div>
+                            </div>
+                        </div>
+                        <div class="sentiment-indicator">
+                            <i class="fas fa-info-circle"></i>
+                            Nenhuma análise disponível
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Botões de Ação Expandidos -->
+        <div class="action-buttons">
+            <a href="/video/" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Nova Transcrição
+            </a>
+            
+            <div class="export-dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="exportDropdown" onclick="toggleExportDropdown()" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-download"></i>
+                    <span>Exportar Transcrição</span>
+                    <i class="fas fa-chevron-down ms-2" style="font-size: 12px; transition: transform 0.3s ease;"></i>
+                </button>
+                <div class="dropdown-menu" id="exportDropdownMenu" style="display: none;">
+                    <a class="dropdown-item" href="#" onclick="exportTranscription('txt')">
+                        <i class="fas fa-file-alt"></i>
+                        <div>
+                            <div style="font-weight: 600;">Texto Simples</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Arquivo .txt com formatação básica</div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item" href="#" onclick="exportTranscription('docx')">
+                        <i class="fas fa-file-word"></i>
+                        <div>
+                            <div style="font-weight: 600;">Word Profissional</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Documento .docx com timestamps e formatação</div>
+                        </div>
+                    </a>
+                    <a class="dropdown-item" href="#" onclick="exportTranscription('json')">
+                        <i class="fas fa-code"></i>
+                        <div>
+                            <div style="font-weight: 600;">JSON Estruturado</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Dados .json para integração técnica</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Estilo do dropdown de exportação */
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .export-dropdown .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-dropdown .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .export-dropdown .dropdown-menu {
+            background: rgba(20, 25, 45, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 12px 0;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            min-width: 280px;
+            margin-top: 8px;
+            animation: dropdownFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .export-dropdown .dropdown-item {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 16px 24px;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 500;
+            font-size: 15px;
+            border-radius: 0;
+            margin: 2px 8px;
+            cursor: pointer;
+        }
+        
+        .export-dropdown .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(59, 87, 111, 0.8), rgba(91, 122, 149, 0.6));
+            color: white;
+            transform: translateX(8px);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(59, 87, 111, 0.3);
+        }
+        
+        .export-dropdown .dropdown-item:active {
+            transform: translateX(4px) scale(0.98);
+        }
+        
+        .export-dropdown .dropdown-item i {
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            opacity: 0.8;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .export-dropdown .dropdown-item:hover i {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* Cores específicas para cada formato */
+        .export-dropdown .dropdown-item:nth-child(1) i { color: #6c757d; }  /* TXT - Cinza */
+        .export-dropdown .dropdown-item:nth-child(2) i { color: #2b579a; }  /* DOCX - Azul Word */
+        .export-dropdown .dropdown-item:nth-child(3) i { color: #dc3545; }  /* PDF - Vermelho */
+        .export-dropdown .dropdown-item:nth-child(4) i { color: #ffc107; }  /* JSON - Amarelo */
+        .export-dropdown .dropdown-item:nth-child(5) i { color: #198754; }  /* CSV - Verde */
+        .export-dropdown .dropdown-item:nth-child(6) i { color: #6f42c1; }  /* SRT - Roxo */
+        
+        /* Indicador visual de carregamento */
+        .export-loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .export-loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: exportSpin 1s linear infinite;
+            transform: translateY(-50%);
+        }
+        
+        @keyframes exportSpin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+    </style>
+    <script>
+        // Verificar se há ID de transcrição para polling
+        let transcriptId = '{{ session.get("transcript_id", "") }}';
+        let pollInterval;
+        
+        if (transcriptId && !{{ results|tojson if results else 'null' }}) {
+            // Iniciar polling se não há resultados ainda
+            startPolling();
+        }
+        
+        function startPolling() {
+            console.log('Iniciando polling para transcrição:', transcriptId);
+            
+            // Mostrar indicador de carregamento robusto
+            document.querySelector('.results-grid').innerHTML = `  
+                <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <div style="margin-bottom: 20px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: rgba(255,255,255,0.6);"></i>
+                    </div>
+                    <h3>Processando Transcrição...</h3>
+                    <p style="color: rgba(255,255,255,0.7); margin-top: 10px;">
+                        Aguarde enquanto processamos seu arquivo. Isso pode levar alguns minutos.
+                    </p>
+                    <div class="progress mt-3" style="width: 300px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 20px auto;">
+                        <div id="progress-fill" class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: 10%; background: linear-gradient(45deg, #3b576f, #5a7a95); border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="polling-status" style="color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 10px;">
+                        Tentativa 1 de 120...
+                    </div>
+                </div>
+            `;
+            
+            let attempts = 0;
+            const maxAttempts = 120; // 6 minutos máximo
+            let consecutiveErrors = 0;
+            
+            // Polling com retry robusto e indicadores visuais
+            pollInterval = setInterval(async () => {
+                attempts++;
+                
+                // Atualizar progresso visual
+                updatePollingProgress(attempts, maxAttempts);
+                
+                if (attempts > maxAttempts) {
+                    clearInterval(pollInterval);
+                    displayError('Timeout: Transcrição demorou mais que o esperado. Verifique sua conexão e tente novamente.');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/video/status/${transcriptId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    consecutiveErrors = 0; // Reset contador de erros
+                    
+                    console.log(`Tentativa ${attempts}: Status = ${data.status}`);
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        console.log('Transcrição concluída, carregando resultados...');
+                        
+                        // Verificar se os resultados são válidos
+                        console.log('Dados recebidos:', data);
+                        
+                        const resultsData = data.results || data;
+                        console.log('Dados processados:', resultsData);
+                        
+                        if (resultsData.text || resultsData.speaker_segments || resultsData.summary) {
+                            displayResults(resultsData);
+                        } else {
+                            console.error('Estrutura de dados inválida:', resultsData);
+                            displayError('Transcrição concluída mas sem dados válidos. Tente fazer uma nova transcrição.');
+                        }
+                    } else if (data.status === 'error') {
+                        clearInterval(pollInterval);
+                        const errorMsg = data.error || 'Erro desconhecido na transcrição';
+                        console.error('Erro na transcrição:', errorMsg);
+                        displayError(`Erro na transcrição: ${errorMsg}`);
+                    } else {
+                        // Ainda processando
+                        updateStatusMessage(data.status || 'processing', attempts);
+                    }
+                    
+                } catch (error) {
+                    consecutiveErrors++;
+                    console.error(`Erro no polling (tentativa ${attempts}):`, error);
+                    
+                    // Permitir até 5 erros consecutivos antes de tentar fallback
+                    if (consecutiveErrors >= 5) {
+                        console.log('Tentando fallback direto...');
+                        clearInterval(pollInterval);
+                        tryDirectFallback();
+                        return;
+                    }
+                    
+                    // Atualizar status com informação do erro
+                    updateStatusMessage('erro_conexao', attempts, consecutiveErrors);
+                }
+            }, 3000);
+        }
+        
+        async function tryDirectFallback() {
+            try {
+                console.log('Executando fallback direto para:', transcriptId);
+                
+                const response = await fetch(`/video/results/direct/${transcriptId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (response.status === 202) {
+                    // Ainda processando, tentar novamente em 10 segundos
+                    setTimeout(tryDirectFallback, 10000);
+                    updateStatusMessage('fallback_processando', 0);
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const results = await response.json();
+                
+                if (results.error) {
+                    throw new Error(results.error);
+                }
+                
+                console.log('Fallback bem-sucedido, carregando resultados...');
+                displayResults(results);
+                
+            } catch (error) {
+                console.error('Fallback também falhou:', error);
+                displayError(`Sistema de recuperação falhou: ${error.message}. Verifique sua conexão e recarregue a página.`);
+            }
+        }
+        
+        function updatePollingProgress(attempts, maxAttempts) {
+            const progressFill = document.getElementById('progress-fill');
+            const statusDiv = document.getElementById('polling-status');
+            
+            if (progressFill) {
+                const progressPercent = Math.min((attempts / maxAttempts) * 100, 95);
+                progressFill.style.width = `${Math.max(progressPercent, 10)}%`;
+            }
+            
+            if (statusDiv) {
+                const timeElapsed = Math.round((attempts * 3) / 60 * 10) / 10;
+                statusDiv.textContent = `Tentativa ${attempts} de ${maxAttempts} • ${timeElapsed} min decorridos`;
+            }
+        }
+        
+        function updateStatusMessage(status, attempts, errors = 0) {
+            const statusDiv = document.getElementById('polling-status');
+            if (!statusDiv) return;
+            
+            const timeElapsed = Math.round((attempts * 3) / 60 * 10) / 10;
+            let message = `Tentativa ${attempts} • ${timeElapsed} min`;
+            
+            switch (status) {
+                case 'processing':
+                case 'queued':
+                    message += ' • Processando...';
+                    break;
+                case 'erro_conexao':
+                    message += ` • Erro de conexão (${errors}/5)`;
+                    break;
+                case 'fallback_processando':
+                    message = 'Sistema de recuperação ativo • Aguardando processamento...';
+                    break;
+                default:
+                    message += ` • Status: ${status}`;
+            }
+            
+            statusDiv.textContent = message;
+        }
+        
+        function displayResults(results) {
+            // Armazenar dados globalmente para funções de download
+            window.currentTranscriptionData = results;
+            
+            // Renderizar resultados diretamente sem recarregar
+            const grid = document.querySelector('.results-grid');
+            
+            grid.innerHTML = `  
+                <!-- Transcrição Completa com Scroll - PRIMEIRO -->
+                <div class="card transcription-full" style="grid-column: 1 / -1; order: -1;">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-file-text"></i>
+                        </div>
+                        <div class="card-title">Transcrição Completa com Timestamps</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="transcription-text" id="transcription-content">
+                            ${results.speaker_segments && results.speaker_segments.length > 0 ? 
+                                results.speaker_segments.map(segment => `
+                                    <div class="transcript-segment">
+                                        <div class="segment-header">
+                                            <div class="speaker-timestamp">
+                                                <div class="speaker-label">
+                                                    <i class="fas fa-user-circle"></i>
+                                                    Falante ${segment.speaker}
+                                                </div>
+                                                <div class="timestamp">
+                                                    <i class="fas fa-clock"></i>
+                                                    ${Math.floor(segment.start/60000).toString().padStart(2, '0')}:${Math.floor((segment.start%60000)/1000).toString().padStart(2, '0')} - ${Math.floor(segment.end/60000).toString().padStart(2, '0')}:${Math.floor((segment.end%60000)/1000).toString().padStart(2, '0')}
+                                                </div>
+                                            </div>
+                                            <div class="confidence-badge">
+                                                ${Math.round(segment.confidence * 100)}%
+                                            </div>
+                                        </div>
+                                        <p>${segment.text}</p>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: ${Math.round(segment.confidence * 100)}%;"></div>
+                                        </div>
+                                    </div>
+                                `).join('') : 
+                                `<p>${results.text || 'Transcrição não disponível.'}</p>`
+                            }
+                        </div>
+                        ${results.confidence ? `
+                            <div style="margin-top: 15px; text-align: center;">
+                                <small>Confiança geral: ${Math.round(results.confidence * 100)}% | Segmentos: ${results.speaker_segments ? results.speaker_segments.length : 0} | Duração: ${results.audio_duration ? Math.floor(results.audio_duration / 60000) : 0}:${results.audio_duration ? Math.floor((results.audio_duration % 60000) / 1000).toString().padStart(2, '0') : '00'}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Card de Métricas -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="card-title">Métricas de Qualidade</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="metrics-grid">
+                            <div class="metric">
+                                <div class="metric-value">${Math.round((results.confidence || 0) * 100)}%</div>
+                                <div class="metric-label">Confiança</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${Math.round((results.audio_duration || 0) / 1000)}s</div>
+                                <div class="metric-label">Duração</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${results.text ? results.text.split(' ').length : 0}</div>
+                                <div class="metric-label">Palavras</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${results.unique_speaker_count || (results.speaker_segments ? new Set(results.speaker_segments.map(s => s.speaker)).size : 0)}</div>
+                                <div class="metric-label">Falantes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            `;
+        }
+        
+        function displayError(error) {
+            document.querySelector('.results-grid').innerHTML = `  
+                <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <div style="margin-bottom: 20px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #f44336;"></i>
+                    </div>
+                    <h3>Erro na Transcrição</h3>
+                    <p style="color: rgba(255,255,255,0.7); margin-top: 10px;">
+                        ${error}
+                    </p>
+                    <a href="/video/" class="btn btn-primary" style="margin-top: 20px;">
+                        <i class="fas fa-arrow-left"></i>
+                        Tentar Novamente
+                    </a>
+                </div>
+            `;
+        }
+
+        // Função para exportar diretamente do servidor usando transcript_id
+        function exportFromServer(format, transcriptId) {
+            const button = document.getElementById('exportDropdown');
+            button.classList.add('export-loading');
+            button.querySelector('span').textContent = 'Exportando...';
+            button.disabled = true;
+            
+            fetch('/video/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    transcript_id: transcriptId,
+                    format: format,
+                    export_type: 'direct'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro na exportação: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                a.download = `transcricao_${timestamp}.${format}`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showExportSuccess(format);
+            })
+            .catch(error => {
+                console.error('Erro na exportação:', error);
+                alert(`Erro na exportação: ${error.message}`);
+            })
+            .finally(() => {
+                button.classList.remove('export-loading');
+                button.querySelector('span').textContent = 'Exportar Transcrição';
+                button.disabled = false;
+            });
+        }
+        
+        // Sistema de exportação aprimorado com múltiplos formatos
+        // Controle do dropdown personalizado
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdownMenu');
+            const button = document.getElementById('exportDropdown');
+            const chevron = button.querySelector('.fa-chevron-down');
+            
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+                button.setAttribute('aria-expanded', 'true');
+                chevron.style.transform = 'rotate(180deg)';
+                
+                // Fechar dropdown ao clicar fora
+                setTimeout(() => {
+                    document.addEventListener('click', closeDropdownOnClickOutside);
+                }, 100);
+            } else {
+                closeExportDropdown();
+            }
+        }
+        
+        function closeExportDropdown() {
+            const dropdown = document.getElementById('exportDropdownMenu');
+            const button = document.getElementById('exportDropdown');
+            const chevron = button.querySelector('.fa-chevron-down');
+            
+            dropdown.style.display = 'none';
+            button.setAttribute('aria-expanded', 'false');
+            chevron.style.transform = 'rotate(0deg)';
+            document.removeEventListener('click', closeDropdownOnClickOutside);
+        }
+        
+        function closeDropdownOnClickOutside(event) {
+            const dropdown = document.querySelector('.export-dropdown');
+            if (!dropdown.contains(event.target)) {
+                closeExportDropdown();
+            }
+        }
+        
+        // Variável global para armazenar dados da transcrição
+        let globalTranscriptionData = null;
+        
+        function exportTranscription(format) {
+            console.log(`Iniciando exportação em formato: ${format}`);
+            
+            // Fechar dropdown
+            closeExportDropdown();
+            
+            // Obter dados da transcrição - usar dados globais ou buscar na página
+            let currentResults = globalTranscriptionData;
+            
+            if (!currentResults) {
+                // Tentar obter dados do JavaScript global se disponível
+                if (window.transcriptionResults) {
+                    currentResults = window.transcriptionResults;
+                } else {
+                    // Buscar dados via fetch se não disponível localmente
+                    const transcriptId = '{{ session.get("transcript_id", "") }}';
+                    if (transcriptId) {
+                        exportFromServer(format, transcriptId);
+                        return;
+                    } else {
+                        alert('Nenhuma transcrição disponível para exportar');
+                        return;
+                    }
+                }
+            }
+            
+            // Adicionar indicador visual de carregamento
+            const button = document.getElementById('exportDropdown');
+            button.classList.add('export-loading');
+            button.querySelector('span').textContent = 'Exportando...';
+            button.disabled = true;
+            
+            // Preparar dados estruturados para exportação
+            const exportData = {
+                metadata: {
+                    filename: '{{ session.get("transcript_filename", "transcricao") }}',
+                    transcript_id: transcriptId,
+                    export_date: new Date().toISOString(),
+                    format: format,
+                    duration: currentResults.audio_duration,
+                    confidence: currentResults.confidence,
+                    speaker_count: currentResults.unique_speaker_count || (currentResults.speaker_segments ? new Set(currentResults.speaker_segments.map(s => s.speaker)).size : 0)
+                },
+                content: currentResults,
+                structure_type: 'detailed' // Preservar estrutura completa
+            };
+            
+            fetch('/video/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro na exportação: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                const baseFilename = exportData.metadata.filename.split('.')[0];
+                a.download = `${baseFilename}_${timestamp}.${format}`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showExportSuccess(format);
+            })
+            .catch(error => {
+                console.error('Erro na exportação:', error);
+                alert(`Erro na exportação: ${error.message}`);
+            })
+            .finally(() => {
+                // Remover indicador de carregamento
+                const button = document.getElementById('exportDropdown');
+                button.classList.remove('export-loading');
+                button.querySelector('span').textContent = 'Exportar Transcrição';
+                button.disabled = false;
+            });
+        }
+        
+        function showExportSuccess(format) {
+            const formatNames = {
+                'txt': 'Texto',
+                'docx': 'Word',
+                'pdf': 'PDF',
+                'json': 'JSON',
+                'csv': 'CSV',
+                'srt': 'Legenda SRT'
+            };
+            
+            const formatName = formatNames[format] || format.toUpperCase();
+            
+            // Criar notificação de sucesso
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #4CAF50, #45a049);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(76, 175, 80, 0.3);
+                z-index: 10000;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 20px;"></i>
+                <span>Arquivo ${formatName} exportado com sucesso!</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function downloadTranscriptPDF() {
+            console.log('=== TESTE DOWNLOAD PDF ===');
+            const currentResults = getCurrentResults();
+            console.log('Dados para download PDF:', currentResults);
+            
+            if (!currentResults) {
+                console.error('Nenhum dado disponível para PDF');
+                alert('❌ Nenhuma transcrição disponível para download');
+                return;
+            }
+            
+            console.log('Enviando dados para /transcription/export/pdf');
+            fetch('/transcription/export/pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...currentResults,
+                    export_type: 'completo'
+                })
+            })
+            .then(response => {
+                console.log('Resposta PDF do servidor:', response.status);
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                console.log('Blob PDF recebido, tamanho:', blob.size);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio_transcricao_${new Date().getTime()}.pdf`;  
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('✅ Relatório PDF baixado com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro completo PDF:', error);
+                alert(`❌ Erro PDF: ${error.message}`);
+            });
+        }
+        
+        function downloadTranscriptTXT() {
+            const currentResults = getCurrentResults();
+            if (!currentResults) {
+                showAlert('Nenhuma transcrição disponível para download', 'error');
+                return;
+            }
+            
+            // Monta conteúdo do arquivo TXT com timestamps
+            let content = `TRANSCRIÇÃO COM TIMESTAMPS\n`;
+            content += `${'='.repeat(50)}\n`;
+            content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
+            
+            if (currentResults.audio_duration) {
+                const duracao_s = Math.floor(currentResults.audio_duration / 1000);
+                const minutes = Math.floor(duracao_s / 60);
+                const seconds = duracao_s % 60;
+                content += `Duração: ${minutes}:${seconds.toString().padStart(2, '0')}\n`;
+            }
+            
+            if (currentResults.confidence) {
+                content += `Confiança geral: ${(currentResults.confidence * 100).toFixed(1)}%\n`;
+            }
+            
+            content += `\nTRANSCRIÇÃO DETALHADA:\n`;
+            content += `${'-'.repeat(50)}\n\n`;
+            
+            if (currentResults.speaker_segments && currentResults.speaker_segments.length > 0) {
+                currentResults.speaker_segments.forEach((segment, index) => {
+                    const startTime = formatTime(segment.start);
+                    const endTime = formatTime(segment.end);
+                    const confidence = (segment.confidence * 100).toFixed(1);
+                    
+                    content += `[${startTime} - ${endTime}] Falante ${segment.speaker}:\n`;
+                    content += `${segment.text}\n`;
+                    content += `(Confiança: ${confidence}%)\n\n`;
+                });
+                
+                // Estatísticas
+                const uniqueSpeakers = [...new Set(currentResults.speaker_segments.map(s => s.speaker))];
+                content += `${'-'.repeat(50)}\n`;
+                content += `ESTATÍSTICAS:\n`;
+                content += `Total de segmentos: ${currentResults.speaker_segments.length}\n`;
+                content += `Número de falantes: ${uniqueSpeakers.length}\n`;
+                
+                const avgConfidence = currentResults.speaker_segments.reduce((sum, s) => sum + s.confidence, 0) / currentResults.speaker_segments.length;
+                content += `Confiança média: ${(avgConfidence * 100).toFixed(1)}%\n`;
+            } else if (currentResults.text) {
+                content += currentResults.text;
+            }
+            
+            // Cria e baixa o arquivo
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transcricao_timestamps_${new Date().getTime()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('Transcrição com timestamps baixada com sucesso!', 'success');
+        }
+        
+        // Sistema de transcrição renovado - sem funções de exportação antigas
+        
+        // Função auxiliar para formatar tempo
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function shareResults() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Resultado da Transcrição',
+                    text: 'Confira os resultados da análise de áudio/vídeo',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback para copiar URL
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showAlert('Link copiado para a área de transferência!', 'success');
+                });
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 12px;
+                z-index: 1000;
+                backdrop-filter: blur(20px);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            `;
+            alertDiv.textContent = message;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // Processar dados reais de análise de sentimento do backend
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if results and results.sentiment_analysis %}
+                const sentimentData = {{ results.sentiment_analysis | tojson }};
+                processSentimentData(sentimentData);
+            {% endif %}
+        });
+
+        function processSentimentData(sentimentData) {
+            if (!sentimentData || sentimentData.length === 0) return;
+
+            // Calcular métricas de sentimento
+            const sentimentCounts = {
+                positive: 0,
+                negative: 0,
+                neutral: 0
+            };
+
+            sentimentData.forEach(item => {
+                const sentiment = item.sentiment.toLowerCase();
+                if (sentiment === 'positive') {
+                    sentimentCounts.positive++;
+                } else if (sentiment === 'negative') {
+                    sentimentCounts.negative++;
+                } else {
+                    sentimentCounts.neutral++;
+                }
+            });
+
+            const total = sentimentData.length;
+            const positivePercent = Math.round((sentimentCounts.positive / total) * 100);
+            const negativePercent = Math.round((sentimentCounts.negative / total) * 100);
+            const neutralPercent = Math.round((sentimentCounts.neutral / total) * 100);
+
+            // Atualizar métricas na interface
+            const metricsHtml = `
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value" style="color: #81c784;">${positivePercent}%</div>
+                        <div class="metric-label">Positivo</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="color: #bdbdbd;">${neutralPercent}%</div>
+                        <div class="metric-label">Neutro</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" style="color: #e57373;">${negativePercent}%</div>
+                        <div class="metric-label">Negativo</div>
+                    </div>
+                </div>
+                <div class="sentiment-indicator ${getOverallSentimentClass(positivePercent, negativePercent)}">
+                    <i class="${getOverallSentimentIcon(positivePercent, negativePercent)}"></i>
+                    Tom Geral: ${getOverallSentimentText(positivePercent, negativePercent)}
+                </div>
+            `;
+
+            const sentimentMetricsElement = document.getElementById('sentiment-metrics');
+            if (sentimentMetricsElement) {
+                sentimentMetricsElement.innerHTML = metricsHtml;  
+            }
+        }
+
+        function getOverallSentimentClass(positive, negative) {
+            if (positive > negative && positive > 40) return 'sentiment-positive';
+            if (negative > positive && negative > 40) return 'sentiment-negative';
+            return 'sentiment-neutral';
+        }
+
+        function getOverallSentimentIcon(positive, negative) {
+            if (positive > negative && positive > 40) return 'fas fa-smile';
+            if (negative > positive && negative > 40) return 'fas fa-frown';
+            return 'fas fa-meh';
+        }
+
+        function getOverallSentimentText(positive, negative) {
+            if (positive > negative && positive > 40) return 'Positivo';
+            if (negative > positive && negative > 40) return 'Negativo';
+            return 'Neutro';
+        }
+    </script>
+
+<!-- Botão Home -->
+<a href="/" class="home-button">
+    <i class="fas fa-home"></i>
+    Home
+</a>
+
+</body>
+</html>

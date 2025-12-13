@@ -1,0 +1,626 @@
+{% extends "modelos_juridicos/base.html" %}
+
+{% block title %}Recomendador de Defesa - Modelos Jurídicos{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* CSS específico apenas para esta página, se necessário */
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4><i class="fas fa-magic"></i> Sistema de Recomendação de Estratégias de Defesa</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Busca por Caso Existente -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6><i class="fas fa-search"></i> Buscar Caso Existente (Base de 2.000 casos reais)</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label for="buscar_caso_id" class="form-label">ID do Caso</label>
+                                        <input type="number" class="form-control" id="buscar_caso_id" 
+                                               placeholder="Digite um ID entre 1 e 2000" min="1" max="2000">
+                                        <small class="form-text">Base de dados com casos reais de SP, RJ, MG, RS</small>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-primary w-100" id="btn-buscar-caso">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="status-caso" class="mt-3" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <form method="POST" enctype="multipart/form-data">
+                            <!-- Tipo de Análise -->
+                            <div class="mb-3">
+                                <label for="tipo_analise" class="form-label">Tipo de Análise</label>
+                                <select class="form-select" id="tipo_analise" name="tipo_analise" required>
+                                    <option value="">Selecione o tipo de análise</option>
+                                    <option value="beta_regression" {% if request.form.tipo_analise == 'beta_regression' %}selected{% endif %}>
+                                        Beta Regression - Análise de Proporções
+                                    </option>
+                                    <option value="glm_binomial" {% if request.form.tipo_analise == 'glm_binomial' %}selected{% endif %}>
+                                        GLM Binomial - Análise Binária
+                                    </option>
+                                    <option value="bayesian_bivariate" {% if request.form.tipo_analise == 'bayesian_bivariate' %}selected{% endif %}>
+                                        Bayesian Bivariate - Análise Bivariada
+                                    </option>
+                                    <option value="generative_scores" {% if request.form.tipo_analise == 'generative_scores' %}selected{% endif %}>
+                                        Generative Model via Scores - Modelo Generativo
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Tipo de Processo -->
+                            <div class="mb-3">
+                                <label for="tipo_processo" class="form-label">Tipo de Processo</label>
+                                <select class="form-select" id="tipo_processo" name="tipo_processo" required>
+                                    <option value="">Selecione o tipo de processo</option>
+                                    <option value="Civil" {% if request.form.tipo_processo == 'Civil' %}selected{% endif %}>Civil</option>
+                                    <option value="Penal" {% if request.form.tipo_processo == 'Penal' %}selected{% endif %}>Penal</option>
+                                    <option value="Trabalhista" {% if request.form.tipo_processo == 'Trabalhista' %}selected{% endif %}>Trabalhista</option>
+                                    <option value="Agrário" {% if request.form.tipo_processo == 'Agrário' %}selected{% endif %}>Agrário</option>
+                                    <option value="Tributário" {% if request.form.tipo_processo == 'Tributário' %}selected{% endif %}>Tributário</option>
+                                    <option value="Empresarial" {% if request.form.tipo_processo == 'Empresarial' %}selected{% endif %}>Empresarial</option>
+                                    <option value="Administrativo" {% if request.form.tipo_processo == 'Administrativo' %}selected{% endif %}>Administrativo</option>
+                                    <option value="Previdenciário" {% if request.form.tipo_processo == 'Previdenciário' %}selected{% endif %}>Previdenciário</option>
+                                    <option value="Ambiental" {% if request.form.tipo_processo == 'Ambiental' %}selected{% endif %}>Ambiental</option>
+                                    <option value="Constitucional" {% if request.form.tipo_processo == 'Constitucional' %}selected{% endif %}>Constitucional</option>
+                                    <option value="Eleitoral" {% if request.form.tipo_processo == 'Eleitoral' %}selected{% endif %}>Eleitoral</option>
+                                    <option value="Militar" {% if request.form.tipo_processo == 'Militar' %}selected{% endif %}>Militar</option>
+                                    <option value="Internacional" {% if request.form.tipo_processo == 'Internacional' %}selected{% endif %}>Internacional</option>
+                                </select>
+                            </div>
+
+                            <!-- Área Jurídica -->
+                            <div class="mb-3">
+                                <label for="area_juridica" class="form-label">Área Jurídica Específica</label>
+                                <select class="form-select" id="area_juridica" name="area_juridica" required>
+                                    <option value="">Selecione a área jurídica</option>
+                                    <option value="Direito Civil" {% if request.form.area_juridica == 'Direito Civil' %}selected{% endif %}>Direito Civil</option>
+                                    <option value="Direito do Consumidor" {% if request.form.area_juridica == 'Direito do Consumidor' %}selected{% endif %}>Direito do Consumidor</option>
+                                    <option value="Direito Penal" {% if request.form.area_juridica == 'Direito Penal' %}selected{% endif %}>Direito Penal</option>
+                                    <option value="Direito Trabalhista" {% if request.form.area_juridica == 'Direito Trabalhista' %}selected{% endif %}>Direito Trabalhista</option>
+                                    <option value="Direito Tributário" {% if request.form.area_juridica == 'Direito Tributário' %}selected{% endif %}>Direito Tributário</option>
+                                    <option value="Direito Empresarial" {% if request.form.area_juridica == 'Direito Empresarial' %}selected{% endif %}>Direito Empresarial</option>
+                                    <option value="Direito Imobiliário" {% if request.form.area_juridica == 'Direito Imobiliário' %}selected{% endif %}>Direito Imobiliário</option>
+                                    <option value="Direito Previdenciário" {% if request.form.area_juridica == 'Direito Previdenciário' %}selected{% endif %}>Direito Previdenciário</option>
+                                    <option value="Direito de Família" {% if request.form.area_juridica == 'Direito de Família' %}selected{% endif %}>Direito de Família</option>
+                                    <option value="Direito Administrativo" {% if request.form.area_juridica == 'Direito Administrativo' %}selected{% endif %}>Direito Administrativo</option>
+                                    <option value="Direito Agrário" {% if request.form.area_juridica == 'Direito Agrário' %}selected{% endif %}>Direito Agrário</option>
+                                    <option value="Direito Ambiental" {% if request.form.area_juridica == 'Direito Ambiental' %}selected{% endif %}>Direito Ambiental</option>
+                                    <option value="Direito Constitucional" {% if request.form.area_juridica == 'Direito Constitucional' %}selected{% endif %}>Direito Constitucional</option>
+                                    <option value="Direito Eleitoral" {% if request.form.area_juridica == 'Direito Eleitoral' %}selected{% endif %}>Direito Eleitoral</option>
+                                    <option value="Direito Militar" {% if request.form.area_juridica == 'Direito Militar' %}selected{% endif %}>Direito Militar</option>
+                                    <option value="Direito Internacional" {% if request.form.area_juridica == 'Direito Internacional' %}selected{% endif %}>Direito Internacional</option>
+                                    <option value="Direito Societário" {% if request.form.area_juridica == 'Direito Societário' %}selected{% endif %}>Direito Societário</option>
+                                </select>
+                            </div>
+
+                            <!-- Foro -->
+                            <div class="mb-3">
+                                <label for="foro" class="form-label">Foro</label>
+                                <select class="form-select" id="foro" name="foro" required>
+                                    <option value="">Selecione o foro</option>
+                                    <option value="SP" {% if request.form.foro == 'SP' %}selected{% endif %}>São Paulo (SP)</option>
+                                    <option value="RJ" {% if request.form.foro == 'RJ' %}selected{% endif %}>Rio de Janeiro (RJ)</option>
+                                    <option value="MG" {% if request.form.foro == 'MG' %}selected{% endif %}>Minas Gerais (MG)</option>
+                                    <option value="RS" {% if request.form.foro == 'RS' %}selected{% endif %}>Rio Grande do Sul (RS)</option>
+                                    <option value="PR" {% if request.form.foro == 'PR' %}selected{% endif %}>Paraná (PR)</option>
+                                    <option value="SC" {% if request.form.foro == 'SC' %}selected{% endif %}>Santa Catarina (SC)</option>
+                                    <option value="BA" {% if request.form.foro == 'BA' %}selected{% endif %}>Bahia (BA)</option>
+                                    <option value="GO" {% if request.form.foro == 'GO' %}selected{% endif %}>Goiás (GO)</option>
+                                    <option value="PE" {% if request.form.foro == 'PE' %}selected{% endif %}>Pernambuco (PE)</option>
+                                    <option value="CE" {% if request.form.foro == 'CE' %}selected{% endif %}>Ceará (CE)</option>
+                                    <option value="ES" {% if request.form.foro == 'ES' %}selected{% endif %}>Espírito Santo (ES)</option>
+                                    <option value="MT" {% if request.form.foro == 'MT' %}selected{% endif %}>Mato Grosso (MT)</option>
+                                    <option value="MS" {% if request.form.foro == 'MS' %}selected{% endif %}>Mato Grosso do Sul (MS)</option>
+                                    <option value="DF" {% if request.form.foro == 'DF' %}selected{% endif %}>Distrito Federal (DF)</option>
+                                </select>
+                            </div>
+
+                            <!-- Valor da Causa -->
+                            <div class="mb-3">
+                                <label for="valor_causa" class="form-label">Valor da Causa (R$)</label>
+                                <input type="text" class="form-control" id="valor_causa" name="valor_causa" 
+                                       placeholder="R$ 0,00" value="{{ request.form.valor_causa or '' }}">
+                                <small class="form-text">Digite o valor monetário da causa</small>
+                            </div>
+
+                            <!-- Complexidade -->
+                            <div class="mb-3">
+                                <label for="complexidade" class="form-label">Complexidade do Caso</label>
+                                <select class="form-select" id="complexidade" name="complexidade" required>
+                                    <option value="">Selecione a complexidade</option>
+                                    <option value="Baixa" {% if request.form.complexidade == 'Baixa' %}selected{% endif %}>Baixa</option>
+                                    <option value="Média" {% if request.form.complexidade == 'Média' %}selected{% endif %}>Média</option>
+                                    <option value="Alta" {% if request.form.complexidade == 'Alta' %}selected{% endif %}>Alta</option>
+                                </select>
+                            </div>
+
+                            <!-- Duração Esperada -->
+                            <div class="mb-3">
+                                <label for="duracao_esperada" class="form-label">Duração Esperada (meses)</label>
+                                <input type="number" class="form-control" id="duracao_esperada" name="duracao_esperada" 
+                                       placeholder="Ex: 12" min="1" max="120" value="{{ request.form.duracao_esperada or '' }}">
+                                <small class="form-text">Estimativa de duração do processo em meses</small>
+                            </div>
+
+                            <!-- Descrição do Caso -->
+                            <div class="mb-3">
+                                <label for="descricao_caso" class="form-label">Descrição do Caso</label>
+                                <textarea class="form-control" id="descricao_caso" name="descricao_caso" rows="5" 
+                                          placeholder="Descreva detalhadamente o caso jurídico para análise...">{{ request.form.descricao_caso or '' }}</textarea>
+                                <small class="form-text">Forneça detalhes relevantes para uma recomendação precisa</small>
+                            </div>
+
+                            <!-- Estratégias de Defesa Disponíveis -->
+                            <div class="mb-4">
+                                <label class="form-label">Estratégias de Defesa Aplicáveis</label>
+                                <small class="form-text d-block mb-3">Marque as defesas que se aplicam ao caso</small>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="prescricao" name="prescricao" value="1">
+                                            <label class="form-check-label" for="prescricao">
+                                                <i class="fas fa-clock text-warning me-1"></i> Prescrição
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="nulidade_prova" name="nulidade_prova" value="1">
+                                            <label class="form-check-label" for="nulidade_prova">
+                                                <i class="fas fa-ban text-danger me-1"></i> Nulidade de Prova
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="ilegitimidade" name="ilegitimidade" value="1">
+                                            <label class="form-check-label" for="ilegitimidade">
+                                                <i class="fas fa-user-slash text-warning me-1"></i> Ilegitimidade
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="decadencia" name="decadencia" value="1">
+                                            <label class="form-check-label" for="decadencia">
+                                                <i class="fas fa-hourglass-end text-secondary me-1"></i> Decadência
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="impugnacao_pericia" name="impugnacao_pericia" value="1">
+                                            <label class="form-check-label" for="impugnacao_pericia">
+                                                <i class="fas fa-search text-info me-1"></i> Impugnação de Perícia
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="acordo_proposto" name="acordo_proposto" value="1">
+                                            <label class="form-check-label" for="acordo_proposto">
+                                                <i class="fas fa-handshake text-success me-1"></i> Acordo Proposto
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="incompetencia" name="incompetencia" value="1">
+                                            <label class="form-check-label" for="incompetencia">
+                                                <i class="fas fa-gavel text-warning me-1"></i> Incompetência
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="conexao" name="conexao" value="1">
+                                            <label class="form-check-label" for="conexao">
+                                                <i class="fas fa-link text-primary me-1"></i> Conexão
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-brain"></i> Analisar e Recomendar Estratégia
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Explicações Estratégicas em Grade 2x2 -->
+                <div class="row mb-4">
+                    <!-- Beta Regression -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-percentage"></i> <strong>Beta Regression</strong></h6>
+                                <small>Análise de proporções e probabilidades</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Quantifica com precisão as chances de sucesso em diferentes contextos jurídicos, permitindo decisões baseadas em probabilidades reais.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Análise de Portfolio:</strong> Identifica tipos de processo com maior probabilidade de êxito em foros específicos</li>
+                                    <li><strong>Precificação Inteligente:</strong> Ajusta honorários baseado na probabilidade real de sucesso</li>
+                                    <li><strong>Alocação de Recursos:</strong> Prioriza casos com maior potencial de retorno</li>
+                                    <li><strong>Negociação Estratégica:</strong> Fundamenta propostas com dados probabilísticos</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Análise estatística avançada vs experiência subjetiva para maximizar resultados e minimizar riscos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GLM Binomial -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-balance-scale"></i> <strong>GLM Binomial</strong></h6>
+                                <small>Análise binária (sucesso/fracasso)</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Prediz com alta precisão se um caso específico será ganho ou perdido, eliminando incertezas e otimizando estratégias processuais.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Triagem de Casos:</strong> Aceita apenas processos com alta probabilidade de vitória</li>
+                                    <li><strong>Estratégia Processual:</strong> Define se vale investir em recursos ou buscar acordo</li>
+                                    <li><strong>Gestão de Expectativas:</strong> Informa clientes sobre chances reais</li>
+                                    <li><strong>Planejamento Financeiro:</strong> Projeta receitas futuras com previsões fundamentadas</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Transforma incertezas jurídicas em decisões objetivas com gestão de risco superior.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bayesian Bivariate -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-network-wired"></i> <strong>Bayesian Bivariate</strong></h6>
+                                <small>Análise bivariada com inferência bayesiana</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Analisa simultaneamente múltiplas variáveis e suas interações, revelando padrões ocultos que influenciam resultados jurídicos.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Análise Multifatorial:</strong> Compreende relações entre foro, área jurídica, valor da causa</li>
+                                    <li><strong>Estratégia Personalizada:</strong> Abordagens específicas considerando múltiplos fatores</li>
+                                    <li><strong>Identificação de Sinergias:</strong> Combinações que potencializam chances de sucesso</li>
+                                    <li><strong>Atualização Contínua:</strong> Refina previsões conforme novos dados emergem</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Visão sistêmica e holística que advogados tradicionais não conseguem alcançar.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generative Model via Scores -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <div class="card-header text-white border-0">
+                                <h6><i class="fas fa-robot"></i> <strong>Generative Model via Scores</strong></h6>
+                                <small>Modelo generativo baseado em pontuações</small>
+                            </div>
+                            <div class="card-body text-white">
+                                <h6><strong>🎯 Diferencial Estratégico:</strong></h6>
+                                <p class="mb-3">Simula cenários futuros e gera insights preditivos avançados, permitindo antecipação de tendências e preparação para diferentes desfechos.</p>
+                                
+                                <h6><strong>📊 Aplicação Prática:</strong></h6>
+                                <ul class="mb-3">
+                                    <li><strong>Simulação de Cenários:</strong> Modela estratégias e prevê impactos antes da implementação</li>
+                                    <li><strong>Benchmarking Inteligente:</strong> Compara performance com padrões estatísticos ideais</li>
+                                    <li><strong>Detecção de Tendências:</strong> Identifica mudanças nos padrões jurisprudenciais</li>
+                                    <li><strong>Otimização Contínua:</strong> Sugere ajustes estratégicos baseados em análise preditiva</li>
+                                </ul>
+                                
+                                <div class="alert alert-light text-dark">
+                                    <strong>💡 Vantagem Competitiva:</strong> Advocacia data-driven de vanguarda com sofisticação incomparável no mercado.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Resultado Final -->
+                <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <div class="text-center">
+                            <h5><i class="fas fa-trophy"></i> <strong>Sistema de Recomendação Inteligente de Estratégias de Defesa</strong></h5>
+                            <p class="mb-0">A combinação dessas quatro metodologias permite análise preditiva avançada das melhores estratégias de defesa para cada caso específico, considerando padrões históricos, características processuais e probabilidades de sucesso baseadas em dados reais brasileiros.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna para resultado (apenas quando há recomendação) -->
+            {% if recomendacao %}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-shield-alt"></i> Recomendação Gerada</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Estratégia Recomendada:</h6>
+                        <div class="alert alert-info">
+                            <h6>{{ recomendacao.estrategia }}</h6>
+                        </div>
+                        
+                        <h6>Probabilidade de Sucesso:</h6>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" style="width: {{ recomendacao.probabilidade }}%">
+                                {{ "%.1f"|format(recomendacao.probabilidade) }}%
+                            </div>
+                        </div>
+                        
+                        <h6>Justificativa Técnica:</h6>
+                        <p class="small">{{ recomendacao.justificativa }}</p>
+                        
+                        <h6>Modelo Utilizado:</h6>
+                        <span class="badge bg-secondary">{{ recomendacao.modelo }}</span>
+                        
+                        <h6 class="mt-3">Dados de Entrada:</h6>
+                        <ul class="small">
+                            <li><strong>Tipo:</strong> {{ recomendacao.entrada.tipo_processo }}</li>
+                            <li><strong>Área:</strong> {{ recomendacao.entrada.area_juridica }}</li>
+                            <li><strong>Foro:</strong> {{ recomendacao.entrada.foro }}</li>
+                            <li><strong>Valor:</strong> {{ recomendacao.entrada.valor_causa_formatado }}</li>
+                            <li><strong>Complexidade:</strong> {{ recomendacao.entrada.complexidade }}</li>
+                            <li><strong>Duração:</strong> {{ recomendacao.entrada.duracao_esperada }} meses</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Script específico para formatação de moeda -->
+    <script>
+    function formatCurrency(input) {
+        // Remove tudo que não é número
+        let value = input.value.replace(/\D/g, '');
+        
+        // Se não tem valor, limpa o campo
+        if (!value) {
+            input.value = '';
+            return;
+        }
+        
+        // Converte para centavos
+        let number = parseInt(value, 10);
+        
+        // Formata como moeda brasileira
+        let formattedValue = (number / 100).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2
+        });
+        
+        input.value = formattedValue;
+    }
+
+    function mostrarStatusCaso(tipo, mensagem) {
+        const statusElement = document.getElementById('status-caso');
+        statusElement.style.display = 'block';
+        statusElement.className = `alert alert-${tipo === 'erro' ? 'danger' : 'success'}`;
+        statusElement.innerHTML = `<h6><i class="fas fa-${tipo === 'erro' ? 'exclamation-triangle' : 'check-circle'}"></i> ${mensagem}</h6>`;
+    }
+
+    function buscarCasoPorId(casoId) {
+        mostrarStatusCaso('info', 'Buscando caso...');
+        
+        fetch(`/modelos-juridicos/api/buscar-caso/${casoId}`, {
+                credentials: 'include',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.status === 302 || response.redirected) {
+                    mostrarStatusCaso('erro', 'Sessão expirada - recarregue a página');
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // Se não há dados (erro de login)
+                
+                if (data.erro) {
+                    mostrarStatusCaso('erro', data.erro);
+                } else {
+                    // Detectar tipo correto baseado na área jurídica
+                    let tipoCorreto = data.tipo_processo;
+                    if (data.area_juridica) {
+                        const areaLower = data.area_juridica.toLowerCase();
+                        if (areaLower.includes('trabalhista')) {
+                            tipoCorreto = 'Trabalhista';
+                        } else if (areaLower.includes('agrár') || areaLower.includes('agrar')) {
+                            tipoCorreto = 'Agrário';
+                        } else if (areaLower.includes('cível') || areaLower.includes('civil') || areaLower.includes('consumidor')) {
+                            tipoCorreto = 'Civil';
+                        }
+                    }
+                    
+                    // Preencher tipo de processo
+                    console.log('Preenchendo tipo:', data.tipo_processo);
+                    const tipoSelect = document.getElementById('tipo_processo');
+                    if (data.tipo_processo && tipoSelect) {
+                        tipoSelect.value = data.tipo_processo;
+                        console.log('Tipo selecionado:', tipoSelect.value);
+                        atualizarAreasJuridicas();
+                        
+                        // Preencher área jurídica específica
+                        if (data.area_juridica) {
+                            setTimeout(() => {
+                                const areaSelect = document.getElementById('area_juridica');
+                                console.log('Preenchendo área:', data.area_juridica);
+                                console.log('Opções disponíveis:', Array.from(areaSelect.options).map(o => o.value));
+                                areaSelect.value = data.area_juridica;
+                                console.log('Área selecionada:', areaSelect.value);
+                            }, 300);
+                        }
+                    }
+                    // Preencher outros campos
+                    if (data.foro) document.getElementById('foro').value = data.foro;
+                    if (data.valor_causa_formatado) document.getElementById('valor_causa').value = data.valor_causa_formatado;
+                    if (data.complexidade) document.getElementById('complexidade').value = data.complexidade;
+                    if (data.duracao_esperada) document.getElementById('duracao_esperada').value = data.duracao_esperada;
+                    if (data.descricao) document.getElementById('descricao_caso').value = data.descricao;
+                    
+                    // Preencher checkboxes das defesas (verificar se existem)
+                    const checkboxes = ['prescricao', 'nulidade_prova', 'ilegitimidade', 'impugnacao_pericia', 'acordo_proposto', 'decadencia', 'incompetencia', 'conexao'];
+                    checkboxes.forEach(checkbox => {
+                        const element = document.getElementById(checkbox);
+                        if (element && data[checkbox]) {
+                            element.checked = true;
+                        }
+                    });
+                    
+                    mostrarStatusCaso('sucesso', `Caso ${casoId} carregado com sucesso! Campos preenchidos automaticamente.`);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar caso:', error);
+                mostrarStatusCaso('erro', `Erro ao buscar o caso: ${error.message}`);
+            });
+    }
+
+    // Mapeamento de tipos de processo para áreas jurídicas - COMPLETO
+    const areasJuridicasPorTipo = {
+        'Civil': ['Direito Civil', 'Direito do Consumidor', 'Direito de Família', 'Direito Imobiliário'],
+        'Penal': ['Direito Penal'],
+        'Trabalhista': ['Direito Trabalhista'],
+        'Agrário': ['Direito Agrário'],
+        'Tributário': ['Direito Tributário'],
+        'Empresarial': ['Direito Empresarial', 'Direito Societário'],
+        'Administrativo': ['Direito Administrativo'],
+        'Previdenciário': ['Direito Previdenciário'],
+        'Ambiental': ['Direito Ambiental'],
+        'Constitucional': ['Direito Constitucional'],
+        'Eleitoral': ['Direito Eleitoral'],
+        'Militar': ['Direito Militar'],
+        'Internacional': ['Direito Internacional']
+    };
+
+    // Mapeamento COMPLETO dos valores da API para os valores do formulário
+    const mapeamentoAreas = {
+        // Dataset real - 4 áreas principais
+        'agrário': 'Direito Agrário',
+        'agrario': 'Direito Agrário', 
+        'consumidor': 'Direito do Consumidor',
+        'cível': 'Direito Civil',
+        'civil': 'Direito Civil',
+        'trabalhista': 'Direito Trabalhista',
+        
+        // Áreas adicionais comuns
+        'penal': 'Direito Penal',
+        'tributário': 'Direito Tributário',
+        'tributario': 'Direito Tributário',
+        'empresarial': 'Direito Empresarial',
+        'administrativo': 'Direito Administrativo',
+        'previdenciário': 'Direito Previdenciário',
+        'previdenciario': 'Direito Previdenciário',
+        'família': 'Direito de Família',
+        'familia': 'Direito de Família',
+        'imobiliário': 'Direito Imobiliário',
+        'imobiliario': 'Direito Imobiliário'
+    };
+
+    function atualizarAreasJuridicas() {
+        const tipoProcesso = document.getElementById('tipo_processo').value;
+        const areaJuridica = document.getElementById('area_juridica');
+        
+        // Limpar opções existentes
+        areaJuridica.innerHTML = '<option value="">Selecione a área jurídica</option>';
+        
+        if (tipoProcesso && areasJuridicasPorTipo[tipoProcesso]) {
+            // Adicionar áreas específicas do tipo selecionado
+            areasJuridicasPorTipo[tipoProcesso].forEach(area => {
+                const option = document.createElement('option');
+                option.value = area;
+                option.textContent = area;
+                areaJuridica.appendChild(option);
+            });
+        } else {
+            // Se não há tipo selecionado, mostrar todas as áreas
+            const todasAreas = ['Direito Civil', 'Direito do Consumidor', 'Direito Penal', 'Direito Trabalhista', 
+                              'Direito Tributário', 'Direito Empresarial', 'Direito Imobiliário', 
+                              'Direito Previdenciário', 'Direito de Família', 'Direito Administrativo'];
+            
+            todasAreas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area;
+                option.textContent = area;
+                areaJuridica.appendChild(option);
+            });
+        }
+    }
+
+    // Aplicar formatação ao campo de valor da causa
+    document.addEventListener('DOMContentLoaded', function() {
+        const valorCausa = document.getElementById('valor_causa');
+        if (valorCausa) {
+            valorCausa.addEventListener('input', function() {
+                formatCurrency(this);
+            });
+            
+            valorCausa.addEventListener('blur', function() {
+                formatCurrency(this);
+            });
+        }
+        
+        // Listener para mudança no tipo de processo
+        const tipoProcesso = document.getElementById('tipo_processo');
+        if (tipoProcesso) {
+            tipoProcesso.addEventListener('change', atualizarAreasJuridicas);
+        }
+        
+        // Event listener para o botão de buscar caso
+        const btnBuscarCaso = document.getElementById('btn-buscar-caso');
+        const inputBuscarCaso = document.getElementById('buscar_caso_id');
+        
+        if (btnBuscarCaso && inputBuscarCaso) {
+            btnBuscarCaso.addEventListener('click', function() {
+                const casoId = inputBuscarCaso.value;
+                if (casoId && casoId >= 1 && casoId <= 2000) {
+                    buscarCasoPorId(casoId);
+                } else {
+                    mostrarStatusCaso('erro', 'Digite um ID válido entre 1 e 2000');
+                }
+            });
+            
+            // Buscar caso ao pressionar Enter
+            inputBuscarCaso.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btnBuscarCaso.click();
+                }
+            });
+        }
+    });
+    </script>
+{% endblock %}

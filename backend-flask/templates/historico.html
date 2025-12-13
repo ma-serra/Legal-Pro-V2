@@ -1,0 +1,344 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico de Análises{% endblock %}
+
+{% block head %}
+<style>
+body {
+    background-color: #21333d !important;
+}
+
+/* Cor dos card-body */
+.card-body {
+    background-color: #575b5c !important;
+    color: #ffffff !important;
+}
+
+/* Cores dos textos dos cards */
+.card-text {
+    color: #768082 !important;
+}
+
+.text-muted {
+    color: #ffffff !important;
+}
+
+.card-title {
+    color: #fcfffb !important;
+}
+
+/* Cores dos botões e elementos */
+.btn-sm {
+    background-color: #355d6c !important;
+    border-color: #355d6c !important;
+}
+
+.agent-icon {
+    color: #355d6c !important;
+}
+
+.form-group {
+    background-color: #575b5c !important;
+}
+
+.form-label {
+    color: #575b5c !important;
+}
+
+/* Cor dos elementos d-flex */
+.d-flex {
+    color: #355d6c !important;
+}
+
+/* Cor dos card-header */
+.card-header {
+    background-color: #355d6c !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos agent-icon */
+.agent-icon {
+    color: #40aba0 !important;
+}
+
+/* Cor dos form-text */
+.form-text {
+    color: #40aba0 !important;
+}
+
+/* Cor dos file-upload e btn-sm */
+.file-upload, .btn-sm {
+    background-color: #40aba0 !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos form-check-label */
+.form-check-label {
+    color: #40a9a3 !important;
+}
+
+/* Cor dos form-check-input checked */
+.form-check-input:checked {
+    background-color: #40a9a3 !important;
+    border-color: #40a9a3 !important;
+}
+
+/* Adiciona margem aos form-check-input */
+.form-check-input {
+    margin: 0.125rem !important;
+}
+
+/* Nav tabs personalizadas */
+.nav-tabs .nav-link.active {
+    border-bottom: 3px solid #336b69 !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos ícones drag-and-drop */
+.drag-and-drop i, .file-drop-zone i, .upload-icon, 
+.fa-upload, .fa-file-upload, .fa-cloud-upload-alt {
+    color: #40a9a3 !important;
+}
+
+/* Cor dos border-bottom */
+.border-bottom, .card-header, .nav-tabs, .dropdown-divider,
+hr, .modal-header, .table-bordered th, .table-bordered td {
+    border-bottom-color: #fcfffb !important;
+}
+
+/* Hover do drag-and-drop */
+.drag-and-drop:hover, .file-drop-zone:hover, 
+.upload-area:hover, .file-upload-area:hover {
+    border-color: #355d6c !important;
+    background-color: rgba(52, 104, 102, 0.1) !important;
+}
+
+/* Alert-info customizado */
+.alert-info {
+    --bs-alert-color: #fcfffb;
+    --bs-alert-bg: #355d6c;
+    --bs-alert-border-color: #355d6c;
+    border-left: 4px solid #355d6c !important;
+    color: #fcfffb !important;
+}
+
+.alert-info h1, .alert-info h2, .alert-info h3, .alert-info h4, .alert-info h5, .alert-info h6,
+.alert-info .alert-heading {
+    color: #fcfffb !important;
+}
+
+.alert-info i, .alert-info .icon, .alert-info .fa, .alert-info [class*="fa-"] {
+    color: #fcfffb !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-3">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Início</a></li>
+          <li class="breadcrumb-item active">Histórico de Análises</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Histórico de Análises</h2>
+        </div>
+        
+        <div class="card-body">
+          <!-- Filtros -->
+          <div class="row mb-4">
+            <div class="col-md-8">
+              <form id="form-filtro" class="row g-3">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control form-control-dark" id="filtro-tag" name="tag" 
+                           placeholder="Filtrar por tag" value="{{ request.args.get('tag', '') }}">
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <select class="form-select form-select-dark" id="filtro-ordem" name="ordem">
+                    <option value="desc" {% if request.args.get('ordem') != 'asc' %}selected{% endif %}>Mais recentes primeiro</option>
+                    <option value="asc" {% if request.args.get('ordem') == 'asc' %}selected{% endif %}>Mais antigos primeiro</option>
+                  </select>
+                </div>
+                
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i> Filtrar
+                  </button>
+                  <a href="/historico" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i> Limpar
+                  </a>
+                </div>
+              </form>
+            </div>
+            
+            <div class="col-md-4 text-end">
+              <a href="/validacao-multi-agente-expandida" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Nova Análise
+              </a>
+            </div>
+          </div>
+          
+          <!-- Tabela de Histórico -->
+          {% if execucoes %}
+            <div class="table-responsive">
+              <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                  <tr>
+                    <th scope="col" width="5%">ID</th>
+                    <th scope="col" width="20%">Data</th>
+                    <th scope="col" width="20%">Tags</th>
+                    <th scope="col" width="10%">Tempo (s)</th>
+                    <th scope="col" width="15%">Fluxo</th>
+                    <th scope="col" width="20%" class="text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in execucoes %}
+                  <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.executado_em }}</td>
+                    <td>
+                      {% for tag in item.tags %}
+                        <span class="badge bg-secondary tag-item">{{ tag }}</span>
+                      {% endfor %}
+                    </td>
+                    <td>{{ item.tempo_execucao }}</td>
+                    <td>{{ item.fluxo }}</td>
+                    <td class="text-center">
+                      <div class="d-flex justify-content-center gap-2">
+                        <a href="/resultado/{{ item.id }}" class="btn btn-info btn-sm rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Visualizar">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <button type="button" class="btn btn-danger btn-sm rounded-circle d-inline-flex align-items-center justify-content-center btn-excluir" style="width: 36px; height: 36px;" title="Excluir"
+                                data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#confirmarExclusao">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Paginação -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div>
+                Mostrando {{ execucoes|length }} de {{ total_execucoes }} resultados
+              </div>
+              
+              <nav aria-label="Paginação">
+                <ul class="pagination">
+                  {% if pagina > 1 %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('historico', pagina=pagina-1, tag=request.args.get('tag', ''), ordem=request.args.get('ordem', 'desc')) }}">
+                        Anterior
+                      </a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled">
+                      <span class="page-link">Anterior</span>
+                    </li>
+                  {% endif %}
+                  
+                  {% set inicio_paginacao = pagina-2 if pagina > 2 else 1 %}
+                  {% set fim_paginacao = pagina+3 if pagina+3 <= total_paginas+1 else total_paginas+1 %}
+                  {% for p in range(inicio_paginacao, fim_paginacao) %}
+                    <li class="page-item {% if p == pagina %}active{% endif %}">
+                      <a class="page-link" href="{{ url_for('historico', pagina=p, tag=request.args.get('tag', ''), ordem=request.args.get('ordem', 'desc')) }}">
+                        {{ p }}
+                      </a>
+                    </li>
+                  {% endfor %}
+                  
+                  {% if pagina < total_paginas %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('historico', pagina=pagina+1, tag=request.args.get('tag', ''), ordem=request.args.get('ordem', 'desc')) }}">
+                        Próximo
+                      </a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled">
+                      <span class="page-link">Próximo</span>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          {% else %}
+            <div class="alert alert-info text-center py-4">
+              <i class="fas fa-info-circle fa-2x mb-3"></i>
+              <h4>Nenhum resultado encontrado</h4>
+              <p>Não foram encontradas execuções com os filtros selecionados.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="confirmarExclusao" tabindex="-1" aria-labelledby="confirmarExclusaoLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmarExclusaoLabel">Confirmar Exclusão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="form-excluir" method="POST" action="/historico/excluir">
+          <input type="hidden" id="execucao-id" name="execucao_id" value="">
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Tornar as tags clicáveis para filtrar
+    document.querySelectorAll('.tag-item').forEach(tag => {
+      tag.style.cursor = 'pointer';
+      tag.addEventListener('click', function() {
+        document.getElementById('filtro-tag').value = this.textContent.trim();
+        document.getElementById('form-filtro').submit();
+      });
+    });
+    
+    // Submeter formulário ao mudar ordem
+    document.getElementById('filtro-ordem').addEventListener('change', function() {
+      document.getElementById('form-filtro').submit();
+    });
+    
+    // Configurar botões de exclusão
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.getAttribute('data-id');
+        document.getElementById('execucao-id').value = id;
+      });
+    });
+  });
+</script>
+{% endblock %}

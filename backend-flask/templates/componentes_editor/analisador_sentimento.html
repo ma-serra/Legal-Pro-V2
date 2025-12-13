@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Analisador de Sentimento - Configuração{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-heart text-danger me-2"></i>
+                        Analisador de Sentimento
+                    </h1>
+                    <p class="text-muted mb-0">Análise emocional avançada para textos jurídicos</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success" onclick="salvarEVoltar()">
+                        <i class="fas fa-save me-1"></i> Salvar e Voltar
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left me-1"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Configurações Principais -->
+                <div class="col-lg-8">
+                    <!-- Tipos de Análise -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-brain me-2"></i>
+                                Tipos de Análise
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="polaridade" checked>
+                                        <label class="form-check-label" for="polaridade">
+                                            <strong>Polaridade Emocional</strong>
+                                            <small class="d-block text-muted">Positivo, Negativo, Neutro</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="intensidade" checked>
+                                        <label class="form-check-label" for="intensidade">
+                                            <strong>Intensidade</strong>
+                                            <small class="d-block text-muted">Força da emoção (0-100%)</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="emocoes_especificas" checked>
+                                        <label class="form-check-label" for="emocoes_especificas">
+                                            <strong>Emoções Específicas</strong>
+                                            <small class="d-block text-muted">Raiva, medo, frustração, satisfação</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="contexto_juridico">
+                                        <label class="form-check-label" for="contexto_juridico">
+                                            <strong>Contexto Jurídico</strong>
+                                            <small class="d-block text-muted">Adaptado para linguagem legal</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="subjetividade">
+                                        <label class="form-check-label" for="subjetividade">
+                                            <strong>Nível de Subjetividade</strong>
+                                            <small class="d-block text-muted">Objetivo vs. Subjetivo</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="urgencia">
+                                        <label class="form-check-label" for="urgencia">
+                                            <strong>Nível de Urgência</strong>
+                                            <small class="d-block text-muted">Detectar urgência no texto</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configurações de IA -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-robot me-2"></i>
+                                Modelo de IA
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Provedor Principal</label>
+                                        <select class="form-select" id="provedor_principal">
+                                            <option value="openai" selected>OpenAI GPT-4o</option>
+                                            <option value="anthropic">Anthropic Claude</option>
+                                            <option value="google">Google Gemini</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Método de Análise</label>
+                                        <select class="form-select" id="metodo">
+                                            <option value="hibrido" selected>Híbrido (IA + Regras)</option>
+                                            <option value="apenas_ia">Apenas IA</option>
+                                            <option value="ensemble">Ensemble (Múltiplos modelos)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Temperatura</label>
+                                        <input type="range" class="form-range" id="temperatura" min="0" max="1" step="0.1" value="0.3">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span>Conservador</span>
+                                            <span class="fw-bold" id="temp-value">0.3</span>
+                                            <span>Criativo</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Limiar de Confiança</label>
+                                        <input type="range" class="form-range" id="confianca" min="0.5" max="0.95" step="0.05" value="0.75">
+                                        <div class="d-flex justify-content-between small text-muted">
+                                            <span>Sensível</span>
+                                            <span class="fw-bold" id="conf-value">75%</span>
+                                            <span>Preciso</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="contexto_historico">
+                                <label class="form-check-label" for="contexto_historico">
+                                    Considerar histórico de análises anteriores
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personalização Jurídica -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-balance-scale me-2"></i>
+                                Personalização Jurídica
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Área Jurídica</label>
+                                <select class="form-select" id="area_juridica">
+                                    <option value="geral" selected>Geral</option>
+                                    <option value="civil">Direito Civil</option>
+                                    <option value="penal">Direito Penal</option>
+                                    <option value="trabalhista">Direito Trabalhista</option>
+                                    <option value="tributario">Direito Tributário</option>
+                                    <option value="administrativo">Direito Administrativo</option>
+                                    <option value="consumidor">Direito do Consumidor</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Palavras-chave Específicas</label>
+                                <textarea class="form-control" id="palavras_chave" rows="3" 
+                                          placeholder="Adicione termos específicos que devem influenciar a análise (opcional)"></textarea>
+                                <small class="text-muted">Uma por linha ou separadas por vírgula</small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="detectar_ironia">
+                                        <label class="form-check-label" for="detectar_ironia">
+                                            Detectar ironia e sarcasmo
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="linguagem_tecnica" checked>
+                                        <label class="form-check-label" for="linguagem_tecnica">
+                                            Reconhecer linguagem técnica
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formato de Saída -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Formato de Saída
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Escala de Pontuação</label>
+                                        <select class="form-select" id="escala">
+                                            <option value="0_100" selected>0-100 (Percentual)</option>
+                                            <option value="-1_1">-1 a +1 (Tradicional)</option>
+                                            <option value="1_5">1-5 (Estrelas)</option>
+                                            <option value="qualitativo">Qualitativo (Palavras)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Granularidade</label>
+                                        <select class="form-select" id="granularidade">
+                                            <option value="documento" selected>Documento inteiro</option>
+                                            <option value="paragrafo">Por parágrafo</option>
+                                            <option value="frase">Por frase</option>
+                                            <option value="hibrido">Híbrido (múltiplos níveis)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="incluir_explicacao" checked>
+                                <label class="form-check-label" for="incluir_explicacao">
+                                    Incluir explicação da análise
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel de Informações -->
+                <div class="col-lg-4">
+                    <!-- Exemplo de Análise -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye me-1"></i>
+                                Exemplo de Análise
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Texto:</strong> <em class="small">"Esta decisão é absolutamente inaceitável..."</em>
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-danger">Negativo</span>
+                                <span class="badge bg-warning">85%</span>
+                            </div>
+                            <div class="small text-muted">
+                                <strong>Emoções:</strong> Raiva (70%), Frustração (60%)<br>
+                                <strong>Urgência:</strong> Alta<br>
+                                <strong>Confiança:</strong> 92%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de Performance -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-tachometer-alt me-1"></i>
+                                Performance Esperada
+                            </h6>
+                        </div>
+                        <div class="card-body small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Precisão:</span>
+                                <strong>88-94%</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Velocidade:</span>
+                                <strong>~1.5s/doc</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Suporte PT-BR:</span>
+                                <strong>Otimizado</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conexões -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-plug me-1"></i>
+                                Conexões
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Entradas:</strong>
+                                <div class="small text-muted">
+                                    • Texto ou documento<br>
+                                    • Contexto adicional (opcional)
+                                </div>
+                            </div>
+                            <div>
+                                <strong>Saídas:</strong>
+                                <div class="small text-muted">
+                                    • Pontuação de sentimento<br>
+                                    • Emoções identificadas<br>
+                                    • Nível de confiança<br>
+                                    • Relatório explicativo
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('temperatura').addEventListener('input', function() {
+    document.getElementById('temp-value').textContent = this.value;
+});
+
+document.getElementById('confianca').addEventListener('input', function() {
+    const percent = Math.round(this.value * 100);
+    document.getElementById('conf-value').textContent = percent + '%';
+});
+
+function salvarEVoltar() {
+    const config = {
+        nome: 'Analisador de Sentimento',
+        tipo: 'analisador',
+        categoria: 'analisador',
+        analises: {
+            polaridade: document.getElementById('polaridade').checked,
+            intensidade: document.getElementById('intensidade').checked,
+            emocoes_especificas: document.getElementById('emocoes_especificas').checked,
+            contexto_juridico: document.getElementById('contexto_juridico').checked,
+            subjetividade: document.getElementById('subjetividade').checked,
+            urgencia: document.getElementById('urgencia').checked
+        },
+        ia: {
+            provedor_principal: document.getElementById('provedor_principal').value,
+            metodo: document.getElementById('metodo').value,
+            temperatura: parseFloat(document.getElementById('temperatura').value),
+            confianca: parseFloat(document.getElementById('confianca').value),
+            contexto_historico: document.getElementById('contexto_historico').checked
+        },
+        personalizacao: {
+            area_juridica: document.getElementById('area_juridica').value,
+            palavras_chave: document.getElementById('palavras_chave').value.split(/[,\n]/).map(s => s.trim()).filter(s => s),
+            detectar_ironia: document.getElementById('detectar_ironia').checked,
+            linguagem_tecnica: document.getElementById('linguagem_tecnica').checked
+        },
+        saida: {
+            escala: document.getElementById('escala').value,
+            granularidade: document.getElementById('granularidade').value,
+            incluir_explicacao: document.getElementById('incluir_explicacao').checked
+        }
+    };
+
+    localStorage.setItem('componente_analisador_sentimento', JSON.stringify(config));
+    alert('Configurações do Analisador de Sentimento salvas com sucesso!');
+    
+    if (window.opener) {
+        window.opener.postMessage({
+            type: 'componente_configurado',
+            componente: config
+        }, '*');
+        window.close();
+    } else {
+        window.history.back();
+    }
+}
+</script>
+{% endblock %}

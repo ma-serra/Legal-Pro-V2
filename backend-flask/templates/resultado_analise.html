@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Análise - Sistema Jurídico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        
+        .container-main {
+            padding: 2rem 0;
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .result-header {
+            background: linear-gradient(135deg, #40a9a3, #2c6b6b);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .result-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid #40a9a3;
+        }
+        
+        .original-text {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin-top: 2rem;
+            gap: 1rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #40a9a3, #2c6b6b);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(64, 169, 163, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            color: #6c757d;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .metadata {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .section-title {
+            color: #2c6b6b;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .result-card {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-balance-scale me-2"></i>Sistema Jurídico
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="/validacao-multi-agente-expandida">
+                    <i class="fas fa-search me-1"></i>Nova Análise
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container container-main">
+        <div class="result-card">
+            <!-- Header -->
+            <div class="result-header">
+                <h1><i class="fas fa-check-circle me-2"></i>Análise Concluída</h1>
+                <p class="mb-0">Resultado da análise jurídica especializada</p>
+            </div>
+            
+            <!-- Metadata -->
+            <div class="metadata">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-tag me-1"></i>Tipo:</strong> 
+                        {% if tipo_analise == 'multiplos_agentes' %}
+                            Análise Multi-Agente
+                        {% else %}
+                            {{ (session.get('tipo_analise') or 'simples').title() }}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-robot me-1"></i>Agentes:</strong> 
+                        {% if agentes_usados %}
+                            {{ agentes_usados|length }} especialistas
+                        {% else %}
+                            {{ session.get('agente_usado', 'Não especificado') }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if tipo_analise == 'multiplos_agentes' and agentes_usados %}
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <strong><i class="fas fa-users me-1"></i>Especialistas Utilizados:</strong> 
+                        {{ agentes_usados|join(', ') }}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-clock me-1"></i>Processado em:</strong> 
+                        <span id="timestamp"></span>
+                    </div>
+                    {% if resultado and resultado.id %}
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-fingerprint me-1"></i>ID da Análise:</strong> 
+                        <span class="badge bg-secondary" title="Identificador único: {{ resultado.id }}">{{ resultado.id[:8] }}...</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-1" onclick="copyAnalysisId('{{ resultado.id }}')" title="Copiar ID completo">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Texto Original Integral -->
+            {% if session.get('texto_original_completo') or texto_original %}
+            <div class="section-title">
+                <i class="fas fa-file-text"></i>
+                Documento Original Analisado
+            </div>
+            <div class="original-text-full">
+                <div class="bg-light p-3 rounded" style="border-left: 4px solid #40a9a3;">
+                    <div class="mb-2">
+                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Texto integral submetido para análise jurídica:</small>
+                    </div>
+                    <div id="texto-completo" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9em; line-height: 1.4; max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; padding: 15px; background: white; border-radius: 5px;">{{ session.get('texto_original_completo') or texto_original }}</div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Análise Jurídica Especializada -->
+            <div class="section-title mt-4">
+                <i class="fas fa-gavel"></i>
+                {% if tipo_analise == 'multiplos_agentes' %}
+                    Análise Jurídica Multi-Agente com Considerações Legislativas
+                {% else %}
+                    Análise Jurídica Especializada
+                {% endif %}
+            </div>
+            
+            {% if tipo_analise == 'multiplos_agentes' %}
+                <!-- Análise Multi-Agente -->
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-users me-2"></i>
+                    <strong>Análise Consolidada:</strong> Esta análise foi processada sequencialmente por 
+                    <strong>{{ agentes_usados|length }} especialistas jurídicos</strong>, garantindo múltiplas perspectivas 
+                    e fundamentação legislativa abrangente.
+                </div>
+                
+                <!-- Estrutura de Tópicos e Respostas Dinâmica -->
+                {% if resultado and resultado.resultado_principal %}
+                    {% set resultado_principal = resultado.resultado_principal %}
+                    
+                    <!-- Exibir análise formatada se disponível -->
+                    {% if resultado_principal.resultado_formatado %}
+                        <div class="result-content">
+                            <h5><i class="fas fa-clipboard-check me-2"></i>Análise Jurídica Especializada</h5>
+                            {{ resultado_principal.resultado_formatado|e }}  <!-- Alterado: |safe removido por segurança -->
+                        </div>
+                    {% elif resultado_principal.analise %}
+                        <div class="result-content">
+                            <h5><i class="fas fa-clipboard-check me-2"></i>Análise Jurídica</h5>
+                            <div class="analise-content">
+                                {{ resultado_principal.analise|e }}  <!-- Alterado: |safe removido por segurança -->
+                            </div>
+                        </div>
+                    {% elif resultado_principal.resposta %}
+                        <div class="result-content">
+                            <h5><i class="fas fa-clipboard-check me-2"></i>Resposta do Especialista</h5>
+                            <div class="resposta-content">
+                                {{ resultado_principal.resposta|e }}  <!-- Alterado: |safe removido por segurança -->
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Fallback para estrutura de dados complexa -->
+                        <div class="result-content">
+                            <h5><i class="fas fa-clipboard-check me-2"></i>Resultado da Análise</h5>
+                            <div class="structured-content">
+                                {% if resultado_principal is mapping %}
+                                    {% for key, value in resultado_principal.items() %}
+                                        {% if key not in ['id', 'timestamp', 'provider', 'modelo'] %}
+                                            <div class="topic-section mb-3">
+                                                <h6 class="topic-title text-primary">{{ key|title|replace('_', ' ') }}</h6>
+                                                <div class="topic-content p-3 bg-light rounded">
+                                                    {% if value is string %}
+                                                        {{ value|e }}  <!-- Alterado: |safe removido por segurança -->
+                                                    {% else %}
+                                                        {{ value }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {{ resultado_principal|e }}  <!-- Alterado: |safe removido por segurança -->
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="result-content">
+                        <p class="text-muted">Processamento em andamento...</p>
+                    </div>
+                {% endif %}
+                
+                <!-- Contribuições Detalhadas dos Agentes -->
+                {% if resultado and resultado.resumo_agentes %}
+                <div class="mt-4">
+                    <h6><i class="fas fa-users me-2"></i>Contribuições Detalhadas por Especialista</h6>
+                    <div class="accordion" id="agentesAccordion">
+                        {% for agente_resumo in resultado.resumo_agentes %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    {{ agente_resumo.agente }} 
+                                    <span class="badge bg-success ms-2">{{ agente_resumo.provider|upper if agente_resumo.provider else 'IA' }}</span>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#agentesAccordion">
+                                <div class="accordion-body">
+                                    {% if agente_resumo.analise %}
+                                        <div class="specialist-analysis">
+                                            {{ agente_resumo.analise|e }}  <!-- Alterado: |safe removido por segurança -->
+                                        </div>
+                                    {% elif agente_resumo.resumo %}
+                                        <div class="specialist-summary">
+                                            {{ agente_resumo.resumo|e }}  <!-- Alterado: |safe removido por segurança -->
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted">Análise não disponível para este especialista.</p>
+                                    {% endif %}
+                                    
+                                    {% if agente_resumo.tempo_processamento %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Processado em {{ agente_resumo.tempo_processamento }}s
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <!-- Análise Simples -->
+                <div class="result-content">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        <strong>Considerações Jurídicas:</strong> Esta análise foi produzida por agente especializado, 
+                        baseada na legislação vigente e jurisprudência aplicável.
+                    </div>
+                    {% if resultado %}
+                        {% if resultado.analise %}
+                            {{ resultado.analise|e }}  <!-- Alterado: |safe removido por segurança -->
+                        {% elif resultado.resposta %}
+                            {{ resultado.resposta|e }}  <!-- Alterado: |safe removido por segurança -->
+                        {% elif resultado.texto %}
+                            {{ resultado.texto|e }}  <!-- Alterado: |safe removido por segurança -->
+                        {% elif resultado is string %}
+                            {{ resultado|e }}  <!-- Alterado: |safe removido por segurança -->
+                        {% else %}
+                            <pre>{{ resultado|pprint }}</pre>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">Nenhum resultado disponível.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+            
+            <!-- Botões de Ação -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-warning me-3" onclick="solicitarSegundaOpiniao()">
+                    <i class="fas fa-users me-2"></i>Segunda Opinião
+                </button>
+                <a href="/analisar" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nova Análise
+                </a>
+                <a href="/" class="btn btn-outline-secondary">
+                    <i class="fas fa-home me-2"></i>Voltar ao Dashboard
+                </a>
+                <button class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+                <button class="btn btn-outline-secondary" onclick="compartilharResultado()">
+                    <i class="fas fa-share me-2"></i>Compartilhar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Definir timestamp atual
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('pt-BR');
+        
+        function solicitarSegundaOpiniao() {
+            // Obter texto original
+            const textoCompleto = document.getElementById('texto-completo').textContent;
+            const agenteAtual = '{{ session.get("agente_usado", "") }}';
+            
+            if (!textoCompleto || textoCompleto.trim() === '') {
+                alert('Não foi possível encontrar o texto original para análise.');
+                return;
+            }
+            
+            // Mostrar modal de confirmação
+            if (confirm('Deseja solicitar uma segunda opinião jurídica sobre este documento? Isso irá gerar uma nova análise com outro agente especializado.')) {
+                // Criar formulário temporário para enviar dados
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/segunda-opiniao';
+                
+                // Adicionar campo de texto
+                const campoTexto = document.createElement('textarea');
+                campoTexto.name = 'texto';
+                campoTexto.value = textoCompleto;
+                campoTexto.style.display = 'none';
+                form.appendChild(campoTexto);
+                
+                // Adicionar agente atual para evitar repetição
+                const campoAgente = document.createElement('input');
+                campoAgente.type = 'hidden';
+                campoAgente.name = 'agente_evitar';
+                campoAgente.value = agenteAtual;
+                form.appendChild(campoAgente);
+                
+                // Adicionar tipo de análise
+                const campoTipo = document.createElement('input');
+                campoTipo.type = 'hidden';
+                campoTipo.name = 'tipo_analise';
+                campoTipo.value = 'segunda_opiniao';
+                form.appendChild(campoTipo);
+                
+                // Adicionar CSRF token se disponível
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (csrfToken) {
+                    const campoCSRF = document.createElement('input');
+                    campoCSRF.type = 'hidden';
+                    campoCSRF.name = 'csrf_token';
+                    campoCSRF.value = csrfToken.content;
+                    form.appendChild(campoCSRF);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function compartilharResultado() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Resultado da Análise Jurídica',
+                    text: 'Confira o resultado da análise jurídica',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback para cópia do link
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Link copiado para a área de transferência!');
+                });
+            }
+        }
+        
+        function copyAnalysisId(analysisId) {
+            navigator.clipboard.writeText(analysisId).then(() => {
+                // Mostrar feedback visual
+                const button = event.target.closest('button');
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-outline-secondary');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000);
+                
+                // Exibir toast de confirmação
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show position-fixed" 
+                         style="top: 20px; right: 20px; z-index: 1050; min-width: 300px;">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ID da análise copiado para área de transferência
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 3000);
+                
+            }).catch(err => {
+                alert('ID da Análise: ' + analysisId);
+            });
+        }
+        
+        // Adicionar funcionalidade de voltar
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>

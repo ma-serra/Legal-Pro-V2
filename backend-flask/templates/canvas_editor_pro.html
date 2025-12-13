@@ -1,0 +1,648 @@
+{% extends "layout.html" %}
+
+{% block title %}Canvas Editor Pro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/canvas-editor-pro.css') }}">
+<style>
+    body {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        min-height: 100vh;
+    }
+
+    .editor-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editor-header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+    }
+
+    .main-content {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 0;
+        height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+        background: rgba(255, 255, 255, 0.05);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        overflow-y: auto;
+    }
+
+    .canvas-area {
+        background: rgba(255, 255, 255, 0.02);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .editor-canvas {
+        width: 100%;
+        height: 100%;
+        background: 
+            linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        position: relative;
+    }
+
+    .component-palette {
+        margin-bottom: 2rem;
+    }
+
+    .palette-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .palette-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #47b6b5;
+    }
+
+    .component-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .component-item {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 0.8rem;
+        cursor: grab;
+        transition: all 0.3s ease;
+        text-align: center;
+        user-select: none;
+    }
+
+    .component-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #47b6b5;
+        transform: translateY(-2px);
+    }
+
+    .component-item:active {
+        cursor: grabbing;
+    }
+
+    .component-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #47b6b5;
+    }
+
+    .component-name {
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .btn-tool {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .btn-tool:hover {
+        background: #47b6b5;
+        border-color: #47b6b5;
+    }
+
+    .btn-tool.active {
+        background: #47b6b5;
+        border-color: #47b6b5;
+    }
+
+    /* Canvas Elements */
+    .canvas-element {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid #47b6b5;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: move;
+        user-select: none;
+        color: #333;
+        min-width: 120px;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .canvas-element:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-element.selected {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+    }
+
+    .resize-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #47b6b5;
+        border: 2px solid white;
+        border-radius: 50%;
+        cursor: se-resize;
+        bottom: -5px;
+        right: -5px;
+    }
+
+    .element-controls {
+        position: absolute;
+        top: -30px;
+        right: 0;
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .canvas-element:hover .element-controls {
+        opacity: 1;
+    }
+
+    .control-btn {
+        width: 20px;
+        height: 20px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .properties-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+        color: #47b6b5;
+    }
+
+    .form-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        padding: 0.5rem;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #47b6b5;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .main-content {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+        }
+        
+        .sidebar {
+            height: 200px;
+            border-right: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .component-grid {
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Header -->
+    <div class="editor-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-outline-light me-3">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <h1 class="mb-0">
+                    <i class="fas fa-paint-brush me-2"></i>Canvas Editor Pro
+                </h1>
+            </div>
+            
+            <div class="toolbar">
+                <button class="btn-tool" id="btn-select" title="Selecionar">
+                    <i class="fas fa-mouse-pointer"></i>
+                </button>
+                <button class="btn-tool" id="btn-pan" title="Mover Canvas">
+                    <i class="fas fa-hand-paper"></i>
+                </button>
+                <button class="btn-tool" onclick="saveDesign()" title="Salvar">
+                    <i class="fas fa-save"></i>
+                </button>
+                <button class="btn-tool" onclick="clearCanvas()" title="Limpar">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn-tool" onclick="exportDesign()" title="Exportar">
+                    <i class="fas fa-download"></i>
+                </button>
+                <a href="/componentes-editor" class="btn-tool" title="Ver Componentes">
+                    <i class="fas fa-puzzle-piece"></i>
+                </a>
+                <a href="/fluxos" class="btn-tool" title="Editor de Fluxos">
+                    <i class="fas fa-sitemap"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+        <!-- Sidebar com Componentes -->
+        <div class="sidebar">
+            <!-- Paleta de Componentes Básicos -->
+            <div class="component-palette">
+                <div class="palette-header">
+                    <h3 class="palette-title">
+                        <i class="fas fa-shapes me-2"></i>Componentes Básicos
+                    </h3>
+                </div>
+                
+                <div class="component-grid">
+                    <div class="component-item" draggable="true" data-type="box" data-name="Caixa">
+                        <div class="component-icon">
+                            <i class="fas fa-square"></i>
+                        </div>
+                        <div class="component-name">Caixa</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="text" data-name="Texto">
+                        <div class="component-icon">
+                            <i class="fas fa-font"></i>
+                        </div>
+                        <div class="component-name">Texto</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="button" data-name="Botão">
+                        <div class="component-icon">
+                            <i class="fas fa-hand-pointer"></i>
+                        </div>
+                        <div class="component-name">Botão</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="image" data-name="Imagem">
+                        <div class="component-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div class="component-name">Imagem</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="table" data-name="Tabela">
+                        <div class="component-icon">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div class="component-name">Tabela</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="chart" data-name="Gráfico">
+                        <div class="component-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="component-name">Gráfico</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paleta de Componentes Jurídicos -->
+            <div class="component-palette">
+                <div class="palette-header">
+                    <h3 class="palette-title">
+                        <i class="fas fa-balance-scale me-2"></i>Jurídicos
+                    </h3>
+                </div>
+                
+                <div class="component-grid">
+                    <div class="component-item" draggable="true" data-type="contract" data-name="Contrato">
+                        <div class="component-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </div>
+                        <div class="component-name">Contrato</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="petition" data-name="Petição">
+                        <div class="component-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="component-name">Petição</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="timeline" data-name="Cronograma">
+                        <div class="component-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="component-name">Cronograma</div>
+                    </div>
+                    
+                    <div class="component-item" draggable="true" data-type="evidence" data-name="Evidência">
+                        <div class="component-icon">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <div class="component-name">Evidência</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Propriedades -->
+            <div class="properties-panel">
+                <h4 style="color: #47b6b5; margin-bottom: 1rem;">
+                    <i class="fas fa-cog me-2"></i>Propriedades
+                </h4>
+                
+                <div id="element-properties">
+                    <p style="opacity: 0.7; font-size: 0.9rem;">Selecione um elemento no canvas para ver suas propriedades.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área do Canvas -->
+        <div class="canvas-area">
+            <div id="editor-canvas" class="editor-canvas">
+                <!-- Elementos serão adicionados aqui dinamicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/canvas-editor-pro.js') }}"></script>
+<script src="{{ url_for('static', filename='js/advanced-templates-loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/canvas-database-integration.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎨 Canvas Editor Pro inicializando...');
+    
+    // Inicializar editor
+    if (typeof CanvasEditorPro !== 'undefined') {
+        window.canvasEditor = new CanvasEditorPro('editor-canvas');
+        console.log('✅ Canvas Editor Pro inicializado');
+    } else {
+        console.warn('⚠️ CanvasEditorPro não encontrado, carregando funcionalidades básicas');
+        initBasicCanvasEditor();
+    }
+    
+    // Configurar drag and drop
+    setupDragAndDrop();
+    
+    // Configurar toolbar
+    setupToolbar();
+});
+
+function initBasicCanvasEditor() {
+    const canvas = document.getElementById('editor-canvas');
+    let isDragging = false;
+    let currentElement = null;
+    let elementCounter = 0;
+    
+    // Canvas drop
+    canvas.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        canvas.style.background = 'rgba(71, 182, 181, 0.1)';
+    });
+    
+    canvas.addEventListener('dragleave', function(e) {
+        canvas.style.background = '';
+    });
+    
+    canvas.addEventListener('drop', function(e) {
+        e.preventDefault();
+        canvas.style.background = '';
+        
+        const type = e.dataTransfer.getData('text/type');
+        const name = e.dataTransfer.getData('text/name');
+        
+        if (type && name) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            createElement(type, name, x, y);
+        }
+    });
+}
+
+function setupDragAndDrop() {
+    const componentItems = document.querySelectorAll('.component-item[draggable="true"]');
+    
+    componentItems.forEach(item => {
+        item.addEventListener('dragstart', function(e) {
+            const type = this.getAttribute('data-type');
+            const name = this.getAttribute('data-name');
+            
+            e.dataTransfer.setData('text/type', type);
+            e.dataTransfer.setData('text/name', name);
+            e.dataTransfer.effectAllowed = 'copy';
+        });
+    });
+}
+
+function setupToolbar() {
+    const selectBtn = document.getElementById('btn-select');
+    const panBtn = document.getElementById('btn-pan');
+    
+    selectBtn?.addEventListener('click', function() {
+        document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+    
+    panBtn?.addEventListener('click', function() {
+        document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+    
+    // Selecionar por padrão
+    selectBtn?.classList.add('active');
+}
+
+function createElement(type, name, x, y) {
+    elementCounter++;
+    const element = document.createElement('div');
+    element.className = 'canvas-element';
+    element.setAttribute('data-type', type);
+    element.setAttribute('data-id', elementCounter);
+    element.style.left = x + 'px';
+    element.style.top = y + 'px';
+    
+    // Conteúdo baseado no tipo
+    let content = name;
+    if (type === 'text') content = 'Texto editável';
+    if (type === 'button') content = '<button class="btn btn-primary">Clique aqui</button>';
+    if (type === 'image') content = '<i class="fas fa-image" style="font-size: 2rem; opacity: 0.5;"></i>';
+    
+    element.innerHTML = `
+        ${content}
+        <div class="element-controls">
+            <button class="control-btn" onclick="removeElement(this)" title="Remover">×</button>
+        </div>
+        <div class="resize-handle"></div>
+    `;
+    
+    // Tornar arrastável
+    makeElementDraggable(element);
+    
+    // Adicionar ao canvas
+    document.getElementById('editor-canvas').appendChild(element);
+    
+    console.log(`✅ Elemento ${name} criado no canvas`);
+}
+
+function makeElementDraggable(element) {
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    element.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('control-btn') || e.target.classList.contains('resize-handle')) return;
+        
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(element.style.left) || 0;
+        startTop = parseInt(element.style.top) || 0;
+        
+        element.style.zIndex = 1000;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        e.preventDefault();
+    });
+    
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        
+        const newLeft = startLeft + (e.clientX - startX);
+        const newTop = startTop + (e.clientY - startY);
+        
+        element.style.left = Math.max(0, newLeft) + 'px';
+        element.style.top = Math.max(0, newTop) + 'px';
+    }
+    
+    function onMouseUp() {
+        isDragging = false;
+        element.style.zIndex = '';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+}
+
+function removeElement(btn) {
+    const element = btn.closest('.canvas-element');
+    if (element && confirm('Remover este elemento?')) {
+        element.remove();
+    }
+}
+
+// Funções globais para toolbar
+function saveDesign() {
+    const elements = Array.from(document.querySelectorAll('.canvas-element')).map(el => ({
+        id: el.getAttribute('data-id'),
+        type: el.getAttribute('data-type'),
+        x: parseInt(el.style.left),
+        y: parseInt(el.style.top),
+        content: el.innerHTML
+    }));
+    
+    console.log('💾 Salvando design:', elements);
+    alert('Design salvo localmente!');
+    localStorage.setItem('canvasDesign', JSON.stringify(elements));
+}
+
+function clearCanvas() {
+    if (confirm('Limpar todo o canvas?')) {
+        document.querySelectorAll('.canvas-element').forEach(el => el.remove());
+        console.log('🧹 Canvas limpo');
+    }
+}
+
+function exportDesign() {
+    const elements = Array.from(document.querySelectorAll('.canvas-element'));
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Design Exportado</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        .container { position: relative; width: 100%; height: 100vh; }
+        .element { position: absolute; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        ${elements.map(el => `
+            <div class="element" style="left: ${el.style.left}; top: ${el.style.top};">
+                ${el.textContent}
+            </div>
+        `).join('')}
+    </div>
+</body>
+</html>
+    `;
+    
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'design-exportado.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('📤 Design exportado');
+}
+</script>
+{% endblock %}

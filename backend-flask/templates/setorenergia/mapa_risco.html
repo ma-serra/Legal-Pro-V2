@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Mapa de Risco</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .kpi-card {
+            background-color: #2a2a2a; /* Fundo escuro */
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+            height: 100%;
+        }
+        
+        /* ✅ REGRA Energia: Texto branco em fundos escuros */
+        .kpi-card,
+        .kpi-card h1,
+        .kpi-card h2,
+        .kpi-card h3,
+        .kpi-card h4,
+        .kpi-card h5,
+        .kpi-card h6,
+        .kpi-card p,
+        .kpi-card small,
+        .kpi-card span,
+        .kpi-card div {
+            color: #ffffff !important;
+        }
+        
+        .kpi-card .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .kpi-card.provavel {
+            border-left: 4px solid #E30613;
+        }
+        
+        .kpi-card.possivel {
+            border-left: 4px solid #F89728;
+        }
+        
+        .kpi-card.remoto {
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .kpi-card.total {
+            border-left: 4px solid #00539F;
+        }
+        
+        .chart-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .matriz-risco {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .celula-risco {
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        
+        /* ✅ REGRA Energia: Texto preto em células da matriz */
+        .celula-risco,
+        .celula-risco strong,
+        .celula-risco small {
+            color: #000000 !important;
+        }
+        
+        .celula-risco:hover {
+            transform: scale(1.05);
+        }
+        
+        .risco-critico {
+            background-color: #fdd; /* Vermelho claro */
+            border: 2px solid #E30613;
+        }
+        
+        .risco-alto {
+            background-color: #ffe4c4; /* Laranja claro */
+            border: 2px solid #F89728;
+        }
+        
+        .risco-medio {
+            background-color: #cfe2ff; /* Azul claro */
+            border: 2px solid #0089CF;
+        }
+        
+        .risco-baixo {
+            background-color: #d4edda; /* Verde claro */
+            border: 2px solid #8DC63F;
+        }
+        
+        .table-responsive {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            color: #ffffff;
+        }
+        
+        table thead {
+            background-color: #003366;
+        }
+        
+        table tbody tr {
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        table tbody tr:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .badge-provavel {
+            background-color: #E30613;
+        }
+        
+        .badge-possivel {
+            background-color: #F89728;
+        }
+        
+        .badge-remoto {
+            background-color: #8DC63F;
+        }
+        
+        /* Placeholder branco para inputs */
+        #filtro-numero-risco::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        
+        /* Estilos para filtros */
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item active">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2 class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                Mapa de Risco Legal
+            </h2>
+            <p class="mb-0 mt-2" style="color: rgba(255, 255, 255, 0.8);">
+                Análise Completa de Riscos e Exposições Financeiras
+            </p>
+        </div>
+        
+        <!-- KPIs de Risco -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="kpi-card total">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Exposição Total</small>
+                            <h3 class="mb-0" id="kpi-total">-</h3>
+                            <small id="kpi-total-processos" class="text-muted">- processos</small>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x" style="color: #00539F; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="kpi-card provavel">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Risco Provável</small>
+                            <h3 class="mb-0" id="kpi-provavel">-</h3>
+                            <small id="kpi-provavel-processos" class="text-muted">- processos</small>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x" style="color: #E30613; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="kpi-card possivel">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Risco Possível</small>
+                            <h3 class="mb-0" id="kpi-possivel">-</h3>
+                            <small id="kpi-possivel-processos" class="text-muted">- processos</small>
+                        </div>
+                        <i class="fas fa-exclamation-circle fa-2x" style="color: #F89728; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="kpi-card remoto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Risco Remoto</small>
+                            <h3 class="mb-0" id="kpi-remoto">-</h3>
+                            <small id="kpi-remoto-processos" class="text-muted">- processos</small>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x" style="color: #8DC63F; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Matriz de Risco -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-th me-2" style="color: #00539F;"></i>
+                        Matriz de Risco (Probabilidade x Impacto)
+                    </h5>
+                    <div id="matriz-risco-container"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráficos de Risco -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-map-marker-alt me-2" style="color: #00539F;"></i>
+                        Top 10 Comarcas por Risco
+                    </h5>
+                    <div style="height: 400px; width: 100%; position: relative;">
+                        <canvas id="chart-risco-comarca"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-list-alt me-2" style="color: #00539F;"></i>
+                        Risco por Causa-Raiz
+                    </h5>
+                    <div style="height: 300px; width: 100%; position: relative;">
+                        <canvas id="chart-risco-causa"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Evolução Temporal -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-line me-2" style="color: #00539F;"></i>
+                        Evolução do Risco (Últimos 12 Meses)
+                    </h5>
+                    <div style="height: 300px; width: 100%; position: relative;">
+                        <canvas id="chart-evolucao"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Processos de Alto Risco -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h5 class="mb-3">
+                        <i class="fas fa-exclamation-triangle me-2" style="color: #E30613;"></i>
+                        Processos de Alto Risco <small class="text-muted">(Score ≥ 60 ou Provável/Possível)</small>
+                    </h5>
+                    
+                    <!-- Filtros - Linha 1 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Número do Processo</label>
+                            <input type="text" id="filtro-numero-risco" class="form-control" placeholder="Filtrar por número...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Comarca</label>
+                            <select id="filtro-comarca-risco" class="form-select">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Causa-Raiz</label>
+                            <select id="filtro-causa-risco" class="form-select">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Classificação</label>
+                            <select id="filtro-classificacao-risco" class="form-select">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Fase</label>
+                            <select id="filtro-fase-risco" class="form-select">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Ordenar Por</label>
+                            <select id="filtro-ordenacao-risco" class="form-select">
+                                <option value="desc">Maior Risco</option>
+                                <option value="asc">Menor Risco</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros - Linha 2 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label class="form-label" style="color: #ffffff;">Exibir</label>
+                            <select id="filtro-limite-risco" class="form-select">
+                                <option value="20">20 processos</option>
+                                <option value="50">50 processos</option>
+                                <option value="100">100 processos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-10">
+                            <!-- Contador de Processos -->
+                            <label class="form-label" style="color: #ffffff; visibility: hidden;">Info</label>
+                            <div>
+                                <small class="text-muted" id="contador-processos-risco">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Mostrando <strong id="count-exibidos">0</strong> de <strong id="count-total">0</strong> processos
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="tabela-processos-risco">
+                            <thead>
+                                <tr>
+                                    <th>Número do Processo</th>
+                                    <th>Comarca</th>
+                                    <th>Causa-Raiz</th>
+                                    <th>Valor Envolvido</th>
+                                    <th>Classificação</th>
+                                    <th>Fase</th>
+                                    <th>Score de Risco</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-alto-risco">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Carregando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let chartComarca = null;
+        let chartCausa = null;
+        let chartEvolucao = null;
+        let dadosCarregados = false; // ✅ Flag para evitar carregamento duplicado
+        let processosAltoRisco = []; // Armazenar dados completos para filtros
+        
+        async function carregarMapaRisco() {
+            // ✅ Prevenir carregamento duplicado
+            if (dadosCarregados) {
+                console.log('⚠️ Dados já carregados, ignorando chamada duplicada');
+                return;
+            }
+            
+            try {
+                console.log('🔄 Carregando Mapa de Risco...');
+                const response = await fetch('/setorenergia/api/mapa-risco');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    // Atualizar KPIs
+                    atualizarKPIs(data.kpis);
+                    
+                    // Renderizar Matriz de Risco
+                    renderizarMatrizRisco(data.matriz_risco);
+                    
+                    // Criar gráficos - só uma vez
+                    criarGraficoComarca(data.risco_por_comarca);
+                    criarGraficoCausa(data.risco_por_causa);
+                    criarGraficoEvolucao(data.evolucao_temporal);
+                    
+                    // Preencher tabela de alto risco
+                    preencherTabelaAltoRisco(data.processos_alto_risco);
+                    
+                    dadosCarregados = true; // ✅ Marcar como carregado
+                    console.log('✅ Mapa de Risco carregado com sucesso');
+                } else {
+                    console.error('❌ Erro ao carregar dados:', result);
+                }
+            } catch (error) {
+                console.error('❌ Erro:', error);
+            }
+        }
+        
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+        
+        function atualizarKPIs(kpis) {
+            document.getElementById('kpi-total').textContent = formatarMoeda(kpis.total_exposicao);
+            document.getElementById('kpi-total-processos').textContent = `${kpis.total_processos} processos`;
+            
+            document.getElementById('kpi-provavel').textContent = formatarMoeda(kpis.valor_provavel);
+            document.getElementById('kpi-provavel-processos').textContent = `${kpis.processos_provavel} processos`;
+            
+            document.getElementById('kpi-possivel').textContent = formatarMoeda(kpis.valor_possivel);
+            document.getElementById('kpi-possivel-processos').textContent = `${kpis.processos_possivel} processos`;
+            
+            document.getElementById('kpi-remoto').textContent = formatarMoeda(kpis.valor_remoto);
+            document.getElementById('kpi-remoto-processos').textContent = `${kpis.processos_remoto} processos`;
+        }
+        
+        function renderizarMatrizRisco(matriz) {
+            const container = document.getElementById('matriz-risco-container');
+            
+            const probabilidades = ['Provável', 'Possível', 'Remoto'];
+            const impactos = ['Alto', 'Médio', 'Baixo'];
+            
+            let html = '<div style="overflow-x: auto;"><table class="table table-bordered" style="background-color: transparent;">';
+            html += '<thead><tr><th style="background-color: #003366; color: #ffffff !important;">Probabilidade / Impacto</th>';
+            impactos.forEach(imp => {
+                html += `<th class="text-center" style="background-color: #003366; color: #ffffff !important;">${imp}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            probabilidades.forEach(prob => {
+                html += `<tr><td style="background-color: #003366; color: #ffffff !important; font-weight: 600;">${prob}</td>`;
+                
+                impactos.forEach(imp => {
+                    const celula = matriz.find(m => m.probabilidade === prob && m.impacto === imp);
+                    
+                    let classeRisco = 'risco-baixo';
+                    if (prob === 'Provável' && imp === 'Alto') classeRisco = 'risco-critico';
+                    else if ((prob === 'Provável' && imp === 'Médio') || (prob === 'Possível' && imp === 'Alto')) classeRisco = 'risco-alto';
+                    else if ((prob === 'Provável' && imp === 'Baixo') || (prob === 'Possível' && imp === 'Médio') || (prob === 'Remoto' && imp === 'Alto')) classeRisco = 'risco-medio';
+                    
+                    if (celula) {
+                        html += `<td class="celula-risco ${classeRisco}">
+                            <strong>${celula.quantidade}</strong> processos<br>
+                            <small>${formatarMoeda(celula.valor_total)}</small>
+                        </td>`;
+                    } else {
+                        html += `<td class="celula-risco ${classeRisco}">
+                            <strong>0</strong> processos<br>
+                            <small>R$ 0,00</small>
+                        </td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        
+        function criarGraficoComarca(dados) {
+            // ✅ Evitar re-criação desnecessária
+            if (chartComarca) {
+                chartComarca.destroy();
+                chartComarca = null;
+            }
+            
+            const ctx = document.getElementById('chart-risco-comarca');
+            if (!ctx) return; // Proteção se elemento não existir
+            
+            const top10 = dados.slice(0, 10);
+            
+            chartComarca = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.comarca),
+                    datasets: [{
+                        label: 'Valor em Risco (R$)',
+                        data: top10.map(d => d.valor_total),
+                        backgroundColor: '#00539F',
+                        borderColor: '#003366',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatarMoeda(context.parsed.x);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function criarGraficoCausa(dados) {
+            // ✅ Evitar re-criação desnecessária
+            if (chartCausa) {
+                chartCausa.destroy();
+                chartCausa = null;
+            }
+            
+            const ctx = document.getElementById('chart-risco-causa');
+            if (!ctx) return; // Proteção se elemento não existir
+            
+            chartCausa = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: dados.map(d => d.causa),
+                    datasets: [{
+                        data: dados.map(d => d.valor_total),
+                        backgroundColor: [
+                            '#E30613', '#F89728', '#8DC63F', '#00539F', '#0089CF',
+                            '#003366', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#ffffff', font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + formatarMoeda(context.parsed);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function criarGraficoEvolucao(dados) {
+            // ✅ Evitar re-criação desnecessária
+            if (chartEvolucao) {
+                chartEvolucao.destroy();
+                chartEvolucao = null;
+            }
+            
+            const ctx = document.getElementById('chart-evolucao');
+            if (!ctx) return; // Proteção se elemento não existir
+            
+            chartEvolucao = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dados.map(d => d.periodo),
+                    datasets: [{
+                        label: 'Valor Total em Risco',
+                        data: dados.map(d => d.valor_total),
+                        borderColor: '#00539F',
+                        backgroundColor: 'rgba(0, 83, 159, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatarMoeda(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function preencherTabelaAltoRisco(processos) {
+            if (!processos || processos.length === 0) {
+                document.getElementById('tabela-alto-risco').innerHTML = 
+                    '<tr><td colspan="7" class="text-center">Nenhum processo encontrado</td></tr>';
+                return;
+            }
+            
+            // Armazenar dados globalmente
+            processosAltoRisco = processos;
+            
+            // Popular dropdowns com valores únicos
+            popularDropdowns();
+            
+            // Renderizar tabela
+            renderizarTabelaRisco(processos);
+            
+            // Adicionar event listeners para filtros
+            configurarFiltros();
+        }
+        
+        function popularDropdowns() {
+            // Comarca
+            const comarcas = [...new Set(processosAltoRisco.map(p => p['Comarca Desdobramento']).filter(c => c))].sort();
+            const selectComarca = document.getElementById('filtro-comarca-risco');
+            selectComarca.innerHTML = '<option value="">Todas</option>';
+            comarcas.forEach(c => {
+                selectComarca.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            
+            // Causa-Raiz
+            const causas = [...new Set(processosAltoRisco.map(p => p['Causa-Raiz']).filter(c => c))].sort();
+            const selectCausa = document.getElementById('filtro-causa-risco');
+            selectCausa.innerHTML = '<option value="">Todas</option>';
+            causas.forEach(c => {
+                selectCausa.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            
+            // Classificação
+            const classificacoes = [...new Set(processosAltoRisco.map(p => p['Classificação - Passiva']).filter(c => c))].sort();
+            const selectClassificacao = document.getElementById('filtro-classificacao-risco');
+            selectClassificacao.innerHTML = '<option value="">Todas</option>';
+            classificacoes.forEach(c => {
+                selectClassificacao.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            
+            // Fase
+            const fases = [...new Set(processosAltoRisco.map(p => p['Fase']).filter(f => f))].sort();
+            const selectFase = document.getElementById('filtro-fase-risco');
+            selectFase.innerHTML = '<option value="">Todas</option>';
+            fases.forEach(f => {
+                selectFase.innerHTML += `<option value="${f}">${f}</option>`;
+            });
+        }
+        
+        function renderizarTabelaRisco(processos) {
+            const tbody = document.getElementById('tabela-alto-risco');
+            
+            if (!processos || processos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum processo encontrado</td></tr>';
+                document.getElementById('count-exibidos').textContent = '0';
+                document.getElementById('count-total').textContent = '0';
+                return;
+            }
+            
+            // Aplicar limite de exibição
+            const limite = parseInt(document.getElementById('filtro-limite-risco').value);
+            const processosExibir = processos.slice(0, limite);
+            
+            // Atualizar contador
+            document.getElementById('count-exibidos').textContent = processosExibir.length;
+            document.getElementById('count-total').textContent = processos.length;
+            
+            let html = '';
+            processosExibir.forEach(p => {
+                let badgeClass = 'badge-remoto';
+                if (p['Classificação - Passiva'] === 'Provável') badgeClass = 'badge-provavel';
+                else if (p['Classificação - Passiva'] === 'Possível') badgeClass = 'badge-possivel';
+                
+                html += `
+                    <tr>
+                        <td><small>${p['Número do Processo']}</small></td>
+                        <td><small>${p['Comarca Desdobramento'] || 'N/A'}</small></td>
+                        <td><small>${p['Causa-Raiz'] || 'N/A'}</small></td>
+                        <td><strong>${formatarMoeda(p['Valor Envolvido Atual - Passiva'])}</strong></td>
+                        <td><span class="badge ${badgeClass}">${p['Classificação - Passiva']}</span></td>
+                        <td><small>${p['Fase'] || 'N/A'}</small></td>
+                        <td><small>${p['risco_financeiro_score'].toFixed(0)}</small></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function aplicarFiltrosRisco() {
+            const filtroNumero = document.getElementById('filtro-numero-risco').value.toLowerCase();
+            const filtroComarca = document.getElementById('filtro-comarca-risco').value;
+            const filtroCausa = document.getElementById('filtro-causa-risco').value;
+            const filtroClassificacao = document.getElementById('filtro-classificacao-risco').value;
+            const filtroFase = document.getElementById('filtro-fase-risco').value;
+            const ordenacao = document.getElementById('filtro-ordenacao-risco').value;
+            
+            let processosFiltrados = processosAltoRisco.filter(p => {
+                const matchNumero = !filtroNumero || p['Número do Processo'].toLowerCase().includes(filtroNumero);
+                const matchComarca = !filtroComarca || p['Comarca Desdobramento'] === filtroComarca;
+                const matchCausa = !filtroCausa || p['Causa-Raiz'] === filtroCausa;
+                const matchClassificacao = !filtroClassificacao || p['Classificação - Passiva'] === filtroClassificacao;
+                const matchFase = !filtroFase || p['Fase'] === filtroFase;
+                
+                return matchNumero && matchComarca && matchCausa && matchClassificacao && matchFase;
+            });
+            
+            // Aplicar ordenação por score de risco
+            processosFiltrados.sort((a, b) => {
+                if (ordenacao === 'desc') {
+                    return b['risco_financeiro_score'] - a['risco_financeiro_score']; // Maior risco primeiro
+                } else {
+                    return a['risco_financeiro_score'] - b['risco_financeiro_score']; // Menor risco primeiro
+                }
+            });
+            
+            renderizarTabelaRisco(processosFiltrados);
+        }
+        
+        function configurarFiltros() {
+            document.getElementById('filtro-numero-risco').addEventListener('input', aplicarFiltrosRisco);
+            document.getElementById('filtro-comarca-risco').addEventListener('change', aplicarFiltrosRisco);
+            document.getElementById('filtro-causa-risco').addEventListener('change', aplicarFiltrosRisco);
+            document.getElementById('filtro-classificacao-risco').addEventListener('change', aplicarFiltrosRisco);
+            document.getElementById('filtro-fase-risco').addEventListener('change', aplicarFiltrosRisco);
+            document.getElementById('filtro-ordenacao-risco').addEventListener('change', aplicarFiltrosRisco);
+            document.getElementById('filtro-limite-risco').addEventListener('change', aplicarFiltrosRisco);
+        }
+        
+        // Carregar dados ao iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarMapaRisco();
+        });
+    </script>
+</body>
+</html>

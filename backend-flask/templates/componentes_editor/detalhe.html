@@ -1,0 +1,508 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ componente.nome }} - Detalhes{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        min-height: 100vh;
+    }
+
+    .detail-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .detail-header {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .section-title {
+        color: #47b6b5;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-label {
+        font-weight: bold;
+        color: #47b6b5;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .component-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 1rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background: #28a745;
+        color: white;
+    }
+
+    .status-inactive {
+        background: #6c757d;
+        color: white;
+    }
+
+    .capacidades-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .capacidade-item {
+        background: rgba(71, 182, 181, 0.2);
+        padding: 0.5rem 1rem;
+        margin: 0.3rem 0;
+        border-radius: 6px;
+        border-left: 3px solid #47b6b5;
+    }
+
+    .config-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .config-table th,
+    .config-table td {
+        padding: 0.8rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .config-table th {
+        background: rgba(255, 255, 255, 0.1);
+        color: #47b6b5;
+        font-weight: bold;
+    }
+
+    .btn-action {
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: #47b6b5;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3a9a9a;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+
+    .code-block {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #47b6b5;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .detail-container {
+            padding: 1rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin-right: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="component-icon-large" style="background: {{ componente.cor or '#6c757d' }}20; color: {{ componente.cor or '#6c757d' }}">
+                    <i class="{{ componente.icone or 'fas fa-cog' }}"></i>
+                </div>
+                <div class="ms-4">
+                    <h1 class="mb-2">{{ componente.nome }}</h1>
+                    <p class="mb-2 opacity-75">{{ componente.categoria.title() }} • {{ componente.tipo.title() }}</p>
+                    <span class="status-badge {{ 'status-active' if componente.ativo else 'status-inactive' }}">
+                        {{ 'Ativo' if componente.ativo else 'Inativo' }}
+                    </span>
+                </div>
+            </div>
+            
+            <div>
+                <a href="/componentes-editor" class="btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <a href="/componentes-editor/{{ componente.id }}/editar" class="btn-warning btn-action">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </a>
+                <button class="btn-primary btn-action" onclick="testarComponente()">
+                    <i class="fas fa-play me-2"></i>Testar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Gerais -->
+    <div class="info-section">
+        <h2 class="section-title">
+            <i class="fas fa-info-circle me-2"></i>Informações Gerais
+        </h2>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">Descrição</div>
+                <div class="info-value">{{ componente.descricao or 'Não informado' }}</div>
+                
+                {% if componente.descricao_detalhada %}
+                <div class="info-label">Descrição Detalhada</div>
+                <div class="info-value">{{ componente.descricao_detalhada }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="info-card">
+                <div class="info-label">Metadados</div>
+                <table class="w-100">
+                    <tr><td><strong>ID:</strong></td><td>{{ componente.id }}</td></tr>
+                    <tr><td><strong>Categoria:</strong></td><td>{{ componente.categoria.title() }}</td></tr>
+                    <tr><td><strong>Tipo:</strong></td><td>{{ componente.tipo.title() }}</td></tr>
+                    <tr><td><strong>Criado em:</strong></td><td>{{ componente.criado_em.strftime('%d/%m/%Y %H:%M') if componente.criado_em else 'Não informado' }}</td></tr>
+                </table>
+            </div>
+            
+            {% if componente.capacidades %}
+            <div class="info-card">
+                <div class="info-label">Capacidades</div>
+                <ul class="capacidades-list">
+                    {% for capacidade in componente.capacidades %}
+                    <li class="capacidade-item">{{ capacidade }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Estatísticas Rápidas -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-number">{{ componente.capacidades|length if componente.capacidades else 0 }}</span>
+                <div class="stat-label">Capacidades</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ componente.temperatura or 0.7 }}</span>
+                <div class="stat-label">Temperatura</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ componente.max_tokens or 4000 }}</span>
+                <div class="stat-label">Max Tokens</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ componente.top_k or 5 }}</span>
+                <div class="stat-label">Top K</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuração de IA -->
+    <div class="info-section">
+        <h2 class="section-title">
+            <i class="fas fa-brain me-2"></i>Configuração de IA
+        </h2>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">Provedor & Modelo</div>
+                <div class="info-value">
+                    {{ componente.provedor.upper() if componente.provedor else 'Não definido' }} • 
+                    {{ componente.modelo or 'Modelo padrão' }}
+                </div>
+                
+                <div class="info-label">Base de Conhecimento</div>
+                <div class="info-value">{{ componente.base_conhecimento or 'Não definido' }}</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-label">Parâmetros Técnicos</div>
+                <table class="config-table">
+                    <tr>
+                        <th>Parâmetro</th>
+                        <th>Valor</th>
+                    </tr>
+                    <tr>
+                        <td>Temperatura</td>
+                        <td>{{ componente.temperatura or 0.7 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Max Tokens</td>
+                        <td>{{ componente.max_tokens or 4000 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Top K</td>
+                        <td>{{ componente.top_k or 5 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Chunk Size</td>
+                        <td>{{ componente.chunk_size or 1000 }}</td>
+                    </tr>
+                    <tr>
+                        <td>Chunk Overlap</td>
+                        <td>{{ componente.chunk_overlap or 200 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        {% if componente.prompt_sistema %}
+        <div class="info-card mt-3">
+            <div class="info-label">Prompt do Sistema</div>
+            <div class="code-block">{{ componente.prompt_sistema }}</div>
+        </div>
+        {% endif %}
+        
+        {% if componente.prompt_usuario %}
+        <div class="info-card mt-3">
+            <div class="info-label">Template do Usuário</div>
+            <div class="code-block">{{ componente.prompt_usuario }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Configurações Avançadas -->
+    {% if componente.configuracao %}
+    <div class="info-section">
+        <h2 class="section-title">
+            <i class="fas fa-cogs me-2"></i>Configurações Avançadas
+        </h2>
+        
+        <div class="code-block">{{ componente.configuracao | tojson(indent=2) }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Ações Rápidas -->
+    <div class="info-section">
+        <h2 class="section-title">
+            <i class="fas fa-tools me-2"></i>Ações Disponíveis
+        </h2>
+        
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn-primary btn-action" onclick="duplicarComponente()">
+                <i class="fas fa-copy me-2"></i>Duplicar
+            </button>
+            
+            <button class="btn-secondary btn-action" onclick="exportarComponente()">
+                <i class="fas fa-download me-2"></i>Exportar JSON
+            </button>
+            
+            <button class="btn-warning btn-action" onclick="adicionarAoCanvas()">
+                <i class="fas fa-plus-circle me-2"></i>Adicionar ao Canvas
+            </button>
+            
+            <button class="btn-secondary btn-action" onclick="verHistorico()">
+                <i class="fas fa-history me-2"></i>Histórico
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function testarComponente() {
+    // Implementar teste do componente
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 90%; color: #333;">
+                <h3>Testar Componente: {{ componente.nome }}</h3>
+                <textarea placeholder="Digite um texto para testar o componente..." style="width: 100%; height: 100px; margin: 1rem 0; padding: 0.5rem;"></textarea>
+                <div>
+                    <button onclick="executarTeste()" style="background: #47b6b5; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; margin-right: 0.5rem;">Executar</button>
+                    <button onclick="this.closest('div').remove()" style="background: #6c757d; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px;">Fechar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function executarTeste() {
+    // Implementar execução do teste
+    alert('Funcionalidade de teste em desenvolvimento');
+}
+
+function duplicarComponente() {
+    if (confirm('Duplicar este componente?')) {
+        fetch(`/componentes-editor/{{ componente.id }}/duplicate`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Componente duplicado com sucesso!');
+                window.location.href = `/componentes-editor/${data.id}`;
+            } else {
+                alert('Erro ao duplicar componente: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao duplicar componente: ' + error);
+        });
+    }
+}
+
+function exportarComponente() {
+    const componentData = {
+        nome: '{{ componente.nome }}',
+        categoria: '{{ componente.categoria }}',
+        tipo: '{{ componente.tipo }}',
+        descricao: '{{ componente.descricao }}',
+        icone: '{{ componente.icone }}',
+        cor: '{{ componente.cor }}',
+        prompt_sistema: {{ componente.prompt_sistema | tojson | safe }},
+        configuracao: {{ componente.configuracao | tojson | safe }}
+    };
+    
+    const dataStr = JSON.stringify(componentData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `componente_${componentData.nome.toLowerCase().replace(/\s+/g, '_')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function adicionarAoCanvas() {
+    if (confirm('Adicionar este componente ao Canvas Editor?')) {
+        window.open('/canvas-editor-pro', '_blank');
+    }
+}
+
+function verHistorico() {
+    alert('Histórico de alterações em desenvolvimento');
+}
+
+console.log('✅ Detalhes do componente carregados para: {{ componente.nome }}');
+</script>
+{% endblock %}

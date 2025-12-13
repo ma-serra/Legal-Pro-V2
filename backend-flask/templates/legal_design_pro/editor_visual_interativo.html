@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Visual Interativo - Legal Design Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- CSS para Interface Compacta -->
+    <link href="{{ url_for('static', filename='css/compact-interface.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/interact.js@1.10.17/interact.min.css">
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --bg-card: #2a2a2a;
+            --bg-editor: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #808080;
+            --border-color: #404040;
+            --system-primary-blue: #3498db;
+            --system-teal: #16a085;
+            --system-green: #27ae60;
+            --system-emerald: #1abc9c;
+            --gradient-primary: linear-gradient(135deg, #3498db 0%, #16a085 100%);
+            --shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --border-radius: 0.5rem;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Barra de ferramentas lateral */
+        .tools-sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .tools-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .tools-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .tools-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tools-section h6 {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .draggable-element {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: grab;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .draggable-element:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--system-primary-blue);
+            transform: translateY(-1px);
+        }
+
+        .draggable-element:active {
+            cursor: grabbing;
+        }
+
+        .element-icon {
+            color: var(--system-primary-blue);
+            font-size: 1.2rem;
+        }
+
+        .element-label {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        /* Área principal do editor */
+        .editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-toolbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--system-primary-blue);
+            color: var(--text-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--system-primary-blue);
+            border-color: var(--system-primary-blue);
+            color: white;
+        }
+
+        .editor-canvas {
+            flex: 1;
+            background: var(--bg-editor);
+            position: relative;
+            overflow: auto;
+            padding: 2rem;
+        }
+
+        .document-page {
+            background: white;
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            box-shadow: var(--shadow-dark);
+            border-radius: var(--border-radius);
+            position: relative;
+            padding: 2cm;
+        }
+
+        /* Elementos editáveis */
+        .editable-element {
+            position: absolute;
+            border: 2px dashed transparent;
+            cursor: move;
+            min-width: 50px;
+            min-height: 20px;
+        }
+
+        .editable-element:hover {
+            border-color: var(--system-primary-blue);
+        }
+
+        .editable-element.selected {
+            border-color: var(--system-green);
+            box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+        }
+
+        .editable-element .resize-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--system-green);
+            border: 1px solid white;
+            border-radius: 50%;
+        }
+
+        .resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+        .resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+        .resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+        .resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+        .resize-handle.n { top: -4px; left: 50%; margin-left: -4px; cursor: n-resize; }
+        .resize-handle.s { bottom: -4px; left: 50%; margin-left: -4px; cursor: s-resize; }
+        .resize-handle.w { top: 50%; left: -4px; margin-top: -4px; cursor: w-resize; }
+        .resize-handle.e { top: 50%; right: -4px; margin-top: -4px; cursor: e-resize; }
+
+        /* Painel de propriedades */
+        .properties-panel {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .properties-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .properties-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .property-group {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-group h6 {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .property-item {
+            margin-bottom: 1rem;
+        }
+
+        .property-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .property-input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.85rem;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--system-primary-blue);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .range-input {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-card);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--system-primary-blue);
+            cursor: pointer;
+        }
+
+        /* Tipos de elementos específicos */
+        .text-element {
+            font-family: Arial, sans-serif;
+            color: #333;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            resize: none;
+            outline: none;
+        }
+
+        .heading-element {
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 8px;
+        }
+
+        .image-element {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .table-element {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table-element th,
+        .table-element td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table-element th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .signature-element {
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .checkbox-element {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+        }
+
+        .checkbox-element input {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed var(--system-primary-blue);
+            border-radius: var(--border-radius);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--system-primary-blue);
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .drop-zone.active {
+            display: flex;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1200px) {
+            .tools-sidebar {
+                width: 250px;
+            }
+            .properties-panel {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .editor-layout {
+                flex-direction: column;
+            }
+            .tools-sidebar,
+            .properties-panel {
+                width: 100%;
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-layout">
+        <!-- Barra de ferramentas lateral -->
+        <div class="tools-sidebar">
+            <div class="tools-header">
+                <h5 class="tools-title">
+                    <i class="bi bi-tools"></i>
+                    Elementos Legal Design
+                </h5>
+            </div>
+
+            <!-- Elementos de Texto -->
+            <div class="tools-section">
+                <h6>Elementos de Texto</h6>
+                
+                <div class="draggable-element" data-element-type="heading">
+                    <i class="bi bi-type-h1 element-icon"></i>
+                    <span class="element-label">Título Principal</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="subtitle">
+                    <i class="bi bi-type-h2 element-icon"></i>
+                    <span class="element-label">Subtítulo</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="text">
+                    <i class="bi bi-paragraph element-icon"></i>
+                    <span class="element-label">Parágrafo</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="quote">
+                    <i class="bi bi-quote element-icon"></i>
+                    <span class="element-label">Citação</span>
+                </div>
+            </div>
+
+            <!-- Elementos Estruturais -->
+            <div class="tools-section">
+                <h6>Estrutura do Documento</h6>
+                
+                <div class="draggable-element" data-element-type="table">
+                    <i class="bi bi-table element-icon"></i>
+                    <span class="element-label">Tabela</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="list">
+                    <i class="bi bi-list-ul element-icon"></i>
+                    <span class="element-label">Lista</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="divider">
+                    <i class="bi bi-dash element-icon"></i>
+                    <span class="element-label">Divisor</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="signature">
+                    <i class="bi bi-pen element-icon"></i>
+                    <span class="element-label">Linha de Assinatura</span>
+                </div>
+            </div>
+
+            <!-- Elementos Visuais -->
+            <div class="tools-section">
+                <h6>Elementos Visuais</h6>
+                
+                <div class="draggable-element" data-element-type="image">
+                    <i class="bi bi-image element-icon"></i>
+                    <span class="element-label">Imagem</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="box">
+                    <i class="bi bi-square element-icon"></i>
+                    <span class="element-label">Caixa de Destaque</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="alert">
+                    <i class="bi bi-exclamation-triangle element-icon"></i>
+                    <span class="element-label">Alerta</span>
+                </div>
+            </div>
+
+            <!-- Elementos Interativos -->
+            <div class="tools-section">
+                <h6>Elementos Interativos</h6>
+                
+                <div class="draggable-element" data-element-type="checkbox">
+                    <i class="bi bi-check-square element-icon"></i>
+                    <span class="element-label">Checkbox</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="input">
+                    <i class="bi bi-input-cursor-text element-icon"></i>
+                    <span class="element-label">Campo de Texto</span>
+                </div>
+                
+                <div class="draggable-element" data-element-type="date">
+                    <i class="bi bi-calendar-date element-icon"></i>
+                    <span class="element-label">Data</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área principal do editor -->
+        <div class="editor-main">
+            <!-- Barra de ferramentas do editor -->
+            <div class="editor-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="saveBtn">
+                        <i class="bi bi-save"></i>
+                        Salvar
+                    </button>
+                    <button class="toolbar-btn" id="undoBtn">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Desfazer
+                    </button>
+                    <button class="toolbar-btn" id="redoBtn">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Refazer
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="zoomOutBtn">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <span class="toolbar-btn">100%</span>
+                    <button class="toolbar-btn" id="zoomInBtn">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="previewBtn">
+                        <i class="bi bi-eye"></i>
+                        Visualizar
+                    </button>
+                    <button class="toolbar-btn" id="exportBtn">
+                        <i class="bi bi-download"></i>
+                        Exportar PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas do editor -->
+            <div class="editor-canvas" id="editorCanvas">
+                <div class="document-page" id="documentPage">
+                    <div class="drop-zone" id="dropZone">
+                        Solte o elemento aqui
+                    </div>
+                    <!-- Elementos serão adicionados dinamicamente aqui -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de propriedades -->
+        <div class="properties-panel">
+            <div class="properties-header">
+                <h5 class="properties-title">
+                    <i class="bi bi-sliders"></i>
+                    Propriedades
+                </h5>
+            </div>
+
+            <div id="propertiesContent">
+                <div class="property-group">
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        Selecione um elemento para editar suas propriedades
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interact.js@1.10.17/dist/interact.min.js"></script>
+    <script>
+        class LegalDesignEditor {
+            constructor() {
+                this.selectedElement = null;
+                this.elementCounter = 0;
+                this.undoStack = [];
+                this.redoStack = [];
+                this.zoom = 1;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupDragAndDrop();
+                this.setupInteractivity();
+                this.setupToolbar();
+                this.setupPropertiesPanel();
+            }
+
+            setupDragAndDrop() {
+                const draggableElements = document.querySelectorAll('.draggable-element');
+                const documentPage = document.getElementById('documentPage');
+                const dropZone = document.getElementById('dropZone');
+
+                // Tornar elementos arrastavéis
+                draggableElements.forEach(element => {
+                    interact(element).draggable({
+                        listeners: {
+                            start: (event) => {
+                                event.target.style.opacity = '0.7';
+                                dropZone.classList.add('active');
+                            },
+                            move: (event) => {
+                                const target = event.target;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                                target.style.transform = `translate(${x}px, ${y}px)`;
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            },
+                            end: (event) => {
+                                event.target.style.opacity = '1';
+                                event.target.style.transform = '';
+                                event.target.removeAttribute('data-x');
+                                event.target.removeAttribute('data-y');
+                                dropZone.classList.remove('active');
+
+                                // Verificar se foi solto na área do documento
+                                const rect = documentPage.getBoundingClientRect();
+                                const x = event.clientX - rect.left;
+                                const y = event.clientY - rect.top;
+
+                                if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                                    this.createElement(event.target.dataset.elementType, x, y);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            createElement(type, x, y) {
+                this.elementCounter++;
+                const elementId = `element_${type}_${this.elementCounter}`;
+                
+                let elementHTML = '';
+                let elementClass = 'editable-element';
+
+                switch (type) {
+                    case 'heading':
+                        elementHTML = `<h2 class="heading-element" contenteditable="true">Título Principal</h2>`;
+                        break;
+                    case 'subtitle':
+                        elementHTML = `<h3 class="heading-element" contenteditable="true">Subtítulo</h3>`;
+                        break;
+                    case 'text':
+                        elementHTML = `<p class="text-element" contenteditable="true">Digite seu texto aqui...</p>`;
+                        break;
+                    case 'quote':
+                        elementHTML = `<blockquote class="text-element" contenteditable="true">"Insira sua citação aqui"</blockquote>`;
+                        break;
+                    case 'table':
+                        elementHTML = `
+                            <table class="table-element">
+                                <thead>
+                                    <tr>
+                                        <th contenteditable="true">Coluna 1</th>
+                                        <th contenteditable="true">Coluna 2</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td contenteditable="true">Dados 1</td>
+                                        <td contenteditable="true">Dados 2</td>
+                                    </tr>
+                                </tbody>
+                            </table>`;
+                        break;
+                    case 'list':
+                        elementHTML = `
+                            <ul class="text-element">
+                                <li contenteditable="true">Item 1</li>
+                                <li contenteditable="true">Item 2</li>
+                                <li contenteditable="true">Item 3</li>
+                            </ul>`;
+                        break;
+                    case 'signature':
+                        elementHTML = `<div class="signature-element">_________________________<br>Nome e Assinatura</div>`;
+                        break;
+                    case 'image':
+                        elementHTML = `<div class="image-element" style="width: 200px; height: 150px;">Clique para adicionar imagem</div>`;
+                        break;
+                    case 'checkbox':
+                        elementHTML = `
+                            <div class="checkbox-element">
+                                <input type="checkbox">
+                                <span contenteditable="true">Opção de checkbox</span>
+                            </div>`;
+                        break;
+                    case 'input':
+                        elementHTML = `<input type="text" class="property-input" placeholder="Campo de texto" style="width: 200px;">`;
+                        break;
+                    case 'date':
+                        elementHTML = `<input type="date" class="property-input" style="width: 150px;">`;
+                        break;
+                    case 'box':
+                        elementHTML = `<div class="text-element" contenteditable="true" style="border: 2px solid #3498db; padding: 15px; background: #f8f9fa;">Caixa de destaque</div>`;
+                        break;
+                    case 'alert':
+                        elementHTML = `<div class="text-element" contenteditable="true" style="border: 2px solid #e74c3c; padding: 15px; background: #fff5f5; color: #e74c3c;"><i class="bi bi-exclamation-triangle"></i> Alerta importante</div>`;
+                        break;
+                    case 'divider':
+                        elementHTML = `<hr style="border: none; border-top: 2px solid #3498db; margin: 20px 0;">`;
+                        break;
+                    default:
+                        elementHTML = `<div class="text-element" contenteditable="true">Elemento desconhecido</div>`;
+                }
+
+                const element = document.createElement('div');
+                element.id = elementId;
+                element.className = elementClass;
+                element.style.left = `${x}px`;
+                element.style.top = `${y}px`;
+                element.innerHTML = elementHTML + this.getResizeHandles();
+                element.dataset.elementType = type;
+
+                // Adicionar event listeners
+                element.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectElement(element);
+                });
+
+                document.getElementById('documentPage').appendChild(element);
+                this.makeElementInteractive(element);
+                this.selectElement(element);
+                this.saveState();
+            }
+
+            getResizeHandles() {
+                return `
+                    <div class="resize-handle nw"></div>
+                    <div class="resize-handle ne"></div>
+                    <div class="resize-handle sw"></div>
+                    <div class="resize-handle se"></div>
+                    <div class="resize-handle n"></div>
+                    <div class="resize-handle s"></div>
+                    <div class="resize-handle w"></div>
+                    <div class="resize-handle e"></div>
+                `;
+            }
+
+            makeElementInteractive(element) {
+                interact(element)
+                    .draggable({
+                        listeners: {
+                            move: (event) => {
+                                const target = event.target;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                                target.style.left = `${parseInt(target.style.left) + event.dx}px`;
+                                target.style.top = `${parseInt(target.style.top) + event.dy}px`;
+
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            },
+                            end: () => {
+                                this.saveState();
+                            }
+                        }
+                    })
+                    .resizable({
+                        edges: { left: true, right: true, bottom: true, top: true },
+                        listeners: {
+                            move: (event) => {
+                                const target = event.target;
+                                let x = parseFloat(target.getAttribute('data-x')) || 0;
+                                let y = parseFloat(target.getAttribute('data-y')) || 0;
+
+                                target.style.width = event.rect.width + 'px';
+                                target.style.height = event.rect.height + 'px';
+
+                                x += event.deltaRect.left;
+                                y += event.deltaRect.top;
+
+                                target.style.left = `${parseInt(target.style.left) + event.deltaRect.left}px`;
+                                target.style.top = `${parseInt(target.style.top) + event.deltaRect.top}px`;
+
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            },
+                            end: () => {
+                                this.saveState();
+                            }
+                        }
+                    });
+            }
+
+            selectElement(element) {
+                // Remover seleção anterior
+                if (this.selectedElement) {
+                    this.selectedElement.classList.remove('selected');
+                }
+
+                // Selecionar novo elemento
+                this.selectedElement = element;
+                element.classList.add('selected');
+                this.updatePropertiesPanel(element);
+            }
+
+            updatePropertiesPanel(element) {
+                const propertiesContent = document.getElementById('propertiesContent');
+                const elementType = element.dataset.elementType;
+
+                let propertiesHTML = `
+                    <div class="property-group">
+                        <h6>Posição e Tamanho</h6>
+                        <div class="property-item">
+                            <label class="property-label">X (px)</label>
+                            <input type="number" class="property-input" id="posX" value="${parseInt(element.style.left) || 0}">
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Y (px)</label>
+                            <input type="number" class="property-input" id="posY" value="${parseInt(element.style.top) || 0}">
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Largura (px)</label>
+                            <input type="number" class="property-input" id="width" value="${parseInt(element.style.width) || element.offsetWidth}">
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Altura (px)</label>
+                            <input type="number" class="property-input" id="height" value="${parseInt(element.style.height) || element.offsetHeight}">
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <h6>Estilo</h6>
+                        <div class="property-item">
+                            <label class="property-label">Cor do Texto</label>
+                            <div class="color-picker">
+                                <input type="color" class="color-swatch" id="textColor" value="#333333">
+                                <input type="text" class="property-input" id="textColorHex" value="#333333" style="width: 80px;">
+                            </div>
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Cor de Fundo</label>
+                            <div class="color-picker">
+                                <input type="color" class="color-swatch" id="bgColor" value="#ffffff">
+                                <input type="text" class="property-input" id="bgColorHex" value="#ffffff" style="width: 80px;">
+                            </div>
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Família da Fonte</label>
+                            <select class="property-input" id="fontFamily">
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="Times New Roman, serif">Times New Roman</option>
+                                <option value="Helvetica, sans-serif">Helvetica</option>
+                                <option value="Courier New, monospace">Courier New</option>
+                            </select>
+                        </div>
+                        <div class="property-item">
+                            <label class="property-label">Tamanho da Fonte (px)</label>
+                            <input type="range" class="range-input" id="fontSize" min="8" max="72" value="16">
+                            <span id="fontSizeValue">16px</span>
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <h6>Ações</h6>
+                        <button class="toolbar-btn" id="deleteElement" style="width: 100%; color: #e74c3c; border-color: #e74c3c;">
+                            <i class="bi bi-trash"></i>
+                            Excluir Elemento
+                        </button>
+                        <button class="toolbar-btn" id="duplicateElement" style="width: 100%; margin-top: 0.5rem;">
+                            <i class="bi bi-copy"></i>
+                            Duplicar Elemento
+                        </button>
+                    </div>
+                `;
+
+                propertiesContent.innerHTML = propertiesHTML;
+                this.bindPropertyEvents(element);
+            }
+
+            bindPropertyEvents(element) {
+                // Posição e tamanho
+                document.getElementById('posX').addEventListener('input', (e) => {
+                    element.style.left = e.target.value + 'px';
+                    this.saveState();
+                });
+
+                document.getElementById('posY').addEventListener('input', (e) => {
+                    element.style.top = e.target.value + 'px';
+                    this.saveState();
+                });
+
+                document.getElementById('width').addEventListener('input', (e) => {
+                    element.style.width = e.target.value + 'px';
+                    this.saveState();
+                });
+
+                document.getElementById('height').addEventListener('input', (e) => {
+                    element.style.height = e.target.value + 'px';
+                    this.saveState();
+                });
+
+                // Cores
+                document.getElementById('textColor').addEventListener('input', (e) => {
+                    const firstChild = element.firstElementChild;
+                    if (firstChild) {
+                        firstChild.style.color = e.target.value;
+                    }
+                    document.getElementById('textColorHex').value = e.target.value;
+                    this.saveState();
+                });
+
+                document.getElementById('bgColor').addEventListener('input', (e) => {
+                    const firstChild = element.firstElementChild;
+                    if (firstChild) {
+                        firstChild.style.backgroundColor = e.target.value;
+                    }
+                    document.getElementById('bgColorHex').value = e.target.value;
+                    this.saveState();
+                });
+
+                // Fonte
+                document.getElementById('fontFamily').addEventListener('change', (e) => {
+                    const firstChild = element.firstElementChild;
+                    if (firstChild) {
+                        firstChild.style.fontFamily = e.target.value;
+                    }
+                    this.saveState();
+                });
+
+                document.getElementById('fontSize').addEventListener('input', (e) => {
+                    const firstChild = element.firstElementChild;
+                    if (firstChild) {
+                        firstChild.style.fontSize = e.target.value + 'px';
+                    }
+                    document.getElementById('fontSizeValue').textContent = e.target.value + 'px';
+                    this.saveState();
+                });
+
+                // Ações
+                document.getElementById('deleteElement').addEventListener('click', () => {
+                    element.remove();
+                    this.selectedElement = null;
+                    document.getElementById('propertiesContent').innerHTML = `
+                        <div class="property-group">
+                            <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                                Selecione um elemento para editar suas propriedades
+                            </p>
+                        </div>
+                    `;
+                    this.saveState();
+                });
+
+                document.getElementById('duplicateElement').addEventListener('click', () => {
+                    const clone = element.cloneNode(true);
+                    clone.id = `element_${element.dataset.elementType}_${++this.elementCounter}`;
+                    clone.style.left = (parseInt(element.style.left) + 20) + 'px';
+                    clone.style.top = (parseInt(element.style.top) + 20) + 'px';
+                    
+                    clone.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectElement(clone);
+                    });
+                    
+                    document.getElementById('documentPage').appendChild(clone);
+                    this.makeElementInteractive(clone);
+                    this.saveState();
+                });
+            }
+
+            setupInteractivity() {
+                // Clique fora deseleciona elemento
+                document.getElementById('documentPage').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) {
+                        if (this.selectedElement) {
+                            this.selectedElement.classList.remove('selected');
+                            this.selectedElement = null;
+                        }
+                        document.getElementById('propertiesContent').innerHTML = `
+                            <div class="property-group">
+                                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                                    Selecione um elemento para editar suas propriedades
+                                </p>
+                            </div>
+                        `;
+                    }
+                });
+
+                // Teclas de atalho
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch (e.key) {
+                            case 'z':
+                                e.preventDefault();
+                                this.undo();
+                                break;
+                            case 'y':
+                                e.preventDefault();
+                                this.redo();
+                                break;
+                            case 's':
+                                e.preventDefault();
+                                this.save();
+                                break;
+                        }
+                    }
+                    
+                    if (e.key === 'Delete' && this.selectedElement) {
+                        this.selectedElement.remove();
+                        this.selectedElement = null;
+                        this.saveState();
+                    }
+                });
+            }
+
+            setupToolbar() {
+                document.getElementById('saveBtn').addEventListener('click', () => this.save());
+                document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+                document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+                document.getElementById('previewBtn').addEventListener('click', () => this.preview());
+                document.getElementById('exportBtn').addEventListener('click', () => this.exportPDF());
+            }
+
+            setupPropertiesPanel() {
+                // Inicialização do painel já foi feita no HTML
+            }
+
+            saveState() {
+                const state = document.getElementById('documentPage').innerHTML;
+                this.undoStack.push(state);
+                this.redoStack = []; // Limpar redo stack
+                
+                // Limitar tamanho do undo stack
+                if (this.undoStack.length > 50) {
+                    this.undoStack.shift();
+                }
+            }
+
+            undo() {
+                if (this.undoStack.length > 1) {
+                    const currentState = this.undoStack.pop();
+                    this.redoStack.push(currentState);
+                    const previousState = this.undoStack[this.undoStack.length - 1];
+                    document.getElementById('documentPage').innerHTML = previousState;
+                    this.rebindElements();
+                }
+            }
+
+            redo() {
+                if (this.redoStack.length > 0) {
+                    const state = this.redoStack.pop();
+                    this.undoStack.push(state);
+                    document.getElementById('documentPage').innerHTML = state;
+                    this.rebindElements();
+                }
+            }
+
+            rebindElements() {
+                const elements = document.querySelectorAll('.editable-element');
+                elements.forEach(element => {
+                    element.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectElement(element);
+                    });
+                    this.makeElementInteractive(element);
+                });
+            }
+
+            save() {
+                const documentData = {
+                    content: document.getElementById('documentPage').innerHTML,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Salvar no localStorage por enquanto
+                localStorage.setItem('legalDesignDocument', JSON.stringify(documentData));
+                
+                // Feedback visual
+                const saveBtn = document.getElementById('saveBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="bi bi-check"></i> Salvo';
+                saveBtn.classList.add('active');
+                
+                setTimeout(() => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.classList.remove('active');
+                }, 2000);
+            }
+
+            preview() {
+                // Abrir preview em nova janela
+                const content = document.getElementById('documentPage').innerHTML;
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Preview - Legal Design Pro</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .document-page { background: white; padding: 2cm; }
+                            .editable-element { border: none !important; position: relative !important; }
+                            .resize-handle { display: none !important; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="document-page">${content}</div>
+                    </body>
+                    </html>
+                `);
+            }
+
+            exportPDF() {
+                // Por enquanto, abrir janela de impressão
+                this.preview();
+                setTimeout(() => {
+                    window.print();
+                }, 1000);
+            }
+        }
+
+        // Inicializar editor quando a página carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            new LegalDesignEditor();
+        });
+    </script>
+</body>
+</html>

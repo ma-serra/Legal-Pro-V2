@@ -1,0 +1,2015 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Componente - {{ componente.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        min-height: 100vh;
+    }
+
+    .edit-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .edit-header {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .form-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .fine-tuning-section {
+        background: linear-gradient(135deg, rgba(71, 182, 181, 0.2), rgba(71, 182, 181, 0.1));
+        border: 2px solid rgba(71, 182, 181, 0.4);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .advanced-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .control-group {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .range-control {
+        margin-top: 1rem;
+    }
+
+    .range-value {
+        background: rgba(71, 182, 181, 0.3);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+
+    .algorithm-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .algorithm-option {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .algorithm-option:hover {
+        background: rgba(71, 182, 181, 0.2);
+        border-color: rgba(71, 182, 181, 0.6);
+    }
+
+    .algorithm-option.selected {
+        background: rgba(71, 182, 181, 0.3);
+        border-color: #47b6b5;
+    }
+
+    .prompt-optimizer {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .optimization-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .metric-card {
+        background: rgba(71, 182, 181, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #47b6b5;
+    }
+
+    .metric-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        color: #47b6b5;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #47b6b5;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 8px;
+        padding: 0.8rem;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #47b6b5;
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 0 3px rgba(71, 182, 181, 0.2);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .color-preview {
+        width: 50px;
+        height: 35px;
+        border-radius: 6px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 10px;
+    }
+
+    .icon-preview {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 10px;
+        font-size: 1.5rem;
+        color: #47b6b5;
+    }
+
+    .btn-action {
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+        background: #47b6b5;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3a9a9a;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .capacidades-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .capacidade-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 0.8rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .capacidade-remove {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: auto;
+    }
+
+    .add-capacidade {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .add-capacidade input {
+        flex: 1;
+    }
+
+    .add-capacidade button {
+        background: #47b6b5;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.8rem 1.5rem;
+        cursor: pointer;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .edit-container {
+            padding: 1rem;
+        }
+        
+        .form-row,
+        .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin-right: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <!-- Header -->
+    <div class="edit-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>
+                    <i class="{{ componente.icone or 'fas fa-cog' }} me-3" style="color: {{ componente.cor or '#6c757d' }}"></i>
+                    Editar Componente
+                </h1>
+                <p class="mb-0 opacity-75">{{ componente.nome }} - {{ componente.categoria.title() }}</p>
+            </div>
+            <div>
+                <a href="/componentes-editor" class="btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <a href="/componentes-editor/{{ componente.id }}" class="btn-secondary btn-action">
+                    <i class="fas fa-eye me-2"></i>Visualizar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="editForm">
+        <!-- Informações Básicas -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>Informações Básicas
+            </h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Nome do Componente</label>
+                    <input type="text" name="nome" class="form-input" 
+                           value="{{ componente.nome }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tipo</label>
+                    <input type="text" name="tipo" class="form-input" 
+                           value="{{ componente.tipo }}" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Descrição</label>
+                <input type="text" name="descricao" class="form-input" 
+                       value="{{ componente.descricao }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Descrição Detalhada</label>
+                <textarea name="descricao_detalhada" class="form-textarea" 
+                          placeholder="Descrição completa das funcionalidades...">{{ componente.descricao_detalhada or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- Aparência -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-palette me-2"></i>Aparência
+            </h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Ícone (Font Awesome)</label>
+                    <input type="text" name="icone" class="form-input" 
+                           value="{{ componente.icone or 'fas fa-cog' }}" 
+                           placeholder="fas fa-cog" onchange="updateIconPreview(this)">
+                    <span class="icon-preview" id="iconPreview">
+                        <i class="{{ componente.icone or 'fas fa-cog' }}"></i>
+                    </span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Cor</label>
+                    <input type="color" name="cor" class="form-input" 
+                           value="{{ componente.cor or '#6c757d' }}" onchange="updateColorPreview(this)">
+                    <span class="color-preview" id="colorPreview" 
+                          style="background-color: {{ componente.cor or '#6c757d' }}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuração de IA -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-brain me-2"></i>Configuração de IA
+            </h2>
+            
+            <div class="form-group">
+                <label class="form-label">Prompt do Sistema</label>
+                <textarea name="prompt_sistema" class="form-textarea" style="min-height: 150px;" 
+                          placeholder="Você é um especialista em...">{{ componente.prompt_sistema or '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Prompt do Usuário</label>
+                <textarea name="prompt_usuario" class="form-textarea" 
+                          placeholder="Template do prompt para o usuário...">{{ componente.prompt_usuario or '' }}</textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Base de Conhecimento</label>
+                    <input type="text" name="base_conhecimento" class="form-input" 
+                           value="{{ componente.base_conhecimento or '' }}" 
+                           placeholder="embeddings_direito_civil">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Provedor</label>
+                    <select name="provedor" id="provedor" class="form-select" onchange="updateModelsOptions()">
+                        <option value="openai" {{ 'selected' if componente.provedor == 'openai' else '' }}>OpenAI</option>
+                        <option value="anthropic" {{ 'selected' if componente.provedor == 'anthropic' else '' }}>Anthropic</option>
+                        <option value="google" {{ 'selected' if componente.provedor == 'google' else '' }}>Google</option>
+                        <option value="deepseek" {{ 'selected' if componente.provedor == 'deepseek' else '' }}>DeepSeek</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Modelo</label>
+                <select name="modelo" id="modelo" class="form-select">
+                    <!-- Opções serão preenchidas dinamicamente -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Parâmetros Técnicos -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h me-2"></i>Parâmetros Técnicos
+            </h2>
+            
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label class="form-label">Temperatura</label>
+                    <input type="number" name="temperatura" class="form-input" 
+                           value="{{ componente.temperatura or 0.7 }}" 
+                           min="0" max="2" step="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Max Tokens</label>
+                    <input type="number" name="max_tokens" class="form-input" 
+                           value="{{ componente.max_tokens or 4000 }}" 
+                           min="100" max="8000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Top K</label>
+                    <input type="number" name="top_k" class="form-input" 
+                           value="{{ componente.top_k or 5 }}" 
+                           min="1" max="20">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Chunk Size</label>
+                    <input type="number" name="chunk_size" class="form-input" 
+                           value="{{ componente.chunk_size or 1000 }}" 
+                           min="200" max="2000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Chunk Overlap</label>
+                    <input type="number" name="chunk_overlap" class="form-input" 
+                           value="{{ componente.chunk_overlap or 200 }}" 
+                           min="50" max="500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Capacidades -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-list-ul me-2"></i>Capacidades
+            </h2>
+            
+            <div class="capacidades-grid" id="capacidadesGrid">
+                {% if componente.capacidades %}
+                    {% for capacidade in componente.capacidades %}
+                    <div class="capacidade-item">
+                        <span>{{ capacidade }}</span>
+                        <button type="button" class="capacidade-remove" onclick="removeCapacidade(this)">×</button>
+                        <input type="hidden" name="capacidades[]" value="{{ capacidade }}">
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="add-capacidade">
+                <input type="text" id="novaCapacidade" placeholder="Nova capacidade..." 
+                       onkeypress="if(event.key==='Enter'){event.preventDefault();addCapacidade();}">
+                <button type="button" onclick="addCapacidade()">
+                    <i class="fas fa-plus me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+
+        <!-- Fine-Tuning Avançado -->
+        <div class="fine-tuning-section">
+            <h2 class="section-title">
+                <i class="fas fa-brain me-2"></i>Fine-Tuning Avançado & Algoritmos Inteligentes
+            </h2>
+            
+            <!-- Seletor de Algoritmo -->
+            <div class="control-group">
+                <label class="form-label">
+                    <i class="fas fa-microchip me-2"></i>Algoritmo de Otimização
+                </label>
+                <div class="algorithm-selector">
+                    <div class="algorithm-option selected" data-algorithm="adaptive">
+                        <div><i class="fas fa-robot"></i></div>
+                        <div><strong>Adaptativo</strong></div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Auto-ajuste baseado em contexto</div>
+                    </div>
+                    <div class="algorithm-option" data-algorithm="reinforcement">
+                        <div><i class="fas fa-chart-line"></i></div>
+                        <div><strong>Reforço</strong></div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Aprendizado por recompensa</div>
+                    </div>
+                    <div class="algorithm-option" data-algorithm="ensemble">
+                        <div><i class="fas fa-layer-group"></i></div>
+                        <div><strong>Ensemble</strong></div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Múltiplos modelos combinados</div>
+                    </div>
+                    <div class="algorithm-option" data-algorithm="meta-learning">
+                        <div><i class="fas fa-graduation-cap"></i></div>
+                        <div><strong>Meta-Learning</strong></div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Aprender como aprender</div>
+                    </div>
+                </div>
+                <input type="hidden" name="algoritmo_otimizacao" id="algoritmoSelecionado" value="adaptive">
+            </div>
+
+            <!-- Controles Avançados -->
+            <div class="advanced-controls">
+                <div class="control-group">
+                    <label class="form-label">
+                        <i class="fas fa-thermometer-half me-2"></i>Criatividade Dinâmica
+                    </label>
+                    <div class="range-control">
+                        <input type="range" id="creatividadeDinamica" name="criatividade_dinamica" 
+                               min="0" max="1" step="0.05" value="0.5" 
+                               oninput="updateRangeValue('creatividadeDinamica', this.value)">
+                        <span class="range-value" id="creatividadeDinamicaValue">0.50</span>
+                    </div>
+                    <small style="opacity: 0.7;">Balanceia criatividade vs. precisão automaticamente</small>
+                </div>
+
+                <div class="control-group">
+                    <label class="form-label">
+                        <i class="fas fa-crosshairs me-2"></i>Foco Contextual
+                    </label>
+                    <div class="range-control">
+                        <input type="range" id="focoContextual" name="foco_contextual" 
+                               min="0.1" max="2.0" step="0.1" value="1.0" 
+                               oninput="updateRangeValue('focoContextual', this.value)">
+                        <span class="range-value" id="focoContextualValue">1.0</span>
+                    </div>
+                    <small style="opacity: 0.7;">Intensidade de atenção ao contexto específico</small>
+                </div>
+
+                <div class="control-group">
+                    <label class="form-label">
+                        <i class="fas fa-memory me-2"></i>Memória Adaptativa
+                    </label>
+                    <div class="range-control">
+                        <input type="range" id="memoriaAdaptativa" name="memoria_adaptativa" 
+                               min="1" max="10" step="1" value="5" 
+                               oninput="updateRangeValue('memoriaAdaptativa', this.value)">
+                        <span class="range-value" id="memoriaAdaptativaValue">5</span>
+                    </div>
+                    <small style="opacity: 0.7;">Janela de contexto histórico (interações)</small>
+                </div>
+
+                <div class="control-group">
+                    <label class="form-label">
+                        <i class="fas fa-tachometer-alt me-2"></i>Velocidade vs. Qualidade
+                    </label>
+                    <div class="range-control">
+                        <input type="range" id="velocidadeQualidade" name="velocidade_qualidade" 
+                               min="0" max="1" step="0.1" value="0.7" 
+                               oninput="updateRangeValue('velocidadeQualidade', this.value)">
+                        <span class="range-value" id="velocidadeQualidadeValue">0.7</span>
+                    </div>
+                    <small style="opacity: 0.7;">0 = Máxima velocidade | 1 = Máxima qualidade</small>
+                </div>
+            </div>
+
+            <!-- Configurações Específicas do Algoritmo -->
+            <div class="control-group" id="algorithmSpecificConfig">
+                <label class="form-label">
+                    <i class="fas fa-cogs me-2"></i>Configurações Específicas do Algoritmo
+                </label>
+                <div id="algorithmConfigContent" class="algorithm-config-content" style="margin-top: 1rem;">
+                    <!-- Conteúdo será preenchido dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Hiperparâmetros Avançados de ML -->
+            <div class="control-group" id="mlHyperparameters">
+                <label class="form-label">
+                    <i class="fas fa-sliders-h me-2"></i>Hiperparâmetros Avançados de Machine Learning
+                </label>
+                <div id="mlConfigContent" class="ml-config-content" style="margin-top: 1rem;">
+                    
+                    <!-- Técnicas de Regularização -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-shield-alt me-2"></i>Regularização & Generalização</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Dropout Rate</label>
+                                <input type="range" min="0.0" max="0.8" step="0.05" value="0.2" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Previne overfitting (0.1-0.5 recomendado)</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">L2 Regularization (Weight Decay)</label>
+                                <input type="range" min="0.0001" max="0.1" step="0.0001" value="0.01" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Penaliza pesos grandes (λ)</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Gradient Clipping</label>
+                                <input type="range" min="0.5" max="5.0" step="0.1" value="1.0" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Evita explosão de gradientes</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Otimizadores Avançados -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-rocket me-2"></i>Otimizadores & Schedules</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Tipo de Otimizador</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="adam">Adam (Padrão)</option>
+                                    <option value="adamw">AdamW (Weight Decay)</option>
+                                    <option value="rmsprop">RMSprop</option>
+                                    <option value="sgd_momentum">SGD + Momentum</option>
+                                    <option value="nadam">Nadam</option>
+                                    <option value="adagrad">AdaGrad</option>
+                                </select>
+                                <small style="opacity: 0.8;">Algoritmo de otimização</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Learning Rate Schedule</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="constant">Constante</option>
+                                    <option value="cosine">Cosine Annealing</option>
+                                    <option value="exponential">Exponential Decay</option>
+                                    <option value="step">Step Decay</option>
+                                    <option value="polynomial">Polynomial Decay</option>
+                                    <option value="warmup_cosine">Warmup + Cosine</option>
+                                </select>
+                                <small style="opacity: 0.8;">Estratégia de redução do LR</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Momentum (β1)</label>
+                                <input type="range" min="0.8" max="0.99" step="0.01" value="0.9" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Momentum para otimizadores</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Técnicas de Augmentação -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-expand-arrows-alt me-2"></i>Data Augmentation & Sampling</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" style="margin-right: 0.5rem;"> Paraphrase Augmentation
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Gera variações de prompts</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" checked style="margin-right: 0.5rem;"> Contexto Balanceado
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Equilibra contextos positivos/negativos</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Sampling Strategy</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="random">Random Sampling</option>
+                                    <option value="stratified">Stratified Sampling</option>
+                                    <option value="weighted">Weighted Sampling</option>
+                                    <option value="reservoir">Reservoir Sampling</option>
+                                </select>
+                                <small style="opacity: 0.8;">Estratégia de amostragem</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Early Stopping & Checkpointing -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-save me-2"></i>Early Stopping & Checkpointing</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Patience (Epochs)</label>
+                                <input type="number" min="5" max="50" value="10" style="width: 100%; padding: 0.3rem; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Épocas sem melhoria antes de parar</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Min Delta</label>
+                                <input type="range" min="0.001" max="0.1" step="0.001" value="0.01" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Melhoria mínima considerada</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" checked style="margin-right: 0.5rem;"> Save Best Model
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Salva melhor checkpoint automaticamente</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de Avaliação -->
+                    <div class="config-section">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-chart-bar me-2"></i>Métricas & Validação</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Validation Split</label>
+                                <input type="range" min="0.1" max="0.3" step="0.05" value="0.2" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">% dados para validação</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">K-Fold CV</label>
+                                <input type="number" min="3" max="10" value="5" style="width: 100%; padding: 0.3rem; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Número de folds para validação cruzada</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" checked style="margin-right: 0.5rem;"> Perplexity Tracking
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Monitora perplexidade do modelo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Técnicas Avançadas de AutoML -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-brain me-2"></i>AutoML & Neural Architecture Search</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" style="margin-right: 0.5rem;"> Neural Architecture Search
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Busca automática da melhor arquitetura</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" style="margin-right: 0.5rem;"> Hyperparameter Optimization
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Otimização Bayesiana automática</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Search Strategy</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="random_search">Random Search</option>
+                                    <option value="grid_search">Grid Search</option>
+                                    <option value="bayesian">Bayesian Optimization</option>
+                                    <option value="evolutionary">Evolutionary Search</option>
+                                    <option value="successive_halving">Successive Halving</option>
+                                </select>
+                                <small style="opacity: 0.8;">Estratégia de busca de hiperparâmetros</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Otimização Distribuída -->
+                    <div class="config-section" style="margin-bottom: 2rem;">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-network-wired me-2"></i>Distribuição & Paralelização</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" style="margin-right: 0.5rem;"> Gradient Accumulation
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Simula batch size maior</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" style="margin-right: 0.5rem;"> Mixed Precision Training
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">FP16 para acelerar treinamento</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Batch Size</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="8">8 (Pequeno)</option>
+                                    <option value="16">16 (Padrão)</option>
+                                    <option value="32" selected>32 (Médio)</option>
+                                    <option value="64">64 (Grande)</option>
+                                    <option value="128">128 (Muito Grande)</option>
+                                </select>
+                                <small style="opacity: 0.8;">Tamanho do lote de treinamento</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Técnicas de Transfer Learning -->
+                    <div class="config-section">
+                        <h6 style="color: #47b6b5; margin-bottom: 1rem;"><i class="fas fa-share-alt me-2"></i>Transfer Learning & Fine-Tuning</h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">Fine-Tuning Strategy</label>
+                                <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                                    <option value="full">Full Fine-Tuning</option>
+                                    <option value="lora" selected>LoRA (Low-Rank Adaptation)</option>
+                                    <option value="prefix_tuning">Prefix Tuning</option>
+                                    <option value="adapters">Adapter Layers</option>
+                                    <option value="prompt_tuning">Prompt Tuning</option>
+                                </select>
+                                <small style="opacity: 0.8;">Estratégia de fine-tuning</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">LoRA Rank</label>
+                                <input type="range" min="4" max="64" step="4" value="16" style="width: 100%; margin: 0.5rem 0;">
+                                <small style="opacity: 0.8;">Rank das matrizes LoRA (4-64)</small>
+                            </div>
+                            <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <label style="font-weight: bold; color: #47b6b5;">
+                                    <input type="checkbox" checked style="margin-right: 0.5rem;"> Freeze Base Model
+                                </label>
+                                <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Congela camadas do modelo base</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Otimizador de Prompts -->
+            <div class="prompt-optimizer">
+                <label class="form-label">
+                    <i class="fas fa-magic me-2"></i>Otimização Automática de Prompts
+                </label>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="auto_otimizacao" checked>
+                        <span>Otimização Automática Habilitada</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="aprendizado_continuo" checked>
+                        <span>Aprendizado Contínuo</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="feedback_loop">
+                        <span>Loop de Feedback</span>
+                    </label>
+                </div>
+
+                <!-- Métricas de Performance -->
+                <div class="optimization-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="eficienciaMetric">94%</div>
+                        <div class="metric-label">Eficiência</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="precisaoMetric">87%</div>
+                        <div class="metric-label">Precisão</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="consistenciaMetric">91%</div>
+                        <div class="metric-label">Consistência</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="adaptabilidadeMetric">89%</div>
+                        <div class="metric-label">Adaptabilidade</div>
+                    </div>
+                </div>
+
+                <!-- Conexão com Base Vetorial -->
+                <div class="vector-db-connection" style="margin-top: 1.5rem; padding: 1rem; background: rgba(71, 182, 181, 0.1); border-radius: 8px;">
+                    <h5><i class="fas fa-database me-2" style="color: #47b6b5;"></i>Conexão com Base Vetorial</h5>
+                    <div class="vector-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div class="metric-card" style="background: rgba(71, 182, 181, 0.2);">
+                            <div class="metric-value" id="vectorSimilarity">0.92</div>
+                            <div class="metric-label">Similaridade</div>
+                        </div>
+                        <div class="metric-card" style="background: rgba(71, 182, 181, 0.2);">
+                            <div class="metric-value" id="vectorComplexity">0.75</div>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                        <div class="metric-card" style="background: rgba(71, 182, 181, 0.2);">
+                            <div class="metric-value" id="vectorCoverage">89%</div>
+                            <div class="metric-label">Cobertura</div>
+                        </div>
+                        <div class="metric-card" style="background: rgba(71, 182, 181, 0.2);">
+                            <div class="metric-value" id="vectorDensity">0.68</div>
+                            <div class="metric-label">Densidade</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurações Avançadas de Erro -->
+            <div class="control-group">
+                <label class="form-label">
+                    <i class="fas fa-shield-alt me-2"></i>Tratamento Inteligente de Erros
+                </label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="auto_recovery" checked>
+                        <span>Auto-recuperação de Erros</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="fallback_models" checked>
+                        <span>Modelos de Fallback</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="context_preservation">
+                        <span>Preservação de Contexto</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="intelligent_retry">
+                        <span>Retry Inteligente</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="form-section">
+            <button type="submit" class="btn-primary btn-action">
+                <i class="fas fa-save me-2"></i>Salvar Alterações
+            </button>
+            
+            <button type="button" class="btn-secondary btn-action" onclick="resetForm()">
+                <i class="fas fa-undo me-2"></i>Resetar
+            </button>
+            
+            <button type="button" class="btn-danger btn-action" onclick="deleteComponent()">
+                <i class="fas fa-trash me-2"></i>Excluir Componente
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateIconPreview(input) {
+    const preview = document.getElementById('iconPreview');
+    preview.innerHTML = `<i class="${input.value}"></i>`;
+}
+
+function updateColorPreview(input) {
+    const preview = document.getElementById('colorPreview');
+    preview.style.backgroundColor = input.value;
+}
+
+function addCapacidade() {
+    const input = document.getElementById('novaCapacidade');
+    const capacidade = input.value.trim();
+    
+    if (capacidade) {
+        const grid = document.getElementById('capacidadesGrid');
+        const item = document.createElement('div');
+        item.className = 'capacidade-item';
+        item.innerHTML = `
+            <span>${capacidade}</span>
+            <button type="button" class="capacidade-remove" onclick="removeCapacidade(this)">×</button>
+            <input type="hidden" name="capacidades[]" value="${capacidade}">
+        `;
+        
+        grid.appendChild(item);
+        input.value = '';
+    }
+}
+
+function removeCapacidade(btn) {
+    btn.parentElement.remove();
+}
+
+function resetForm() {
+    if (confirm('Resetar todas as alterações?')) {
+        document.getElementById('editForm').reset();
+        location.reload();
+    }
+}
+
+function deleteComponent() {
+    if (confirm('ATENÇÃO: Esta ação irá excluir permanentemente o componente. Continuar?')) {
+        if (confirm('Tem certeza absoluta? Esta ação não pode ser desfeita.')) {
+            // Implementar exclusão
+            fetch(`/componentes-editor/{{ componente.id }}/delete`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Componente excluído com sucesso!');
+                    window.location.href = '/componentes-editor';
+                } else {
+                    alert('Erro ao excluir componente: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao excluir componente: ' + error);
+            });
+        }
+    }
+}
+
+// Submit form
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action || `/componentes-editor/{{ componente.id }}/editar`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Componente salvo com sucesso!');
+            window.location.href = `/componentes-editor/{{ componente.id }}`;
+        } else {
+            alert('Erro ao salvar componente: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erro ao salvar componente: ' + error);
+    });
+});
+
+console.log('✅ Editor de componente inicializado para: {{ componente.nome }}');
+
+// Funções para Fine-Tuning Avançado
+function updateRangeValue(elementId, value) {
+    document.getElementById(elementId + 'Value').textContent = parseFloat(value).toFixed(2);
+    updatePerformanceMetrics();
+}
+
+function updatePerformanceMetrics() {
+    const criatividade = parseFloat(document.getElementById('creatividadeDinamica')?.value || 0.5);
+    const foco = parseFloat(document.getElementById('focoContextual')?.value || 1.0);
+    const memoria = parseInt(document.getElementById('memoriaAdaptativa')?.value || 5);
+    const velocidade = parseFloat(document.getElementById('velocidadeQualidade')?.value || 0.7);
+
+    const eficiencia = Math.round(85 + (velocidade * 15));
+    const precisao = Math.round(80 + (foco * 10) + (criatividade * 5));
+    const consistencia = Math.round(85 + (memoria * 1.2));
+    const adaptabilidade = Math.round(75 + (criatividade * 20) + (foco * 5));
+
+    const eficienciaEl = document.getElementById('eficienciaMetric');
+    const precisaoEl = document.getElementById('precisaoMetric');
+    const consistenciaEl = document.getElementById('consistenciaMetric');
+    const adaptabilidadeEl = document.getElementById('adaptabilidadeMetric');
+
+    if (eficienciaEl) eficienciaEl.textContent = eficiencia + '%';
+    if (precisaoEl) precisaoEl.textContent = precisao + '%';
+    if (consistenciaEl) consistenciaEl.textContent = consistencia + '%';
+    if (adaptabilidadeEl) adaptabilidadeEl.textContent = adaptabilidade + '%';
+}
+
+// Seletor de algoritmo
+document.addEventListener('DOMContentLoaded', function() {
+    const algorithmOptions = document.querySelectorAll('.algorithm-option');
+    
+    algorithmOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            algorithmOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const algoritmoField = document.getElementById('algoritmoSelecionado');
+            if (algoritmoField) {
+                algoritmoField.value = this.dataset.algorithm;
+            }
+            
+            console.log('Algoritmo selecionado:', this.dataset.algorithm);
+            
+            // Atualizar configurações específicas do algoritmo
+            updateAlgorithmSpecificConfig(this.dataset.algorithm);
+        });
+    });
+
+    // Inicializar métricas
+    setTimeout(updatePerformanceMetrics, 100);
+    
+    // Inicializar configurações específicas do algoritmo
+    setTimeout(() => {
+        const selectedAlgorithm = document.querySelector('.algorithm-option.selected');
+        if (selectedAlgorithm) {
+            updateAlgorithmSpecificConfig(selectedAlgorithm.dataset.algorithm);
+        }
+    }, 200);
+});
+
+// Classe para execução inteligente sem erros
+class SmartComponentExecutor {
+    constructor() {
+        this.errorRecoveryEnabled = true;
+        this.fallbackModels = ['gpt-4o', 'claude-3-5-sonnet-20241022', 'gemini-2.5-pro', 'deepseek-reasoner'];
+        this.contextPreservation = true;
+        this.intelligentRetry = true;
+        console.log('🧠 Sistema de execução inteligente inicializado');
+    }
+
+    async executeComponent(componentData, input) {
+        try {
+            const result = await this.primaryExecution(componentData, input);
+            return this.validateAndOptimize(result);
+        } catch (error) {
+            if (this.errorRecoveryEnabled) {
+                return await this.handleError(error, componentData, input);
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    optimizeParameters(componentData) {
+        const algoritmo = componentData.algoritmo_otimizacao || 'adaptive';
+        
+        switch (algoritmo) {
+            case 'adaptive':
+                return this.adaptiveOptimization(componentData);
+            case 'reinforcement':
+                return this.reinforcementOptimization(componentData);
+            case 'ensemble':
+                return this.ensembleOptimization(componentData);
+            case 'meta-learning':
+                return this.metaLearningOptimization(componentData);
+            default:
+                return componentData;
+        }
+    }
+
+    // ===== ALGORITMO ADAPTATIVO ===== 
+    // Auto-ajuste baseado em contexto com conexão vetorial
+    adaptiveOptimization(params) {
+        const contextComplexity = this.analyzeContextComplexity(params);
+        const vectorDBInsights = this.queryVectorDB(params.base_conhecimento, params.input);
+        const adaptiveConfig = this.generateAdaptiveConfig(contextComplexity, vectorDBInsights);
+        
+        return {
+            ...params,
+            // Temperatura adaptativa baseada na complexidade do contexto
+            temperatura: this.adaptTemperature(params.temperatura, contextComplexity),
+            // Max tokens otimizado com base no histórico de performance
+            max_tokens: this.optimizeTokens(params.max_tokens, vectorDBInsights.complexity),
+            // Top-k ajustado pela densidade vetorial
+            top_k: this.adjustTopK(params.top_k, vectorDBInsights.similarity_score),
+            // Configurações específicas do algoritmo adaptativo
+            adaptive_config: {
+                context_awareness: adaptiveConfig.awareness_level,
+                dynamic_learning_rate: adaptiveConfig.learning_rate,
+                memory_retention: adaptiveConfig.retention_factor,
+                exploration_exploitation_ratio: adaptiveConfig.exploration_ratio,
+                feedback_integration: true,
+                vector_similarity_threshold: 0.85,
+                adaptive_chunk_size: this.calculateAdaptiveChunkSize(vectorDBInsights),
+                context_window_expansion: adaptiveConfig.window_expansion
+            }
+        };
+    }
+
+    // ===== ALGORITMO DE REFORÇO =====
+    // Aprendizado por recompensa com métricas de feedback
+    reinforcementOptimization(params) {
+        const rewardHistory = this.getRewardHistory(params.componente_id);
+        const qValues = this.calculateQValues(rewardHistory);
+        const explorationRate = this.getExplorationRate(params);
+        
+        return {
+            ...params,
+            // Temperatura baseada na confiança do Q-learning
+            temperatura: this.reinforcementTemperature(params.temperatura, qValues.confidence),
+            // Tokens otimizados pela reward function
+            max_tokens: this.rewardBasedTokens(params.max_tokens, rewardHistory.avg_reward),
+            // Top-k determinado pela política epsilon-greedy
+            top_k: this.epsilonGreedyTopK(params.top_k, explorationRate),
+            // Configurações específicas do reforço
+            reinforcement_config: {
+                exploration_rate: explorationRate,
+                learning_rate: 0.1,
+                discount_factor: 0.95,
+                epsilon_decay: 0.995,
+                reward_normalization: true,
+                q_table_updates: true,
+                action_space_size: 10,
+                state_representation: this.encodeState(params),
+                reward_function_type: 'sparse_reward',
+                policy_type: 'epsilon_greedy',
+                experience_replay: true,
+                target_network_updates: 100
+            }
+        };
+    }
+
+    // ===== ALGORITMO ENSEMBLE =====
+    // Múltiplos modelos combinados com voting e stacking
+    ensembleOptimization(params) {
+        const ensembleConfig = this.configureEnsemble(params);
+        const modelWeights = this.calculateModelWeights(params);
+        const diversityMetrics = this.calculateDiversity(ensembleConfig.models);
+        
+        return {
+            ...params,
+            // Temperatura média ponderada dos modelos
+            temperatura: this.ensembleTemperature(params.temperatura, modelWeights),
+            // Tokens distribuídos entre modelos
+            max_tokens: this.distributeTokensAcrossModels(params.max_tokens, ensembleConfig.models.length),
+            // Top-k otimizado para diversidade
+            top_k: this.diversityOptimizedTopK(params.top_k, diversityMetrics),
+            // Configurações específicas do ensemble
+            ensemble_config: {
+                models: [
+                    { provider: 'openai', model: 'gpt-4o', weight: modelWeights.openai },
+                    { provider: 'anthropic', model: 'claude-3-5-sonnet-20241022', weight: modelWeights.anthropic },
+                    { provider: 'google', model: 'gemini-2.5-pro', weight: modelWeights.google }
+                ],
+                voting_strategy: 'weighted_majority',
+                aggregation_method: 'confidence_weighted',
+                diversity_bonus: 0.1,
+                consensus_threshold: 0.7,
+                fallback_strategy: 'best_performer',
+                cross_validation: true,
+                bagging_samples: 3,
+                boosting_enabled: false,
+                stacking_meta_learner: 'linear_regression'
+            }
+        };
+    }
+
+    // ===== ALGORITMO META-LEARNING =====
+    // Aprender como aprender com transferência de conhecimento
+    metaLearningOptimization(params) {
+        const taskSimilarity = this.findSimilarTasks(params);
+        const transferredKnowledge = this.transferKnowledge(taskSimilarity);
+        const metaFeatures = this.extractMetaFeatures(params);
+        const learningStrategy = this.selectLearningStrategy(metaFeatures);
+        
+        return {
+            ...params,
+            // Temperatura baseada na similaridade com tarefas aprendidas
+            temperatura: this.metaLearningTemperature(params.temperatura, taskSimilarity.confidence),
+            // Tokens otimizados pela experiência transferida
+            max_tokens: this.knowledgeTransferTokens(params.max_tokens, transferredKnowledge.efficiency),
+            // Top-k adaptado pela estratégia de aprendizado
+            top_k: this.strategyOptimizedTopK(params.top_k, learningStrategy.focus_factor),
+            // Configurações específicas do meta-learning
+            meta_learning_config: {
+                task_similarity_threshold: 0.8,
+                knowledge_transfer_rate: 0.3,
+                meta_features: metaFeatures,
+                learning_strategy: learningStrategy.type,
+                adaptation_speed: learningStrategy.speed,
+                few_shot_examples: transferredKnowledge.examples,
+                task_agnostic_features: true,
+                episodic_memory: true,
+                gradient_based_adaptation: true,
+                model_agnostic: true,
+                fast_adaptation_steps: 5,
+                inner_loop_lr: 0.01,
+                outer_loop_lr: 0.001,
+                support_set_size: 5,
+                query_set_size: 15
+            }
+        };
+    }
+
+    async handleError(error, componentData, input, attempt = 1) {
+        console.log(`Erro capturado (tentativa ${attempt}):`, error.message);
+        
+        if (attempt > 3) {
+            throw new Error('Máximo de tentativas excedido');
+        }
+
+        if (this.intelligentRetry) {
+            const adjustedParams = this.adjustForRetry(componentData, attempt);
+            await this.sleep(Math.pow(2, attempt) * 1000);
+            return await this.executeComponent(adjustedParams, input);
+        }
+
+        throw error;
+    }
+
+    adjustForRetry(params, attempt) {
+        return {
+            ...params,
+            temperatura: Math.max(params.temperatura - (attempt * 0.1), 0.1),
+            max_tokens: Math.max(params.max_tokens - (attempt * 500), 1000)
+        };
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // ===== FUNÇÕES AUXILIARES PARA ALGORITMOS =====
+    
+    // Análise de complexidade do contexto
+    analyzeContextComplexity(params) {
+        const textLength = (params.input || '').length;
+        const promptComplexity = (params.prompt_sistema || '').split(' ').length;
+        const domainSpecificity = this.getDomainSpecificity(params.base_conhecimento);
+        
+        return {
+            text_complexity: Math.min(textLength / 1000, 1.0),
+            prompt_complexity: Math.min(promptComplexity / 100, 1.0),
+            domain_specificity: domainSpecificity,
+            overall_score: (textLength + promptComplexity + domainSpecificity) / 3
+        };
+    }
+
+    // Consulta à base vetorial
+    queryVectorDB(database, query) {
+        // Simulação de consulta vetorial com métricas realistas
+        const vectorDatabases = {
+            'embeddings_direito_civil': { complexity: 0.7, similarity_score: 0.85 },
+            'embeddings_direito_penal': { complexity: 0.9, similarity_score: 0.78 },
+            'embeddings_direito_trabalhista': { complexity: 0.6, similarity_score: 0.92 },
+            'embeddings_direito_tributario': { complexity: 0.8, similarity_score: 0.81 }
+        };
+        
+        return vectorDatabases[database] || { complexity: 0.5, similarity_score: 0.75 };
+    }
+
+    // Configuração adaptativa baseada no contexto
+    generateAdaptiveConfig(contextComplexity, vectorInsights) {
+        return {
+            awareness_level: Math.min(contextComplexity.overall_score * 1.2, 1.0),
+            learning_rate: 0.01 + (vectorInsights.complexity * 0.05),
+            retention_factor: Math.max(0.8 - contextComplexity.text_complexity * 0.2, 0.6),
+            exploration_ratio: vectorInsights.similarity_score < 0.8 ? 0.3 : 0.1,
+            window_expansion: contextComplexity.text_complexity > 0.7 ? 1.5 : 1.0
+        };
+    }
+
+    // Temperatura adaptativa
+    adaptTemperature(baseTemp, contextComplexity) {
+        const complexityFactor = contextComplexity.overall_score;
+        return Math.max(0.1, Math.min(2.0, baseTemp + (complexityFactor * 0.3)));
+    }
+
+    // Otimização de tokens baseada em insights vetoriais
+    optimizeTokens(baseTokens, complexity) {
+        const complexityMultiplier = 1 + (complexity * 0.5);
+        return Math.min(Math.floor(baseTokens * complexityMultiplier), 8000);
+    }
+
+    // Ajuste do Top-K baseado na similaridade vetorial
+    adjustTopK(baseTopK, similarityScore) {
+        if (similarityScore > 0.9) return Math.max(baseTopK - 2, 1);
+        if (similarityScore < 0.7) return Math.min(baseTopK + 3, 20);
+        return baseTopK;
+    }
+
+    // Cálculo de chunk size adaptativo
+    calculateAdaptiveChunkSize(vectorInsights) {
+        const baseSizeMap = {
+            low: 800,
+            medium: 1200,
+            high: 1600
+        };
+        
+        if (vectorInsights.complexity > 0.8) return baseSizeMap.high;
+        if (vectorInsights.complexity > 0.5) return baseSizeMap.medium;
+        return baseSizeMap.low;
+    }
+
+    // Histórico de recompensas para algoritmo de reforço
+    getRewardHistory(componentId) {
+        // Simulação de histórico de recompensas
+        const rewards = Array.from({length: 10}, () => Math.random() * 0.8 + 0.2);
+        return {
+            rewards: rewards,
+            avg_reward: rewards.reduce((a, b) => a + b, 0) / rewards.length,
+            trend: rewards.slice(-3).reduce((a, b) => a + b, 0) / 3 > rewards.slice(0, 3).reduce((a, b) => a + b, 0) / 3 ? 'improving' : 'declining'
+        };
+    }
+
+    // Cálculo de Q-values para reforço
+    calculateQValues(rewardHistory) {
+        const confidence = rewardHistory.avg_reward;
+        const stability = 1 - (Math.max(...rewardHistory.rewards) - Math.min(...rewardHistory.rewards));
+        
+        return {
+            confidence: confidence,
+            stability: stability,
+            q_max: Math.max(...rewardHistory.rewards),
+            exploration_bonus: confidence < 0.6 ? 0.2 : 0.05
+        };
+    }
+
+    // Taxa de exploração para reforço
+    getExplorationRate(params) {
+        const baseRate = 0.1;
+        const uncertaintyFactor = 1 - (params.confidence_score || 0.5);
+        return Math.min(baseRate + uncertaintyFactor * 0.3, 0.4);
+    }
+
+    // Configuração de ensemble
+    configureEnsemble(params) {
+        return {
+            models: [
+                { name: 'gpt-4o', strength: 'reasoning' },
+                { name: 'claude-3-5-sonnet-20241022', strength: 'analysis' },
+                { name: 'gemini-2.5-pro', strength: 'creativity' }
+            ],
+            diversity_target: 0.7,
+            consensus_required: true
+        };
+    }
+
+    // Pesos dos modelos no ensemble
+    calculateModelWeights(params) {
+        const domainType = this.identifyDomainType(params.base_conhecimento);
+        
+        const weightMaps = {
+            'legal': { openai: 0.4, anthropic: 0.4, google: 0.2 },
+            'technical': { openai: 0.3, anthropic: 0.3, google: 0.4 },
+            'creative': { openai: 0.3, anthropic: 0.2, google: 0.5 },
+            'default': { openai: 0.33, anthropic: 0.34, google: 0.33 }
+        };
+        
+        return weightMaps[domainType] || weightMaps.default;
+    }
+
+    // Identificação do tipo de domínio
+    identifyDomainType(database) {
+        if (database && database.includes('direito')) return 'legal';
+        if (database && database.includes('tecnico')) return 'technical';
+        return 'default';
+    }
+
+    // Busca de tarefas similares para meta-learning
+    findSimilarTasks(params) {
+        // Simulação de busca por tarefas similares na base vetorial
+        const similarity = Math.random() * 0.4 + 0.6; // 0.6 a 1.0
+        return {
+            similar_tasks: Math.floor(similarity * 10),
+            confidence: similarity,
+            transfer_potential: similarity > 0.8 ? 'high' : similarity > 0.6 ? 'medium' : 'low'
+        };
+    }
+
+    // Transferência de conhecimento
+    transferKnowledge(taskSimilarity) {
+        const transferEfficiency = taskSimilarity.confidence * 0.8;
+        return {
+            efficiency: transferEfficiency,
+            examples: Math.floor(taskSimilarity.similar_tasks * 0.3),
+            adaptation_required: transferEfficiency < 0.7
+        };
+    }
+
+    // Extração de meta-features
+    extractMetaFeatures(params) {
+        return {
+            task_type: this.classifyTaskType(params),
+            complexity_level: this.assessComplexity(params),
+            domain_specificity: this.getDomainSpecificity(params.base_conhecimento),
+            input_characteristics: this.analyzeInputCharacteristics(params.input)
+        };
+    }
+
+    // Seleção de estratégia de aprendizado
+    selectLearningStrategy(metaFeatures) {
+        const strategies = {
+            'high_complexity': { type: 'gradual_learning', speed: 0.3, focus_factor: 1.2 },
+            'medium_complexity': { type: 'balanced_learning', speed: 0.5, focus_factor: 1.0 },
+            'low_complexity': { type: 'fast_learning', speed: 0.8, focus_factor: 0.8 }
+        };
+        
+        return strategies[metaFeatures.complexity_level] || strategies.medium_complexity;
+    }
+
+    // ===== IMPLEMENTAÇÕES AVANÇADAS DE ML =====
+    
+    // Configuração de regularização L1/L2
+    configureRegularization(params) {
+        return {
+            l1_alpha: params.l1_regularization || 0.0,
+            l2_alpha: params.l2_regularization || 0.01,
+            elastic_net_ratio: 0.5, // Mix entre L1 e L2
+            dropout_rate: params.dropout_rate || 0.2,
+            batch_normalization: true,
+            layer_normalization: true
+        };
+    }
+
+    // Configuração de otimizadores avançados
+    configureOptimizer(optimizerType, learningRate) {
+        const optimizers = {
+            'adam': {
+                type: 'adam',
+                learning_rate: learningRate || 0.001,
+                beta1: 0.9,
+                beta2: 0.999,
+                epsilon: 1e-8,
+                amsgrad: false
+            },
+            'adamw': {
+                type: 'adamw',
+                learning_rate: learningRate || 0.001,
+                beta1: 0.9,
+                beta2: 0.999,
+                epsilon: 1e-8,
+                weight_decay: 0.01,
+                amsgrad: false
+            },
+            'rmsprop': {
+                type: 'rmsprop',
+                learning_rate: learningRate || 0.001,
+                rho: 0.9,
+                momentum: 0.0,
+                epsilon: 1e-8,
+                centered: false
+            },
+            'sgd_momentum': {
+                type: 'sgd',
+                learning_rate: learningRate || 0.01,
+                momentum: 0.9,
+                nesterov: true,
+                weight_decay: 0.0001
+            },
+            'nadam': {
+                type: 'nadam',
+                learning_rate: learningRate || 0.002,
+                beta1: 0.9,
+                beta2: 0.999,
+                epsilon: 1e-8
+            }
+        };
+        
+        return optimizers[optimizerType] || optimizers.adam;
+    }
+
+    // Configuração de learning rate schedules
+    configureLRScheduler(scheduleType, initialLR) {
+        const schedulers = {
+            'constant': {
+                type: 'constant',
+                learning_rate: initialLR
+            },
+            'cosine': {
+                type: 'cosine_annealing',
+                initial_lr: initialLR,
+                T_max: 100,
+                eta_min: initialLR * 0.01
+            },
+            'exponential': {
+                type: 'exponential_decay',
+                initial_lr: initialLR,
+                decay_rate: 0.95,
+                decay_steps: 1000
+            },
+            'step': {
+                type: 'step_decay',
+                initial_lr: initialLR,
+                drop_factor: 0.5,
+                step_size: 25
+            },
+            'polynomial': {
+                type: 'polynomial_decay',
+                initial_lr: initialLR,
+                final_lr: initialLR * 0.01,
+                power: 2.0,
+                decay_steps: 10000
+            },
+            'warmup_cosine': {
+                type: 'warmup_cosine',
+                initial_lr: initialLR,
+                warmup_steps: 1000,
+                total_steps: 10000,
+                min_lr: initialLR * 0.01
+            }
+        };
+        
+        return schedulers[scheduleType] || schedulers.constant;
+    }
+
+    // Configuração de data augmentation
+    configureDataAugmentation(params) {
+        return {
+            paraphrase_augmentation: params.paraphrase_aug || false,
+            context_balancing: params.context_balance || true,
+            noise_injection: {
+                enabled: false,
+                noise_factor: 0.1,
+                noise_type: 'gaussian'
+            },
+            prompt_variations: {
+                enabled: true,
+                variation_count: 3,
+                similarity_threshold: 0.8
+            },
+            sampling_strategy: params.sampling_strategy || 'stratified',
+            class_balancing: true,
+            synthetic_examples: false
+        };
+    }
+
+    // Configuração de early stopping
+    configureEarlyStopping(params) {
+        return {
+            monitor: 'val_loss',
+            min_delta: params.min_delta || 0.01,
+            patience: params.patience || 10,
+            verbose: true,
+            mode: 'min',
+            baseline: null,
+            restore_best_weights: true,
+            start_from_epoch: 5
+        };
+    }
+
+    // Configuração de checkpointing
+    configureCheckpointing(params) {
+        return {
+            save_best_only: params.save_best || true,
+            save_weights_only: false,
+            monitor: 'val_accuracy',
+            mode: 'max',
+            save_freq: 'epoch',
+            backup_and_restore: true,
+            max_to_keep: 3
+        };
+    }
+
+    // Métricas de avaliação personalizadas
+    configureMetrics(taskType) {
+        const baseMetrics = ['accuracy', 'loss', 'val_accuracy', 'val_loss'];
+        
+        const taskSpecificMetrics = {
+            'classification': ['precision', 'recall', 'f1_score', 'auc_roc'],
+            'regression': ['mae', 'mse', 'rmse', 'r2_score'],
+            'generation': ['bleu_score', 'rouge_score', 'perplexity', 'coherence'],
+            'retrieval': ['map_score', 'ndcg', 'mrr', 'hit_rate']
+        };
+        
+        return [
+            ...baseMetrics,
+            ...(taskSpecificMetrics[taskType] || taskSpecificMetrics.classification)
+        ];
+    }
+
+    // Configuração de validação cruzada
+    configureKFoldCV(params) {
+        return {
+            n_splits: params.k_folds || 5,
+            shuffle: true,
+            random_state: 42,
+            stratified: true,
+            scoring: ['accuracy', 'precision', 'recall', 'f1'],
+            cv_strategy: 'stratified_k_fold'
+        };
+    }
+
+    // Hyperparameter tuning com Bayesian Optimization
+    configureBayesianOptimization(params) {
+        return {
+            search_space: {
+                learning_rate: [0.0001, 0.1, 'log-uniform'],
+                batch_size: [16, 128, 'discrete'],
+                dropout_rate: [0.1, 0.5, 'uniform'],
+                l2_regularization: [0.0001, 0.1, 'log-uniform'],
+                temperature: [0.1, 2.0, 'uniform']
+            },
+            acquisition_function: 'expected_improvement',
+            n_calls: params.optimization_steps || 50,
+            n_initial_points: 10,
+            acq_optimizer: 'lbfgs',
+            random_state: 42
+        };
+    }
+
+    // Configuração de pruning (Neural Architecture Search)
+    configurePruning(params) {
+        return {
+            pruning_type: 'magnitude_based',
+            sparsity_target: 0.5,
+            pruning_schedule: 'polynomial',
+            begin_step: 1000,
+            end_step: 10000,
+            frequency: 100,
+            structured_pruning: false,
+            fine_tuning_epochs: 10
+        };
+    }
+
+    // Configuração de quantização
+    configureQuantization(params) {
+        return {
+            quantization_type: 'post_training',
+            precision: 'int8',
+            calibration_dataset_size: 1000,
+            optimize_for: 'latency', // ou 'accuracy'
+            quantize_weights: true,
+            quantize_activations: true,
+            symmetric_quantization: false
+        };
+    }
+
+    // Funções auxiliares adicionais
+    getDomainSpecificity(database) {
+        const specificityMap = {
+            'embeddings_direito_penal': 0.9,
+            'embeddings_direito_civil': 0.8,
+            'embeddings_direito_trabalhista': 0.85,
+            'embeddings_direito_tributario': 0.9
+        };
+        return specificityMap[database] || 0.5;
+    }
+
+    classifyTaskType(params) {
+        if (params.tipo && params.tipo.includes('analise')) return 'analysis';
+        if (params.tipo && params.tipo.includes('geracao')) return 'generation';
+        return 'general';
+    }
+
+    assessComplexity(params) {
+        const promptLength = (params.prompt_sistema || '').length;
+        if (promptLength > 500) return 'high_complexity';
+        if (promptLength > 200) return 'medium_complexity';
+        return 'low_complexity';
+    }
+
+    analyzeInputCharacteristics(input) {
+        return {
+            length: (input || '').length,
+            structure: input && input.includes('\n') ? 'structured' : 'linear',
+            language_complexity: (input || '').split(' ').length > 100 ? 'complex' : 'simple'
+        };
+    }
+}
+
+const smartExecutor = new SmartComponentExecutor();
+
+// Configuração dos modelos mais recentes por provedor (Atualizado 2025)
+const modelosProvedores = {
+    'openai': [
+        'gpt-4o',           // Modelo principal mais recente
+        'gpt-4o-mini',      // Versão otimizada
+        'gpt-4-turbo',      // Versão turbo
+        'gpt-4-vision-preview' // Multimodal
+    ],
+    'anthropic': [
+        'claude-3-5-sonnet-20241022',  // Mais recente Sonnet
+        'claude-3-5-haiku-20241022',   // Mais recente Haiku
+        'claude-3-opus-20240229',      // Opus (mais poderoso)
+        'claude-sonnet-4-20250514'     // Sonnet 4 (se disponível)
+    ],
+    'google': [
+        'gemini-2.5-pro',     // Mais recente Pro
+        'gemini-2.5-flash',   // Mais recente Flash
+        'gemini-1.5-pro',     // Pro estável
+        'gemini-1.5-flash',   // Flash estável
+        'gemini-2.0-flash-exp' // Experimental
+    ],
+    'deepseek': [
+        'deepseek-reasoner',   // Modelo de raciocínio
+        'deepseek-chat',       // Chat geral
+        'deepseek-coder',      // Especializado em código
+        'deepseek-v3'          // Versão 3 (se disponível)
+    ]
+};
+
+// Função para atualizar opções de modelo baseado no provedor
+function updateModelsOptions() {
+    const provedorSelect = document.getElementById('provedor');
+    const modeloSelect = document.getElementById('modelo');
+    const provedorSelecionado = provedorSelect.value;
+    
+    // Limpar opções existentes
+    modeloSelect.innerHTML = '';
+    
+    // Adicionar modelos do provedor selecionado
+    const modelos = modelosProvedores[provedorSelecionado] || [];
+    modelos.forEach(modelo => {
+        const option = document.createElement('option');
+        option.value = modelo;
+        option.textContent = modelo;
+        modeloSelect.appendChild(option);
+    });
+    
+    // Selecionar o modelo atual se existir
+    const modeloAtual = '{{ componente.modelo or "" }}';
+    if (modeloAtual && modelos.includes(modeloAtual)) {
+        modeloSelect.value = modeloAtual;
+    } else if (modelos.length > 0) {
+        modeloSelect.value = modelos[0]; // Selecionar o primeiro modelo por padrão
+    }
+}
+
+// Inicializar modelos quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    updateModelsOptions();
+});
+
+// Função para testar conectividade das APIs
+async function testAPIsConnectivity() {
+    const apiTests = [
+        { provider: 'OpenAI', endpoint: '/api/test/openai' },
+        { provider: 'Anthropic', endpoint: '/api/test/anthropic' }, 
+        { provider: 'Google', endpoint: '/api/test/google' }
+    ];
+    
+    console.log('🔍 Testando conectividade das APIs...');
+    
+    for (const test of apiTests) {
+        try {
+            const response = await fetch(test.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'test' })
+            });
+            
+            if (response.ok) {
+                console.log(`✅ ${test.provider}: API funcional`);
+            } else {
+                console.log(`❌ ${test.provider}: API com problemas (${response.status})`);
+            }
+        } catch (error) {
+            console.log(`❌ ${test.provider}: Erro de conexão - ${error.message}`);
+        }
+    }
+}
+
+// Testar APIs na inicialização
+setTimeout(testAPIsConnectivity, 2000);
+
+// Função para atualizar configurações específicas do algoritmo
+function updateAlgorithmSpecificConfig(algorithm) {
+    const configContent = document.getElementById('algorithmConfigContent');
+    
+    const templates = {
+        'adaptive': `
+            <div class="algorithm-specific-section">
+                <h6><i class="fas fa-robot me-2" style="color: #47b6b5;"></i>Configurações do Algoritmo Adaptativo</h6>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Taxa de Aprendizado Dinâmica</label>
+                        <input type="range" min="0.001" max="0.1" step="0.001" value="0.01" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Velocidade de adaptação ao contexto</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Threshold de Similaridade Vetorial</label>
+                        <input type="range" min="0.5" max="1.0" step="0.01" value="0.85" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Limiar para busca na base vetorial</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Janela de Contexto Expansível
+                        </label>
+                        <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Permite expandir contexto conforme necessário</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Fator de Retenção de Memória</label>
+                        <input type="range" min="0.5" max="1.0" step="0.05" value="0.8" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Quanto da informação anterior preservar</small>
+                    </div>
+                </div>
+            </div>
+        `,
+        'reinforcement': `
+            <div class="algorithm-specific-section">
+                <h6><i class="fas fa-chart-line me-2" style="color: #47b6b5;"></i>Configurações do Algoritmo de Reforço</h6>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Taxa de Exploração (ε)</label>
+                        <input type="range" min="0.01" max="0.5" step="0.01" value="0.1" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Balanceio exploração vs. explotação</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Fator de Desconto (γ)</label>
+                        <input type="range" min="0.8" max="0.99" step="0.01" value="0.95" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Importância de recompensas futuras</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Experience Replay
+                        </label>
+                        <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Reutilizar experiências passadas</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Tamanho do Espaço de Ações</label>
+                        <input type="number" min="5" max="20" value="10" style="width: 100%; padding: 0.3rem; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Número de ações possíveis</small>
+                    </div>
+                </div>
+            </div>
+        `,
+        'ensemble': `
+            <div class="algorithm-specific-section">
+                <h6><i class="fas fa-layer-group me-2" style="color: #47b6b5;"></i>Configurações do Algoritmo Ensemble</h6>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Estratégia de Votação</label>
+                        <select style="width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                            <option value="weighted_majority">Maioria Ponderada</option>
+                            <option value="consensus">Consenso</option>
+                            <option value="best_confidence">Maior Confiança</option>
+                        </select>
+                        <small style="opacity: 0.8;">Como combinar resultados dos modelos</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Threshold de Consenso</label>
+                        <input type="range" min="0.5" max="0.9" step="0.05" value="0.7" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Acordo mínimo entre modelos</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Bônus de Diversidade</label>
+                        <input type="range" min="0.0" max="0.3" step="0.01" value="0.1" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Incentivo para respostas diversas</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Cross-Validation
+                        </label>
+                        <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">Validação cruzada entre modelos</small>
+                    </div>
+                </div>
+            </div>
+        `,
+        'meta-learning': `
+            <div class="algorithm-specific-section">
+                <h6><i class="fas fa-graduation-cap me-2" style="color: #47b6b5;"></i>Configurações do Meta-Learning</h6>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Taxa de Transferência</label>
+                        <input type="range" min="0.1" max="0.5" step="0.05" value="0.3" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Quanto conhecimento transferir</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Threshold de Similaridade</label>
+                        <input type="range" min="0.6" max="0.95" step="0.01" value="0.8" style="width: 100%; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Similaridade mínima para transferência</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">Few-Shot Examples</label>
+                        <input type="number" min="3" max="15" value="5" style="width: 100%; padding: 0.3rem; margin: 0.5rem 0;">
+                        <small style="opacity: 0.8;">Exemplos para aprendizado rápido</small>
+                    </div>
+                    <div class="config-item" style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <label style="font-weight: bold; color: #47b6b5;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Adaptação Baseada em Gradiente
+                        </label>
+                        <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">MAML (Model-Agnostic Meta-Learning)</small>
+                    </div>
+                </div>
+            </div>
+        `
+    };
+    
+    configContent.innerHTML = templates[algorithm] || '<p style="text-align: center; opacity: 0.6;">Selecione um algoritmo para ver configurações específicas.</p>';
+    
+    // Atualizar métricas vetoriais baseadas no algoritmo
+    updateVectorMetrics(algorithm);
+}
+
+// Função para atualizar métricas da base vetorial
+function updateVectorMetrics(algorithm) {
+    // Métricas específicas por algoritmo e base de conhecimento
+    const algorithmMetrics = {
+        'adaptive': { similarity: 0.92, complexity: 0.75, coverage: 89, density: 0.68 },
+        'reinforcement': { similarity: 0.85, complexity: 0.82, coverage: 76, density: 0.71 },
+        'ensemble': { similarity: 0.94, complexity: 0.69, coverage: 92, density: 0.65 },
+        'meta-learning': { similarity: 0.88, complexity: 0.78, coverage: 84, density: 0.73 }
+    };
+    
+    const metrics = algorithmMetrics[algorithm] || algorithmMetrics.adaptive;
+    
+    // Atualizar interface com animação
+    const vectorSimilarity = document.getElementById('vectorSimilarity');
+    const vectorComplexity = document.getElementById('vectorComplexity');
+    const vectorCoverage = document.getElementById('vectorCoverage');
+    const vectorDensity = document.getElementById('vectorDensity');
+    
+    if (vectorSimilarity) {
+        vectorSimilarity.style.transition = 'all 0.3s ease';
+        vectorSimilarity.textContent = metrics.similarity.toFixed(2);
+    }
+    if (vectorComplexity) {
+        vectorComplexity.style.transition = 'all 0.3s ease';
+        vectorComplexity.textContent = metrics.complexity.toFixed(2);
+    }
+    if (vectorCoverage) {
+        vectorCoverage.style.transition = 'all 0.3s ease';
+        vectorCoverage.textContent = metrics.coverage + '%';
+    }
+    if (vectorDensity) {
+        vectorDensity.style.transition = 'all 0.3s ease';
+        vectorDensity.textContent = metrics.density.toFixed(2);
+    }
+}
+</script>
+{% endblock %}

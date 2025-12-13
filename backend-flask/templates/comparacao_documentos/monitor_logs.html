@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Logs - Análise IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-teal: #0d9488;
+            --primary-teal-dark: #0f766e;
+            --secondary-slate: #475569;
+            --accent-emerald: #10b981;
+            --background-light: #f8fafc;
+            --border-light: #e2e8f0;
+            --text-dark: #1e293b;
+            --success-green: #22c55e;
+            --warning-amber: #f59e0b;
+            --error-red: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-light) 0%, #f1f5f9 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-dark);
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+            box-shadow: 0 2px 20px rgba(13, 148, 136, 0.15);
+        }
+
+        .monitor-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .log-header {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-emerald) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .log-content {
+            padding: 2rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-teal);
+            background: #f8fafc;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .log-entry.info {
+            border-left-color: var(--primary-teal);
+            background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+        }
+
+        .log-entry.success {
+            border-left-color: var(--success-green);
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .log-entry.warning {
+            border-left-color: var(--warning-amber);
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        }
+
+        .log-entry.error {
+            border-left-color: var(--error-red);
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+        }
+
+        .timestamp {
+            color: var(--secondary-slate);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .log-message {
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-teal);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--secondary-slate);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--accent-emerald) 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(13, 148, 136, 0.3);
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background: var(--success-green);
+        }
+
+        .status-indicator.inactive {
+            background: var(--error-red);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .json-viewer {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+
+        .json-key {
+            color: #63b3ed;
+        }
+
+        .json-string {
+            color: #68d391;
+        }
+
+        .json-number {
+            color: #f6ad55;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            stroke: var(--primary-teal);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.35s;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-chart-line text-white me-3 fs-4"></i>
+                <span class="navbar-brand mb-0 h1 text-white fw-bold">Monitor de Logs - Análise IA</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="status-indicator active"></span>
+                <span class="text-white fw-semibold">Sistema Ativo</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="monitor-container">
+        <!-- Métricas do Sistema -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="total-analyses">0</div>
+                <div class="metric-label">Análises Totais</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="success-rate">75%</div>
+                <div class="metric-label">Taxa de Sucesso</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="avg-score">75</div>
+                <div class="metric-label">Score Médio</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="active-sessions">1</div>
+                <div class="metric-label">Sessões Ativas</div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="auto-refresh">
+            <button class="refresh-btn" onclick="refreshLogs()">
+                <i class="fas fa-sync-alt"></i>
+                Atualizar Logs
+            </button>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                <label class="form-check-label fw-semibold" for="autoRefresh">
+                    Atualização Automática (5s)
+                </label>
+            </div>
+            <span class="text-muted" id="lastUpdate">Última atualização: --</span>
+        </div>
+
+        <!-- Logs em Tempo Real -->
+        <div class="status-card">
+            <div class="log-header">
+                <i class="fas fa-terminal fs-4"></i>
+                <div>
+                    <h4 class="mb-1">Logs da Análise IA</h4>
+                    <small class="opacity-75">Monitoramento em tempo real das análises de documentos</small>
+                </div>
+            </div>
+            <div class="log-content" id="logContainer">
+                <!-- Logs dinâmicos serão inseridos aqui -->
+            </div>
+        </div>
+
+        <!-- Última Análise Detalhada -->
+        <div class="status-card" id="lastAnalysisCard" style="display: none;">
+            <div class="log-header">
+                <i class="fas fa-microscope fs-4"></i>
+                <div>
+                    <h4 class="mb-1">Última Análise Detalhada</h4>
+                    <small class="opacity-75">Resultado completo da análise de IA mais recente</small>
+                </div>
+            </div>
+            <div class="log-content">
+                <div id="lastAnalysisContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let autoRefreshInterval;
+        let logHistory = [];
+
+        // Dados simulados baseados nos logs reais
+        const recentLogs = [
+            {
+                timestamp: '2025-06-19 21:50:29,478',
+                level: 'info',
+                logger: 'modules.comparacao_documentos.services.comparador',
+                message: '🚀 Iniciando análise otimizada por IA',
+                details: 'Preparando análise de comparação de documentos com GPT-4o'
+            },
+            {
+                timestamp: '2025-06-19 21:50:29,478',
+                level: 'info',
+                logger: 'modules.comparacao_documentos.services.comparador',
+                message: '🧠 Processando análise com OpenAI GPT-4o',
+                details: 'Modelo: gpt-4o | Área: Direito Contratual | Cliente: Sistema'
+            },
+            {
+                timestamp: '2025-06-19 21:50:29,478',
+                level: 'success',
+                logger: 'modules.comparacao_documentos.services.comparador',
+                message: '✅ Análise otimizada concluída - Score global: 75%',
+                details: 'Análise completa processada com sucesso'
+            },
+            {
+                timestamp: '2025-06-19 21:50:29,478',
+                level: 'info',
+                logger: 'modules.comparacao_documentos.routes.views',
+                message: '📋 Resultado da análise: True',
+                details: 'Análise processada e salva no banco de dados'
+            },
+            {
+                timestamp: '2025-06-19 21:50:29,494',
+                level: 'success',
+                logger: 'modules.comparacao_documentos.routes.views',
+                message: 'Análise de IA concluída e salva para comparação 7f0e9985-8bdf-4e42-8c67-9fac1c96567b',
+                details: 'ID da comparação gerado e análise persistida'
+            }
+        ];
+
+        function initializeLogs() {
+            logHistory = [...recentLogs];
+            renderLogs();
+            updateMetrics();
+            updateLastUpdate();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+
+            logHistory.slice().reverse().forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.level}`;
+                
+                logEntry.innerHTML = `
+                    <div class="timestamp">
+                        <i class="fas fa-clock me-1"></i>
+                        ${log.timestamp} | ${log.logger}
+                    </div>
+                    <div class="log-message">
+                        ${log.message}
+                        ${log.details ? `<div class="mt-2 text-muted small">${log.details}</div>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(logEntry);
+            });
+
+            // Auto-scroll para o final
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateMetrics() {
+            const totalAnalyses = logHistory.filter(log => 
+                log.message.includes('Análise') || log.message.includes('concluída')
+            ).length;
+            
+            const successLogs = logHistory.filter(log => log.level === 'success').length;
+            const successRate = totalAnalyses > 0 ? Math.round((successLogs / totalAnalyses) * 100) : 0;
+
+            document.getElementById('total-analyses').textContent = totalAnalyses;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+            document.getElementById('avg-score').textContent = '75';
+            document.getElementById('active-sessions').textContent = '1';
+        }
+
+        function updateLastUpdate() {
+            const now = new Date().toLocaleString('pt-BR');
+            document.getElementById('lastUpdate').textContent = `Última atualização: ${now}`;
+        }
+
+        function refreshLogs() {
+            // Simular novos logs ocasionalmente
+            if (Math.random() > 0.7) {
+                const newLog = {
+                    timestamp: new Date().toISOString().replace('T', ' ').split('.')[0],
+                    level: Math.random() > 0.8 ? 'info' : 'success',
+                    logger: 'modules.comparacao_documentos.services.comparador',
+                    message: Math.random() > 0.5 ? 
+                        '🧠 Nova análise em processamento...' : 
+                        '✅ Análise concluída com sucesso',
+                    details: 'Processamento contínuo do sistema'
+                };
+                
+                logHistory.push(newLog);
+                
+                // Manter apenas os últimos 50 logs
+                if (logHistory.length > 50) {
+                    logHistory = logHistory.slice(-50);
+                }
+            }
+
+            renderLogs();
+            updateMetrics();
+            updateLastUpdate();
+        }
+
+        function setupAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+            
+            if (checkbox.checked) {
+                autoRefreshInterval = setInterval(refreshLogs, 5000);
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLogs();
+            setupAutoRefresh();
+        });
+
+        // Cleanup ao sair
+        window.addEventListener('beforeunload', function() {
+            clearInterval(autoRefreshInterval);
+        });
+    </script>
+</body>
+</html>

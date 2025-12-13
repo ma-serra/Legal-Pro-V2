@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcrição de Áudio - Legal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #47b6b5;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-light: #e0e0e0;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .header-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 0;
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            border: 2px dashed var(--primary-color);
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-card:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .upload-area {
+            cursor: pointer;
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area.dragover {
+            background: rgba(71, 182, 181, 0.1);
+            border-color: var(--secondary-color);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .upload-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        .upload-subtitle {
+            color: rgba(224, 224, 224, 0.8);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-formats {
+            font-size: 0.95rem;
+            color: rgba(224, 224, 224, 0.7);
+            line-height: 1.6;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+        }
+
+        .file-info {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary-color);
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-info.show {
+            display: flex;
+        }
+
+        .file-info i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+        }
+
+        .file-error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .controls-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-label {
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .form-select, .form-control {
+            background-color: #404040;
+            border: 2px solid #555;
+            color: var(--text-light);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .form-select:focus, .form-control:focus {
+            background-color: #404040;
+            border-color: var(--secondary-color);
+            color: var(--text-light);
+            box-shadow: 0 0 0 0.2rem rgba(71, 182, 181, 0.25);
+        }
+
+        .btn-transcribe {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-transcribe:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-transcribe:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .progress-icon {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-info h4 {
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .progress-filename {
+            color: rgba(224, 224, 224, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .progress-bar-container {
+            background: #404040;
+            border-radius: 25px;
+            padding: 8px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            height: 25px;
+            border-radius: 20px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            width: 0%;
+        }
+
+        .progress-message {
+            color: rgba(224, 224, 224, 0.9);
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .navigation-buttons {
+                margin-top: 15px;
+                justify-content: center;
+            }
+            
+            .header-section .d-flex {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-section">
+            <div class="text-center">
+                <h1 class="header-title">
+                    <i class="fas fa-microphone"></i>
+                    Transcrição de Áudio/Vídeo
+                </h1>
+                <p class="header-subtitle">Converta seus arquivos de áudio e vídeo em texto com inteligência artificial</p>
+                
+                <!-- Navegação -->
+                <div style="margin-top: 20px;">
+                    <div class="navigation-buttons">
+                        <a href="/" class="btn btn-outline-light">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-outline-light">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </a>
+                        <a href="/transcricao-audio/historico" class="btn btn-outline-light">
+                            <i class="fas fa-history"></i> Ver Histórico
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-card">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3 class="upload-title">Clique ou arraste o arquivo de áudio</h3>
+                <p class="upload-subtitle">Processamento automatizado com IA avançada</p>
+                <p class="upload-formats">
+                    Formatos: MP3, WAV, M4A, AAC, OGG, FLAC, OPUS<br>
+                    <strong>Limite: 500MB</strong> (Chunks de 5MB >30MB)
+                </p>
+                <input type="file" id="audioFile" name="file" accept="audio/*" class="file-input">
+            </div>
+            
+            <div id="fileInfo" class="file-info">
+                <!-- Informações do arquivo serão exibidas aqui -->
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="speakerDetection" class="form-label">
+                        <i class="fas fa-users"></i> Detecção de Falantes
+                    </label>
+                    <select class="form-select" id="speakerDetection" name="speakerDetection">
+                        <option value="true">Ativar identificação de falantes</option>
+                        <option value="false">Texto corrido (sem identificação)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="speakerCount" class="form-label">
+                        <i class="fas fa-user-friends"></i> Máximo de Falantes
+                    </label>
+                    <select class="form-select" id="speakerCount" name="speakerCount">
+                        <option value="2">2 falantes</option>
+                        <option value="3">3 falantes</option>
+                        <option value="5">5 falantes</option>
+                        <option value="8">8 falantes</option>
+                        <option value="15" selected>15 falantes (recomendado)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="button" id="startTranscription" class="btn-transcribe" disabled>
+                <i class="fas fa-play"></i>
+                Iniciar Transcrição
+            </button>
+        </div>
+
+        <div id="progressSection" class="progress-section">
+            <div class="progress-header">
+                <i class="fas fa-sync-alt progress-icon"></i>
+                <div class="progress-info">
+                    <h4>Processando transcrição...</h4>
+                    <div id="progressFilename" class="progress-filename">arquivo.mp3</div>
+                </div>
+            </div>
+            
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar">
+                    <span id="progressPercentage">0%</span>
+                </div>
+            </div>
+            
+            <div id="progressMessage" class="progress-message">Preparando upload...</div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let selectedFile = null;
+        let currentTranscriptId = null;
+
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('audioFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const startButton = document.getElementById('startTranscription');
+        const progressSection = document.getElementById('progressSection');
+
+        // Upload area events
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        startButton.addEventListener('click', startTranscription);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                displayFileInfo();
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                displayFileInfo();
+            }
+        }
+
+        function displayFileInfo() {
+            if (!selectedFile) return;
+
+            const fileSize = (selectedFile.size / (1024 * 1024)).toFixed(2);
+            const fileName = selectedFile.name;
+            
+            // Verificar se é arquivo de áudio
+            const audioFormats = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac', '.wma', '.opus'];
+            const fileExt = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+            
+            if (!audioFormats.includes(fileExt)) {
+                fileInfo.innerHTML = `
+                    <div class="file-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Formato não suportado: ${fileName}</span>
+                        <p>Use arquivos de áudio: MP3, WAV, M4A, AAC, OGG, FLAC, OPUS</p>
+                    </div>
+                `;
+                fileInfo.classList.add('show');
+                startButton.disabled = true;
+                return;
+            }
+            
+            // Verificar se é muito grande
+            if (selectedFile.size > 500 * 1024 * 1024) {
+                fileInfo.innerHTML = `
+                    <div class="file-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Arquivo muito grande: ${fileName} (${fileSize}MB)</span>
+                        <p>Limite máximo: 500MB</p>
+                        <small>Comprima o áudio para reduzir o tamanho</small>
+                    </div>
+                `;
+                fileInfo.classList.add('show');
+                startButton.disabled = true;
+                return;
+            }
+            
+            // Aviso para arquivos grandes
+            let uploadMethod = '';
+            if (selectedFile.size > 30 * 1024 * 1024) {
+                uploadMethod = ' (Chunks 5MB - Produção)';
+            }
+            
+            fileInfo.innerHTML = `
+                <i class="fas fa-file-audio"></i>
+                <strong>${fileName}</strong> (${fileSize} MB)${uploadMethod}
+            `;
+            fileInfo.classList.add('show');
+            startButton.disabled = false;
+        }
+
+        async function startTranscription() {
+            if (!selectedFile) {
+                alert('Selecione um arquivo primeiro');
+                return;
+            }
+
+            // Mostrar progress
+            showProgress(selectedFile.name);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('speakerDetection', document.getElementById('speakerDetection').value);
+            formData.append('speakerCount', document.getElementById('speakerCount').value);
+
+            try {
+                updateProgress(10, 'Enviando arquivo de áudio...');
+                
+                const response = await fetch('/transcricao-audio/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.status === 413) {
+                    showError('Arquivo muito grande para upload. Limite CloudFlare: ~100MB. Tente um arquivo menor.');
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentTranscriptId = result.transcript_id;
+                    updateProgress(30, 'Arquivo enviado. Iniciando transcrição...');
+                    
+                    // Monitorar progresso
+                    monitorTranscription(currentTranscriptId);
+                } else {
+                    showError(result.error);
+                }
+            } catch (error) {
+                showError('Erro na conexão: ' + error.message);
+            }
+        }
+
+        function showProgress(filename) {
+            document.getElementById('progressFilename').textContent = filename;
+            progressSection.style.display = 'block';
+            startButton.disabled = true;
+        }
+
+        function updateProgress(percentage, message) {
+            document.getElementById('progressPercentage').textContent = percentage + '%';
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressMessage').textContent = message;
+        }
+
+        async function monitorTranscription(transcriptId) {
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`/transcricao-audio/status/${transcriptId}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        updateProgress(result.progress, result.message);
+
+                        if (result.status === 'completed') {
+                            setTimeout(() => {
+                                window.location.href = `/transcricao-audio/result/${transcriptId}`;
+                            }, 2000);
+                        } else if (result.status === 'error') {
+                            showError('Erro no processamento da transcrição');
+                        } else {
+                            // Continue monitorando
+                            setTimeout(checkStatus, 3000);
+                        }
+                    } else {
+                        showError(result.error);
+                    }
+                } catch (error) {
+                    showError('Erro ao verificar status: ' + error.message);
+                }
+            };
+
+            setTimeout(checkStatus, 2000);
+        }
+
+        function showError(message) {
+            progressSection.style.display = 'none';
+            startButton.disabled = false;
+            
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Erro:</strong> ${message}
+            `;
+            
+            document.querySelector('.main-container').appendChild(alertDiv);
+        }
+    </script>
+</body>
+</html>

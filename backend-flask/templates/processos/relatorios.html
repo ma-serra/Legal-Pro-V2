@@ -1,0 +1,854 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios Gerenciais - Processos Jurídicos{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .filter-section {
+        background: rgba(87, 91, 92, 0.3);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #768082;
+        color: #fcfffb;
+    }
+    
+    .column-selector {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #768082;
+        border-radius: 5px;
+        padding: 10px;
+        background: rgba(87, 91, 92, 0.5);
+        color: #fcfffb;
+    }
+    
+    .preview-table {
+        max-height: 400px;
+        overflow: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    
+    .export-buttons .btn {
+        background-color: #7b8c93;
+        border-color: #7b8c93;
+        color: white;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .export-buttons .btn:hover {
+        background-color: #6a787e;
+        border-color: #6a787e;
+    }
+    
+    .column-group {
+        border: 1px solid #768082;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: rgba(87, 91, 92, 0.3);
+        color: #fcfffb;
+    }
+    
+    .column-group h6 {
+        color: #40aba0;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #768082;
+    }
+    
+    .aggregation-controls {
+        background: rgba(87, 91, 92, 0.5);
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 10px;
+        color: #fcfffb;
+    }
+    
+    .loading-preview {
+        text-align: center;
+        padding: 50px;
+        color: #6c757d;
+    }
+    
+    .report-stats {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #3b576f;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .placeholder-text {
+        color: white !important;
+    }
+    
+    .form-control::placeholder {
+        color: white !important;
+        opacity: 0.8;
+    }
+    
+    .form-select option {
+        color: #333;
+    }
+    
+    /* Aplicar padrão de cores do template de editar */
+    body {
+        background: linear-gradient(135deg, #355d6c 0%, #40aba0 100%);
+        color: #fcfffb;
+    }
+    
+    .container-fluid {
+        color: #fcfffb;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #fcfffb;
+    }
+    
+    .text-muted {
+        color: #ffffff !important;
+    }
+    
+    .fa, .fas, .far {
+        color: #fcfffb;
+    }
+    
+    .form-control, .form-select {
+        background-color: #575b5c;
+        border: 2px solid #768082;
+        color: #fcfffb;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: #575b5c;
+        border-color: #40aba0;
+        box-shadow: 0 0 0 0.2rem rgba(64, 171, 160, 0.25);
+        color: #fcfffb;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #355d6c 0%, #40aba0 100%);
+        border: none;
+        color: #fcfffb;
+    }
+    
+    .btn-secondary {
+        background: #575b5c;
+        border: none;
+        color: #fcfffb;
+    }
+    
+    .card {
+        background: rgba(87, 91, 92, 0.3);
+        border: 1px solid #768082;
+        color: #fcfffb;
+    }
+    
+    .breadcrumb-item a {
+        color: #40aba0;
+    }
+    
+    .breadcrumb-item.active {
+        color: #fcfffb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-chart-bar text-primary me-2"></i>Relatórios Gerenciais</h2>
+                    <p class="text-muted mb-0">Gere relatórios personalizados dos processos jurídicos</p>
+                </div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('processos_juridicos') }}">Processos</a></li>
+                        <li class="breadcrumb-item active">Relatórios</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="report-stats">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-processos">{{ total_processos }}</div>
+                    <div class="stat-label">Total de Processos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="valor-total">R$ {{ "{:,.2f}".format(valor_total_causas) }}</div>
+                    <div class="stat-label">Valor Total das Causas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="areas-ativas">{{ areas_ativas }}</div>
+                    <div class="stat-label">Áreas Jurídicas Ativas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number" id="processos-ano">{{ processos_ano_atual }}</div>
+                    <div class="stat-label">Processos em {{ ano_atual }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Configuração do Relatório -->
+        <div class="col-md-4">
+            <div class="filter-section">
+                <h5><i class="fas fa-filter me-2"></i>Configuração do Relatório</h5>
+                
+                <!-- Filtros Básicos -->
+                <div class="mb-3">
+                    <label class="form-label">Nome do Relatório:</label>
+                    <input type="text" class="form-control" id="nome-relatorio" placeholder="Ex: Relatório Mensal - Janeiro 2025">
+                </div>
+
+                <!-- Filtros de Data -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Data Início:</label>
+                        <input type="date" class="form-control" id="data-inicio">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Data Fim:</label>
+                        <input type="date" class="form-control" id="data-fim">
+                    </div>
+                </div>
+
+                <!-- Filtros de Área -->
+                <div class="mb-3">
+                    <label class="form-label">Área Jurídica:</label>
+                    <select class="form-select" id="filtro-area" multiple>
+                        <option value="">Todas as Áreas</option>
+                        {% for area in areas_juridicas %}
+                        <option value="{{ area }}">{{ area }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtros de Estado -->
+                <div class="mb-3">
+                    <label class="form-label">Estado:</label>
+                    <select class="form-select" id="filtro-estado" multiple>
+                        <option value="">Todos os Estados</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado }}">{{ estado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filtros de Valor -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Valor Mínimo:</label>
+                        <input type="number" class="form-control" id="valor-minimo" placeholder="0,00" step="0.01">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Valor Máximo:</label>
+                        <input type="number" class="form-control" id="valor-maximo" placeholder="Sem limite" step="0.01">
+                    </div>
+                </div>
+
+                <!-- Filtros de Status -->
+                <div class="mb-3">
+                    <label class="form-label">Status:</label>
+                    <select class="form-select" id="filtro-status" multiple>
+                        <option value="">Todos os Status</option>
+                        <option value="ATIVO">Ativo</option>
+                        <option value="ARQUIVADO">Arquivado</option>
+                        <option value="SUSPENSO">Suspenso</option>
+                        <option value="ENCERRADO">Encerrado</option>
+                    </select>
+                </div>
+
+                <!-- Filtros de Risco -->
+                <div class="mb-3">
+                    <label class="form-label">Nível de Risco:</label>
+                    <select class="form-select" id="filtro-risco" multiple>
+                        <option value="">Todos os Riscos</option>
+                        <option value="BAIXO">Baixo</option>
+                        <option value="MEDIO">Médio</option>
+                        <option value="ALTO">Alto</option>
+                        <option value="CRÍTICO">Crítico</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Seleção de Colunas -->
+            <div class="filter-section">
+                <h5><i class="fas fa-columns me-2"></i>Colunas do Relatório</h5>
+                <p class="text-muted small">Selecione as informações que deseja incluir no relatório:</p>
+                
+                <div class="column-selector">
+                    <!-- Informações Básicas -->
+                    <div class="column-group">
+                        <h6><i class="fas fa-info-circle me-1"></i>Informações Básicas</h6>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="numero_processo_cnj" id="col-numero" checked>
+                            <label class="form-check-label" for="col-numero">Número do Processo CNJ</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="cliente" id="col-cliente" checked>
+                            <label class="form-check-label" for="col-cliente">Cliente</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="area_juridica" id="col-area" checked>
+                            <label class="form-check-label" for="col-area">Área Jurídica</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="autor" id="col-autor">
+                            <label class="form-check-label" for="col-autor">Autor</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="advogado_do_caso" id="col-advogado">
+                            <label class="form-check-label" for="col-advogado">Advogado Responsável</label>
+                        </div>
+                    </div>
+
+                    <!-- Informações Financeiras -->
+                    <div class="column-group">
+                        <h6><i class="fas fa-dollar-sign me-1"></i>Informações Financeiras</h6>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="valor_da_causa" id="col-valor-causa" checked>
+                            <label class="form-check-label" for="col-valor-causa">Valor da Causa</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="provisao" id="col-provisao">
+                            <label class="form-check-label" for="col-provisao">Provisão</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="valor_recuperado" id="col-valor-recuperado">
+                            <label class="form-check-label" for="col-valor-recuperado">Valor Recuperado</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="custas_processuais" id="col-custas">
+                            <label class="form-check-label" for="col-custas">Custas Processuais</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="honorarios_sucumbencia" id="col-honorarios">
+                            <label class="form-check-label" for="col-honorarios">Honorários Sucumbência</label>
+                        </div>
+                    </div>
+
+                    <!-- Informações Processuais -->
+                    <div class="column-group">
+                        <h6><i class="fas fa-balance-scale me-1"></i>Informações Processuais</h6>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="estado" id="col-estado" checked>
+                            <label class="form-check-label" for="col-estado">Estado</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="comarca" id="col-comarca">
+                            <label class="form-check-label" for="col-comarca">Comarca</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="juizo" id="col-juizo">
+                            <label class="form-check-label" for="col-juizo">Juízo</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="fase_processual" id="col-fase">
+                            <label class="form-check-label" for="col-fase">Fase Processual</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="status" id="col-status" checked>
+                            <label class="form-check-label" for="col-status">Status</label>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Gestão -->
+                    <div class="column-group">
+                        <h6><i class="fas fa-chart-line me-1"></i>Informações de Gestão</h6>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="risco" id="col-risco">
+                            <label class="form-check-label" for="col-risco">Risco</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="probabilidade_exito" id="col-probabilidade">
+                            <label class="form-check-label" for="col-probabilidade">Probabilidade de Êxito</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="complexidade_caso" id="col-complexidade">
+                            <label class="form-check-label" for="col-complexidade">Complexidade do Caso</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="tempo_tramitacao_dias" id="col-tempo-tramitacao">
+                            <label class="form-check-label" for="col-tempo-tramitacao">Tempo de Tramitação (dias)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="satisfacao_cliente" id="col-satisfacao">
+                            <label class="form-check-label" for="col-satisfacao">Satisfação do Cliente</label>
+                        </div>
+                    </div>
+
+                    <!-- Datas -->
+                    <div class="column-group">
+                        <h6><i class="fas fa-calendar me-1"></i>Datas</h6>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="data_registro" id="col-data-registro" checked>
+                            <label class="form-check-label" for="col-data-registro">Data de Registro</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="data_distribuicao" id="col-data-distribuicao">
+                            <label class="form-check-label" for="col-data-distribuicao">Data de Distribuição</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="data_encerramento" id="col-data-encerramento">
+                            <label class="form-check-label" for="col-data-encerramento">Data de Encerramento</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-check" type="checkbox" value="previsao_de_pagamento" id="col-previsao-pagamento">
+                            <label class="form-check-label" for="col-previsao-pagamento">Previsão de Pagamento</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles de Agregação -->
+                <div class="aggregation-controls">
+                    <h6><i class="fas fa-calculator me-1"></i>Agregações</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="enable-aggregation">
+                        <label class="form-check-label" for="enable-aggregation">
+                            Habilitar agregações (soma, média, contagem)
+                        </label>
+                    </div>
+                    
+                    <div id="aggregation-options" style="display: none; margin-top: 10px;">
+                        <div class="mb-2">
+                            <label class="form-label small">Agrupar por:</label>
+                            <select class="form-select form-select-sm" id="group-by">
+                                <option value="">Nenhum agrupamento</option>
+                                <option value="area_juridica">Área Jurídica</option>
+                                <option value="estado">Estado</option>
+                                <option value="status">Status</option>
+                                <option value="risco">Risco</option>
+                                <option value="complexidade_caso">Complexidade</option>
+                                <option value="ano_distribuicao">Ano de Distribuição</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label class="form-label small">Função:</label>
+                            <select class="form-select form-select-sm" id="aggregation-function">
+                                <option value="count">Contagem</option>
+                                <option value="sum">Soma</option>
+                                <option value="avg">Média</option>
+                                <option value="min">Mínimo</option>
+                                <option value="max">Máximo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-grid gap-2 mt-3">
+                    <button type="button" class="btn btn-primary" onclick="gerarPrevia()">
+                        <i class="fas fa-eye me-2"></i>Gerar Prévia
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="limparFiltros()">
+                        <i class="fas fa-undo me-2"></i>Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prévia e Exportação -->
+        <div class="col-md-8">
+            <div class="filter-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-table me-2"></i>Prévia do Relatório</h5>
+                    <div class="export-buttons">
+                        <button type="button" class="btn" onclick="exportarRelatorio('xlsx')" disabled id="btn-excel">
+                            <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                        </button>
+                        <button type="button" class="btn" onclick="exportarRelatorio('pdf')" disabled id="btn-pdf">
+                            <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                        </button>
+                        <button type="button" class="btn" onclick="exportarRelatorio('docx')" disabled id="btn-word">
+                            <i class="fas fa-file-word me-2"></i>Exportar Word
+                        </button>
+                    </div>
+                </div>
+
+                <div id="preview-container">
+                    <div class="loading-preview">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p>Configure os filtros e colunas, depois clique em "Gerar Prévia" para visualizar o relatório.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let currentReportData = null;
+
+// Habilitar/desabilitar opções de agregação
+document.getElementById('enable-aggregation').addEventListener('change', function() {
+    const options = document.getElementById('aggregation-options');
+    options.style.display = this.checked ? 'block' : 'none';
+});
+
+// Função para gerar prévia do relatório
+async function gerarPrevia() {
+    const previewContainer = document.getElementById('preview-container');
+    
+    // Mostrar loading
+    previewContainer.innerHTML = `
+        <div class="loading-preview">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Gerando prévia...</span>
+            </div>
+            <p class="mt-3">Gerando prévia do relatório...</p>
+        </div>
+    `;
+
+    try {
+        // Coletar filtros
+        const filtros = coletarFiltros();
+        
+        // Coletar colunas selecionadas
+        const colunas = coletarColunasSelecionadas();
+        
+        if (colunas.length === 0) {
+            throw new Error('Selecione pelo menos uma coluna para o relatório.');
+        }
+
+        // Coletar configurações de agregação
+        const agregacao = coletarConfiguracaoAgregacao();
+
+        // Fazer requisição para o backend
+        const response = await fetch('/processos/relatorios/gerar-previa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filtros: filtros,
+                colunas: colunas,
+                agregacao: agregacao
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao gerar relatório');
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            currentReportData = data;
+            exibirPrevia(data);
+            habilitarBotoesExportacao();
+        } else {
+            throw new Error(data.message || 'Erro desconhecido');
+        }
+
+    } catch (error) {
+        previewContainer.innerHTML = `
+            <div class="loading-preview">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <p class="text-danger">${error.message}</p>
+                <button class="btn btn-outline-primary btn-sm" onclick="gerarPrevia()">Tentar Novamente</button>
+            </div>
+        `;
+    }
+}
+
+// Função para coletar filtros
+function coletarFiltros() {
+    return {
+        data_inicio: document.getElementById('data-inicio').value,
+        data_fim: document.getElementById('data-fim').value,
+        area_juridica: Array.from(document.getElementById('filtro-area').selectedOptions).map(opt => opt.value),
+        estado: Array.from(document.getElementById('filtro-estado').selectedOptions).map(opt => opt.value),
+        valor_minimo: document.getElementById('valor-minimo').value,
+        valor_maximo: document.getElementById('valor-maximo').value,
+        status: Array.from(document.getElementById('filtro-status').selectedOptions).map(opt => opt.value),
+        risco: Array.from(document.getElementById('filtro-risco').selectedOptions).map(opt => opt.value)
+    };
+}
+
+// Função para coletar colunas selecionadas
+function coletarColunasSelecionadas() {
+    const checkboxes = document.querySelectorAll('.column-check:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Função para coletar configuração de agregação
+function coletarConfiguracaoAgregacao() {
+    const enableAggregation = document.getElementById('enable-aggregation').checked;
+    
+    if (!enableAggregation) {
+        return null;
+    }
+
+    return {
+        habilitado: true,
+        agrupar_por: document.getElementById('group-by').value,
+        funcao: document.getElementById('aggregation-function').value
+    };
+}
+
+// Função para exibir prévia
+function exibirPrevia(data) {
+    const previewContainer = document.getElementById('preview-container');
+    
+    let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="badge bg-primary">${data.total_registros} registro(s) encontrado(s)</span>
+                ${data.agregacao && data.agregacao.habilitado ? 
+                    `<span class="badge bg-info ms-2">Agrupado por: ${data.agregacao.agrupar_por}</span>` : ''
+                }
+            </div>
+        </div>
+        <div class="preview-table">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+    `;
+    
+    // Cabeçalhos
+    data.colunas.forEach(coluna => {
+        html += `<th>${formatarNomeColuna(coluna)}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    
+    // Dados (mostrar apenas primeiros 50 registros na prévia)
+    const registrosPrevia = data.dados.slice(0, 50);
+    registrosPrevia.forEach(registro => {
+        html += '<tr>';
+        data.colunas.forEach(coluna => {
+            let valor = registro[coluna];
+            html += `<td>${formatarValorColuna(coluna, valor)}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    
+    if (data.dados.length > 50) {
+        html += `
+            <div class="text-center p-3 bg-light">
+                <small class="text-muted">
+                    Mostrando primeiros 50 registros de ${data.total_registros}. 
+                    Use a exportação para ver todos os dados.
+                </small>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    previewContainer.innerHTML = html;
+}
+
+// Função para formatar nome da coluna
+function formatarNomeColuna(coluna) {
+    const nomes = {
+        'numero_processo_cnj': 'Número CNJ',
+        'cliente': 'Cliente',
+        'area_juridica': 'Área Jurídica',
+        'autor': 'Autor',
+        'advogado_do_caso': 'Advogado',
+        'valor_da_causa': 'Valor da Causa',
+        'provisao': 'Provisão',
+        'valor_recuperado': 'Valor Recuperado',
+        'custas_processuais': 'Custas',
+        'honorarios_sucumbencia': 'Honorários',
+        'estado': 'Estado',
+        'comarca': 'Comarca',
+        'juizo': 'Juízo',
+        'fase_processual': 'Fase',
+        'status': 'Status',
+        'risco': 'Risco',
+        'probabilidade_exito': 'Prob. Êxito (%)',
+        'complexidade_caso': 'Complexidade',
+        'tempo_tramitacao_dias': 'Tempo (dias)',
+        'satisfacao_cliente': 'Satisfação',
+        'data_registro': 'Data Registro',
+        'data_distribuicao': 'Data Distribuição',
+        'data_encerramento': 'Data Encerramento',
+        'previsao_de_pagamento': 'Previsão Pagamento'
+    };
+    
+    return nomes[coluna] || coluna;
+}
+
+// Função para formatar valor da coluna
+function formatarValorColuna(coluna, valor) {
+    if (valor === null || valor === undefined) {
+        return '<span class="text-muted">-</span>';
+    }
+    
+    // Colunas monetárias
+    if (['valor_da_causa', 'provisao', 'valor_recuperado', 'custas_processuais', 'honorarios_sucumbencia'].includes(coluna)) {
+        return `R$ ${parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+    
+    // Colunas de data
+    if (['data_registro', 'data_distribuicao', 'data_encerramento', 'previsao_de_pagamento'].includes(coluna)) {
+        if (valor) {
+            return new Date(valor).toLocaleDateString('pt-BR');
+        }
+        return '<span class="text-muted">-</span>';
+    }
+    
+    // Probabilidade
+    if (coluna === 'probabilidade_exito') {
+        return `${valor}%`;
+    }
+    
+    // Satisfação
+    if (coluna === 'satisfacao_cliente') {
+        const estrelas = '★'.repeat(valor || 0) + '☆'.repeat(5 - (valor || 0));
+        return `${estrelas} (${valor || 0}/5)`;
+    }
+    
+    return valor;
+}
+
+// Função para habilitar botões de exportação
+function habilitarBotoesExportacao() {
+    document.getElementById('btn-excel').disabled = false;
+    document.getElementById('btn-pdf').disabled = false;
+    document.getElementById('btn-word').disabled = false;
+}
+
+// Função para exportar relatório
+async function exportarRelatorio(formato) {
+    if (!currentReportData) {
+        alert('Gere a prévia do relatório primeiro');
+        return;
+    }
+
+    const nomeRelatorio = document.getElementById('nome-relatorio').value || 'Relatório Processos Jurídicos';
+    
+    // Mostrar loading no botão
+    const botao = document.getElementById(`btn-${formato === 'xlsx' ? 'excel' : formato}`);
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+    botao.disabled = true;
+
+    try {
+        const response = await fetch('/processos/relatorios/exportar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                ...currentReportData,
+                formato: formato,
+                nome_relatorio: nomeRelatorio
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao exportar relatório');
+        }
+
+        // Download do arquivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${nomeRelatorio}.${formato}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+    } catch (error) {
+        alert('Erro ao exportar relatório: ' + error.message);
+    } finally {
+        // Restaurar botão
+        botao.innerHTML = textoOriginal;
+        botao.disabled = false;
+    }
+}
+
+// Função para limpar filtros
+function limparFiltros() {
+    document.getElementById('nome-relatorio').value = '';
+    document.getElementById('data-inicio').value = '';
+    document.getElementById('data-fim').value = '';
+    document.getElementById('filtro-area').selectedIndex = 0;
+    document.getElementById('filtro-estado').selectedIndex = 0;
+    document.getElementById('valor-minimo').value = '';
+    document.getElementById('valor-maximo').value = '';
+    document.getElementById('filtro-status').selectedIndex = 0;
+    document.getElementById('filtro-risco').selectedIndex = 0;
+    
+    // Limpar seleção de colunas (manter apenas as básicas)
+    document.querySelectorAll('.column-check').forEach(cb => {
+        cb.checked = ['numero_processo_cnj', 'cliente', 'area_juridica', 'valor_da_causa', 'estado', 'status', 'data_registro'].includes(cb.value);
+    });
+    
+    // Limpar agregação
+    document.getElementById('enable-aggregation').checked = false;
+    document.getElementById('aggregation-options').style.display = 'none';
+    
+    // Limpar prévia
+    document.getElementById('preview-container').innerHTML = `
+        <div class="loading-preview">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <p>Configure os filtros e colunas, depois clique em "Gerar Prévia" para visualizar o relatório.</p>
+        </div>
+    `;
+    
+    // Desabilitar botões de exportação
+    document.getElementById('btn-excel').disabled = true;
+    document.getElementById('btn-pdf').disabled = true;
+    document.getElementById('btn-word').disabled = true;
+    
+    currentReportData = null;
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar datas padrão (último mês)
+    const hoje = new Date();
+    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    
+    document.getElementById('data-inicio').value = primeiroDiaMes.toISOString().split('T')[0];
+    document.getElementById('data-fim').value = hoje.toISOString().split('T')[0];
+});
+</script>
+{% endblock %}

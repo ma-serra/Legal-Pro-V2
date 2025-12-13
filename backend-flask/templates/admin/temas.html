@@ -1,0 +1,3718 @@
+{% extends "layout.html" %}
+
+{% block title %}Personalização Completa do Sistema{% endblock %}
+
+{% block head %}
+<style>
+    .color-picker-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .color-picker-item {
+        background: #323749;
+        border: 1px solid #4a5568;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .color-input {
+        width: 60px;
+        height: 40px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    
+    .font-preview {
+        padding: 15px;
+        background: #2a2f3e;
+        border-radius: 8px;
+        margin-top: 10px;
+        border: 1px solid #4a5568;
+    }
+    
+    .theme-preview {
+        background: #323749;
+        border: 1px solid #4a5568;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .preview-card {
+        background: var(--preview-bg-card, #404556);
+        color: var(--preview-text, #ffffff);
+        border: 1px solid var(--preview-border, #4a5568);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .preview-input {
+        background: var(--preview-bg-input, #404556);
+        color: var(--preview-text, #ffffff);
+        border: 1px solid var(--preview-border, #4a5568);
+        border-radius: 6px;
+        padding: 8px 12px;
+        width: 100%;
+    }
+    
+    .preview-button {
+        background: var(--preview-primary, #0066cc);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        margin-right: 10px;
+    }
+    
+    .tabs-nav {
+        display: flex;
+        border-bottom: 2px solid #4a5568;
+        margin-bottom: 30px;
+    }
+    
+    .tab-button {
+        background: none;
+        border: none;
+        padding: 12px 24px;
+        color: #ffffff;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .tab-button.active {
+        border-bottom-color: #0066cc;
+        background: rgba(0, 102, 204, 0.1);
+    }
+    
+    .tab-content {
+        display: none !important;
+    }
+    
+    .tab-content.active {
+        display: block !important;
+    }
+    
+    .range-display {
+        min-width: 50px;
+        text-align: center;
+        font-family: monospace;
+        background: #404556;
+        border: 1px solid #4a5568;
+        border-radius: 4px;
+        padding: 4px 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-palette me-2"></i>Personalização Completa do Sistema</h1>
+        <div>
+            <button class="btn btn-info me-2" onclick="toggleRealTime()">
+                <i class="fas fa-play me-2"></i>Tempo Real
+            </button>
+            <button class="btn btn-success me-2" onclick="aplicarTema()">
+                <i class="fas fa-check me-2"></i>Aplicar Tema
+            </button>
+            <button class="btn btn-warning me-2" onclick="resetarTema()">
+                <i class="fas fa-undo me-2"></i>Resetar
+            </button>
+            <button class="btn btn-primary me-2" onclick="salvarTemaPersonalizado()">
+                <i class="fas fa-save me-2"></i>Salvar Tema
+            </button>
+            <button class="btn btn-secondary me-2" onclick="exportarTema()">
+                <i class="fas fa-download me-2"></i>Exportar
+            </button>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-magic me-2"></i>Temas Predefinidos
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="carregarTemaPredefinido('dark_professional')">Dark Professional</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="carregarTemaPredefinido('light_classic')">Light Classic</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="carregarTemaPredefinido('juridico_tradicional')">Jurídico Tradicional</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Seção de Importação -->
+    <div class="alert alert-secondary mb-4" style="display: none;" id="importacao-section">
+        <h6><i class="fas fa-upload me-2"></i>Importar Tema</h6>
+        <div class="input-group">
+            <input type="file" class="form-control" id="file-import" accept=".json">
+            <button class="btn btn-primary" onclick="importarTema()">
+                <i class="fas fa-upload me-2"></i>Importar
+            </button>
+            <button class="btn btn-secondary" onclick="toggleImportacao()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="text-end mb-3">
+        <button class="btn btn-outline-secondary btn-sm" onclick="toggleImportacao()">
+            <i class="fas fa-upload me-2"></i>Importar Tema de Arquivo
+        </button>
+    </div>
+    
+    <!-- Navegação por Tabs -->
+    <div class="tabs-nav">
+        <button class="tab-button active" onclick="showTab('templates-juridicos')">
+            <i class="fas fa-balance-scale me-2"></i>Templates Jurídicos
+        </button>
+        <button class="tab-button" onclick="showTab('paginas')">
+            <i class="fas fa-file-alt me-2"></i>Páginas Específicas
+        </button>
+        <button class="tab-button" onclick="showTab('cores')">
+            <i class="fas fa-palette me-2"></i>Cores Globais
+        </button>
+        <button class="tab-button" onclick="showTab('tipografia')">
+            <i class="fas fa-font me-2"></i>Tipografia
+        </button>
+        <button class="tab-button" onclick="showTab('layout')">
+            <i class="fas fa-th-large me-2"></i>Layout & Espaçamento
+        </button>
+        <button class="tab-button" onclick="showTab('preview')">
+            <i class="fas fa-eye me-2"></i>Visualização
+        </button>
+    </div>
+
+    <!-- Tab: Templates Jurídicos -->
+    <div id="tab-templates-juridicos" class="tab-content active">
+        <div class="alert alert-info">
+            <i class="fas fa-balance-scale me-2"></i>
+            <strong>Templates Jurídicos:</strong> Configure a aparência e formatação de todos os documentos jurídicos do sistema
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Configurações de Documento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Área de Pré-visualização</h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Fundo Pré-visualização</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-preview-bg" value="#ffffff">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Texto Pré-visualização</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-preview-text" value="#000000">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Borda Pré-visualização</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-preview-border" value="#dee2e6">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Fundo Área Preview</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-preview-area-bg" value="#e9ecef">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Fonte Área Preview</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-preview-area-text" value="#495057">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Placeholder</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-placeholder" value="#6c757d">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Tipografia do Documento</h6>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Família da Fonte</label>
+                                            <select class="form-select" id="juridico-font-family">
+                                                <option value="Times New Roman">Times New Roman (Padrão Jurídico)</option>
+                                                <option value="Arial">Arial</option>
+                                                <option value="Georgia">Georgia</option>
+                                                <option value="Garamond">Garamond</option>
+                                                <option value="Book Antiqua">Book Antiqua</option>
+                                                <option value="Palatino">Palatino</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Tamanho da Fonte (px)</label>
+                                            <input type="number" class="form-control" id="juridico-font-size" value="14" min="10" max="24">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Altura da Linha</label>
+                                            <input type="number" class="form-control" id="juridico-line-height" value="1.6" min="1" max="3" step="0.1">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Peso da Fonte</label>
+                                            <select class="form-select" id="juridico-font-weight">
+                                                <option value="400">Normal (400)</option>
+                                                <option value="500">Média (500)</option>
+                                                <option value="600">Negrito (600)</option>
+                                                <option value="700">Extra Negrito (700)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Espaçamento entre Letras (px)</label>
+                                            <input type="number" class="form-control" id="juridico-letter-spacing" value="0" min="-2" max="5" step="0.1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Interface dos Formulários</h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Fundo dos Cards</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-card-bg" value="#f8f9fa">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Texto dos Cards</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-card-text" value="#212529">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Campos de Input</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-input-bg" value="#ffffff">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Texto dos Inputs</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-input-text" value="#495057">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Bordas dos Inputs</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-input-border" value="#ced4da">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Focus dos Inputs</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-input-focus" value="#0066cc">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Botões e Ações</h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Botão Primário</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-btn-primary" value="#0066cc">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Botão Secundário</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-btn-secondary" value="#6c757d">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Botão Sucesso</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-btn-success" value="#1f5981">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Botão Perigo</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-btn-danger" value="#dc3545">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Alertas e Notificações</h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Alerta Info</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-alert-info" value="#00734d">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Texto Alerta Info</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-alert-info-text" value="#ffffff">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Alerta Sucesso</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-alert-success" value="#d4edda">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Alerta Erro</label>
+                                            <input type="color" class="form-control form-control-color" id="juridico-alert-error" value="#f8d7da">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" onclick="aplicarTemasJuridicos()">
+                                        <i class="fas fa-check me-2"></i>Aplicar Configurações
+                                    </button>
+                                    <button class="btn btn-success" onclick="salvarTemplatesJuridicos()">
+                                        <i class="fas fa-save me-2"></i>Salvar Templates
+                                    </button>
+                                    <button class="btn btn-warning" onclick="resetarTemplatesJuridicos()">
+                                        <i class="fas fa-undo me-2"></i>Resetar
+                                    </button>
+                                    <button class="btn btn-info" onclick="exportarTemplatesJuridicos()">
+                                        <i class="fas fa-download me-2"></i>Exportar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tab: Páginas Específicas -->
+    <div id="tab-paginas" class="tab-content">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Selecionar Página</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="lista-paginas-specs">
+                            <button type="button" class="list-group-item list-group-item-action active" onclick="selecionarPaginaEspecifica('dashboard', this)">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('assistente', this)">
+                                <i class="fas fa-robot me-2"></i>Assistente Penal
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('juridico', this)">
+                                <i class="fas fa-balance-scale me-2"></i>Módulos Jurídicos
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('historico', this)">
+                                <i class="fas fa-history me-2"></i>Histórico
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('perfil', this)">
+                                <i class="fas fa-user me-2"></i>Perfil
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('admin', this)">
+                                <i class="fas fa-cogs me-2"></i>Administração
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPaginaEspecifica('login', this)">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="titulo-pagina-especifica">Personalizar Dashboard</h5>
+                        <div>
+                            <button class="btn btn-sm btn-success" onclick="aplicarTemaEspecifico()">
+                                <i class="fas fa-check me-1"></i>Aplicar
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="resetarPaginaEspecifica()">
+                                <i class="fas fa-undo me-1"></i>Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="configuracoes-pagina-especifica">
+                            <!-- Dashboard -->
+                            <div class="configuracao-especifica" id="especifica-dashboard">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">Header e Navegação</h6>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Fundo Header</label>
+                                            <input type="color" class="color-input" id="dash-header-bg" value="#1a1f2e">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Texto Header</label>
+                                            <input type="color" class="color-input" id="dash-header-text" value="#ffffff">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Cards Fundo</label>
+                                            <input type="color" class="color-input" id="dash-cards-bg" value="#323749">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Cards Texto</label>
+                                            <input type="color" class="color-input" id="dash-cards-text" value="#ffffff">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">Botões e Ações</h6>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Botões Principais</label>
+                                            <input type="color" class="color-input" id="dash-btn-primary" value="#0066cc">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Links</label>
+                                            <input type="color" class="color-input" id="dash-links" value="#0066cc">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Fundo Principal</label>
+                                            <input type="color" class="color-input" id="dash-bg-main" value="#0a0e1a">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Bordas</label>
+                                            <input type="color" class="color-input" id="dash-borders" value="#4a5568">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Assistente -->
+                            <div class="configuracao-especifica d-none" id="especifica-assistente">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">Chat Interface</h6>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Fundo Chat</label>
+                                            <input type="color" class="color-input" id="assist-chat-bg" value="#0a0e1a">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Mensagens Usuário</label>
+                                            <input type="color" class="color-input" id="assist-user-msg" value="#0066cc">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Mensagens Bot</label>
+                                            <input type="color" class="color-input" id="assist-bot-msg" value="#323749">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Input Fundo</label>
+                                            <input type="color" class="color-input" id="assist-input-bg" value="#404556">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">Botões de Ação</h6>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Botão Enviar</label>
+                                            <input type="color" class="color-input" id="assist-send-btn" value="#0066cc">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Botão Home</label>
+                                            <input type="color" class="color-input" id="assist-home-btn" value="#17a2b8">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Botão Download</label>
+                                            <input type="color" class="color-input" id="assist-download-btn" value="#1f5981">
+                                        </div>
+                                        <div class="color-picker-item mb-3">
+                                            <label class="form-label">Texto Mensagens</label>
+                                            <input type="color" class="color-input" id="assist-text" value="#ffffff">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Outras páginas -->
+                            <div class="configuracao-especifica d-none" id="especifica-juridico">
+                                <p class="text-muted">Configurações para módulos jurídicos...</p>
+                            </div>
+                            <div class="configuracao-especifica d-none" id="especifica-historico">
+                                <p class="text-muted">Configurações para histórico...</p>
+                            </div>
+                            <div class="configuracao-especifica d-none" id="especifica-perfil">
+                                <p class="text-muted">Configurações para perfil...</p>
+                            </div>
+                            <div class="configuracao-especifica d-none" id="especifica-admin">
+                                <p class="text-muted">Configurações para administração...</p>
+                            </div>
+                            <div class="configuracao-especifica d-none" id="especifica-login">
+                                <p class="text-muted">Configurações para login...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Controles Globais -->
+    <div id="tab-global" class="tab-content">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Controles Globais:</strong> As alterações aqui afetam todo o sistema
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cores Principais</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="color-picker-item mb-3">
+                            <label class="form-label">Cor Primária</label>
+                            <input type="color" class="form-control color-input" id="primary-color" value="#0066cc">
+                        </div>
+                        <div class="color-picker-item mb-3">
+                            <label class="form-label">Cor Secundária</label>
+                            <input type="color" class="form-control color-input" id="secondary-color" value="#17a2b8">
+                        </div>
+                        <div class="color-picker-item mb-3">
+                            <label class="form-label">Cor de Sucesso</label>
+                            <input type="color" class="form-control color-input" id="success-color" value="#1f5981">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Teste Rápido</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-success me-2" onclick="aplicarTemaGlobal()">
+                            <i class="fas fa-check me-1"></i>Aplicar Mudanças
+                        </button>
+                        <button class="btn btn-warning me-2" onclick="resetarTemaGlobal()">
+                            <i class="fas fa-undo me-1"></i>Resetar
+                        </button>
+                        <button class="btn btn-info" onclick="visualizarTema()">
+                            <i class="fas fa-eye me-1"></i>Visualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPagina('perfil')">
+                                <i class="fas fa-user me-2"></i>Perfil
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPagina('admin')">
+                                <i class="fas fa-cogs me-2"></i>Administração
+                            </button>
+                            <button type="button" class="list-group-item list-group-item-action" onclick="selecionarPagina('login')">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="titulo-pagina-selecionada">Personalizar Dashboard</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-info" onclick="copiarConfiguracoesPagina()">
+                                <i class="fas fa-copy me-1"></i>Copiar Config
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="colarConfiguracoesPagina()">
+                                <i class="fas fa-paste me-1"></i>Colar Config
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="resetarPagina()">
+                                <i class="fas fa-undo me-1"></i>Resetar Página
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="configuracoes-pagina">
+                            <!-- Configurações específicas da página selecionada -->
+                            <div class="configuracao-pagina" id="config-dashboard">
+                                <h6 class="text-primary mb-3"><i class="fas fa-tachometer-alt me-2"></i>Elementos do Dashboard</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Header e Navegação</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Header</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-header-bg" value="#1a1f2e">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Header</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-header-text" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Logo/Título</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-logo-color" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Menu Hover</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-menu-hover" value="#0066cc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Cards Principais</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-cards-bg" value="#323749">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-cards-text" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Bordas Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-cards-border" value="#4a5568">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Ícones Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-cards-icons" value="#0066cc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Botões e Ações</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Primário</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-btn-primary" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Hover</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-btn-hover" value="#0052a3">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Botão</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-btn-text" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Links</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-links" value="#0066cc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Fundo e Layout</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Principal</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-bg-main" value="#0a0e1a">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Sidebar</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-sidebar-bg" value="#1a1f2e">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Divisores</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-dividers" value="#4a5568">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Sombras</label>
+                                                    <input type="color" class="form-control form-control-color" id="dashboard-shadows" value="#000000">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configurações do Assistente Penal -->
+                            <div class="configuracao-pagina d-none" id="config-assistente">
+                                <h6 class="text-primary mb-3"><i class="fas fa-robot me-2"></i>Elementos do Assistente Penal</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Chat Interface</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Chat</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-chat-bg" value="#0a0e1a">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Mensagem Usuário</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-user-msg" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Mensagem Bot</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-bot-msg" value="#323749">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Mensagens</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-msg-text" value="#ffffff">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Campo de Input</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Input</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-input-bg" value="#404556">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Input</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-input-text" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Borda Input</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-input-border" value="#4a5568">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Placeholder</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-placeholder" value="#9ca3af">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Botões e Ações</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Enviar</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-send-btn" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Botões Ação</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-action-btns" value="#6c757d">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Download</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-download-btn" value="#1f5981">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Home</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-home-btn" value="#17a2b8">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Status e Indicadores</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Typing Indicator</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-typing" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Timestamp</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-timestamp" value="#9ca3af">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Scroll Thumb</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-scroll" value="#4a5568">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Loading</label>
+                                                    <input type="color" class="form-control form-control-color" id="assistente-loading" value="#0066cc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mais configurações de páginas serão adicionadas aqui -->
+                            <div class="configuracao-pagina d-none" id="config-juridico">
+                                <h6 class="text-primary mb-3"><i class="fas fa-balance-scale me-2"></i>Templates Jurídicos</h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Área de Pré-visualização</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo Pré-visualização</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-preview-bg" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Pré-visualização</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-preview-text" value="#000000">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Borda Pré-visualização</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-preview-border" value="#dee2e6">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Placeholder</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-placeholder" value="#6c757d">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Fontes do Documento</h6>
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label">Família da Fonte</label>
+                                                    <select class="form-select" id="juridico-font-family">
+                                                        <option value="Times New Roman">Times New Roman (Padrão)</option>
+                                                        <option value="Arial">Arial</option>
+                                                        <option value="Georgia">Georgia</option>
+                                                        <option value="Garamond">Garamond</option>
+                                                        <option value="Book Antiqua">Book Antiqua</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Tamanho da Fonte</label>
+                                                    <input type="number" class="form-control" id="juridico-font-size" value="14" min="10" max="24">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Altura da Linha</label>
+                                                    <input type="number" class="form-control" id="juridico-line-height" value="1.6" min="1" max="3" step="0.1">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Peso da Fonte</label>
+                                                    <select class="form-select" id="juridico-font-weight">
+                                                        <option value="400">Normal (400)</option>
+                                                        <option value="500">Média (500)</option>
+                                                        <option value="600">Negrito (600)</option>
+                                                        <option value="700">Extra Negrito (700)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Espaçamento entre Letras</label>
+                                                    <input type="number" class="form-control" id="juridico-letter-spacing" value="0" min="-2" max="5" step="0.1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Cards e Formulários</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Fundo dos Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-card-bg" value="#f8f9fa">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto dos Cards</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-card-text" value="#212529">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Campos de Input</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-input-bg" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto dos Inputs</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-input-text" value="#495057">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Bordas dos Inputs</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-input-border" value="#ced4da">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Focus dos Inputs</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-input-focus" value="#0066cc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Botões e Ações</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Primário</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-btn-primary" value="#0066cc">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Secundário</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-btn-secondary" value="#6c757d">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Sucesso</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-btn-success" value="#1f5981">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Botão Perigo</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-btn-danger" value="#dc3545">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">Alertas e Notificações</h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <label class="form-label">Alerta Info</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-alert-info" value="#00734d">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Texto Alerta Info</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-alert-info-text" value="#ffffff">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Alerta Sucesso</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-alert-success" value="#d4edda">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label">Alerta Erro</label>
+                                                    <input type="color" class="form-control form-control-color" id="juridico-alert-error" value="#f8d7da">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h6 class="mb-3">Pré-visualização dos Templates Jurídicos</h6>
+                                    <div class="preview-container p-4 border rounded" style="background-color: #ffffff;">
+                                        <div class="preview-template-juridico">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="preview-card p-3 border rounded mb-3" style="background-color: #f8f9fa;">
+                                                        <h6>Campos do Documento</h6>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Processo Número</label>
+                                                            <input type="text" class="form-control" value="0001234-56.2023.8.26.0100">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label">Requerente</label>
+                                                            <input type="text" class="form-control" value="João da Silva">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="preview-documento p-3 border rounded" style="background-color: #ffffff; min-height: 200px;">
+                                                        <div class="documento-preview" style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: #000000;">
+                                                            <p><strong>EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO</strong></p>
+                                                            <p>Processo nº: 0001234-56.2023.8.26.0100</p>
+                                                            <p>Requerente: João da Silva</p>
+                                                            <p>Vem respeitosamente à presença de Vossa Excelência...</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="configuracao-pagina d-none" id="config-especialistas">
+                                <h6 class="text-primary mb-3"><i class="fas fa-user-tie me-2"></i>Especialistas</h6>
+                                <p class="text-muted">Configurações específicas para a página de especialistas...</p>
+                            </div>
+                            
+                            <div class="configuracao-pagina d-none" id="config-historico">
+                                <h6 class="text-primary mb-3"><i class="fas fa-history me-2"></i>Histórico</h6>
+                                <p class="text-muted">Configurações específicas para a página de histórico...</p>
+                            </div>
+                            
+                            <div class="configuracao-pagina d-none" id="config-perfil">
+                                <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Perfil</h6>
+                                <p class="text-muted">Configurações específicas para a página de perfil...</p>
+                            </div>
+                            
+                            <div class="configuracao-pagina d-none" id="config-admin">
+                                <h6 class="text-primary mb-3"><i class="fas fa-cogs me-2"></i>Administração</h6>
+                                <p class="text-muted">Configurações específicas para as páginas de administração...</p>
+                            </div>
+                            
+                            <div class="configuracao-pagina d-none" id="config-login">
+                                <h6 class="text-primary mb-3"><i class="fas fa-sign-in-alt me-2"></i>Login</h6>
+                                <p class="text-muted">Configurações específicas para a página de login...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab: Cores do Sistema -->
+    <div id="tab-cores" class="tab-content">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Paleta de Cores Principal</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="color-picker-group">
+                            <div class="color-picker-item">
+                                <label class="form-label">Cor Primária</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-primaria" class="color-input" value="#0066cc">
+                                    <input type="text" class="form-control" id="cor-primaria-text" value="#0066cc">
+                                </div>
+                                <small class="text-muted">Botões principais, links, destaques</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Cor Secundária</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-secundaria" class="color-input" value="#6c757d">
+                                    <input type="text" class="form-control" id="cor-secundaria-text" value="#6c757d">
+                                </div>
+                                <small class="text-muted">Elementos secundários, bordas</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Fundo Principal</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="bg-principal" class="color-input" value="#0a0e1a">
+                                    <input type="text" class="form-control" id="bg-principal-text" value="#0a0e1a">
+                                </div>
+                                <small class="text-muted">Fundo da página principal</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Fundo Secundário</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="bg-secundario" class="color-input" value="#1a1f2e">
+                                    <input type="text" class="form-control" id="bg-secundario-text" value="#1a1f2e">
+                                </div>
+                                <small class="text-muted">Navegação, header</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Fundo Cards</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="bg-cards" class="color-input" value="#323749">
+                                    <input type="text" class="form-control" id="bg-cards-text" value="#323749">
+                                </div>
+                                <small class="text-muted">Cartões, modals, painéis</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Fundo Inputs</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="bg-inputs" class="color-input" value="#404556">
+                                    <input type="text" class="form-control" id="bg-inputs-text" value="#404556">
+                                </div>
+                                <small class="text-muted">Campos de formulário</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Texto Principal</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="texto-principal" class="color-input" value="#ffffff">
+                                    <input type="text" class="form-control" id="texto-principal-text" value="#ffffff">
+                                </div>
+                                <small class="text-muted">Texto principal do sistema</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Texto Secundário</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="texto-secundario" class="color-input" value="#e1e5f0">
+                                    <input type="text" class="form-control" id="texto-secundario-text" value="#e1e5f0">
+                                </div>
+                                <small class="text-muted">Legendas, descrições</small>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Bordas</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-bordas" class="color-input" value="#4a5568">
+                                    <input type="text" class="form-control" id="cor-bordas-text" value="#4a5568">
+                                </div>
+                                <small class="text-muted">Bordas dos elementos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cores de Estado</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="color-picker-group">
+                            <div class="color-picker-item">
+                                <label class="form-label">Sucesso</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-sucesso" class="color-input" value="#1f5981">
+                                    <input type="text" class="form-control" id="cor-sucesso-text" value="#1f5981">
+                                </div>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Aviso</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-aviso" class="color-input" value="#ffc107">
+                                    <input type="text" class="form-control" id="cor-aviso-text" value="#ffc107">
+                                </div>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Erro</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-erro" class="color-input" value="#dc3545">
+                                    <input type="text" class="form-control" id="cor-erro-text" value="#dc3545">
+                                </div>
+                            </div>
+                            
+                            <div class="color-picker-item">
+                                <label class="form-label">Informação</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" id="cor-info" class="color-input" value="#17a2b8">
+                                    <input type="text" class="form-control" id="cor-info-text" value="#17a2b8">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab: Tipografia -->
+    <div id="tab-tipografia" class="tab-content">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Fonte Principal</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Família da Fonte</label>
+                            <select class="form-select" id="fonte-principal">
+                                <option value="Inter">Inter (Recomendada)</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Lato">Lato</option>
+                                <option value="Poppins">Poppins</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Source Sans Pro">Source Sans Pro</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tamanho Base</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="tamanho-fonte" min="12" max="18" value="14">
+                                <span class="range-display" id="tamanho-fonte-value">14px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Altura da Linha</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="altura-linha" min="1.2" max="2.0" step="0.1" value="1.6">
+                                <span class="range-display" id="altura-linha-value">1.6</span>
+                            </div>
+                        </div>
+                        
+                        <div class="font-preview" id="preview-fonte-principal">
+                            <h4>Título H4 - Exemplo</h4>
+                            <p>Este é um parágrafo de exemplo para visualizar como ficará a fonte principal do sistema em diferentes contextos de uso.</p>
+                            <small>Texto pequeno e legendas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Configurações de Títulos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Peso da Fonte (Títulos)</label>
+                            <select class="form-select" id="peso-titulos">
+                                <option value="400">Normal (400)</option>
+                                <option value="500">Medium (500)</option>
+                                <option value="600" selected>Semi-Bold (600)</option>
+                                <option value="700">Bold (700)</option>
+                                <option value="800">Extra-Bold (800)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Espaçamento entre Letras</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="espacamento-letras" min="-0.5" max="2" step="0.1" value="0">
+                                <span class="range-display" id="espacamento-letras-value">0px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="font-preview">
+                            <h1 style="font-size: 2rem;">H1 - Título Principal</h1>
+                            <h2 style="font-size: 1.75rem;">H2 - Subtítulo</h2>
+                            <h3 style="font-size: 1.5rem;">H3 - Seção</h3>
+                            <h4 style="font-size: 1.25rem;">H4 - Subseção</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab: Layout & Espaçamento -->
+    <div id="tab-layout" class="tab-content">
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Bordas & Cantos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Raio das Bordas</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="border-radius" min="0" max="20" value="8">
+                                <span class="range-display" id="border-radius-value">8px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Espessura das Bordas</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="border-width" min="1" max="4" value="1">
+                                <span class="range-display" id="border-width-value">1px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Espaçamentos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Padding dos Cards</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="card-padding" min="10" max="30" value="20">
+                                <span class="range-display" id="card-padding-value">20px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Margem entre Elementos</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="element-margin" min="10" max="40" value="20">
+                                <span class="range-display" id="element-margin-value">20px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Sombras</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Intensidade da Sombra</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="shadow-intensity" min="0" max="20" value="6">
+                                <span class="range-display" id="shadow-intensity-value">6px</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Opacidade da Sombra</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="shadow-opacity" min="0" max="0.5" step="0.05" value="0.15">
+                                <span class="range-display" id="shadow-opacity-value">0.15</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab: Visualização -->
+    <div id="tab-preview" class="tab-content">
+        <div class="theme-preview" id="theme-preview">
+            <h3>Visualização do Tema</h3>
+            <p>Esta é uma prévia de como o tema ficará aplicado no sistema.</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="preview-card">
+                        <h5>Card de Exemplo</h5>
+                        <p>Este é um exemplo de card com o tema aplicado.</p>
+                        <input type="text" class="preview-input" placeholder="Campo de exemplo" value="Texto de exemplo">
+                        <div class="mt-3">
+                            <button class="preview-button">Botão Primário</button>
+                            <button class="btn btn-outline-primary">Botão Secundário</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="preview-card">
+                        <h5>Formulário de Exemplo</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="preview-input" value="João Silva">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="preview-input" value="joao@exemplo.com">
+                        </div>
+                        <select class="preview-input">
+                            <option>Opção 1</option>
+                            <option>Opção 2</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sistema de Tabs
+function showTab(tabName) {
+    // Esconder todas as tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+    });
+    
+    // Remover active de todos os botões
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar tab selecionada
+    const targetTab = document.getElementById('tab-' + tabName);
+    if (targetTab) {
+        targetTab.classList.add('active');
+        targetTab.style.display = 'block';
+    }
+    
+    // Ativar botão clicado
+    event.target.classList.add('active');
+    
+    console.log('Tab ativada:', tabName);
+}
+
+// Sistema de atualização em tempo real
+let updateInterval;
+let isRealTimeActive = false;
+
+function toggleRealTime() {
+    isRealTimeActive = !isRealTimeActive;
+    const btn = document.querySelector('[onclick="toggleRealTime()"]');
+    
+    if (isRealTimeActive) {
+        btn.innerHTML = '<i class="fas fa-pause me-2"></i>Pausar Tempo Real';
+        btn.className = 'btn btn-warning me-2';
+        startRealTimeUpdates();
+        toggleRealTimeIndicator(true);
+        showNotification('Modo tempo real ativado - todas as mudanças são aplicadas instantaneamente!', 'info');
+    } else {
+        btn.innerHTML = '<i class="fas fa-play me-2"></i>Tempo Real';
+        btn.className = 'btn btn-info me-2';
+        stopRealTimeUpdates();
+        toggleRealTimeIndicator(false);
+        showNotification('Modo tempo real desativado', 'info');
+    }
+}
+
+function startRealTimeUpdates() {
+    updateInterval = setInterval(() => {
+        updatePreview();
+        aplicarTemaTempoReal();
+    }, 100); // Atualiza a cada 100ms
+}
+
+function stopRealTimeUpdates() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+}
+
+// Sincronizar color pickers com campos de texto
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar sincronização para todos os color pickers
+    const colorInputs = ['cor-primaria', 'cor-secundaria', 'bg-principal', 'bg-secundario', 
+                        'bg-cards', 'bg-inputs', 'texto-principal', 'texto-secundario', 
+                        'cor-bordas', 'cor-sucesso', 'cor-aviso', 'cor-erro', 'cor-info'];
+    
+    colorInputs.forEach(id => {
+        const colorPicker = document.getElementById(id);
+        const textInput = document.getElementById(id + '-text');
+        
+        if (colorPicker && textInput) {
+            colorPicker.addEventListener('input', function() {
+                textInput.value = this.value;
+                updatePreview();
+            });
+            
+            textInput.addEventListener('input', function() {
+                if (this.value.match(/^#[0-9A-F]{6}$/i)) {
+                    colorPicker.value = this.value;
+                    updatePreview();
+                }
+            });
+        }
+    });
+    
+    // Configurar ranges
+    const ranges = [
+        { id: 'tamanho-fonte', suffix: 'px' },
+        { id: 'altura-linha', suffix: '' },
+        { id: 'espacamento-letras', suffix: 'px' },
+        { id: 'border-radius', suffix: 'px' },
+        { id: 'border-width', suffix: 'px' },
+        { id: 'card-padding', suffix: 'px' },
+        { id: 'element-margin', suffix: 'px' },
+        { id: 'shadow-intensity', suffix: 'px' },
+        { id: 'shadow-opacity', suffix: '' }
+    ];
+    
+    ranges.forEach(range => {
+        const input = document.getElementById(range.id);
+        const display = document.getElementById(range.id + '-value');
+        
+        if (input && display) {
+            input.addEventListener('input', function() {
+                display.textContent = this.value + range.suffix;
+                updatePreview();
+            });
+        }
+    });
+    
+    // Event listeners para selects
+    document.getElementById('fonte-principal').addEventListener('change', updatePreview);
+    document.getElementById('peso-titulos').addEventListener('change', updatePreview);
+    
+    // Configurar page-specific color inputs
+    setupPageSpecificInputs();
+    
+    // Event listeners para controles específicos dos templates jurídicos
+    setupJuridicoPreviewControls();
+});
+
+// Variáveis globais para configurações de página
+let currentPage = 'dashboard';
+let pageConfigurations = {};
+let copiedPageConfig = null;
+
+// Função para configurar inputs específicos de página
+function setupPageSpecificInputs() {
+    const pageElements = [
+        // Dashboard
+        'dashboard-header-bg', 'dashboard-header-text', 'dashboard-logo-color', 'dashboard-menu-hover',
+        'dashboard-cards-bg', 'dashboard-cards-text', 'dashboard-cards-border', 'dashboard-cards-icons',
+        'dashboard-btn-primary', 'dashboard-btn-hover', 'dashboard-btn-text', 'dashboard-links',
+        'dashboard-bg-main', 'dashboard-sidebar-bg', 'dashboard-dividers', 'dashboard-shadows',
+        
+        // Assistente
+        'assistente-chat-bg', 'assistente-user-msg', 'assistente-bot-msg', 'assistente-msg-text',
+        'assistente-input-bg', 'assistente-input-text', 'assistente-input-border', 'assistente-placeholder',
+        'assistente-send-btn', 'assistente-action-btns', 'assistente-download-btn', 'assistente-home-btn',
+        'assistente-typing', 'assistente-timestamp', 'assistente-scroll', 'assistente-loading'
+    ];
+    
+    pageElements.forEach(elementId => {
+        const input = document.getElementById(elementId);
+        if (input) {
+            input.addEventListener('input', function() {
+                updatePageConfiguration();
+                if (isRealTimeActive) {
+                    aplicarTemaEspecificoPagina();
+                }
+            });
+        }
+    });
+}
+
+// Função para selecionar página
+function selecionarPagina(pageId) {
+    // Salvar configuração atual antes de trocar
+    if (currentPage) {
+        saveCurrentPageConfiguration();
+    }
+    
+    // Atualizar página atual
+    currentPage = pageId;
+    
+    // Atualizar lista visual
+    document.querySelectorAll('#lista-paginas .list-group-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Atualizar título
+    const titles = {
+        'dashboard': 'Personalizar Dashboard',
+        'assistente': 'Personalizar Assistente Penal',
+        'juridico': 'Personalizar Módulos Jurídicos',
+        'especialistas': 'Personalizar Especialistas',
+        'historico': 'Personalizar Histórico',
+        'perfil': 'Personalizar Perfil',
+        'admin': 'Personalizar Administração',
+        'login': 'Personalizar Login'
+    };
+    
+    document.getElementById('titulo-pagina-selecionada').textContent = titles[pageId];
+    
+    // Mostrar configuração da página
+    document.querySelectorAll('.configuracao-pagina').forEach(config => {
+        config.classList.add('d-none');
+    });
+    
+    const pageConfig = document.getElementById('config-' + pageId);
+    if (pageConfig) {
+        pageConfig.classList.remove('d-none');
+    }
+    
+    // Carregar configuração salva da página
+    loadPageConfiguration(pageId);
+}
+
+// Função para salvar configuração atual da página
+function saveCurrentPageConfiguration() {
+    if (!currentPage) return;
+    
+    pageConfigurations[currentPage] = {};
+    
+    // Salvar todas as configurações de cor da página atual
+    const configDiv = document.getElementById('config-' + currentPage);
+    if (configDiv) {
+        const colorInputs = configDiv.querySelectorAll('input[type="color"]');
+        colorInputs.forEach(input => {
+            pageConfigurations[currentPage][input.id] = input.value;
+        });
+    }
+}
+
+// Função para carregar configuração da página
+function loadPageConfiguration(pageId) {
+    if (pageConfigurations[pageId]) {
+        Object.keys(pageConfigurations[pageId]).forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = pageConfigurations[pageId][inputId];
+            }
+        });
+    }
+}
+
+// Função para atualizar configuração da página
+function updatePageConfiguration() {
+    if (!currentPage) return;
+    
+    if (!pageConfigurations[currentPage]) {
+        pageConfigurations[currentPage] = {};
+    }
+    
+    const configDiv = document.getElementById('config-' + currentPage);
+    if (configDiv) {
+        const colorInputs = configDiv.querySelectorAll('input[type="color"]');
+        colorInputs.forEach(input => {
+            pageConfigurations[currentPage][input.id] = input.value;
+        });
+    }
+}
+
+// Função para copiar configurações de página
+function copiarConfiguracoesPagina() {
+    saveCurrentPageConfiguration();
+    copiedPageConfig = JSON.parse(JSON.stringify(pageConfigurations[currentPage] || {}));
+    showNotification('Configurações da página copiadas!', 'success');
+}
+
+// Função para colar configurações de página
+function colarConfiguracoesPagina() {
+    if (!copiedPageConfig) {
+        showNotification('Nenhuma configuração copiada encontrada!', 'warning');
+        return;
+    }
+    
+    pageConfigurations[currentPage] = JSON.parse(JSON.stringify(copiedPageConfig));
+    loadPageConfiguration(currentPage);
+    
+    if (isRealTimeActive) {
+        aplicarTemaEspecificoPagina();
+    }
+    
+    showNotification('Configurações coladas com sucesso!', 'success');
+}
+
+// Função para resetar página
+function resetarPagina() {
+    if (confirm('Tem certeza que deseja resetar todas as configurações desta página?')) {
+        delete pageConfigurations[currentPage];
+        
+        // Resetar inputs para valores padrão
+        const configDiv = document.getElementById('config-' + currentPage);
+        if (configDiv) {
+            const colorInputs = configDiv.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(input => {
+                input.value = input.getAttribute('value') || '#0066cc';
+            });
+        }
+        
+        showNotification('Página resetada com sucesso!', 'success');
+    }
+}
+
+// Função para aplicar tema específico da página
+function aplicarTemaEspecificoPagina() {
+    if (!pageConfigurations[currentPage]) return;
+    
+    let css = `
+    /* Estilos específicos para ${currentPage} */
+    `;
+    
+    const config = pageConfigurations[currentPage];
+    
+    // Aplicar estilos baseado na página atual
+    switch(currentPage) {
+        case 'dashboard':
+            css += generateDashboardCSS(config);
+            break;
+        case 'assistente':
+            css += generateAssistenteCSS(config);
+            break;
+        case 'juridico':
+            css += generateJuridicoCSS(config);
+            break;
+        default:
+            css += generateGenericPageCSS(config);
+    }
+    
+    // Aplicar CSS
+    updatePageSpecificCSS(css);
+}
+
+// Função para gerar CSS do Dashboard
+function generateDashboardCSS(config) {
+    return `
+    /* Dashboard Styles */
+    ${config['dashboard-header-bg'] ? `.navbar, .header { background-color: ${config['dashboard-header-bg']} !important; }` : ''}
+    ${config['dashboard-header-text'] ? `.navbar .navbar-brand, .navbar .nav-link { color: ${config['dashboard-header-text']} !important; }` : ''}
+    ${config['dashboard-logo-color'] ? `.navbar-brand, .logo { color: ${config['dashboard-logo-color']} !important; }` : ''}
+    ${config['dashboard-menu-hover'] ? `.navbar .nav-link:hover { color: ${config['dashboard-menu-hover']} !important; }` : ''}
+    ${config['dashboard-cards-bg'] ? `.card { background-color: ${config['dashboard-cards-bg']} !important; }` : ''}
+    ${config['dashboard-cards-text'] ? `.card .card-body, .card-text { color: ${config['dashboard-cards-text']} !important; }` : ''}
+    ${config['dashboard-cards-border'] ? `.card { border-color: ${config['dashboard-cards-border']} !important; }` : ''}
+    ${config['dashboard-cards-icons'] ? `.card i, .card .fa { color: ${config['dashboard-cards-icons']} !important; }` : ''}
+    ${config['dashboard-btn-primary'] ? `.btn-primary { background-color: ${config['dashboard-btn-primary']} !important; border-color: ${config['dashboard-btn-primary']} !important; }` : ''}
+    ${config['dashboard-btn-hover'] ? `.btn-primary:hover { background-color: ${config['dashboard-btn-hover']} !important; border-color: ${config['dashboard-btn-hover']} !important; }` : ''}
+    ${config['dashboard-btn-text'] ? `.btn-primary { color: ${config['dashboard-btn-text']} !important; }` : ''}
+    ${config['dashboard-links'] ? `a { color: ${config['dashboard-links']} !important; }` : ''}
+    ${config['dashboard-bg-main'] ? `body, .main-content { background-color: ${config['dashboard-bg-main']} !important; }` : ''}
+    ${config['dashboard-sidebar-bg'] ? `.sidebar { background-color: ${config['dashboard-sidebar-bg']} !important; }` : ''}
+    ${config['dashboard-dividers'] ? `.border, hr { border-color: ${config['dashboard-dividers']} !important; }` : ''}
+    `;
+}
+
+// Função para gerar CSS do Assistente
+function generateAssistenteCSS(config) {
+    return `
+    /* Assistente Styles */
+    ${config['assistente-chat-bg'] ? `#chat-container, .chat-area { background-color: ${config['assistente-chat-bg']} !important; }` : ''}
+    ${config['assistente-user-msg'] ? `.message-user, .user-message { background-color: ${config['assistente-user-msg']} !important; }` : ''}
+    ${config['assistente-bot-msg'] ? `.message-bot, .bot-message { background-color: ${config['assistente-bot-msg']} !important; }` : ''}
+    ${config['assistente-msg-text'] ? `.message, .chat-message { color: ${config['assistente-msg-text']} !important; }` : ''}
+    ${config['assistente-input-bg'] ? `#mensagem-input, .chat-input { background-color: ${config['assistente-input-bg']} !important; }` : ''}
+    ${config['assistente-input-text'] ? `#mensagem-input, .chat-input { color: ${config['assistente-input-text']} !important; }` : ''}
+    ${config['assistente-input-border'] ? `#mensagem-input, .chat-input { border-color: ${config['assistente-input-border']} !important; }` : ''}
+    ${config['assistente-placeholder'] ? `#mensagem-input::placeholder, .chat-input::placeholder { color: ${config['assistente-placeholder']} !important; }` : ''}
+    ${config['assistente-send-btn'] ? `#enviar-btn, .send-button { background-color: ${config['assistente-send-btn']} !important; }` : ''}
+    ${config['assistente-action-btns'] ? `.action-button { background-color: ${config['assistente-action-btns']} !important; }` : ''}
+    ${config['assistente-download-btn'] ? `#download-btn, .download-button { background-color: ${config['assistente-download-btn']} !important; }` : ''}
+    ${config['assistente-home-btn'] ? `#home-btn, .home-button { background-color: ${config['assistente-home-btn']} !important; }` : ''}
+    ${config['assistente-typing'] ? `.typing-indicator { color: ${config['assistente-typing']} !important; }` : ''}
+    ${config['assistente-timestamp'] ? `.timestamp { color: ${config['assistente-timestamp']} !important; }` : ''}
+    ${config['assistente-scroll'] ? `.chat-container::-webkit-scrollbar-thumb { background-color: ${config['assistente-scroll']} !important; }` : ''}
+    `;
+}
+
+// Função para gerar CSS genérico
+function generateGenericPageCSS(config) {
+    return `/* Generic page styles for ${currentPage} */`;
+}
+
+// Função para atualizar CSS específico da página
+function updatePageSpecificCSS(css) {
+    let styleElement = document.getElementById('page-specific-theme-css');
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'page-specific-theme-css';
+        document.head.appendChild(styleElement);
+    }
+    styleElement.textContent = css;
+}
+
+// Função principal para atualizar preview
+function updatePreview() {
+    const preview = document.getElementById('theme-preview');
+    const root = document.documentElement;
+    
+    // Aplicar cores
+    root.style.setProperty('--preview-primary', document.getElementById('cor-primaria').value);
+    root.style.setProperty('--preview-bg-card', document.getElementById('bg-cards').value);
+    root.style.setProperty('--preview-bg-input', document.getElementById('bg-inputs').value);
+    root.style.setProperty('--preview-text', document.getElementById('texto-principal').value);
+    root.style.setProperty('--preview-border', document.getElementById('cor-bordas').value);
+    
+    // Aplicar tipografia
+    const fontFamily = document.getElementById('fonte-principal').value;
+    const fontSize = document.getElementById('tamanho-fonte').value + 'px';
+    const lineHeight = document.getElementById('altura-linha').value;
+    
+    preview.style.fontFamily = fontFamily;
+    preview.style.fontSize = fontSize;
+    preview.style.lineHeight = lineHeight;
+}
+
+function aplicarTema() {
+    try {
+        const configuracoes = coletarTodasConfiguracoes();
+        const customCSS = generateCustomCSS();
+        
+        // Aplicar ao sistema imediatamente
+        aplicarCSSGlobal(customCSS);
+        
+        // Salvar no servidor via API
+        fetch('/admin/temas/salvar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                configuracoes: configuracoes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Salvar no localStorage como backup
+                localStorage.setItem('customTheme', customCSS);
+                localStorage.setItem('customThemeConfig', JSON.stringify(configuracoes));
+                
+                showNotification('Tema aplicado e salvo com sucesso! Todas as páginas do sistema foram atualizadas.', 'success');
+            } else {
+                showNotification('Erro ao salvar tema no servidor: ' + data.message, 'error');
+                
+                // Salvar pelo menos localmente
+                localStorage.setItem('customTheme', customCSS);
+                localStorage.setItem('customThemeConfig', JSON.stringify(configuracoes));
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao salvar tema no servidor:', error);
+            showNotification('Erro de comunicação com o servidor, tema salvo localmente', 'warning');
+            
+            // Salvar pelo menos localmente
+            localStorage.setItem('customTheme', customCSS);
+            localStorage.setItem('customThemeConfig', JSON.stringify(configuracoes));
+        });
+        
+    } catch (error) {
+        console.error('Erro ao aplicar tema:', error);
+        showNotification('Erro ao aplicar tema', 'error');
+    }
+}
+
+function aplicarTemaTempoReal() {
+    if (!isRealTimeActive) return;
+    
+    const customCSS = generateCustomCSS();
+    aplicarCSSGlobal(customCSS);
+    localStorage.setItem('customTheme', customCSS);
+}
+
+function aplicarCSSGlobal(css) {
+    let styleElement = document.getElementById('custom-theme-style');
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'custom-theme-style';
+        document.head.appendChild(styleElement);
+    }
+    
+    styleElement.textContent = css;
+    
+    // Aplicar também em iframes se existirem
+    document.querySelectorAll('iframe').forEach(iframe => {
+        try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            let iframeStyle = iframeDoc.getElementById('custom-theme-style');
+            if (!iframeStyle) {
+                iframeStyle = iframeDoc.createElement('style');
+                iframeStyle.id = 'custom-theme-style';
+                iframeDoc.head.appendChild(iframeStyle);
+            }
+            iframeStyle.textContent = css;
+        } catch (e) {
+            // Ignorar iframes de domínios diferentes
+        }
+    });
+}
+
+function salvarTemaNoServidor(css) {
+    fetch('/api/temas/aplicar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            css: css,
+            configuracoes: coletarTodasConfiguracoes()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Tema salvo no servidor com sucesso');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao salvar tema no servidor:', error);
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} position-fixed`;
+    notification.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check' : 'info'}-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close float-end" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function generateCustomCSS() {
+    const values = coletarTodasConfiguracoes();
+    
+    return `
+    /* ====================================
+       TEMA PERSONALIZADO - SISTEMA ROBUSTO
+       Controla Bootstrap e CSS Globalmente
+       ==================================== */
+    
+    /* Variáveis CSS Customizadas */
+    :root {
+        --custom-primary: ${values.corPrimaria};
+        --custom-secondary: ${values.corSecundaria};
+        --custom-bg-primary: ${values.bgPrincipal};
+        --custom-bg-secondary: ${values.bgSecundario};
+        --custom-bg-cards: ${values.bgCards};
+        --custom-bg-inputs: ${values.bgInputs};
+        --custom-text-primary: ${values.textoPrincipal};
+        --custom-text-secondary: ${values.textoSecundario};
+        --custom-border-color: ${values.corBordas};
+        --custom-success: ${values.corSucesso};
+        --custom-warning: ${values.corAviso};
+        --custom-danger: ${values.corErro};
+        --custom-info: ${values.corInfo};
+        --custom-border-radius: ${values.borderRadius};
+        --custom-border-width: ${values.borderWidth};
+        --custom-shadow: 0 ${values.shadowIntensity} 15px rgba(0, 0, 0, ${values.shadowOpacity});
+    }
+    
+    /* RESET TOTAL DO BOOTSTRAP */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* CORPO PRINCIPAL */
+    body, html {
+        background-color: ${values.bgPrincipal} !important;
+        color: ${values.textoPrincipal} !important;
+        font-family: "${values.fontePrincipal}", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-size: ${values.tamanhoFonte} !important;
+        line-height: ${values.alturaLinha} !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* TIPOGRAFIA COMPLETA */
+    h1, h2, h3, h4, h5, h6 {
+        color: ${values.textoPrincipal} !important;
+        font-weight: ${values.pesoTitulos} !important;
+        letter-spacing: ${values.espacamentoLetras} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    p, div, span, label, small, .small, a, li, td, th {
+        color: ${values.textoPrincipal} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    .text-muted {
+        color: ${values.textoSecundario} !important;
+    }
+    
+    /* BOOTSTRAP CARDS OVERRIDE */
+    .card {
+        background-color: ${values.bgCards} !important;
+        border: ${values.borderWidth} solid ${values.corBordas} !important;
+        border-radius: ${values.borderRadius} !important;
+        margin-bottom: ${values.elementMargin} !important;
+        box-shadow: ${values.shadowIntensity === '0' ? 'none' : '0 ' + values.shadowIntensity + ' 15px rgba(0, 0, 0, ' + values.shadowOpacity + ')'} !important;
+    }
+    
+    .card-body, .card-header, .card-footer {
+        color: ${values.textoPrincipal} !important;
+        background-color: transparent !important;
+        padding: ${values.cardPadding} !important;
+    }
+    
+    .card-header {
+        border-bottom: ${values.borderWidth} solid ${values.corBordas} !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    /* FORMULÁRIOS E INPUTS - CONTROLE TOTAL */
+    input, textarea, select, .form-control, .form-select, .form-check-input {
+        background-color: ${values.bgInputs} !important;
+        color: ${values.textoPrincipal} !important;
+        border: ${values.borderWidth} solid ${values.corBordas} !important;
+        border-radius: ${values.borderRadius} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+        font-size: ${values.tamanhoFonte} !important;
+    }
+    
+    input:focus, textarea:focus, select:focus, .form-control:focus, .form-select:focus {
+        background-color: ${values.bgInputs} !important;
+        color: ${values.textoPrincipal} !important;
+        border-color: ${values.corPrimaria} !important;
+        box-shadow: 0 0 0 0.2rem rgba(${hexToRgb(values.corPrimaria)}, 0.25) !important;
+        outline: none !important;
+    }
+    
+    input::placeholder, textarea::placeholder, select::placeholder {
+        color: ${values.textoSecundario} !important;
+        opacity: 0.7 !important;
+    }
+    
+    option {
+        background-color: ${values.bgInputs} !important;
+        color: ${values.textoPrincipal} !important;
+        padding: 8px !important;
+    }
+    
+    label, .form-label, .form-check-label {
+        color: ${values.textoPrincipal} !important;
+        font-weight: 500 !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* BOTÕES BOOTSTRAP OVERRIDE */
+    .btn {
+        border-radius: ${values.borderRadius} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+        font-weight: 500 !important;
+        font-size: ${values.tamanhoFonte} !important;
+        border-width: ${values.borderWidth} !important;
+    }
+    
+    .btn-primary {
+        background-color: ${values.corPrimaria} !important;
+        border-color: ${values.corPrimaria} !important;
+        color: white !important;
+    }
+    
+    .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+        background-color: ${darkenColor(values.corPrimaria, 10)} !important;
+        border-color: ${darkenColor(values.corPrimaria, 10)} !important;
+        color: white !important;
+    }
+    
+    .btn-secondary {
+        background-color: ${values.corSecundaria} !important;
+        border-color: ${values.corSecundaria} !important;
+        color: white !important;
+    }
+    
+    .btn-success {
+        background-color: ${values.corSucesso} !important;
+        border-color: ${values.corSucesso} !important;
+        color: white !important;
+    }
+    
+    .btn-warning {
+        background-color: ${values.corAviso} !important;
+        border-color: ${values.corAviso} !important;
+        color: black !important;
+    }
+    
+    .btn-danger {
+        background-color: ${values.corErro} !important;
+        border-color: ${values.corErro} !important;
+        color: white !important;
+    }
+    
+    .btn-info {
+        background-color: ${values.corInfo} !important;
+        border-color: ${values.corInfo} !important;
+        color: white !important;
+    }
+    
+    /* NAVEGAÇÃO */
+    .navbar {
+        background-color: ${values.bgSecundario} !important;
+        border-bottom: ${values.borderWidth} solid ${values.corBordas} !important;
+    }
+    
+    .navbar-brand, .nav-link {
+        color: ${values.textoPrincipal} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    .nav-link:hover {
+        color: ${values.corPrimaria} !important;
+    }
+    
+    /* TABELAS */
+    .table {
+        color: ${values.textoPrincipal} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    .table th {
+        background-color: ${values.bgCards} !important;
+        color: ${values.textoPrincipal} !important;
+        border-color: ${values.corBordas} !important;
+        font-weight: ${values.pesoTitulos} !important;
+    }
+    
+    .table td {
+        color: ${values.textoPrincipal} !important;
+        border-color: ${values.corBordas} !important;
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(255, 255, 255, 0.02) !important;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(${hexToRgb(values.corPrimaria)}, 0.1) !important;
+    }
+    
+    /* MODALS */
+    .modal-content {
+        background-color: ${values.bgCards} !important;
+        border: ${values.borderWidth} solid ${values.corBordas} !important;
+        border-radius: ${values.borderRadius} !important;
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    .modal-header {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-bottom: ${values.borderWidth} solid ${values.corBordas} !important;
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    .modal-body, .modal-footer {
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    .modal-footer {
+        border-top: ${values.borderWidth} solid ${values.corBordas} !important;
+    }
+    
+    /* ALERTAS */
+    .alert {
+        border-radius: ${values.borderRadius} !important;
+        border-width: ${values.borderWidth} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    .alert-success {
+        background-color: rgba(${hexToRgb(values.corSucesso)}, 0.1) !important;
+        color: ${values.corSucesso} !important;
+        border-color: ${values.corSucesso} !important;
+    }
+    
+    .alert-warning {
+        background-color: rgba(${hexToRgb(values.corAviso)}, 0.1) !important;
+        color: ${darkenColor(values.corAviso, 30)} !important;
+        border-color: ${values.corAviso} !important;
+    }
+    
+    .alert-danger {
+        background-color: rgba(${hexToRgb(values.corErro)}, 0.1) !important;
+        color: ${values.corErro} !important;
+        border-color: ${values.corErro} !important;
+    }
+    
+    .alert-info {
+        background-color: rgba(${hexToRgb(values.corInfo)}, 0.1) !important;
+        color: ${values.corInfo} !important;
+        border-color: ${values.corInfo} !important;
+    }
+    
+    /* BREADCRUMBS */
+    .breadcrumb {
+        background-color: transparent !important;
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    .breadcrumb-item {
+        color: ${values.textoSecundario} !important;
+    }
+    
+    .breadcrumb-item.active {
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    .breadcrumb-item a {
+        color: ${values.corPrimaria} !important;
+    }
+    
+    /* DROPDOWNS */
+    .dropdown-menu {
+        background-color: ${values.bgCards} !important;
+        border: ${values.borderWidth} solid ${values.corBordas} !important;
+        border-radius: ${values.borderRadius} !important;
+        box-shadow: ${values.shadowIntensity === '0' ? 'none' : '0 ' + values.shadowIntensity + ' 15px rgba(0, 0, 0, ' + values.shadowOpacity + ')'} !important;
+    }
+    
+    .dropdown-item {
+        color: ${values.textoPrincipal} !important;
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+    }
+    
+    .dropdown-item:hover, .dropdown-item:focus {
+        background-color: rgba(${hexToRgb(values.corPrimaria)}, 0.1) !important;
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    /* PROGRESS BARS */
+    .progress {
+        background-color: ${values.bgCards} !important;
+        border-radius: ${values.borderRadius} !important;
+    }
+    
+    .progress-bar {
+        background-color: ${values.corPrimaria} !important;
+    }
+    
+    /* BADGES */
+    .badge {
+        font-family: "${values.fontePrincipal}", sans-serif !important;
+        border-radius: ${values.borderRadius} !important;
+    }
+    
+    .badge.bg-primary {
+        background-color: ${values.corPrimaria} !important;
+    }
+    
+    .badge.bg-success {
+        background-color: ${values.corSucesso} !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: ${values.corAviso} !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: ${values.corErro} !important;
+    }
+    
+    /* CONTAINERS E LAYOUT */
+    .container, .container-fluid {
+        color: ${values.textoPrincipal} !important;
+    }
+    
+    /* MARGENS E ESPAÇAMENTOS CUSTOMIZADOS */
+    .mb-3, .my-3 { margin-bottom: ${values.elementMargin} !important; }
+    .mt-3, .my-3 { margin-top: ${values.elementMargin} !important; }
+    .p-3 { padding: ${values.cardPadding} !important; }
+    
+    /* SCROLLBARS CUSTOMIZADAS */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: ${values.bgCards} !important;
+        border-radius: ${values.borderRadius} !important;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: ${values.corBordas} !important;
+        border-radius: ${values.borderRadius} !important;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: ${values.corPrimaria} !important;
+    }
+    
+    /* ANIMAÇÕES DE NOTIFICAÇÃO */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {
+        body {
+            font-size: ${Math.max(12, parseInt(values.tamanhoFonte) - 2)}px !important;
+        }
+        
+        .card {
+            margin-bottom: ${Math.max(10, parseInt(values.elementMargin) - 5)}px !important;
+        }
+    }
+    `;
+}
+
+function coletarTodasConfiguracoes() {
+    // Função auxiliar para obter valor seguro dos elementos
+    function obterValor(id, valorPadrao = '') {
+        const elemento = document.getElementById(id);
+        return elemento ? elemento.value : valorPadrao;
+    }
+    
+    return {
+        corPrimaria: obterValor('cor-primaria', '#0066cc'),
+        corSecundaria: obterValor('cor-secundaria', '#6c757d'),
+        bgPrincipal: obterValor('bg-principal', '#0a0e1a'),
+        bgSecundario: obterValor('bg-secundario', '#1a1f2e'),
+        bgCards: obterValor('bg-cards', '#323749'),
+        bgInputs: obterValor('bg-inputs', '#404556'),
+        textoPrincipal: obterValor('texto-principal', '#ffffff'),
+        textoSecundario: obterValor('texto-secundario', '#e1e5f0'),
+        corBordas: obterValor('cor-bordas', '#4a5568'),
+        corSucesso: obterValor('cor-sucesso', '#1f5981'),
+        corAviso: obterValor('cor-aviso', '#ffc107'),
+        corErro: obterValor('cor-erro', '#dc3545'),
+        corInfo: obterValor('cor-info', '#17a2b8'),
+        fontePrincipal: obterValor('fonte-principal', 'Inter'),
+        tamanhoFonte: (obterValor('tamanho-fonte', '14') || '14') + 'px',
+        alturaLinha: obterValor('altura-linha', '1.5'),
+        pesoTitulos: obterValor('peso-titulos', '600'),
+        espacamentoLetras: (obterValor('espacamento-letras', '0') || '0') + 'px',
+        borderRadius: (obterValor('border-radius', '8') || '8') + 'px',
+        borderWidth: (obterValor('border-width', '1') || '1') + 'px',
+        cardPadding: (obterValor('card-padding', '16') || '16') + 'px',
+        elementMargin: (obterValor('element-margin', '8') || '8') + 'px',
+        shadowIntensity: (obterValor('shadow-intensity', '4') || '4') + 'px',
+        shadowOpacity: obterValor('shadow-opacity', '0.1'),
+        // Configurações específicas dos templates jurídicos
+        juridicoPreviewBg: obterValor('juridico-preview-bg', '#ffffff'),
+        juridicoPreviewText: obterValor('juridico-preview-text', '#000000'),
+        juridicoPreviewBorder: obterValor('juridico-preview-border', '#dee2e6'),
+        juridicoPreviewAreaBg: obterValor('juridico-preview-area-bg', '#e9ecef'),
+        juridicoPreviewAreaText: obterValor('juridico-preview-area-text', '#495057'),
+        juridicoPlaceholder: obterValor('juridico-placeholder', '#6c757d')
+    };
+}
+
+// Funções utilitárias para manipulação de cores
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? 
+        parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) : 
+        '0, 0, 0';
+}
+
+function darkenColor(hex, percent) {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) - amt;
+    const G = (num >> 8 & 0x00FF) - amt;
+    const B = (num & 0x0000FF) - amt;
+    return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+        (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+}
+
+function resetarTema() {
+    if (confirm('Tem certeza que deseja resetar todas as configurações de tema?')) {
+        // Usar nova API se disponível
+        resetarTemaAPI();
+        return;
+        
+        // Fallback para reset manual
+        // Resetar todos os valores para o padrão
+        document.getElementById('cor-primaria').value = '#0066cc';
+        document.getElementById('cor-secundaria').value = '#6c757d';
+        document.getElementById('bg-principal').value = '#0a0e1a';
+        document.getElementById('bg-secundario').value = '#1a1f2e';
+        document.getElementById('bg-cards').value = '#323749';
+        document.getElementById('bg-inputs').value = '#404556';
+        document.getElementById('texto-principal').value = '#ffffff';
+        document.getElementById('texto-secundario').value = '#e1e5f0';
+        document.getElementById('cor-bordas').value = '#4a5568';
+        document.getElementById('cor-sucesso').value = '#1f5981';
+        document.getElementById('cor-aviso').value = '#ffc107';
+        document.getElementById('cor-erro').value = '#dc3545';
+        document.getElementById('cor-info').value = '#17a2b8';
+        
+        // Resetar campos de texto correspondentes
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            if (input.id.endsWith('-text')) {
+                const colorId = input.id.replace('-text', '');
+                const colorInput = document.getElementById(colorId);
+                if (colorInput) {
+                    input.value = colorInput.value;
+                }
+            }
+        });
+        
+        // Resetar ranges
+        document.getElementById('tamanho-fonte').value = '14';
+        document.getElementById('altura-linha').value = '1.6';
+        document.getElementById('espacamento-letras').value = '0';
+        document.getElementById('border-radius').value = '8';
+        document.getElementById('border-width').value = '1';
+        document.getElementById('card-padding').value = '20';
+        document.getElementById('element-margin').value = '20';
+        document.getElementById('shadow-intensity').value = '6';
+        document.getElementById('shadow-opacity').value = '0.15';
+        
+        // Resetar selects
+        document.getElementById('fonte-principal').value = 'Inter';
+        document.getElementById('peso-titulos').value = '600';
+        
+        // Atualizar displays
+        document.querySelectorAll('.range-display').forEach(display => {
+            const rangeId = display.id.replace('-value', '');
+            const rangeInput = document.getElementById(rangeId);
+            if (rangeInput) {
+                const suffix = display.textContent.replace(/[\d.-]/g, '');
+                display.textContent = rangeInput.value + suffix;
+            }
+        });
+        
+        updatePreview();
+        
+        // Remover tema personalizado
+        const styleElement = document.getElementById('custom-theme-style');
+        if (styleElement) {
+            styleElement.remove();
+        }
+        localStorage.removeItem('customTheme');
+        
+        alert('Tema resetado para os valores padrão!');
+    }
+}
+
+function salvarTemaPersonalizado() {
+    const nomeTema = prompt('Digite um nome para salvar este tema:');
+    if (nomeTema) {
+        const tema = {
+            nome: nomeTema,
+            css: generateCustomCSS(),
+            configuracoes: {
+                cores: {
+                    primaria: document.getElementById('cor-primaria').value,
+                    secundaria: document.getElementById('cor-secundaria').value,
+                    bgPrincipal: document.getElementById('bg-principal').value,
+                    bgSecundario: document.getElementById('bg-secundario').value,
+                    bgCards: document.getElementById('bg-cards').value,
+                    bgInputs: document.getElementById('bg-inputs').value,
+                    textoPrincipal: document.getElementById('texto-principal').value,
+                    textoSecundario: document.getElementById('texto-secundario').value,
+                    corBordas: document.getElementById('cor-bordas').value
+                },
+                tipografia: {
+                    fontePrincipal: document.getElementById('fonte-principal').value,
+                    tamanhoFonte: document.getElementById('tamanho-fonte').value,
+                    alturaLinha: document.getElementById('altura-linha').value,
+                    pesoTitulos: document.getElementById('peso-titulos').value
+                }
+            }
+        };
+        
+        // Salvar no backend via API
+        fetch('/api/temas/criar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(tema)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Tema salvo com sucesso!');
+            } else {
+                alert('Erro ao salvar tema: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao salvar tema');
+        });
+    }
+}
+
+function exportarTema() {
+    const configuracoes = coletarTodasConfiguracoes();
+    const css = generateCustomCSS();
+    
+    const temaExportado = {
+        nome: prompt('Nome do tema para exportação:') || 'MeuTemaPersonalizado',
+        versao: '1.0',
+        dataCriacao: new Date().toISOString(),
+        configuracoes: configuracoes,
+        css: css
+    };
+    
+    // Criar arquivo para download
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(temaExportado, null, 2));
+    const downloadElement = document.createElement('a');
+    downloadElement.setAttribute("href", dataStr);
+    downloadElement.setAttribute("download", temaExportado.nome + ".json");
+    document.body.appendChild(downloadElement);
+    downloadElement.click();
+    downloadElement.remove();
+    
+    showNotification('Tema exportado com sucesso!', 'success');
+}
+
+function importarTema() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const tema = JSON.parse(e.target.result);
+                    aplicarConfiguracoes(tema.configuracoes);
+                    showNotification('Tema importado com sucesso!', 'success');
+                } catch (error) {
+                    showNotification('Erro ao importar tema: arquivo inválido', 'danger');
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+}
+
+function aplicarConfiguracoes(config) {
+    // Aplicar cores
+    document.getElementById('cor-primaria').value = config.corPrimaria.replace('px', '');
+    document.getElementById('cor-secundaria').value = config.corSecundaria.replace('px', '');
+    document.getElementById('bg-principal').value = config.bgPrincipal.replace('px', '');
+    document.getElementById('bg-secundario').value = config.bgSecundario.replace('px', '');
+    document.getElementById('bg-cards').value = config.bgCards.replace('px', '');
+    document.getElementById('bg-inputs').value = config.bgInputs.replace('px', '');
+    document.getElementById('texto-principal').value = config.textoPrincipal.replace('px', '');
+    document.getElementById('texto-secundario').value = config.textoSecundario.replace('px', '');
+    document.getElementById('cor-bordas').value = config.corBordas.replace('px', '');
+    
+    // Aplicar tipografia
+    document.getElementById('fonte-principal').value = config.fontePrincipal.replace('px', '');
+    document.getElementById('tamanho-fonte').value = parseInt(config.tamanhoFonte);
+    document.getElementById('altura-linha').value = config.alturaLinha.replace('px', '');
+    document.getElementById('peso-titulos').value = config.pesoTitulos.replace('px', '');
+    document.getElementById('espacamento-letras').value = parseInt(config.espacamentoLetras);
+    
+    // Aplicar layout
+    document.getElementById('border-radius').value = parseInt(config.borderRadius);
+    document.getElementById('border-width').value = parseInt(config.borderWidth);
+    document.getElementById('card-padding').value = parseInt(config.cardPadding);
+    document.getElementById('element-margin').value = parseInt(config.elementMargin);
+    document.getElementById('shadow-intensity').value = parseInt(config.shadowIntensity);
+    document.getElementById('shadow-opacity').value = config.shadowOpacity.replace('px', '');
+    
+    // Atualizar campos de texto correspondentes
+    document.querySelectorAll('input[type="text"]').forEach(input => {
+        if (input.id.endsWith('-text')) {
+            const colorId = input.id.replace('-text', '');
+            const colorInput = document.getElementById(colorId);
+            if (colorInput) {
+                input.value = colorInput.value;
+            }
+        }
+    });
+    
+    // Atualizar displays de ranges
+    document.querySelectorAll('.range-display').forEach(display => {
+        const rangeId = display.id.replace('-value', '');
+        const rangeInput = document.getElementById(rangeId);
+        if (rangeInput) {
+            const suffix = display.textContent.replace(/[\d.-]/g, '');
+            display.textContent = rangeInput.value + suffix;
+        }
+    });
+    
+    updatePreview();
+}
+
+// Funções de importação/exportação e temas predefinidos
+function toggleImportacao() {
+    const section = document.getElementById('importacao-section');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+async function exportarTema() {
+    try {
+        const configuracoes = coletarTodasConfiguracoes();
+        
+        // Criar objeto para exportação
+        const temaExport = {
+            nome: 'Tema Personalizado Legal Pro',
+            versao: '1.0',
+            rota: 'global',
+            configuracoes: configuracoes,
+            exportado_em: new Date().toISOString()
+        };
+        
+        // Criar e baixar arquivo
+        const blob = new Blob([JSON.stringify(temaExport, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tema_legal_pro_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Tema exportado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao exportar tema:', error);
+        alert('Erro ao exportar tema: ' + error.message);
+    }
+}
+
+async function importarTema() {
+    const fileInput = document.getElementById('file-import');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Selecione um arquivo JSON para importar');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/temas/importar', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            // Aplicar configurações importadas
+            aplicarConfiguracao(result.configuracoes);
+            updatePreview();
+            toggleImportacao(); // Fechar seção de importação
+        } else {
+            alert('Erro ao importar: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao importar tema:', error);
+        alert('Erro ao importar tema: ' + error.message);
+    }
+}
+
+async function carregarTemaPredefinido(temaId) {
+    try {
+        const response = await fetch('/api/temas/predefinidos');
+        const result = await response.json();
+        
+        if (result.success && result.temas[temaId]) {
+            const tema = result.temas[temaId];
+            
+            if (confirm(`Carregar o tema "${tema.nome}"?\n${tema.descricao}`)) {
+                aplicarConfiguracao(tema.configuracoes);
+                updatePreview();
+                alert(`Tema "${tema.nome}" carregado com sucesso!`);
+            }
+        } else {
+            alert('Tema não encontrado');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar tema predefinido:', error);
+        alert('Erro ao carregar tema: ' + error.message);
+    }
+}
+
+function aplicarConfiguracao(config) {
+    // Aplicar cores
+    Object.keys(config).forEach(key => {
+        const elemento = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+        if (elemento) {
+            elemento.value = config[key];
+        }
+    });
+    
+    // Atualizar displays de ranges
+    document.querySelectorAll('.range-display').forEach(display => {
+        const rangeId = display.id.replace('-value', '');
+        const rangeInput = document.getElementById(rangeId);
+        if (rangeInput) {
+            const suffix = display.textContent.replace(/[\d.-]/g, '');
+            display.textContent = rangeInput.value + suffix;
+        }
+    });
+}
+
+async function resetarTemaAPI() {
+    try {
+        const response = await fetch('/api/temas/resetar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ rota: 'global' })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            aplicarConfiguracao(result.configuracoes);
+            updatePreview();
+            alert(result.message);
+        } else {
+            alert('Erro ao resetar: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao resetar tema:', error);
+        alert('Erro ao resetar tema: ' + error.message);
+    }
+}
+
+// Sistema de auto-salvamento
+let autoSaveInterval;
+
+function iniciarAutoSave() {
+    autoSaveInterval = setInterval(() => {
+        try {
+            const configuracoes = coletarTodasConfiguracoes();
+            
+            // Debug: verificar se há valores problemáticos
+            console.log('Debug configurações:', configuracoes);
+            
+            // Validar cada valor
+            Object.keys(configuracoes).forEach(key => {
+                const valor = configuracoes[key];
+                if (valor === undefined || valor === null) {
+                    console.warn(`Valor problemático encontrado: ${key} = ${valor}`);
+                    configuracoes[key] = '';
+                }
+                if (typeof valor === 'string' && valor.includes('undefined')) {
+                    console.warn(`String com undefined encontrada: ${key} = ${valor}`);
+                    configuracoes[key] = valor.replace('undefined', '');
+                }
+            });
+            
+            // Tentar criar JSON
+            const configString = JSON.stringify(configuracoes);
+            console.log('JSON criado com sucesso, tamanho:', configString.length);
+            
+            const css = generateCustomCSS();
+            localStorage.setItem('customTheme', css);
+            localStorage.setItem('customThemeConfig', configString);
+            console.log('Tema auto-salvo');
+        } catch (error) {
+            console.error('Erro no auto-save:', error);
+            console.error('Configurações problemáticas:', coletarTodasConfiguracoes());
+        }
+    }, 30000); // Auto-salva a cada 30 segundos
+}
+
+function pararAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+    }
+}
+
+// Aplicar tema salvo e inicializar sistema
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar tema salvo
+    const savedTheme = localStorage.getItem('customTheme');
+    if (savedTheme) {
+        aplicarCSSGlobal(savedTheme);
+    }
+    
+    // Carregar configurações salvas
+    const savedConfig = localStorage.getItem('customThemeConfig');
+    if (savedConfig) {
+        try {
+            const config = JSON.parse(savedConfig);
+            aplicarConfiguracoes(config);
+        } catch (e) {
+            console.log('Configuração salva inválida, usando padrões');
+        }
+    }
+    
+    // Iniciar auto-salvamento
+    iniciarAutoSave();
+    
+    // Adicionar botão de importação
+    const toolbar = document.querySelector('.d-flex.justify-content-between .d-flex');
+    if (toolbar) {
+        const importBtn = document.createElement('button');
+        importBtn.className = 'btn btn-outline-primary';
+        importBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Importar';
+        importBtn.onclick = importarTema;
+        toolbar.appendChild(importBtn);
+    }
+    
+    // Adicionar indicador de tempo real
+    const realTimeIndicator = document.createElement('div');
+    realTimeIndicator.id = 'realtime-indicator';
+    realTimeIndicator.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 102, 204, 0.9);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        z-index: 9999;
+        display: none;
+    `;
+    realTimeIndicator.innerHTML = '<i class="fas fa-circle me-2" style="color: #00ff00;"></i>Modo Tempo Real Ativo';
+    document.body.appendChild(realTimeIndicator);
+});
+
+// Mostrar/ocultar indicador de tempo real
+function toggleRealTimeIndicator(show) {
+    const indicator = document.getElementById('realtime-indicator');
+    if (indicator) {
+        indicator.style.display = show ? 'block' : 'none';
+    }
+}
+
+// Função para configurar controles específicos dos templates jurídicos
+function setupJuridicoPreviewControls() {
+    const juridicoControls = [
+        'juridico-preview-bg',
+        'juridico-preview-text', 
+        'juridico-preview-border',
+        'juridico-preview-area-bg',
+        'juridico-preview-area-text',
+        'juridico-placeholder'
+    ];
+    
+    juridicoControls.forEach(controlId => {
+        const control = document.getElementById(controlId);
+        if (control) {
+            control.addEventListener('input', function() {
+                aplicarCoresPreviewJuridico();
+                updatePreview();
+            });
+        }
+    });
+    
+    // Aplicar configurações iniciais
+    setTimeout(() => {
+        aplicarCoresPreviewJuridico();
+    }, 100);
+}
+
+// Função para aplicar cores da área de pré-visualização em tempo real
+function aplicarCoresPreviewJuridico() {
+    const previewAreaBg = document.getElementById('juridico-preview-area-bg')?.value || '#e9ecef';
+    const previewAreaText = document.getElementById('juridico-preview-area-text')?.value || '#495057';
+    const previewBg = document.getElementById('juridico-preview-bg')?.value || '#ffffff';
+    const previewText = document.getElementById('juridico-preview-text')?.value || '#000000';
+    const previewBorder = document.getElementById('juridico-preview-border')?.value || '#dee2e6';
+    
+    // Aplicar estilos na área de pré-visualização principal
+    const previewContent = document.querySelector('.preview-content');
+    if (previewContent) {
+        previewContent.style.backgroundColor = previewAreaBg;
+        previewContent.style.color = previewAreaText;
+    }
+    
+    // Aplicar estilos nas abas de pré-visualização
+    const previewTabs = document.querySelectorAll('.preview-tab-content');
+    previewTabs.forEach(tab => {
+        tab.style.backgroundColor = previewAreaBg;
+        tab.style.color = previewAreaText;
+    });
+    
+    // Aplicar estilos nos cards de pré-visualização
+    const previewCards = document.querySelectorAll('.preview-card');
+    previewCards.forEach(card => {
+        card.style.backgroundColor = previewBg;
+        card.style.color = previewText;
+        card.style.borderColor = previewBorder;
+    });
+    
+    // Aplicar estilos nos elementos dentro dos cards
+    const previewElements = document.querySelectorAll('.preview-card h6, .preview-card label, .preview-card p, .preview-card input, .preview-card .form-control');
+    previewElements.forEach(element => {
+        element.style.color = previewText;
+        if (element.tagName === 'INPUT') {
+            element.style.backgroundColor = previewBg;
+            element.style.borderColor = previewBorder;
+        }
+    });
+    
+    // Aplicar cor do texto especificamente para todos os elementos de texto
+    const allTextElements = document.querySelectorAll('.preview-template-juridico *');
+    allTextElements.forEach(element => {
+        if (element.nodeType === Node.ELEMENT_NODE) {
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.display !== 'none') {
+                element.style.color = previewText + ' !important';
+            }
+        }
+    });
+}
+
+// Função para gerar CSS específico dos templates jurídicos
+function generateJuridicoCSS(config) {
+    const previewBg = document.getElementById('juridico-preview-bg')?.value || '#ffffff';
+    const previewText = document.getElementById('juridico-preview-text')?.value || '#000000';
+    const previewBorder = document.getElementById('juridico-preview-border')?.value || '#dee2e6';
+    const placeholderColor = document.getElementById('juridico-placeholder')?.value || '#6c757d';
+    
+    const fontFamily = document.getElementById('juridico-font-family')?.value || 'Times New Roman';
+    const fontSize = document.getElementById('juridico-font-size')?.value || '14';
+    const lineHeight = document.getElementById('juridico-line-height')?.value || '1.6';
+    const fontWeight = document.getElementById('juridico-font-weight')?.value || '400';
+    const letterSpacing = document.getElementById('juridico-letter-spacing')?.value || '0';
+    
+    const cardBg = document.getElementById('juridico-card-bg')?.value || '#f8f9fa';
+    const cardText = document.getElementById('juridico-card-text')?.value || '#212529';
+    const inputBg = document.getElementById('juridico-input-bg')?.value || '#ffffff';
+    const inputText = document.getElementById('juridico-input-text')?.value || '#495057';
+    const inputBorder = document.getElementById('juridico-input-border')?.value || '#ced4da';
+    const inputFocus = document.getElementById('juridico-input-focus')?.value || '#0066cc';
+    
+    const btnPrimary = document.getElementById('juridico-btn-primary')?.value || '#0066cc';
+    const btnSecondary = document.getElementById('juridico-btn-secondary')?.value || '#6c757d';
+    const btnSuccess = document.getElementById('juridico-btn-success')?.value || '#1f5981';
+    const btnDanger = document.getElementById('juridico-btn-danger')?.value || '#dc3545';
+    
+    const alertInfo = document.getElementById('juridico-alert-info')?.value || '#00734d';
+    const alertInfoText = document.getElementById('juridico-alert-info-text')?.value || '#ffffff';
+    const alertSuccess = document.getElementById('juridico-alert-success')?.value || '#d4edda';
+    const alertError = document.getElementById('juridico-alert-error')?.value || '#f8d7da';
+
+    return `
+    /* ====================================
+       TEMPLATES JURÍDICOS - CONTROLE TOTAL
+       ==================================== */
+    
+    /* Área de Pré-visualização dos Templates */
+    .preview-juridico-container,
+    .preview-juridico-container *,
+    #previewDocumento.preview-juridico-container,
+    #previewDocumento.preview-juridico-container *,
+    #previaDocumento.preview-juridico-container,
+    #previaDocumento.preview-juridico-container * {
+        background-color: ${previewBg} !important;
+        color: ${previewText} !important;
+        border-color: ${previewBorder} !important;
+        font-family: "${fontFamily}", serif !important;
+        font-size: ${fontSize}px !important;
+        line-height: ${lineHeight} !important;
+        font-weight: ${fontWeight} !important;
+        letter-spacing: ${letterSpacing}px !important;
+    }
+    
+    /* Placeholder dos Templates */
+    .preview-placeholder,
+    .preview-placeholder * {
+        color: ${placeholderColor} !important;
+        font-style: italic !important;
+    }
+    
+    /* Cards dos Formulários Jurídicos */
+    .juridico-card,
+    .template-card,
+    .documento-card {
+        background-color: ${cardBg} !important;
+        color: ${cardText} !important;
+        border: 1px solid ${previewBorder} !important;
+        border-radius: 8px !important;
+        padding: 1rem !important;
+    }
+    
+    /* Inputs dos Formulários Jurídicos */
+    .juridico-form input,
+    .juridico-form textarea,
+    .juridico-form select,
+    .template-form input,
+    .template-form textarea,
+    .template-form select {
+        background-color: ${inputBg} !important;
+        color: ${inputText} !important;
+        border: 1px solid ${inputBorder} !important;
+        border-radius: 4px !important;
+        padding: 0.5rem !important;
+        font-family: "${fontFamily}", serif !important;
+        font-size: ${fontSize}px !important;
+    }
+    
+    .juridico-form input:focus,
+    .juridico-form textarea:focus,
+    .juridico-form select:focus,
+    .template-form input:focus,
+    .template-form textarea:focus,
+    .template-form select:focus {
+        border-color: ${inputFocus} !important;
+        box-shadow: 0 0 0 0.2rem ${inputFocus}25 !important;
+        outline: none !important;
+    }
+    
+    /* Botões dos Templates Jurídicos */
+    .juridico-btn-primary,
+    .template-btn-primary {
+        background-color: ${btnPrimary} !important;
+        border-color: ${btnPrimary} !important;
+        color: white !important;
+    }
+    
+    .juridico-btn-secondary,
+    .template-btn-secondary {
+        background-color: ${btnSecondary} !important;
+        border-color: ${btnSecondary} !important;
+        color: white !important;
+    }
+    
+    .juridico-btn-success,
+    .template-btn-success {
+        background-color: ${btnSuccess} !important;
+        border-color: ${btnSuccess} !important;
+        color: white !important;
+    }
+    
+    .juridico-btn-danger,
+    .template-btn-danger {
+        background-color: ${btnDanger} !important;
+        border-color: ${btnDanger} !important;
+        color: white !important;
+    }
+    
+    /* Alertas dos Templates Jurídicos */
+    .juridico-alert-info,
+    .template-alert-info {
+        background-color: ${alertInfo} !important;
+        color: ${alertInfoText} !important;
+        border: 1px solid ${alertInfo} !important;
+        border-radius: 4px !important;
+        padding: 0.75rem 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .juridico-alert-success,
+    .template-alert-success {
+        background-color: ${alertSuccess} !important;
+        color: #155724 !important;
+        border: 1px solid #c3e6cb !important;
+    }
+    
+    .juridico-alert-error,
+    .template-alert-error {
+        background-color: ${alertError} !important;
+        color: #721c24 !important;
+        border: 1px solid #f5c6cb !important;
+    }
+    
+    /* Tipografia dos Documentos Jurídicos */
+    .documento-juridico h1,
+    .documento-juridico h2,
+    .documento-juridico h3,
+    .documento-juridico h4,
+    .documento-juridico h5,
+    .documento-juridico h6 {
+        font-family: "${fontFamily}", serif !important;
+        font-weight: ${fontWeight} !important;
+        color: ${previewText} !important;
+        letter-spacing: ${letterSpacing}px !important;
+    }
+    
+    .documento-juridico p,
+    .documento-juridico div,
+    .documento-juridico span {
+        font-family: "${fontFamily}", serif !important;
+        font-size: ${fontSize}px !important;
+        line-height: ${lineHeight} !important;
+        color: ${previewText} !important;
+        letter-spacing: ${letterSpacing}px !important;
+    }
+    
+    /* Pré-visualização em tempo real */
+    .preview-template-juridico .preview-card {
+        background-color: ${cardBg} !important;
+        color: ${cardText} !important;
+        border: 1px solid ${previewBorder} !important;
+    }
+    
+    .preview-template-juridico .preview-documento {
+        background-color: ${previewBg} !important;
+        color: ${previewText} !important;
+        border: 1px solid ${previewBorder} !important;
+    }
+    
+    .preview-template-juridico .documento-preview {
+        font-family: "${fontFamily}", serif !important;
+        font-size: ${fontSize}px !important;
+        line-height: ${lineHeight} !important;
+        color: ${previewText} !important;
+        letter-spacing: ${letterSpacing}px !important;
+    }
+    
+    /* Override para garantir aplicação */
+    [data-juridico="true"] * {
+        font-family: "${fontFamily}", serif !important;
+        font-size: ${fontSize}px !important;
+        line-height: ${lineHeight} !important;
+        color: ${previewText} !important;
+    }
+    
+    /* Garantir visibilidade do texto em todos os elementos de preview */
+    .preview-template-juridico * {
+        color: ${previewText} !important;
+    }
+    
+    .preview-template-juridico h6,
+    .preview-template-juridico label,
+    .preview-template-juridico p,
+    .preview-template-juridico span,
+    .preview-template-juridico div {
+        color: ${previewText} !important;
+        font-family: "${fontFamily}", serif !important;
+    }
+    `;
+}
+
+// Função para aplicar configurações dos templates jurídicos em tempo real
+function aplicarTemasJuridicos() {
+    const previewContainer = document.querySelector('.preview-template-juridico');
+    if (previewContainer) {
+        const css = generateJuridicoCSS();
+        updatePageSpecificCSS(css);
+        
+        // Aplicar estilos inline para garantir aplicação imediata
+        const previewDoc = previewContainer.querySelector('.documento-preview');
+        if (previewDoc) {
+            const fontFamily = document.getElementById('juridico-font-family')?.value || 'Times New Roman';
+            const fontSize = document.getElementById('juridico-font-size')?.value || '14';
+            const lineHeight = document.getElementById('juridico-line-height')?.value || '1.6';
+            const previewText = document.getElementById('juridico-preview-text')?.value || '#000000';
+            const letterSpacing = document.getElementById('juridico-letter-spacing')?.value || '0';
+            
+            previewDoc.style.fontFamily = `"${fontFamily}", serif`;
+            previewDoc.style.fontSize = `${fontSize}px`;
+            previewDoc.style.lineHeight = lineHeight;
+            previewDoc.style.color = previewText;
+            previewDoc.style.letterSpacing = `${letterSpacing}px`;
+        }
+    }
+}
+
+// Função para seleção de configuração
+function selecionarConfiguracao(pagina) {
+    currentPage = pagina;
+    
+    // Atualizar botões ativos
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Mostrar/ocultar configurações
+    const configs = document.querySelectorAll('.configuracao-pagina');
+    configs.forEach(config => {
+        config.classList.add('d-none');
+    });
+    
+    const targetConfig = document.getElementById('config-' + pagina);
+    if (targetConfig) {
+        targetConfig.classList.remove('d-none');
+    }
+    
+    // Aplicar tema específico da página se o modo tempo real estiver ativo
+    if (isRealTimeActive) {
+        aplicarTemaEspecificoPagina();
+    }
+}
+
+// Função para seleção de página específica
+function selecionarPaginaEspecifica(pagina, element) {
+    currentPage = pagina;
+    
+    // Atualizar botões ativos
+    const buttons = document.querySelectorAll('.list-group-item');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+    
+    // Atualizar título
+    const titulos = {
+        'dashboard': 'Personalizar Dashboard',
+        'assistente': 'Personalizar Assistente Penal',
+        'juridico': 'Personalizar Templates Jurídicos',
+        'historico': 'Personalizar Histórico',
+        'perfil': 'Personalizar Perfil',
+        'admin': 'Personalizar Administração',
+        'login': 'Personalizar Login'
+    };
+    
+    const tituloElement = document.getElementById('titulo-pagina-especifica');
+    if (tituloElement) {
+        tituloElement.textContent = titulos[pagina] || 'Personalizar Página';
+    }
+    
+    // Mostrar/ocultar configurações
+    const configs = document.querySelectorAll('.configuracao-pagina');
+    configs.forEach(config => {
+        config.classList.add('d-none');
+    });
+    
+    const targetConfig = document.getElementById('config-' + pagina);
+    if (targetConfig) {
+        targetConfig.classList.remove('d-none');
+    }
+    
+    // Aplicar tema específico da página se o modo tempo real estiver ativo
+    if (isRealTimeActive) {
+        aplicarTemaEspecificoPagina();
+    }
+}
+
+// Funções específicas para templates jurídicos
+function salvarTemplatesJuridicos() {
+    const configuracoes = coletarConfiguracaoJuridica();
+    
+    fetch('/temas/salvar-configuracao-completa', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            juridico: configuracoes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Configurações dos templates jurídicos salvas com sucesso!', 'success');
+        } else {
+            showNotification('Erro ao salvar configurações: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showNotification('Erro ao salvar configurações', 'danger');
+    });
+}
+
+function resetarTemplatesJuridicos() {
+    if (confirm('Tem certeza que deseja resetar todas as configurações dos templates jurídicos?')) {
+        // Valores padrão
+        document.getElementById('juridico-preview-bg').value = '#ffffff';
+        document.getElementById('juridico-preview-text').value = '#000000';
+        document.getElementById('juridico-preview-border').value = '#dee2e6';
+        document.getElementById('juridico-placeholder').value = '#6c757d';
+        
+        document.getElementById('juridico-font-family').value = 'Times New Roman';
+        document.getElementById('juridico-font-size').value = '14';
+        document.getElementById('juridico-line-height').value = '1.6';
+        document.getElementById('juridico-font-weight').value = '400';
+        document.getElementById('juridico-letter-spacing').value = '0';
+        
+        document.getElementById('juridico-card-bg').value = '#f8f9fa';
+        document.getElementById('juridico-card-text').value = '#212529';
+        document.getElementById('juridico-input-bg').value = '#ffffff';
+        document.getElementById('juridico-input-text').value = '#495057';
+        document.getElementById('juridico-input-border').value = '#ced4da';
+        document.getElementById('juridico-input-focus').value = '#0066cc';
+        
+        document.getElementById('juridico-btn-primary').value = '#0066cc';
+        document.getElementById('juridico-btn-secondary').value = '#6c757d';
+        document.getElementById('juridico-btn-success').value = '#1f5981';
+        document.getElementById('juridico-btn-danger').value = '#dc3545';
+        
+        document.getElementById('juridico-alert-info').value = '#00734d';
+        document.getElementById('juridico-alert-info-text').value = '#ffffff';
+        document.getElementById('juridico-alert-success').value = '#d4edda';
+        document.getElementById('juridico-alert-error').value = '#f8d7da';
+        
+        aplicarTemasJuridicos();
+        showNotification('Configurações dos templates jurídicos resetadas!', 'success');
+    }
+}
+
+function exportarTemplatesJuridicos() {
+    const configuracoes = coletarConfiguracaoJuridica();
+    const dataStr = JSON.stringify(configuracoes, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = 'templates_juridicos_config.json';
+    link.click();
+    
+    showNotification('Configurações dos templates jurídicos exportadas!', 'success');
+}
+
+function aplicarTemasJuridicos() {
+    const config = coletarConfiguracaoJuridica();
+    
+    // Aplicar na pré-visualização do card
+    const previewCard = document.querySelector('.preview-card');
+    if (previewCard) {
+        previewCard.style.backgroundColor = config.card_bg;
+        previewCard.style.color = config.card_text;
+        previewCard.style.borderColor = config.preview_border;
+    }
+    
+    // Aplicar na área do documento
+    const previewDocumento = document.querySelector('.preview-documento');
+    if (previewDocumento) {
+        previewDocumento.style.backgroundColor = config.preview_bg;
+        previewDocumento.style.borderColor = config.preview_border;
+    }
+    
+    // Aplicar tipografia do documento
+    const documentoPreview = document.querySelector('.documento-preview');
+    if (documentoPreview) {
+        documentoPreview.style.fontFamily = config.font_family;
+        documentoPreview.style.fontSize = config.font_size + 'px';
+        documentoPreview.style.lineHeight = config.line_height;
+        documentoPreview.style.fontWeight = config.font_weight;
+        documentoPreview.style.letterSpacing = config.letter_spacing + 'px';
+        documentoPreview.style.color = config.preview_text;
+    }
+    
+    // Aplicar estilos nos inputs da pré-visualização
+    const previewInputs = document.querySelectorAll('.preview-card input, .preview-card select');
+    previewInputs.forEach(input => {
+        input.style.backgroundColor = config.input_bg;
+        input.style.color = config.input_text;
+        input.style.borderColor = config.input_border;
+    });
+    
+    // Aplicar estilos nos botões da pré-visualização
+    const btnPrimary = document.querySelector('.preview-card .btn-primary');
+    if (btnPrimary) {
+        btnPrimary.style.backgroundColor = config.btn_primary;
+        btnPrimary.style.borderColor = config.btn_primary;
+    }
+    
+    const btnSecondary = document.querySelector('.preview-card .btn-secondary');
+    if (btnSecondary) {
+        btnSecondary.style.backgroundColor = config.btn_secondary;
+        btnSecondary.style.borderColor = config.btn_secondary;
+    }
+    
+    // Aplicar nos alertas
+    const alertInfo = document.querySelector('.alert-info');
+    if (alertInfo) {
+        alertInfo.style.backgroundColor = config.alert_info;
+        alertInfo.style.color = config.alert_info_text;
+        alertInfo.style.borderColor = config.alert_info;
+    }
+    
+    // Gerar CSS dinâmico para aplicar globalmente nos templates jurídicos
+    let cssRules = `
+        /* Estilos para Templates Jurídicos */
+        .juridico-preview-area {
+            background-color: ${config.preview_bg} !important;
+            color: ${config.preview_text} !important;
+            border-color: ${config.preview_border} !important;
+        }
+        
+        .juridico-documento {
+            font-family: ${config.font_family} !important;
+            font-size: ${config.font_size}px !important;
+            line-height: ${config.line_height} !important;
+            font-weight: ${config.font_weight} !important;
+            letter-spacing: ${config.letter_spacing}px !important;
+            color: ${config.preview_text} !important;
+        }
+        
+        .juridico-form-card {
+            background-color: ${config.card_bg} !important;
+            color: ${config.card_text} !important;
+        }
+        
+        .juridico-input {
+            background-color: ${config.input_bg} !important;
+            color: ${config.input_text} !important;
+            border-color: ${config.input_border} !important;
+        }
+        
+        .juridico-input:focus {
+            border-color: ${config.input_focus} !important;
+            box-shadow: 0 0 0 0.2rem rgba(${hexToRgb(config.input_focus)}, 0.25) !important;
+        }
+        
+        .juridico-btn-primary {
+            background-color: ${config.btn_primary} !important;
+            border-color: ${config.btn_primary} !important;
+        }
+        
+        .juridico-btn-secondary {
+            background-color: ${config.btn_secondary} !important;
+            border-color: ${config.btn_secondary} !important;
+        }
+        
+        .juridico-btn-success {
+            background-color: ${config.btn_success} !important;
+            border-color: ${config.btn_success} !important;
+        }
+        
+        .juridico-btn-danger {
+            background-color: ${config.btn_danger} !important;
+            border-color: ${config.btn_danger} !important;
+        }
+        
+        .juridico-alert-info {
+            background-color: ${config.alert_info} !important;
+            color: ${config.alert_info_text} !important;
+            border-color: ${config.alert_info} !important;
+        }
+        
+        .juridico-alert-success {
+            background-color: ${config.alert_success} !important;
+            border-color: ${config.alert_success} !important;
+        }
+        
+        .juridico-alert-error {
+            background-color: ${config.alert_error} !important;
+            border-color: ${config.alert_error} !important;
+        }
+    `;
+    
+    // Aplicar CSS dinamicamente
+    let existingStyle = document.getElementById('juridico-dynamic-styles');
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+    
+    const style = document.createElement('style');
+    style.id = 'juridico-dynamic-styles';
+    style.textContent = cssRules;
+    document.head.appendChild(style);
+    
+    // Auto-salvar se estiver no modo tempo real
+    if (isRealTimeActive) {
+        salvarTemaAutomatico();
+    }
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? 
+        parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) :
+        '0, 0, 0';
+}
+
+function coletarConfiguracaoJuridica() {
+    return {
+        preview_bg: document.getElementById('juridico-preview-bg').value,
+        preview_text: document.getElementById('juridico-preview-text').value,
+        preview_border: document.getElementById('juridico-preview-border').value,
+        placeholder: document.getElementById('juridico-placeholder').value,
+        
+        font_family: document.getElementById('juridico-font-family').value,
+        font_size: document.getElementById('juridico-font-size').value,
+        line_height: document.getElementById('juridico-line-height').value,
+        font_weight: document.getElementById('juridico-font-weight').value,
+        letter_spacing: document.getElementById('juridico-letter-spacing').value,
+        
+        card_bg: document.getElementById('juridico-card-bg').value,
+        card_text: document.getElementById('juridico-card-text').value,
+        input_bg: document.getElementById('juridico-input-bg').value,
+        input_text: document.getElementById('juridico-input-text').value,
+        input_border: document.getElementById('juridico-input-border').value,
+        input_focus: document.getElementById('juridico-input-focus').value,
+        
+        btn_primary: document.getElementById('juridico-btn-primary').value,
+        btn_secondary: document.getElementById('juridico-btn-secondary').value,
+        btn_success: document.getElementById('juridico-btn-success').value,
+        btn_danger: document.getElementById('juridico-btn-danger').value,
+        
+        alert_info: document.getElementById('juridico-alert-info').value,
+        alert_info_text: document.getElementById('juridico-alert-info-text').value,
+        alert_success: document.getElementById('juridico-alert-success').value,
+        alert_error: document.getElementById('juridico-alert-error').value
+    };
+}
+
+// Variáveis globais para o editor
+let modoAtual = 'visualizar';
+let abaAtual = 'formulario';
+
+// Funções para alternar modos de visualização
+function alternarModoPreview(modo) {
+    modoAtual = modo;
+    
+    // Atualizar botões ativos
+    document.querySelectorAll('.btn-group button').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Ocultar todos os modos
+    document.getElementById('modo-visualizacao').style.display = 'none';
+    document.getElementById('modo-edicao').style.display = 'none';
+    document.getElementById('modo-sincronizado').style.display = 'none';
+    
+    // Mostrar modo selecionado
+    switch(modo) {
+        case 'visualizar':
+            document.getElementById('modo-visualizacao').style.display = 'block';
+            document.getElementById('status-preview').textContent = 'Modo: Visualização';
+            break;
+        case 'editar':
+            document.getElementById('modo-edicao').style.display = 'block';
+            document.getElementById('status-preview').textContent = 'Modo: Edição';
+            inicializarEditor();
+            break;
+        case 'sincronizado':
+            document.getElementById('modo-sincronizado').style.display = 'block';
+            document.getElementById('status-preview').textContent = 'Modo: Sincronizado';
+            inicializarEditorSincronizado();
+            break;
+    }
+}
+
+// Função para alternar entre abas
+function showPreviewTab(aba) {
+    abaAtual = aba;
+    
+    // Atualizar abas ativas
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Ocultar todo conteúdo das abas
+    document.querySelectorAll('.preview-tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('active');
+    });
+    
+    // Mostrar aba selecionada
+    const targetTab = document.getElementById('preview-tab-' + aba);
+    if (targetTab) {
+        targetTab.style.display = 'block';
+        targetTab.classList.add('active');
+    }
+}
+
+// Função para atualizar documento baseado no formulário
+function atualizarDocumento() {
+    const inputs = document.querySelectorAll('#preview-tab-formulario input, #preview-tab-formulario select');
+    const valores = {};
+    
+    inputs.forEach(input => {
+        const label = input.previousElementSibling;
+        if (label && label.textContent) {
+            const key = label.textContent.replace(':', '').toLowerCase();
+            valores[key] = input.value;
+        }
+    });
+    
+    // Atualizar campos específicos no documento
+    const docProcesso = document.getElementById('doc-processo');
+    const docRequerente = document.getElementById('doc-requerente');
+    const docRequerido = document.getElementById('doc-requerido');
+    const docTipo = document.getElementById('doc-tipo');
+    
+    if (docProcesso && valores['processo número']) {
+        docProcesso.textContent = valores['processo número'];
+    }
+    if (docRequerente && valores['requerente']) {
+        docRequerente.textContent = valores['requerente'];
+    }
+    if (docRequerido && valores['requerido']) {
+        docRequerido.textContent = valores['requerido'];
+    }
+    if (docTipo && valores['tipo de ação']) {
+        docTipo.textContent = valores['tipo de ação'].toUpperCase();
+    }
+}
+
+// Função para inicializar editor de texto
+function inicializarEditor() {
+    const editor = document.getElementById('editor-documento');
+    const visualizacao = document.querySelector('.documento-preview');
+    
+    if (editor && visualizacao) {
+        editor.value = visualizacao.innerText || visualizacao.textContent;
+    }
+}
+
+// Função para sincronizar edição com visualização
+function sincronizarEdicao() {
+    const editor = document.getElementById('editor-documento');
+    const visualizacao = document.querySelector('.documento-preview');
+    
+    if (editor && visualizacao) {
+        // Converter texto simples para HTML básico
+        const texto = editor.value;
+        const textoFormatado = texto
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p>')
+            .replace(/$/, '</p>');
+        
+        visualizacao.innerHTML = textoFormatado;
+    }
+}
+
+// Função para inicializar editor sincronizado
+function inicializarEditorSincronizado() {
+    const editor = document.getElementById('editor-sincronizado');
+    const visualizacao = document.querySelector('.documento-preview');
+    
+    if (editor && visualizacao) {
+        editor.value = visualizacao.innerText || visualizacao.textContent;
+        sincronizarVisualizacao();
+    }
+}
+
+// Função para sincronizar visualização em tempo real
+function sincronizarVisualizacao() {
+    const editor = document.getElementById('editor-sincronizado');
+    const preview = document.getElementById('preview-sincronizado');
+    
+    if (editor && preview) {
+        const texto = editor.value;
+        const textoFormatado = texto
+            .replace(/\n\n/g, '</p><p style="text-align: justify;">')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p style="text-align: justify;">')
+            .replace(/$/, '</p>');
+        
+        preview.innerHTML = textoFormatado;
+        preview.className = 'border p-2 juridico-preview-area juridico-documento';
+    }
+}
+
+// Funções de ação dos botões
+function gerarDocumento() {
+    showNotification('Documento gerado com base no formulário!', 'success');
+    atualizarDocumento();
+}
+
+function limparFormulario() {
+    if (confirm('Tem certeza que deseja limpar todo o formulário?')) {
+        document.querySelectorAll('#preview-tab-formulario input').forEach(input => {
+            if (input.type !== 'text' || input.value !== input.defaultValue) {
+                input.value = '';
+            }
+        });
+        document.querySelectorAll('#preview-tab-formulario select').forEach(select => {
+            select.selectedIndex = 0;
+        });
+        showNotification('Formulário limpo!', 'info');
+    }
+}
+
+function salvarRascunho() {
+    const config = coletarConfiguracaoJuridica();
+    const dadosFormulario = {};
+    
+    document.querySelectorAll('#preview-tab-formulario input, #preview-tab-formulario select').forEach(input => {
+        const label = input.previousElementSibling;
+        if (label && label.textContent) {
+            const key = label.textContent.replace(':', '').toLowerCase();
+            dadosFormulario[key] = input.value;
+        }
+    });
+    
+    const rascunho = {
+        configuracao: config,
+        formulario: dadosFormulario,
+        timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('rascunho_juridico', JSON.stringify(rascunho));
+    showNotification('Rascunho salvo localmente!', 'success');
+}
+
+function expandirEditor(tipo) {
+    showNotification('Funcionalidade de expansão será implementada em breve!', 'info');
+}
+
+function exportarDocumento() {
+    const visualizacao = document.querySelector('.documento-preview');
+    if (visualizacao) {
+        const conteudo = visualizacao.innerHTML;
+        const blob = new Blob([`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Documento Jurídico</title>
+                <style>
+                    body { font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; }
+                    p { text-align: justify; margin: 1em 0; }
+                </style>
+            </head>
+            <body>${conteudo}</body>
+            </html>
+        `], { type: 'text/html' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'documento_juridico.html';
+        link.click();
+        
+        showNotification('Documento exportado!', 'success');
+    }
+}
+
+// Event listeners para templates jurídicos
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar listeners para todos os controles dos templates jurídicos
+    const juridicoControls = [
+        'juridico-preview-bg', 'juridico-preview-text', 'juridico-preview-border', 'juridico-placeholder',
+        'juridico-font-family', 'juridico-font-size', 'juridico-line-height', 'juridico-font-weight', 'juridico-letter-spacing',
+        'juridico-card-bg', 'juridico-card-text', 'juridico-input-bg', 'juridico-input-text', 'juridico-input-border', 'juridico-input-focus',
+        'juridico-btn-primary', 'juridico-btn-secondary', 'juridico-btn-success', 'juridico-btn-danger',
+        'juridico-alert-info', 'juridico-alert-info-text', 'juridico-alert-success', 'juridico-alert-error'
+    ];
+    
+    juridicoControls.forEach(controlId => {
+        const control = document.getElementById(controlId);
+        if (control) {
+            control.addEventListener('change', aplicarTemasJuridicos);
+            control.addEventListener('input', aplicarTemasJuridicos);
+        }
+    });
+    
+    // Carregar rascunho salvo se existir
+    const rascunhoSalvo = localStorage.getItem('rascunho_juridico');
+    if (rascunhoSalvo) {
+        try {
+            const rascunho = JSON.parse(rascunhoSalvo);
+            console.log('Rascunho encontrado:', rascunho);
+        } catch (e) {
+            console.log('Erro ao carregar rascunho:', e);
+        }
+    }
+});
+</script>
+{% endblock %}

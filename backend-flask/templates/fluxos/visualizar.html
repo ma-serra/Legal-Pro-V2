@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+{% block title %}{{ fluxo.nome }} - Fluxo Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('fluxos_principal') }}" class="text-decoration-none">Fluxos Jurídicos</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ fluxo.nome }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1"><i class="fas fa-project-diagram me-2"></i>{{ fluxo.nome }}</h4>
+                        <p class="mb-0 small opacity-75">{{ fluxo.descricao or "Sem descrição" }}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('fluxos_editor', fluxo_id=fluxo.id) }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-edit me-1"></i> Editar
+                        </a>
+                        <button class="btn btn-success btn-sm" onclick="executarFluxo()">
+                            <i class="fas fa-play me-1"></i> Executar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="text-primary">Visualização do Fluxo</h5>
+                            <div id="fluxo-canvas" class="border rounded p-3" style="min-height: 400px; background-color: #f8f9fa;">
+                                <div class="text-center text-muted mt-5">
+                                    <i class="fas fa-sitemap fa-3x mb-3"></i>
+                                    <h6>Carregando visualização do fluxo...</h6>
+                                    <div id="componentes-info" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Detalhes do Fluxo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">ID do Fluxo</label>
+                                        <div class="fw-bold">{{ fluxo.id }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Data de Criação</label>
+                                        <div class="fw-bold">{{ fluxo.data_criacao.strftime('%d/%m/%Y %H:%M') if fluxo.data_criacao else 'N/A' }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Última Atualização</label>
+                                        <div class="fw-bold">{{ fluxo.data_atualizacao.strftime('%d/%m/%Y %H:%M') if fluxo.data_atualizacao else 'N/A' }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Status</label>
+                                        <div>
+                                            {% if fluxo.ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inativo</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Componentes</label>
+                                        <div class="fw-bold" id="total-componentes">{{ fluxo.agentes|length if fluxo.agentes else 0 }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Conexões</label>
+                                        <div class="fw-bold" id="total-conexoes">{{ fluxo.conexoes|length if fluxo.conexoes else 0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Painel de Execução -->
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-play-circle me-2"></i>Executar Fluxo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Tipo de Input -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Tipo de Entrada</label>
+                                        <div class="btn-group w-100" role="group">
+                                            <input type="radio" class="btn-check" name="tipo-input" id="tipo-texto" value="texto" checked onclick="toggleInputType('texto')">
+                                            <label class="btn btn-outline-primary" for="tipo-texto">
+                                                <i class="fas fa-keyboard me-1"></i> Texto
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="tipo-input" id="tipo-arquivo" value="arquivo" onclick="toggleInputType('arquivo')">
+                                            <label class="btn btn-outline-primary" for="tipo-arquivo">
+                                                <i class="fas fa-file-upload me-1"></i> Arquivo
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="tipo-input" id="tipo-tarefa" value="tarefa" onclick="toggleInputType('tarefa')">
+                                            <label class="btn btn-outline-primary" for="tipo-tarefa">
+                                                <i class="fas fa-tasks me-1"></i> Tarefa
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input: Texto -->
+                                    <div id="input-texto-container" class="mb-3">
+                                        <label for="input-texto" class="form-label">Texto Jurídico</label>
+                                        <textarea id="input-texto" class="form-control" rows="5" placeholder="Digite o texto jurídico para processar no fluxo..."></textarea>
+                                        <small class="text-muted">Exemplo: peça processual, contrato, parecer jurídico, etc.</small>
+                                    </div>
+
+                                    <!-- Input: Arquivo -->
+                                    <div id="input-arquivo-container" class="mb-3" style="display: none;">
+                                        <label for="input-arquivo" class="form-label">Upload de Documento</label>
+                                        <input type="file" class="form-control" id="input-arquivo" accept=".pdf,.docx,.txt">
+                                        <small class="text-muted">Formatos aceitos: PDF, DOCX, TXT</small>
+                                    </div>
+
+                                    <!-- Input: Tarefa -->
+                                    <div id="input-tarefa-container" class="mb-3" style="display: none;">
+                                        <label for="input-tarefa" class="form-label">Tarefa Jurídica</label>
+                                        <select id="input-tarefa" class="form-select">
+                                            <option value="">Selecione uma tarefa...</option>
+                                            <option value="analise_contrato">Análise de Contrato</option>
+                                            <option value="revisao_peticao">Revisão de Petição</option>
+                                            <option value="pesquisa_jurisprudencia">Pesquisa de Jurisprudência</option>
+                                            <option value="elaboracao_parecer">Elaboração de Parecer</option>
+                                            <option value="analise_processo">Análise de Processo</option>
+                                        </select>
+                                        <div class="mt-2">
+                                            <label for="tarefa-detalhes" class="form-label small">Detalhes Adicionais</label>
+                                            <textarea id="tarefa-detalhes" class="form-control" rows="3" placeholder="Informações adicionais sobre a tarefa..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="modo-verbose" checked>
+                                            <label class="form-check-label" for="modo-verbose">
+                                                Modo detalhado (exibir resultados intermediários)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success w-100" onclick="executarFluxo()">
+                                        <i class="fas fa-play me-2"></i>Executar Fluxo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Resultados da Execução -->
+                            <div class="card mt-3" id="resultado-card" style="display: none;">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-chart-line me-2"></i>Resultados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="resultado-conteudo">
+                                        <!-- Resultados serão inseridos aqui via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Execução em Tempo Real -->
+    <div class="modal fade" id="execucaoModal" tabindex="-1" aria-labelledby="execucaoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="execucaoModalLabel">Executando Fluxo: {{ fluxo.nome }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Progresso</label>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progress-bar">0%</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Log de Execução</label>
+                        <div id="execution-log" class="border rounded p-3" style="height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+                            <!-- Log será inserido aqui -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados do fluxo passados do backend
+const fluxoData = {
+    id: {{ fluxo.id }},
+    nome: "{{ fluxo.nome }}",
+    descricao: "{{ fluxo.descricao or '' }}",
+    agentes: {{ fluxo.agentes|tojson }},
+    conexoes: {{ fluxo.conexoes|tojson }},
+    configuracao: {{ fluxo.configuracao|tojson }}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar visualização do fluxo
+    carregarVisualizacaoFluxo();
+});
+
+function carregarVisualizacaoFluxo() {
+    const canvas = document.getElementById('fluxo-canvas');
+    const componentesInfo = document.getElementById('componentes-info');
+    
+    if (fluxoData.agentes && fluxoData.agentes.length > 0) {
+        let html = '<div class="row g-3">';
+        
+        fluxoData.agentes.forEach((componente, index) => {
+            const corComponente = getCorComponente(componente.type);
+            html += `
+                <div class="col-12 mb-2">
+                    <div class="card border-${corComponente}" style="max-width: 100%;">
+                        <div class="card-body p-2">
+                            <h6 class="card-title mb-1 text-${corComponente}">
+                                <i class="fas fa-cog me-1"></i>
+                                ${componente.name || 'Componente ' + (index + 1)}
+                            </h6>
+                            <p class="card-text small text-muted mb-0">
+                                Tipo: ${componente.type || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        canvas.innerHTML = html;
+        
+        componentesInfo.innerHTML = `
+            <div class="text-success">
+                <i class="fas fa-check-circle me-1"></i>
+                ${fluxoData.agentes.length} componente(s) configurado(s)
+            </div>
+        `;
+    } else {
+        canvas.innerHTML = `
+            <div class="text-center text-muted mt-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h6>Nenhum componente configurado</h6>
+                <p>Este fluxo não possui componentes configurados.</p>
+                <a href="/fluxos/editor/${fluxoData.id}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i> Editar Fluxo
+                </a>
+            </div>
+        `;
+    }
+}
+
+function getCorComponente(tipo) {
+    const cores = {
+        'entrada': 'primary',
+        'processamento': 'info', 
+        'decisao': 'warning',
+        'saida': 'success',
+        'ai': 'purple',
+        'default': 'secondary'
+    };
+    return cores[tipo] || cores['default'];
+}
+
+function toggleInputType(tipo) {
+    // Esconder todos os containers
+    document.getElementById('input-texto-container').style.display = 'none';
+    document.getElementById('input-arquivo-container').style.display = 'none';
+    document.getElementById('input-tarefa-container').style.display = 'none';
+    
+    // Mostrar o container selecionado
+    if (tipo === 'texto') {
+        document.getElementById('input-texto-container').style.display = 'block';
+    } else if (tipo === 'arquivo') {
+        document.getElementById('input-arquivo-container').style.display = 'block';
+    } else if (tipo === 'tarefa') {
+        document.getElementById('input-tarefa-container').style.display = 'block';
+    }
+}
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function executarFluxo() {
+    const tipoInput = document.querySelector('input[name="tipo-input"]:checked').value;
+    const modoVerbose = document.getElementById('modo-verbose').checked;
+    
+    let inputData = {};
+    
+    // Processar input baseado no tipo selecionado
+    if (tipoInput === 'texto') {
+        const inputTexto = document.getElementById('input-texto').value;
+        if (!inputTexto.trim()) {
+            alert('Por favor, digite um texto para processar.');
+            return;
+        }
+        inputData = {
+            tipo: 'texto',
+            conteudo: inputTexto
+        };
+    } else if (tipoInput === 'arquivo') {
+        const inputArquivo = document.getElementById('input-arquivo').files[0];
+        if (!inputArquivo) {
+            alert('Por favor, selecione um arquivo para processar.');
+            return;
+        }
+        
+        // Ler arquivo como base64
+        const base64 = await readFileAsBase64(inputArquivo);
+        inputData = {
+            tipo: 'arquivo',
+            nome_arquivo: inputArquivo.name,
+            tipo_arquivo: inputArquivo.type,
+            conteudo: base64
+        };
+    } else if (tipoInput === 'tarefa') {
+        const tarefa = document.getElementById('input-tarefa').value;
+        const detalhes = document.getElementById('tarefa-detalhes').value;
+        
+        if (!tarefa) {
+            alert('Por favor, selecione uma tarefa.');
+            return;
+        }
+        
+        inputData = {
+            tipo: 'tarefa',
+            tarefa: tarefa,
+            detalhes: detalhes
+        };
+    }
+    
+    // Mostrar modal de execução
+    const modal = new bootstrap.Modal(document.getElementById('execucaoModal'));
+    modal.show();
+    
+    // Limpar log anterior
+    document.getElementById('execution-log').innerHTML = '';
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('progress-bar').textContent = '0%';
+    
+    // Iniciar execução
+    const dados = {
+        fluxo_id: fluxoData.id,
+        input_data: inputData,
+        execution_mode: 'sequential',
+        verbose_mode: modoVerbose
+    };
+    
+    fetch('/fluxos/executar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erro na execução do fluxo');
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        
+        function readStream() {
+            return reader.read().then(({ done, value }) => {
+                if (done) {
+                    adicionarLogExecucao('Execução finalizada!', 'success');
+                    adicionarLogExecucao('Redirecionando para a página de resultados...', 'info');
+                    
+                    // Log de debug
+                    console.log('🔍 DEBUG: Preparando redirecionamento');
+                    console.log('🔍 DEBUG: fluxoData.id =', fluxoData.id);
+                    console.log('🔍 DEBUG: URL de destino =', `/fluxos/${fluxoData.id}/resultado`);
+                    
+                    // Redirecionar para a página de resultado após 3 segundos
+                    setTimeout(() => {
+                        console.log('🔍 DEBUG: Executando redirecionamento...');
+                        console.log('🔍 DEBUG: URL final =', `/fluxos/${fluxoData.id}/resultado`);
+                        
+                        // Adicionar indicador visual de redirecionamento
+                        adicionarLogExecucao('🔄 Redirecionando agora...', 'info');
+                        
+                        window.location.href = `/fluxos/${fluxoData.id}/resultado`;
+                    }, 3000);
+                    return;
+                }
+                
+                const chunk = decoder.decode(value);
+                const linhas = chunk.split('\n');
+                
+                linhas.forEach(linha => {
+                    if (linha.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(linha.substring(6));
+                            processarEventoExecucao(data);
+                        } catch (e) {
+                            console.error('Erro ao processar evento:', e);
+                        }
+                    }
+                });
+                
+                return readStream();
+            });
+        }
+        
+        return readStream();
+    })
+    .catch(error => {
+        console.error('Erro na execução:', error);
+        adicionarLogExecucao('Erro: ' + error.message, 'error');
+    });
+}
+
+function processarEventoExecucao(evento) {
+    switch (evento.type) {
+        case 'log':
+            adicionarLogExecucao(evento.message, evento.level);
+            break;
+            
+        case 'progress':
+            const progresso = Math.round((evento.step / evento.total) * 100);
+            document.getElementById('progress-bar').style.width = progresso + '%';
+            document.getElementById('progress-bar').textContent = progresso + '%';
+            break;
+            
+        case 'result':
+            mostrarResultado(evento.data);
+            break;
+    }
+}
+
+function adicionarLogExecucao(mensagem, nivel) {
+    const log = document.getElementById('execution-log');
+    const timestamp = new Date().toLocaleTimeString();
+    const corNivel = {
+        'info': 'text-info',
+        'success': 'text-success', 
+        'warning': 'text-warning',
+        'error': 'text-danger'
+    };
+    
+    const cor = corNivel[nivel] || 'text-muted';
+    
+    log.innerHTML += `
+        <div class="${cor}">
+            <small>[${timestamp}]</small> ${mensagem}
+        </div>
+    `;
+    
+    log.scrollTop = log.scrollHeight;
+}
+
+function mostrarResultado(resultado) {
+    const resultadoCard = document.getElementById('resultado-card');
+    const resultadoConteudo = document.getElementById('resultado-conteudo');
+    
+    // Criar interface específica para template jurídico
+    let html = `
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-success mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Template Jurídico Gerado
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportarTemplate()">
+                        <i class="fas fa-download me-1"></i>Exportar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <div class="card border-0 bg-light">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="fas fa-scroll me-2"></i>Template Gerado
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <pre class="mb-0" style="white-space: pre-wrap; font-family: 'Times New Roman', serif; line-height: 1.6;">
+${resultado.template_gerado || 'Template não disponível'}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Análise Jurídica
+                        </h6>
+                    </div>
+                    <div class="card-body small">
+                        <pre style="white-space: pre-wrap; font-size: 0.9rem;">
+${resultado.analise_juridica || 'Análise não disponível'}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white py-2">
+                        <h6 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>Componentes Processados
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">`;
+    
+    if (resultado.componentes_processados) {
+        resultado.componentes_processados.forEach(comp => {
+            html += `
+                            <div class="list-group-item px-0 py-2 border-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1 text-primary">${comp.componente}</h6>
+                                        <p class="mb-0 small text-muted">${comp.resultado}</p>
+                                    </div>
+                                    <span class="badge bg-${comp.status === 'sucesso' ? 'success' : 'warning'} ms-2">
+                                        ${comp.status}
+                                    </span>
+                                </div>
+                            </div>`;
+        });
+    }
+    
+    html += `
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-check-circle me-2"></i>Execução Concluída
+                    </h6>
+                    <p class="mb-1">Template jurídico processado com sucesso em ${resultado.timestamp ? new Date(resultado.timestamp).toLocaleString() : 'agora'}.</p>
+                    <hr>
+                    <p class="mb-0 small">
+                        <strong>Fluxo:</strong> ${resultado.fluxo_id} | 
+                        <strong>Componentes:</strong> ${resultado.componentes_processados ? resultado.componentes_processados.length : 0} | 
+                        <strong>Modo:</strong> ${resultado.execution_mode || 'sequential'}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    resultadoConteudo.innerHTML = html;
+    resultadoCard.style.display = 'block';
+    
+    // Scroll até o resultado
+    setTimeout(() => {
+        resultadoCard.scrollIntoView({ behavior: 'smooth' });
+    }, 500);
+}
+
+function exportarTemplate() {
+    // Implementar exportação do template
+    const templateTexto = document.querySelector('#resultado-conteudo pre').textContent;
+    
+    // Criar link de download
+    const elemento = document.createElement('a');
+    elemento.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(templateTexto));
+    elemento.setAttribute('download', `template_juridico_${Date.now()}.txt`);
+    elemento.style.display = 'none';
+    
+    document.body.appendChild(elemento);
+    elemento.click();
+    document.body.removeChild(elemento);
+    
+    // Mostrar notificação
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check me-2"></i>Template exportado com sucesso!
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+.text-purple {
+    color: #6f42c1 !important;
+}
+.border-purple {
+    border-color: #6f42c1 !important;
+}
+</style>
+{% endblock %}

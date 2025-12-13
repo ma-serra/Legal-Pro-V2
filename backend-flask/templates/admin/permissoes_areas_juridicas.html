@@ -1,0 +1,1357 @@
+{% extends "layout.html" %}
+
+{% block title %}Gerenciamento de Permissões - Áreas Jurídicas - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header modernizado com estatísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0 bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="mb-2"><i class="fas fa-shield-alt me-2"></i>Gerenciamento de Permissões</h1>
+                            <p class="mb-0 opacity-75">Configure acesso às áreas jurídicas e especialistas do sistema</p>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('admin_permissoes') }}" class="btn btn-light btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar para Permissões
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Estatísticas rápidas com botão de atualização -->
+                    <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+                        <div>
+                            <h6 class="text-white-50 mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Estatísticas em Tempo Real
+                            </h6>
+                            <small class="text-white-50">Última atualização: <span id="ultimo_update">Carregando...</span></small>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-light btn-sm" onclick="atualizarDadosSistema()" id="btn_atualizar_header">
+                                <i class="fas fa-sync-alt me-1"></i>Atualizar Dados
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="toggleAtualizacaoAutomatica()" id="btn_auto_update">
+                                <i class="fas fa-play me-1"></i>Auto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card bg-white bg-opacity-20 border-0">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fs-2 mb-2"></i>
+                                    <h4 class="mb-0" id="total_usuarios_header">{{ usuarios|length }}</h4>
+                                    <small>Usuários Totais</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-white bg-opacity-20 border-0">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-balance-scale fs-2 mb-2"></i>
+                                    <h4 class="mb-0" id="total_areas_header">0</h4>
+                                    <small>Áreas Jurídicas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-white bg-opacity-20 border-0">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-robot fs-2 mb-2"></i>
+                                    <h4 class="mb-0" id="total_agentes_header">0</h4>
+                                    <small>Agentes Ativos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-white bg-opacity-20 border-0">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cogs fs-2 mb-2"></i>
+                                    <h4 class="mb-0" id="usuarios_com_permissoes_header">{{ usuarios|selectattr('areas_permitidas')|list|length }}</h4>
+                                    <small>Permissões Ativas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Barra de filtros e busca -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">🔍 Buscar Usuário:</label>
+                            <input type="text" class="form-control" id="filtro_usuario" placeholder="Nome ou email do usuário...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">📊 Filtrar por Status:</label>
+                            <select class="form-select" id="filtro_status">
+                                <option value="">Todos os Status</option>
+                                <option value="com_permissao">Com Permissões</option>
+                                <option value="sem_permissao">Sem Permissões</option>
+                                <option value="acesso_total">Acesso Total</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">⚖️ Filtrar por Área:</label>
+                            <select class="form-select" id="filtro_area">
+                                <option value="">Todas as Áreas</option>
+                                <!-- Opções carregadas dinamicamente -->
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100" onclick="limparFiltros()">
+                                <i class="fas fa-times me-1"></i>Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção: Seleção Hierárquica Ativa (Modernizada) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-sitemap me-2"></i>Configuração de Permissões: Usuário → Área → Assistente → Agentes
+                        </h5>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">Sistema Hierárquico Ativo</span>
+                            <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalAjuda">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Formulário Hierárquico Modernizado -->
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow">
+                                <div class="card-header bg-gradient-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-users-cog me-1"></i>Configuração de Permissões</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info border-0 shadow-sm">
+                                        <i class="fas fa-route me-2"></i>
+                                        <strong>Fluxo de Configuração:</strong>
+                                        <div class="mt-2">
+                                            <span class="badge bg-primary me-1">1</span> Usuário →
+                                            <span class="badge bg-warning me-1">2</span> Áreas →
+                                            <span class="badge bg-success me-1">3</span> Assistente →
+                                            <span class="badge bg-info">4</span> Agentes
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Formulário de Seleção Hierárquica -->
+                                    <form id="form_hierarquico" method="POST" action="{{ url_for('admin_permissoes_areas_juridicas_salvar') }}">
+                                        <input type="hidden" name="tipo_permissao" value="hierarquica">
+                                        <input type="hidden" name="agentes_selecionados" id="agentes_selecionados_input">
+                                        
+                                        <div class="row g-3">
+                                            <!-- Etapa 1: Usuário -->
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold">
+                                                    <span class="badge bg-primary me-1">1</span>Selecionar Usuário:
+                                                </label>
+                                                <select class="form-select" id="usuario_hierarquico" name="usuario_id" required>
+                                                    <option value="">Escolha o usuário...</option>
+                                                    {% for user in usuarios %}
+                                                    <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Etapa 2: Área (Checkboxes) -->
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold">
+                                                    <span class="badge bg-warning me-1">2</span>Selecionar Áreas:
+                                                </label>
+                                                <div id="areas_checkbox_container" class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+                                                    <div class="text-muted text-center py-3">
+                                                        <i class="fas fa-arrow-left me-2"></i>Aguardando usuário...
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted mt-2 d-block">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Selecione uma ou mais áreas para configurar as permissões
+                                                </small>
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="selecionarTodasAreas()" disabled id="btn_todas_areas">
+                                                        <i class="fas fa-check-all me-1"></i>Todas as Áreas
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="limparSelecaoAreas()" disabled id="btn_limpar_areas">
+                                                        <i class="fas fa-times me-1"></i>Limpar Seleção
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Etapa 3: Assistente -->
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold">
+                                                    <span class="badge bg-success me-1">3</span>Selecionar Assistente:
+                                                </label>
+                                                <select class="form-select" id="assistente_hierarquico" name="assistente_id" disabled>
+                                                    <option value="">Aguardando área...</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Botões de Ação -->
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-success me-2" id="aplicar_hierarquico" disabled>
+                                                    <i class="fas fa-check me-2"></i>Aplicar Permissões
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="limparFormulario()">
+                                                    <i class="fas fa-eraser me-2"></i>Limpar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coluna Direita: Lista de Agentes -->
+                        <div class="col-lg-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <span class="badge bg-light text-dark me-1" id="agentes_count_badge">4</span>
+                                        <i class="fas fa-robot me-1"></i>Agentes Disponíveis
+                                        <span id="area_info" class="small ms-2"></span>
+                                    </h6>
+                                </div>
+                                <div class="card-body" id="agentes_container">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-hand-pointer fs-1 mb-3"></i>
+                                        <p>Selecione uma ou mais áreas para ver os agentes disponíveis</p>
+                                        <small class="text-info">O número total de agentes será exibido automaticamente</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de Usuários com Permissões Atuais - Modernizada -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Usuários e Permissões Atuais</h5>
+                        <div>
+                            <span class="badge bg-light text-dark me-2" id="usuarios_visíveis">{{ usuarios|length }} usuários</span>
+                            <button class="btn btn-sm btn-outline-light" onclick="exportarPermissoes()">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tabela_usuarios">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-4"><i class="fas fa-user me-1"></i>Usuário</th>
+                                    <th><i class="fas fa-balance-scale me-1"></i>Áreas Permitidas</th>
+                                    <th><i class="fas fa-chart-bar me-1"></i>Status</th>
+                                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in usuarios %}
+                                <tr class="usuario-row" data-username="{{ user.username|lower }}" data-email="{{ user.email|lower }}" data-areas="{{ user.areas_permitidas or '' }}">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary text-white me-3">
+                                                {{ user.username[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <strong class="d-block">{{ user.username }}</strong>
+                                                <small class="text-muted">{{ user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="areas-container">
+                                            {% if user.areas_permitidas and user.areas_permitidas != '[]' %}
+                                                {% set areas_list = user.areas_permitidas|replace("'", '"')|from_json if user.areas_permitidas != '[]' else [] %}
+                                                {% if areas_list %}
+                                                    {% for area in areas_list %}
+                                                        <span class="badge bg-primary me-1 mb-1">{{ area }}</span>
+                                                    {% endfor %}
+                                                    <div class="mt-1">
+                                                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>{{ areas_list|length }} área{{ 's' if areas_list|length > 1 else '' }}</small>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Todas as Áreas</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-warning">Todas as Áreas</span>
+                                                <div class="mt-1">
+                                                    <small class="text-warning"><i class="fas fa-unlock me-1"></i>Acesso total</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.areas_permitidas and user.areas_permitidas != '[]' %}
+                                            {% set areas_list = user.areas_permitidas|replace("'", '"')|from_json if user.areas_permitidas != '[]' else [] %}
+                                            {% if areas_list %}
+                                                <span class="badge bg-success">Restrito</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Total</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">Total</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary editar-permissao" 
+                                                    data-user-id="{{ user.id }}"
+                                                    data-user-name="{{ user.username }}"
+                                                    data-areas-permitidas="{{ user.areas_permitidas|tojson }}"
+                                                    title="Editar Permissões">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{{ url_for('admin_permissoes_areas_juridicas_resetar', user_id=user.id) }}" 
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="Resetar para Acesso Total"
+                                               onclick="return confirm('Tem certeza que deseja resetar as permissões deste usuário?')">
+                                                <i class="fas fa-sync-alt"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info"
+                                                    onclick="verDetalhesUsuario({{ user.id }}, '{{ user.username }}')"
+                                                    title="Ver Detalhes">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Ajuda -->
+    <div class="modal fade" id="modalAjuda" tabindex="-1" aria-labelledby="modalAjudaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalAjudaLabel">
+                        <i class="fas fa-question-circle me-2"></i>Como usar o Sistema de Permissões
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-route me-1"></i>Fluxo de Configuração</h6>
+                            <ol class="list-group list-group-numbered">
+                                <li class="list-group-item d-flex align-items-start">
+                                    <span class="badge bg-primary rounded-pill me-2">1</span>
+                                    Selecione o <strong>usuário</strong> que terá as permissões configuradas
+                                </li>
+                                <li class="list-group-item d-flex align-items-start">
+                                    <span class="badge bg-warning rounded-pill me-2">2</span>
+                                    Escolha as <strong>áreas jurídicas</strong> que o usuário pode acessar
+                                </li>
+                                <li class="list-group-item d-flex align-items-start">
+                                    <span class="badge bg-success rounded-pill me-2">3</span>
+                                    Selecione o <strong>assistente</strong> responsável pelas áreas
+                                </li>
+                                <li class="list-group-item d-flex align-items-start">
+                                    <span class="badge bg-info rounded-pill me-2">4</span>
+                                    Visualize os <strong>agentes</strong> disponíveis e aplique as permissões
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success"><i class="fas fa-filter me-1"></i>Filtros Disponíveis</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <strong>🔍 Busca por Nome:</strong> Digite o nome ou email do usuário
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>📊 Filtro por Status:</strong> Com permissões, sem permissões ou acesso total
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>⚖️ Filtro por Área:</strong> Filtre usuários por área jurídica específica
+                                </li>
+                            </ul>
+                            
+                            <h6 class="text-info mt-3"><i class="fas fa-tools me-1"></i>Ações Rápidas</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <i class="fas fa-edit text-primary me-2"></i>Editar permissões do usuário
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-sync-alt text-warning me-2"></i>Resetar para acesso total
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="fas fa-eye text-info me-2"></i>Ver detalhes do usuário
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Usuário -->
+    <div class="modal fade" id="modalDetalhesUsuario" tabindex="-1" aria-labelledby="modalDetalhesUsuarioLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="modalDetalhesUsuarioLabel">
+                        <i class="fas fa-user-circle me-2"></i>Detalhes do Usuário
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="conteudoDetalhesUsuario">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CSS customizado -->
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+        }
+        
+        .bg-gradient-success {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+        }
+        
+        .bg-gradient-info {
+            background: linear-gradient(45deg, #17a2b8, #117a8b);
+        }
+        
+        .areas-container .badge {
+            font-size: 0.75em;
+        }
+        
+        .usuario-row:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .table th {
+            border-top: none;
+        }
+        
+        .card {
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+    
+    <!-- JavaScript para funcionalidade da hierarquia e filtros -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar filtros
+        inicializarFiltros();
+        
+        // Função para filtros avançados
+        function inicializarFiltros() {
+            const filtroUsuario = document.getElementById('filtro_usuario');
+            const filtroStatus = document.getElementById('filtro_status');
+            const filtroArea = document.getElementById('filtro_area');
+            
+            [filtroUsuario, filtroStatus, filtroArea].forEach(filtro => {
+                if (filtro) {
+                    filtro.addEventListener('input', aplicarFiltros);
+                    filtro.addEventListener('change', aplicarFiltros);
+                }
+            });
+        }
+        
+        function aplicarFiltros() {
+            const filtroUsuario = document.getElementById('filtro_usuario').value.toLowerCase();
+            const filtroStatus = document.getElementById('filtro_status').value;
+            const filtroArea = document.getElementById('filtro_area').value;
+            
+            const linhas = document.querySelectorAll('.usuario-row');
+            let linhasVisiveis = 0;
+            
+            linhas.forEach(linha => {
+                let mostrar = true;
+                
+                // Filtro por usuário (nome ou email)
+                if (filtroUsuario) {
+                    const username = linha.dataset.username || '';
+                    const email = linha.dataset.email || '';
+                    if (!username.includes(filtroUsuario) && !email.includes(filtroUsuario)) {
+                        mostrar = false;
+                    }
+                }
+                
+                // Filtro por status
+                if (filtroStatus && mostrar) {
+                    const areas = linha.dataset.areas || '';
+                    const statusBadge = linha.querySelector('td:nth-child(3) .badge');
+                    
+                    if (filtroStatus === 'com_permissao' && (!areas || areas === '[]' || areas === '')) {
+                        mostrar = false;
+                    } else if (filtroStatus === 'sem_permissao' && areas && areas !== '[]' && areas !== '') {
+                        mostrar = false;
+                    } else if (filtroStatus === 'acesso_total' && areas && areas !== '[]' && areas !== '') {
+                        mostrar = false;
+                    }
+                }
+                
+                // Filtro por área específica
+                if (filtroArea && mostrar) {
+                    const areas = linha.dataset.areas || '';
+                    if (!areas.includes(filtroArea)) {
+                        mostrar = false;
+                    }
+                }
+                
+                linha.style.display = mostrar ? '' : 'none';
+                if (mostrar) linhasVisiveis++;
+            });
+            
+            // Atualizar contador
+            document.getElementById('usuarios_visíveis').textContent = `${linhasVisiveis} usuários`;
+        }
+        
+        // Função para limpar filtros
+        window.limparFiltros = function() {
+            document.getElementById('filtro_usuario').value = '';
+            document.getElementById('filtro_status').value = '';
+            document.getElementById('filtro_area').value = '';
+            aplicarFiltros();
+        };
+        
+        // Função para exportar permissões
+        window.exportarPermissoes = function() {
+            // Implementar exportação (CSV, Excel, etc.)
+            console.log('Exportando permissões...');
+            // Aqui você pode adicionar a lógica de exportação
+        };
+        
+        // Função para ver detalhes do usuário
+        window.verDetalhesUsuario = function(userId, username) {
+            const modal = new bootstrap.Modal(document.getElementById('modalDetalhesUsuario'));
+            document.getElementById('modalDetalhesUsuarioLabel').innerHTML = 
+                `<i class="fas fa-user-circle me-2"></i>Detalhes: ${username}`;
+            
+            // Simular carregamento de dados (substituir por chamada real à API)
+            setTimeout(() => {
+                document.getElementById('conteudoDetalhesUsuario').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Informações do Usuário</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>ID:</strong> <span>${userId}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Nome:</strong> <span>${username}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Status:</strong> <span class="badge bg-success">Ativo</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Último acesso:</strong> <span>Hoje às 14:30</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">Histórico de Atividades</h6>
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <small class="text-muted">Hoje 14:30</small>
+                                    <p class="mb-1">Acesso ao sistema</p>
+                                </div>
+                                <div class="timeline-item">
+                                    <small class="text-muted">Ontem 16:15</small>
+                                    <p class="mb-1">Permissões atualizadas</p>
+                                </div>
+                                <div class="timeline-item">
+                                    <small class="text-muted">Há 2 dias</small>
+                                    <p class="mb-1">Primeiro acesso</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 1000);
+            
+            modal.show();
+        };
+        
+        // Variável global para dados do sistema
+        window.dadosSistema = {
+            areas_juridicas: [],
+            agentes_por_area: {},
+            estatisticas: {}
+        };
+        
+        // Variável para controlar atualização automática
+        let autoUpdateInterval = null;
+        
+        // Função para atualizar dados do sistema
+        window.atualizarDadosSistema = function() {
+            const btnAtualizar = document.getElementById('btn_atualizar_header');
+            const btnAtualizar2 = document.getElementById('btn_atualizar');
+            
+            // Mostrar loading
+            if (btnAtualizar) {
+                btnAtualizar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...';
+                btnAtualizar.disabled = true;
+            }
+            if (btnAtualizar2) {
+                btnAtualizar2.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...';
+                btnAtualizar2.disabled = true;
+            }
+            
+            // Fazer requisição para API
+            fetch('/api/admin/areas-juridicas/dados-dinamicos')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Armazenar dados globalmente
+                        window.dadosSistema = data.data;
+                        
+                        // Atualizar estatísticas no header
+                        document.getElementById('total_usuarios_header').textContent = data.data.estatisticas.total_usuarios;
+                        document.getElementById('total_areas_header').textContent = data.data.estatisticas.total_areas;
+                        document.getElementById('total_agentes_header').textContent = data.data.estatisticas.total_agentes;
+                        document.getElementById('usuarios_com_permissoes_header').textContent = data.data.estatisticas.usuarios_com_permissoes;
+                        
+                        // Atualizar dropdown de filtro de áreas
+                        atualizarDropdownAreas(data.data.areas_juridicas);
+                        
+                        // Atualizar áreas disponíveis na seleção hierárquica
+                        atualizarAreasHierarquicas(data.data.areas_juridicas);
+                        
+                        // Atualizar timestamp
+                        const agora = new Date();
+                        document.getElementById('ultimo_update').textContent = agora.toLocaleTimeString('pt-BR');
+                        
+                        console.log('✅ Dados do sistema atualizados:', data.data);
+                        
+                        // Mostrar toast de sucesso
+                        mostrarToast('Dados atualizados com sucesso!', 'success');
+                    } else {
+                        console.error('❌ Erro ao buscar dados:', data.error);
+                        mostrarToast('Erro ao atualizar dados: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro na requisição:', error);
+                    mostrarToast('Erro de conexão ao atualizar dados', 'error');
+                })
+                .finally(() => {
+                    // Restaurar botões
+                    if (btnAtualizar) {
+                        btnAtualizar.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Atualizar Dados';
+                        btnAtualizar.disabled = false;
+                    }
+                    if (btnAtualizar2) {
+                        btnAtualizar2.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Atualizar';
+                        btnAtualizar2.disabled = false;
+                    }
+                });
+        };
+        
+        // Função para iniciar atualização automática
+        window.iniciarAtualizacaoAutomatica = function() {
+            // Parar qualquer interval existente
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+            }
+            
+            // Carregar dados imediatamente
+            atualizarDadosSistema();
+            
+            // Configurar atualização automática a cada 30 segundos
+            autoUpdateInterval = setInterval(() => {
+                console.log('🔄 Atualização automática executada às', new Date().toLocaleTimeString());
+                atualizarDadosSistema();
+            }, 30000); // 30 segundos
+            
+            console.log('✅ Atualização automática ativada - dados serão atualizados a cada 30 segundos');
+            
+            // Mostrar indicador visual
+            mostrarToast('Atualização automática ativada (30s)', 'info');
+        };
+        
+        // Função para parar atualização automática
+        window.pararAtualizacaoAutomatica = function() {
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+                autoUpdateInterval = null;
+                console.log('❌ Atualização automática desativada');
+                mostrarToast('Atualização automática desativada', 'warning');
+            }
+        };
+        
+        // Função para atualizar dropdown de áreas
+        function atualizarDropdownAreas(areas) {
+            const dropdown = document.getElementById('filtro_area');
+            if (dropdown) {
+                // Manter o valor selecionado
+                const valorAtual = dropdown.value;
+                
+                // Limpar e reconstruir options
+                dropdown.innerHTML = '<option value="">Todas as Áreas</option>';
+                
+                areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.nome;
+                    option.textContent = area.nome;
+                    dropdown.appendChild(option);
+                });
+                
+                // Restaurar valor selecionado se ainda existir
+                if (valorAtual && [...dropdown.options].some(opt => opt.value === valorAtual)) {
+                    dropdown.value = valorAtual;
+                }
+            }
+        }
+        
+        // Função para atualizar áreas na seleção hierárquica
+        function atualizarAreasHierarquicas(areas) {
+            const container = document.getElementById('areas_checkbox_container');
+            if (container && areas.length > 0) {
+                let html = '<div class="row g-2">';
+                
+                areas.forEach(area => {
+                    html += `
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="areas_juridicas" 
+                                       value="${area.nome}" id="area_${area.id}">
+                                <label class="form-check-label" for="area_${area.id}">
+                                    <i class="${area.icone || 'fas fa-balance-scale'}" style="color: ${area.cor || '#007bff'}"></i>
+                                    ${area.nome}
+                                    <small class="text-muted d-block">${area.agentes_count} agentes</small>
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+                
+                // Habilitar botões
+                document.getElementById('btn_todas_areas').disabled = false;
+                document.getElementById('btn_limpar_areas').disabled = false;
+            }
+        }
+        
+        // Função para mostrar toast de notificação
+        function mostrarToast(mensagem, tipo = 'info') {
+            // Criar toast dynamicamente se não existir
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+                document.body.appendChild(toastContainer);
+            }
+            
+            const toastId = 'toast-' + Date.now();
+            const bgClass = tipo === 'success' ? 'bg-success' : tipo === 'error' ? 'bg-danger' : 'bg-info';
+            
+            const toastHtml = `
+                <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas ${tipo === 'success' ? 'fa-check-circle' : tipo === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} me-2"></i>
+                            ${mensagem}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+            
+            // Remover após esconder
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+        
+        // Carregar dados iniciais ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aguardar um pouco para o DOM estar totalmente carregado
+            setTimeout(() => {
+                atualizarDadosSistema();
+            }, 500);
+        });
+        // Função para limpar formulário
+        window.limparFormulario = function() {
+            document.getElementById('usuario_hierarquico').value = '';
+            document.getElementById('area_hierarquica').disabled = true;
+            document.getElementById('area_hierarquica').value = '';
+            document.getElementById('assistente_hierarquico').disabled = true;
+            document.getElementById('assistente_hierarquico').value = '';
+            document.getElementById('aplicar_hierarquico').disabled = true;
+            document.getElementById('agentes_container').innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-arrow-left fs-1 mb-3"></i><p>Selecione um assistente para ver os agentes disponíveis</p></div>';
+        };
+        
+        // Ativar área quando usuário for selecionado
+        document.getElementById('usuario_hierarquico').addEventListener('change', function() {
+            const areasContainer = document.getElementById('areas_checkbox_container');
+            const btnTodasAreas = document.getElementById('btn_todas_areas');
+            const btnLimparAreas = document.getElementById('btn_limpar_areas');
+            
+            if (this.value) {
+                // Mostrar checkboxes das áreas
+                areasContainer.innerHTML = `
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_penal" value="Direito Penal" data-agentes="10">
+                                <label class="form-check-label" for="area_penal">
+                                    ⚖️ Direito Penal <small class="text-muted">(10 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_empresarial" value="Direito Empresarial" data-agentes="12">
+                                <label class="form-check-label" for="area_empresarial">
+                                    🏢 Direito Empresarial <small class="text-muted">(12 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_bancario" value="Direito Bancário" data-agentes="8">
+                                <label class="form-check-label" for="area_bancario">
+                                    🏦 Direito Bancário <small class="text-muted">(8 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_credito" value="Recuperação de Crédito" data-agentes="6">
+                                <label class="form-check-label" for="area_credito">
+                                    💰 Recuperação de Crédito <small class="text-muted">(6 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_agrario" value="Direito Agrário" data-agentes="9">
+                                <label class="form-check-label" for="area_agrario">
+                                    🚜 Direito Agrário <small class="text-muted">(9 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_trabalhista" value="Direito Trabalhista" data-agentes="11">
+                                <label class="form-check-label" for="area_trabalhista">
+                                    👷 Direito Trabalhista <small class="text-muted">(11 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_consumidor" value="Direito do Consumidor" data-agentes="7">
+                                <label class="form-check-label" for="area_consumidor">
+                                    🛡️ Direito do Consumidor <small class="text-muted">(7 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_digital" value="Direito Digital" data-agentes="8">
+                                <label class="form-check-label" for="area_digital">
+                                    💻 Direito Digital <small class="text-muted">(8 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_previdenciario" value="Direito Previdenciário" data-agentes="10">
+                                <label class="form-check-label" for="area_previdenciario">
+                                    ⏰ Direito Previdenciário <small class="text-muted">(10 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_tributario" value="Direito Tributário" data-agentes="12">
+                                <label class="form-check-label" for="area_tributario">
+                                    🧾 Direito Tributário <small class="text-muted">(12 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_imobiliario" value="Direito Imobiliário" data-agentes="9">
+                                <label class="form-check-label" for="area_imobiliario">
+                                    🏠 Direito Imobiliário <small class="text-muted">(9 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_securitario" value="Direito Securitário" data-agentes="8">
+                                <label class="form-check-label" for="area_securitario">
+                                    🛡️ Direito Securitário <small class="text-muted">(8 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input area-checkbox" type="checkbox" id="area_negociacao" value="Negociação e Conflitos" data-agentes="15">
+                                <label class="form-check-label" for="area_negociacao">
+                                    🤝 Negociação e Conflitos <small class="text-muted">(15 agentes)</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                btnTodasAreas.disabled = false;
+                btnLimparAreas.disabled = false;
+                
+                // Adicionar listeners para os checkboxes
+                document.querySelectorAll('.area-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', atualizarAgentesCheckboxes);
+                });
+                
+                resetAgentesContainer();
+            } else {
+                areasContainer.innerHTML = `
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-arrow-left me-2"></i>Aguardando usuário...
+                    </div>
+                `;
+                btnTodasAreas.disabled = true;
+                btnLimparAreas.disabled = true;
+                resetAgentesContainer();
+            }
+        });
+        
+        // Função para atualizar agentes baseado nos checkboxes
+        function atualizarAgentesCheckboxes() {
+            const assistenteSelect = document.getElementById('assistente_hierarquico');
+            const checkedBoxes = document.querySelectorAll('.area-checkbox:checked');
+            
+            if (checkedBoxes.length > 0) {
+                assistenteSelect.disabled = false;
+                
+                // Calcular total de agentes
+                let totalAgentes = 0;
+                let areasNomes = [];
+                
+                checkedBoxes.forEach(checkbox => {
+                    const agentesCount = parseInt(checkbox.getAttribute('data-agentes'));
+                    totalAgentes += agentesCount;
+                    areasNomes.push(checkbox.value);
+                });
+                
+                // Atualizar badge e informações
+                document.getElementById('agentes_count_badge').textContent = totalAgentes;
+                document.getElementById('area_info').textContent = `(${checkedBoxes.length} área${checkedBoxes.length > 1 ? 's' : ''} selecionada${checkedBoxes.length > 1 ? 's' : ''})`;
+                
+                // Atualizar assistente
+                assistenteSelect.innerHTML = `
+                    <option value="">Escolha o assistente...</option>
+                    <option value="assistente_multiplas_areas">Assistente Multi-Áreas (${checkedBoxes.length} áreas)</option>
+                `;
+                
+                // Mostrar agentes das áreas selecionadas
+                mostrarAgentesAreasCheckboxes(checkedBoxes, totalAgentes);
+                
+            } else {
+                assistenteSelect.disabled = true;
+                assistenteSelect.innerHTML = '<option value="">Aguardando área...</option>';
+                resetAgentesContainer();
+            }
+        }
+        
+        function mostrarAgentesAreas(selectedOptions, totalAgentes) {
+            const agentesContainer = document.getElementById('agentes_container');
+            
+            let agentesHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Total de ${totalAgentes} agentes</strong> disponíveis nas ${selectedOptions.length} área${selectedOptions.length > 1 ? 's' : ''} selecionada${selectedOptions.length > 1 ? 's' : ''}
+                </div>
+                <div class="row">
+            `;
+            
+            let agentCounter = 1;
+            selectedOptions.forEach(option => {
+                const areaName = option.value;
+                const agentesCount = parseInt(option.getAttribute('data-agentes'));
+                const areaIcon = option.text.split(' ')[0];
+                
+                agentesHTML += `
+                    <div class="col-12 mb-3">
+                        <h6 class="text-primary">${areaIcon} ${areaName} (${agentesCount} agentes)</h6>
+                        <div class="row">
+                `;
+                
+                for (let i = 1; i <= agentesCount; i++) {
+                    agentesHTML += `
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agente_${agentCounter}" name="agentes[]" value="${areaName}_agente_${i}">
+                                <label class="form-check-label" for="agente_${agentCounter}">
+                                    Agente ${areaName.replace('Direito ', '')} ${i}
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    agentCounter++;
+                }
+                
+                agentesHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            agentesHTML += `
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="selecionarTodosAgentes()">
+                        <i class="fas fa-check-all me-1"></i>Selecionar Todos (${totalAgentes})
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="limparSelecaoAgentes()">
+                        <i class="fas fa-times me-1"></i>Limpar Seleção
+                    </button>
+                </div>
+            `;
+            
+            agentesContainer.innerHTML = agentesHTML;
+        }
+        
+        function mostrarAgentesAreasCheckboxes(checkedBoxes, totalAgentes) {
+            const agentesContainer = document.getElementById('agentes_container');
+            
+            let agentesHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Total de ${totalAgentes} agentes</strong> disponíveis nas ${checkedBoxes.length} área${checkedBoxes.length > 1 ? 's' : ''} selecionada${checkedBoxes.length > 1 ? 's' : ''}
+                </div>
+                <div class="row">
+            `;
+            
+            let agentCounter = 1;
+            checkedBoxes.forEach(checkbox => {
+                const areaName = checkbox.value;
+                const agentesCount = parseInt(checkbox.getAttribute('data-agentes'));
+                const areaIcon = checkbox.nextElementSibling.textContent.split(' ')[0];
+                
+                agentesHTML += `
+                    <div class="col-12 mb-3">
+                        <h6 class="text-primary">${areaIcon} ${areaName} (${agentesCount} agentes)</h6>
+                        <div class="row">
+                `;
+                
+                // Buscar agentes reais da área
+                const agentesArea = window.dadosSistema.agentes_por_area[areaName] || [];
+                
+                if (agentesArea.length > 0) {
+                    agentesArea.forEach(agente => {
+                        agentesHTML += `
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agente_${agentCounter}" name="agentes[]" value="${agente.id}">
+                                    <label class="form-check-label" for="agente_${agentCounter}">
+                                        <strong>${agente.nome}</strong>
+                                        <br><small class="text-muted">${agente.classe || 'Especialista'}</small>
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                        agentCounter++;
+                    });
+                } else {
+                    // Fallback para áreas sem agentes cadastrados
+                    agentesHTML += `
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Nenhum agente encontrado para esta área
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                agentesHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            agentesHTML += `
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="selecionarTodosAgentes()">
+                        <i class="fas fa-check-all me-1"></i>Selecionar Todos (${totalAgentes})
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="limparSelecaoAgentes()">
+                        <i class="fas fa-times me-1"></i>Limpar Seleção
+                    </button>
+                </div>
+            `;
+            
+            agentesContainer.innerHTML = agentesHTML;
+        }
+        
+        function resetAgentesContainer() {
+            document.getElementById('agentes_count_badge').textContent = '0';
+            document.getElementById('area_info').textContent = '';
+            document.getElementById('agentes_container').innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-hand-pointer fs-1 mb-3"></i>
+                    <p>Selecione uma ou mais áreas para ver os agentes disponíveis</p>
+                    <small class="text-info">O número total de agentes será exibido automaticamente</small>
+                </div>
+            `;
+        }
+        
+        // Adicionar submissão do formulário com coleta de checkboxes
+        document.getElementById('form_hierarquico').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Coletar áreas selecionadas
+            const selectedAreas = [];
+            document.querySelectorAll('.area-checkbox:checked').forEach(checkbox => {
+                selectedAreas.push(checkbox.value);
+            });
+            
+            // Coletar agentes selecionados
+            const selectedAgents = [];
+            document.querySelectorAll('#agentes_container input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedAgents.push(checkbox.value);
+            });
+            
+            // Criar campos hidden para envio
+            const hiddenContainer = document.createElement('div');
+            hiddenContainer.innerHTML = `
+                <input type="hidden" name="areas_juridicas" value="${selectedAreas.join(',')}">
+                <input type="hidden" name="agentes_selecionados" value="${selectedAgents.join(',')}">
+            `;
+            
+            this.appendChild(hiddenContainer);
+            this.submit();
+        });
+        
+        // Ativar botão quando assistente for selecionado
+        document.getElementById('assistente_hierarquico').addEventListener('change', function() {
+            const aplicarBtn = document.getElementById('aplicar_hierarquico');
+            const agentesContainer = document.getElementById('agentes_container');
+            
+            if (this.value) {
+                aplicarBtn.disabled = false;
+                
+                // Simular carregamento de agentes
+                agentesContainer.innerHTML = `
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando agentes...</span>
+                        </div>
+                        <p class="mt-2">Carregando agentes disponíveis...</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    agentesContainer.innerHTML = `
+                        <h6 class="mb-3">Agentes Disponíveis:</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agente1">
+                                    <label class="form-check-label" for="agente1">
+                                        Agente Especialista 1
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agente2">
+                                    <label class="form-check-label" for="agente2">
+                                        Agente Especialista 2
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="selecionarTodosAgentes()">
+                                <i class="fas fa-check-all me-1"></i>Selecionar Todos
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="limparSelecaoAgentes()">
+                                <i class="fas fa-times me-1"></i>Limpar Seleção
+                            </button>
+                        </div>
+                    `;
+                }, 1000);
+            } else {
+                aplicarBtn.disabled = true;
+                agentesContainer.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-arrow-left fs-1 mb-3"></i><p>Selecione um assistente para ver os agentes disponíveis</p></div>';
+            }
+        });
+        
+        // Funções auxiliares
+        window.selecionarTodosAgentes = function() {
+            document.querySelectorAll('#agentes_container input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        };
+        
+        window.limparSelecaoAgentes = function() {
+            document.querySelectorAll('#agentes_container input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        };
+        
+        // Funções para seleção de áreas
+        window.selecionarTodasAreas = function() {
+            document.querySelectorAll('.area-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            atualizarAgentesCheckboxes();
+        };
+        
+        window.limparSelecaoAreas = function() {
+            document.querySelectorAll('.area-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            atualizarAgentesCheckboxes();
+        };
+        
+        // Ativar botões de edição
+        document.querySelectorAll('.editar-permissao').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const areasPermitidas = JSON.parse(this.getAttribute('data-areas-permitidas') || '[]');
+                
+                // Preencher formulário hierárquico com dados do usuário
+                document.getElementById('usuario_hierarquico').value = userId;
+                document.getElementById('usuario_hierarquico').dispatchEvent(new Event('change'));
+                
+                // Aguardar um momento para o form ser atualizado e então selecionar as áreas
+                setTimeout(() => {
+                    // Selecionar checkboxes das áreas permitidas
+                    document.querySelectorAll('.area-checkbox').forEach(checkbox => {
+                        checkbox.checked = areasPermitidas.includes(checkbox.value);
+                    });
+                    atualizarAgentesCheckboxes();
+                }, 200);
+                
+                // Scroll para o formulário
+                document.getElementById('hierarquica_selection').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // Destacar o formulário temporariamente
+                const card = document.querySelector('#hierarquica_selection .card');
+                card.style.boxShadow = '0 0 20px rgba(0,123,255,0.5)';
+                card.style.border = '2px solid #007bff';
+                
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                    card.style.border = '';
+                }, 3000);
+            });
+        });
+        
+        // Função para alternar atualização automática
+        window.toggleAtualizacaoAutomatica = function() {
+            const btn = document.getElementById('btn_auto_update');
+            
+            if (autoUpdateInterval) {
+                // Desativar
+                pararAtualizacaoAutomatica();
+                btn.innerHTML = '<i class="fas fa-play me-1"></i>Auto';
+                btn.className = 'btn btn-success btn-sm';
+            } else {
+                // Ativar
+                iniciarAtualizacaoAutomatica();
+                btn.innerHTML = '<i class="fas fa-pause me-1"></i>Auto';
+                btn.className = 'btn btn-warning btn-sm';
+            }
+        };
+        
+        // Inicializar sistema quando página carregar
+        setTimeout(() => {
+            console.log('🚀 Iniciando sistema de permissões...');
+            iniciarAtualizacaoAutomatica();
+        }, 1000);
+        
+        // Parar atualização quando sair da página
+        window.addEventListener('beforeunload', function() {
+            pararAtualizacaoAutomatica();
+        });
+    });
+    </script>
+{% endblock %}

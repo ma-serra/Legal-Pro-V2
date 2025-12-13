@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Analisador de Sentenças com NLP</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .card-dark {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab-nav {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button:hover {
+            background-color: rgba(0, 137, 207, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .tab-button.active {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+            border-bottom-color: #0089CF;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-control, .form-select, textarea {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control::placeholder, 
+        .form-select::placeholder, 
+        textarea::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        
+        .form-control:focus, .form-select:focus, textarea:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #0089CF;
+            border-color: #0089CF;
+        }
+        
+        .btn-primary:hover {
+            background-color: #006a9f;
+            border-color: #006a9f;
+        }
+        
+        .btn-success {
+            background-color: #8DC63F;
+            border-color: #8DC63F;
+            color: #000000;
+            font-weight: 600;
+        }
+        
+        .btn-success:hover {
+            background-color: #7ab82f;
+            border-color: #7ab82f;
+            color: #000000;
+        }
+        
+        .table {
+            color: #ffffff;
+        }
+        
+        .table thead {
+            background-color: #003366;
+        }
+        
+        .table tbody tr {
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #353535;
+        }
+        
+        .badge-success {
+            background-color: #10b981;
+        }
+        
+        .badge-warning {
+            background-color: #f59e0b;
+        }
+        
+        .badge-danger {
+            background-color: #ef4444;
+        }
+        
+        .result-box {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner-border {
+            color: #0089CF;
+        }
+        
+        pre {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e0e0e0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .stat-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+        
+        .stat-card,
+        .stat-card * {
+            color: #000000 !important;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item active">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2 class="mb-2"><i class="fas fa-gavel me-2"></i>Analisador de Sentenças com NLP</h2>
+            <p class="mb-0">Análise automática em segundos + Extração de jurisprudência + Intelligence por Vara/Juiz</p>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="tab-nav d-flex">
+            <button class="tab-button active" onclick="switchTab('vara')" id="tab-vara">
+                <i class="fas fa-balance-scale me-2"></i>Análise por Vara
+            </button>
+            <button class="tab-button" onclick="switchTab('juiz')" id="tab-juiz">
+                <i class="fas fa-user-tie me-2"></i>Taxa de Sucesso por Juiz
+            </button>
+            <button class="tab-button" onclick="switchTab('nlp')" id="tab-nlp">
+                <i class="fas fa-robot me-2"></i>Analisador NLP
+            </button>
+        </div>
+        
+        <!-- Tab: Análise por Vara -->
+        <div id="content-vara" class="tab-content active">
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="stat-card" style="border-color: #0089CF;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">Análise Preditiva Específica por Vara</h5>
+                                <p class="mb-0">Estatísticas históricas de sucesso baseadas em 3.216 processos reais</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="carregarAnaliseVara()">
+                                <i class="fas fa-sync me-2"></i>Carregar Dados
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-dark">
+                <h5 class="mb-3"><i class="fas fa-chart-bar me-2" style="color: #0089CF;"></i>Top 10 Varas - Ordenadas por Volume</h5>
+                <div class="table-responsive">
+                    <table class="table" id="tabelaVaras">
+                        <thead>
+                            <tr>
+                                <th>Vara</th>
+                                <th>Comarca</th>
+                                <th>Total Processos</th>
+                                <th>Taxa Sucesso</th>
+                                <th>Risco</th>
+                                <th>Valor Total</th>
+                                <th>Recomendação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaVarasBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Clique em "Carregar Dados" para visualizar a análise</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card-dark">
+                <h5 class="mb-3"><i class="fas fa-chart-line me-2" style="color: #8DC63F;"></i>Correlação: Risco vs Taxa de Sucesso por Vara</h5>
+                <div class="chart-container">
+                    <canvas id="chartRiscoVara"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Taxa de Sucesso por Juiz -->
+        <div id="content-juiz" class="tab-content">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="stat-card" style="border-color: #10b981;">
+                        <h6>Top Vara Favorável</h6>
+                        <h3 id="topFavoravel">-</h3>
+                        <p id="topFavoravelTaxa" class="mb-0">-</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card" style="border-color: #f59e0b;">
+                        <h6>Taxa Média Geral</h6>
+                        <h3 id="taxaMedia">-</h3>
+                        <p class="mb-0">Média de todas as varas</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card" style="border-color: #ef4444;">
+                        <h6>Vara Mais Desafiadora</h6>
+                        <h3 id="topDesfavoravel">-</h3>
+                        <p id="topDesfavoravelTaxa" class="mb-0">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card-dark">
+                        <h5 class="mb-3 text-success"><i class="fas fa-trophy me-2"></i>Top 10 Varas Mais Favoráveis</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Posição</th>
+                                        <th>Vara</th>
+                                        <th>Taxa Sucesso</th>
+                                        <th>Julgados</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rankingFavoraveis">
+                                    <tr><td colspan="4" class="text-center">Carregando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card-dark">
+                        <h5 class="mb-3 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Top 10 Varas Mais Desafiadoras</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Posição</th>
+                                        <th>Vara</th>
+                                        <th>Taxa Sucesso</th>
+                                        <th>Julgados</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rankingDesfavoraveis">
+                                    <tr><td colspan="4" class="text-center">Carregando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Analisador NLP -->
+        <div id="content-nlp" class="tab-content">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-dark">
+                        <h5 class="mb-3"><i class="fas fa-file-alt me-2" style="color: #0089CF;"></i>Análise Automática de Sentença</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Número do Processo (opcional)</label>
+                            <input type="text" class="form-control" id="numeroProcesso" placeholder="Ex: 5000647-02.2025.8.21.0121">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Texto da Sentença <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="textoSentenca" rows="8" placeholder="Cole aqui o texto completo da sentença judicial..."></textarea>
+                            <small class="text-muted">A análise utiliza Claude 3.5 Sonnet para extrair insights jurídicos relevantes</small>
+                        </div>
+                        
+                        <button class="btn btn-success btn-lg w-100 mb-3" onclick="analisarSentenca()">
+                            <i class="fas fa-magic me-2"></i>Analisar Sentença com IA
+                        </button>
+                        
+                        <div class="loading" id="loadingAnalise">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Analisando...</span>
+                            </div>
+                            <p class="mt-2">Analisando sentença com IA... Isso pode levar alguns segundos.</p>
+                        </div>
+                        
+                        <div id="resultadoAnalise"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card-dark">
+                        <h5 class="mb-3"><i class="fas fa-book-open me-2" style="color: #8DC63F;"></i>Extração Rápida de Jurisprudência</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tema</label>
+                            <select class="form-select" id="temaJurisprudencia">
+                                <option>Direito do Consumidor - Energia Elétrica</option>
+                                <option>Indenização por Danos Materiais</option>
+                                <option>Reajuste Tarifário</option>
+                                <option>Cobrança Indevida</option>
+                                <option>Variação de Consumo</option>
+                                <option>Interrupção de Serviço</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Texto para Análise <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="textoJurisprudencia" rows="6" placeholder="Cole aqui o texto da decisão, petição ou documento..."></textarea>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-lg w-100 mb-3" onclick="extrairJurisprudencia()">
+                            <i class="fas fa-search me-2"></i>Extrair Jurisprudência Relevante
+                        </button>
+                        
+                        <div class="loading" id="loadingJuris">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Extraindo...</span>
+                            </div>
+                            <p class="mt-2">Extraindo jurisprudência relevante...</p>
+                        </div>
+                        
+                        <div id="resultadoJurisprudencia"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Tab switching function
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById('content-' + tabName).classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            // Carregar dados específicos da aba
+            if (tabName === 'juiz') {
+                carregarTaxaSucessoJuiz();
+            }
+        }
+        
+        // Carregar análise por vara
+        async function carregarAnaliseVara() {
+            try {
+                const response = await fetch('/setorenergia/api/analise-por-vara');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('tabelaVarasBody');
+                    tbody.innerHTML = '';
+                    
+                    // Exibir top 10
+                    const top10 = data.varas.slice(0, 10);
+                    
+                    top10.forEach(vara => {
+                        const row = document.createElement('tr');
+                        
+                        let badgeRisco = '';
+                        if (vara.nivel_risco === 'BAIXO') {
+                            badgeRisco = '<span class="badge badge-success">BAIXO</span>';
+                        } else if (vara.nivel_risco === 'MÉDIO') {
+                            badgeRisco = '<span class="badge badge-warning">MÉDIO</span>';
+                        } else {
+                            badgeRisco = '<span class="badge badge-danger">ALTO</span>';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${vara.vara}</td>
+                            <td><small>${vara.comarca}</small></td>
+                            <td>${vara.total_processos}</td>
+                            <td><strong>${vara.taxa_sucesso}%</strong></td>
+                            <td>${badgeRisco}</td>
+                            <td>R$ ${vara.valor_total.toLocaleString('pt-BR')}</td>
+                            <td><small>${vara.recomendacao}</small></td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                    
+                    // Criar gráfico de risco
+                    criarGraficoRisco(data.varas.slice(0, 15));
+                }
+            } catch (error) {
+                console.error('Erro ao carregar análise por vara:', error);
+                alert('Erro ao carregar dados. Verifique a conexão.');
+            }
+        }
+        
+        // Criar gráfico de correlação risco vs taxa de sucesso
+        function criarGraficoRisco(varas) {
+            const ctx = document.getElementById('chartRiscoVara').getContext('2d');
+            
+            // Ordenar varas por valor total (risco) decrescente
+            const varasOrdenadas = [...varas].sort((a, b) => b.valor_total - a.valor_total).slice(0, 12);
+            
+            // Extrair labels e dados
+            const labels = varasOrdenadas.map(v => v.vara.length > 30 ? v.vara.substring(0, 30) + '...' : v.vara);
+            const valoresRisco = varasOrdenadas.map(v => (v.valor_total / 1000).toFixed(1)); // Em milhares
+            const taxasSucesso = varasOrdenadas.map(v => v.taxa_sucesso);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Risco Total (R$ mil)',
+                            data: valoresRisco,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y',
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Taxa de Sucesso (%)',
+                            data: taxasSucesso,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1',
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                color: '#ffffff',
+                                font: { size: 12, weight: 'bold' },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#0089CF',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        if (context.datasetIndex === 0) {
+                                            label += 'R$ ' + (context.parsed.y * 1000).toLocaleString('pt-BR');
+                                        } else {
+                                            label += context.parsed.y.toFixed(1) + '%';
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#b0b0b0',
+                                font: { size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { 
+                                color: 'rgba(255, 255, 255, 0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Risco Total (R$ mil)',
+                                color: '#ef4444',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            ticks: { 
+                                color: '#ef4444',
+                                font: { size: 11, weight: 'bold' },
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(0) + 'k';
+                                }
+                            },
+                            grid: { 
+                                color: 'rgba(239, 68, 68, 0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Taxa de Sucesso (%)',
+                                color: '#10b981',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            ticks: { 
+                                color: '#10b981',
+                                font: { size: 11, weight: 'bold' },
+                                callback: function(value) {
+                                    return value.toFixed(0) + '%';
+                                }
+                            },
+                            grid: { 
+                                drawOnChartArea: false,
+                                color: 'rgba(16, 185, 129, 0.1)',
+                                drawBorder: false
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Carregar taxa de sucesso por juiz
+        async function carregarTaxaSucessoJuiz() {
+            try {
+                const response = await fetch('/setorenergia/api/taxa-sucesso-juiz');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Atualizar cards de estatísticas
+                    if (data.estatisticas_gerais.melhor_vara) {
+                        document.getElementById('topFavoravel').textContent = data.estatisticas_gerais.melhor_vara.vara.substring(0, 30) + '...';
+                        document.getElementById('topFavoravelTaxa').textContent = data.estatisticas_gerais.melhor_vara.taxa_sucesso + '% de sucesso';
+                    }
+                    
+                    if (data.estatisticas_gerais.pior_vara) {
+                        document.getElementById('topDesfavoravel').textContent = data.estatisticas_gerais.pior_vara.vara.substring(0, 30) + '...';
+                        document.getElementById('topDesfavoravelTaxa').textContent = data.estatisticas_gerais.pior_vara.taxa_sucesso + '% de sucesso';
+                    }
+                    
+                    document.getElementById('taxaMedia').textContent = data.estatisticas_gerais.taxa_sucesso_media + '%';
+                    
+                    // Preencher ranking de favoráveis
+                    const tbodyFav = document.getElementById('rankingFavoraveis');
+                    tbodyFav.innerHTML = '';
+                    
+                    data.top_favoraveis.forEach((vara, idx) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>#${idx + 1}</strong></td>
+                            <td><small>${vara.vara.substring(0, 40)}...</small></td>
+                            <td class="text-success"><strong>${vara.taxa_sucesso}%</strong></td>
+                            <td>${vara.total_julgados}</td>
+                        `;
+                        tbodyFav.appendChild(row);
+                    });
+                    
+                    // Preencher ranking de desfavoráveis
+                    const tbodyDesf = document.getElementById('rankingDesfavoraveis');
+                    tbodyDesf.innerHTML = '';
+                    
+                    data.top_desfavoraveis.forEach((vara, idx) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>#${idx + 1}</strong></td>
+                            <td><small>${vara.vara.substring(0, 40)}...</small></td>
+                            <td class="text-danger"><strong>${vara.taxa_sucesso}%</strong></td>
+                            <td>${vara.total_julgados}</td>
+                        `;
+                        tbodyDesf.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar taxa de sucesso:', error);
+            }
+        }
+        
+        // Analisar sentença com NLP
+        async function analisarSentenca() {
+            const texto = document.getElementById('textoSentenca').value;
+            const numero = document.getElementById('numeroProcesso').value;
+            
+            if (!texto.trim()) {
+                alert('Por favor, insira o texto da sentença.');
+                return;
+            }
+            
+            document.getElementById('loadingAnalise').classList.add('active');
+            document.getElementById('resultadoAnalise').innerHTML = '';
+            
+            try {
+                const response = await fetch('/setorenergia/api/analisar-sentenca', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        texto_sentenca: texto,
+                        numero_processo: numero
+                    })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loadingAnalise').classList.remove('active');
+                
+                if (data.success) {
+                    document.getElementById('resultadoAnalise').innerHTML = `
+                        <div class="result-box">
+                            <h6 class="mb-3" style="color: #8DC63F;">
+                                <i class="fas fa-check-circle me-2"></i>Análise Concluída com Sucesso
+                            </h6>
+                            ${numero ? `<p><strong>Processo:</strong> ${numero}</p>` : ''}
+                            <p><strong>Data da Análise:</strong> ${data.metadados.data_analise}</p>
+                            <p><strong>Tokens Utilizados:</strong> ${data.analise.tokens_utilizados}</p>
+                            <p><strong>Modelo:</strong> ${data.analise.modelo}</p>
+                            
+                            <hr style="border-color: #3a3a3a;">
+                            
+                            <h6 class="mt-3 mb-2" style="color: #0089CF;">📋 Análise Completa:</h6>
+                            <pre>${data.analise.texto_completo}</pre>
+                            
+                            <hr style="border-color: #3a3a3a;">
+                            
+                            <h6 class="mt-3 mb-2" style="color: #0089CF;">📚 Jurisprudência Extraída:</h6>
+                            <pre>${data.analise.jurisprudencia_extraida}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('resultadoAnalise').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loadingAnalise').classList.remove('active');
+                document.getElementById('resultadoAnalise').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro ao processar análise: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Extrair jurisprudência
+        async function extrairJurisprudencia() {
+            const texto = document.getElementById('textoJurisprudencia').value;
+            const tema = document.getElementById('temaJurisprudencia').value;
+            
+            if (!texto.trim()) {
+                alert('Por favor, insira o texto para análise.');
+                return;
+            }
+            
+            document.getElementById('loadingJuris').classList.add('active');
+            document.getElementById('resultadoJurisprudencia').innerHTML = '';
+            
+            try {
+                const response = await fetch('/setorenergia/api/extrair-jurisprudencia', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        texto: texto,
+                        tema: tema
+                    })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loadingJuris').classList.remove('active');
+                
+                if (data.success) {
+                    document.getElementById('resultadoJurisprudencia').innerHTML = `
+                        <div class="result-box">
+                            <h6 class="mb-3" style="color: #8DC63F;">
+                                <i class="fas fa-check-circle me-2"></i>Jurisprudência Extraída
+                            </h6>
+                            <p><strong>Tema:</strong> ${data.tema}</p>
+                            <p><strong>Tokens Utilizados:</strong> ${data.jurisprudencia.tokens_utilizados}</p>
+                            
+                            <hr style="border-color: #3a3a3a;">
+                            
+                            <pre>${data.jurisprudencia.resultado_completo}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('resultadoJurisprudencia').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loadingJuris').classList.remove('active');
+                document.getElementById('resultadoJurisprudencia').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro ao extrair jurisprudência: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Carregar dados iniciais
+        window.addEventListener('load', () => {
+            carregarAnaliseVara();
+        });
+    </script>
+</body>
+</html>

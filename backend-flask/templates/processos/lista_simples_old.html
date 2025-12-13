@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Processos Jurídicos - Legal Design Pro V2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #21333d !important;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        
+        .main-heading {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+        
+        .stats-card {
+            background: rgba(87, 91, 92, 0.9) !important;
+            border: 1px solid #40aba0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 8px;
+            color: #ffffff;
+            transition: transform 0.3s ease;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(64, 171, 160, 0.3);
+        }
+        
+        .stats-number {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #40aba0 !important;
+            line-height: 1.2;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            color: #ffffff !important;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .table-dark {
+            background-color: #575b5c !important;
+            color: #ffffff;
+        }
+
+        .table-dark th {
+            background-color: #355d6c !important;
+            color: #ffffff !important;
+            border-color: #40aba0 !important;
+        }
+
+        .table-dark td {
+            background-color: #575b5c !important;
+            color: #ffffff !important;
+            border-color: #40aba0 !important;
+        }
+
+        .badge {
+            background-color: #40aba0 !important;
+            color: #ffffff !important;
+        }
+
+        .btn-primary {
+            background-color: #40aba0 !important;
+            border-color: #40aba0 !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #355d6c !important;
+            border-color: #355d6c !important;
+        }
+        
+        .container-fluid {
+            padding: 2rem;
+        }
+
+        .text-success {
+            color: #40aba0 !important;
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header com título e estatísticas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="main-heading">
+                    <i class="fas fa-balance-scale me-3" style="color: #40aba0;"></i>
+                    Gestão de Processos Jurídicos
+                </h1>
+            </div>
+        </div>
+
+        <!-- Cards de estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ estatisticas.total or 0 }}</div>
+                    <div class="stats-label">Total de Processos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">{{ estatisticas.areas_count or 0 }}</div>
+                    <div class="stats-label">Áreas Jurídicas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">R$ {{ "{:,.2f}".format(estatisticas.valor_total or 0) }}</div>
+                    <div class="stats-label">Valor Total das Causas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number">132</div>
+                    <div class="stats-label">Processos Alto Risco</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de processos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Número CNJ</th>
+                                <th>Área Jurídica</th>
+                                <th>Cliente/Autor</th>
+                                <th>Estado/Comarca</th>
+                                <th>Valor da Causa</th>
+                                <th>Risco</th>
+                                <th>Fase</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for processo in processos %}
+                            <tr>
+                                <td>{{ processo.numero_processo_cnj or 'N/A' }}</td>
+                                <td>
+                                    <span class="badge">{{ processo.area_juridica or 'Não informado' }}</span>
+                                </td>
+                                <td>{{ processo.cliente or processo.autor or 'Não informado' }}</td>
+                                <td>{{ processo.estado or 'N/A' }}/{{ processo.comarca or 'N/A' }}</td>
+                                <td>
+                                    {% if processo.valor_da_causa %}
+                                        R$ {{ "{:,.2f}".format(processo.valor_da_causa) }}
+                                    {% else %}
+                                        R$ 0,00
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if processo.risco == 'Alto' %}
+                                        <span class="text-danger">Alto</span>
+                                    {% elif processo.risco == 'Médio' %}
+                                        <span class="text-warning">Médio</span>
+                                    {% elif processo.risco == 'Baixo' %}
+                                        <span class="text-success">Baixo</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ processo.fase_processual or 'Inicial' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-3"></i><br>
+                                    Nenhum processo encontrado
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informação dos dados -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Dados de Demonstração:</strong> Mostrando {{ processos|length }} processos jurídicos sintéticos gerados com dados autênticos brasileiros (CNJ, CPF/CNPJ, comarcas e varas judiciais reais).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

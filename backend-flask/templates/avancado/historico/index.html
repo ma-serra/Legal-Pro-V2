@@ -1,0 +1,220 @@
+{% extends 'layout.html' %}
+
+{% block title %}Histórico de Versões{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('analise_avancada.pagina_principal') }}">Recursos Avançados</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Histórico de Versões</li>
+                </ol>
+            </nav>
+            
+            <h1 class="mb-4">Histórico de Versões</h1>
+            <p class="lead">Acompanhe o histórico de versões de documentos e suas respectivas análises ao longo do tempo.</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Seus Documentos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNovoDocumento">
+                            <i class="fas fa-plus me-1"></i> Novo Documento
+                        </button>
+                    </div>
+                    
+                    {% if documentos %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Tipo</th>
+                                    <th>Data de Criação</th>
+                                    <th>Versões</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documentos %}
+                                <tr>
+                                    <td>{{ doc.titulo }}</td>
+                                    <td><span class="badge bg-secondary">{{ doc.tipo or 'Não especificado' }}</span></td>
+                                    <td>{{ doc.data_criacao|datetimeformat }}</td>
+                                    <td>{{ doc.total_versoes or 1 }}</td>
+                                    <td>
+                                        <a href="{{ url_for('analise_avancada.pagina_historico_documento', documento_id=doc.id) }}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-history me-1"></i> Histórico
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Nenhum documento encontrado. Crie um novo documento para começar.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Como Funciona</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Crie um novo documento ou selecione um existente</li>
+                        <li>Acompanhe as alterações realizadas ao longo do tempo</li>
+                        <li>Compare diferentes versões para visualizar as mudanças</li>
+                        <li>Visualize as análises associadas a cada versão</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Benefícios</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><strong>Controle de mudanças:</strong> Acompanhe a evolução do documento</li>
+                        <li><strong>Auditoria completa:</strong> Mantenha o registro de todas as alterações</li>
+                        <li><strong>Análise comparativa:</strong> Visualize as diferenças entre versões</li>
+                        <li><strong>Recuperação fácil:</strong> Acesse versões anteriores quando necessário</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Documento -->
+<div class="modal fade" id="modalNovoDocumento" tabindex="-1" aria-labelledby="modalNovoDocumentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalNovoDocumentoLabel">Novo Documento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNovoDocumento">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="tipo" name="tipo">
+                            <option value="contrato">Contrato</option>
+                            <option value="parecer">Parecer</option>
+                            <option value="petição">Petição</option>
+                            <option value="recurso">Recurso</option>
+                            <option value="legislação">Legislação</option>
+                            <option value="jurisprudência">Jurisprudência</option>
+                            <option value="minuta">Minuta</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição (opcional)</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags (separadas por vírgula, opcional)</label>
+                        <input type="text" class="form-control" id="tags" name="tags" placeholder="Ex: trabalhista, rescisão, indenização">
+                    </div>
+                    <div class="mb-3">
+                        <label for="conteudo" class="form-label">Conteúdo</label>
+                        <textarea class="form-control" id="conteudo" name="conteudo" rows="10" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnSalvarDocumento">
+                    <i class="fas fa-save me-1"></i> Salvar Documento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botão para salvar novo documento
+    document.getElementById('btnSalvarDocumento').addEventListener('click', function() {
+        const form = document.getElementById('formNovoDocumento');
+        
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const titulo = document.getElementById('titulo').value;
+        const conteudo = document.getElementById('conteudo').value;
+        const tipo = document.getElementById('tipo').value;
+        const descricao = document.getElementById('descricao').value;
+        const tags = document.getElementById('tags').value;
+        
+        // Converte as tags em array
+        const tagsArray = tags ? tags.split(',').map(tag => tag.trim()) : [];
+        
+        const data = {
+            titulo: titulo,
+            conteudo: conteudo,
+            tipo: tipo,
+            descricao: descricao,
+            tags: tagsArray
+        };
+        
+        fetch('/avancado/api/historico/documento/novo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoDocumento'));
+                modal.hide();
+                
+                // Exibe mensagem de sucesso
+                alert('Documento criado com sucesso!');
+                
+                // Redireciona para a página do documento
+                window.location.href = `/avancado/historico/documento/${data.documento.id}`;
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao criar documento:', error);
+            alert('Erro ao criar documento. Por favor, tente novamente.');
+        });
+    });
+});
+</script>
+{% endblock %}

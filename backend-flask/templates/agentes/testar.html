@@ -1,0 +1,207 @@
+{% extends "layout.html" %}
+
+{% block title %}Testar Agente: {{ agente.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1>Testar Agente</h1>
+      <p class="text-muted">{{ agente.nome }} - {{ agente.tipo }}</p>
+    </div>
+    <div>
+      <a href="{{ url_for('visualizar_agente', agente_id=agente.id) }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar ao Agente
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Formulário de Teste -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Entrada para Teste</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('testar_agente', agente_id=agente.id) }}">
+            <div class="mb-3">
+              <label for="texto" class="form-label">Texto de Entrada</label>
+              <textarea class="form-control" id="texto" name="texto" rows="10" required
+                        placeholder="Digite o texto que será processado pelo agente...">{{ texto or '' }}</textarea>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="modo-debug" name="modo_debug" checked>
+              <label class="form-check-label" for="modo-debug">
+                Ativar modo debug (logs detalhados)
+              </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-play"></i> Executar Teste
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Informações do Agente -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">Informações do Agente</h5>
+        </div>
+        <div class="card-body">
+          <p>{{ agente.descricao or 'Sem descrição' }}</p>
+          
+          <h6>Configurações</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Provider:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.llm_provider }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Modelo:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.llm_model }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Temperatura:</span>
+              <span class="badge bg-secondary">{{ agente.configuracoes.temperatura }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Resultado do Teste -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Resultado</h5>
+        </div>
+        <div class="card-body">
+          {% if resultado %}
+            <!-- Abas de visualização -->
+            <ul class="nav nav-tabs mb-3" id="resultadoTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="formatado-tab" data-bs-toggle="tab" data-bs-target="#formatado"
+                        type="button" role="tab" aria-controls="formatado" aria-selected="true">
+                  Visualização
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="json-tab" data-bs-toggle="tab" data-bs-target="#json"
+                        type="button" role="tab" aria-controls="json" aria-selected="false">
+                  JSON
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log"
+                        type="button" role="tab" aria-controls="log" aria-selected="false">
+                  Log
+                </button>
+              </li>
+            </ul>
+            
+            <div class="tab-content" id="resultadoTabsContent">
+              <!-- Aba de Visualização -->
+              <div class="tab-pane fade show active" id="formatado" role="tabpanel" aria-labelledby="formatado-tab">
+                {% if resultado.html %}
+                  <div class="resultado-html">
+                    {{ resultado.html|e }}  <!-- Alterado: |safe removido por segurança -->
+                  </div>
+                {% elif resultado.markdown %}
+                  <div class="resultado-markdown">
+                    {{ resultado.markdown|markdown }}
+                  </div>
+                {% elif resultado.texto %}
+                  <pre class="resultado-texto">{{ resultado.texto }}</pre>
+                {% elif resultado.texto_traduzido %}
+                  <div class="traducao">
+                    <h6>Texto Traduzido:</h6>
+                    <pre class="resultado-texto">{{ resultado.texto_traduzido }}</pre>
+                    {% if resultado.texto_original %}
+                      <h6 class="mt-3">Texto Original:</h6>
+                      <pre class="texto-original">{{ resultado.texto_original }}</pre>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="alert alert-info">
+                    {{ resultado.mensagem or 'Resultado em formato JSON. Veja na aba JSON.' }}
+                  </div>
+                {% endif %}
+              </div>
+              
+              <!-- Aba JSON -->
+              <div class="tab-pane fade" id="json" role="tabpanel" aria-labelledby="json-tab">
+                <pre class="json-view">{{ resultado|tojson(indent=2) }}</pre>
+              </div>
+              
+              <!-- Aba de Log -->
+              <div class="tab-pane fade" id="log" role="tabpanel" aria-labelledby="log-tab">
+                {% if log %}
+                  <pre class="log-view">{{ log|tojson(indent=2) }}</pre>
+                {% else %}
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Log não disponível.
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="mt-4">
+              <h6 class="border-bottom pb-2">Estatísticas</h6>
+              <div class="row text-center">
+                <div class="col-4">
+                  <div class="stat-value">{{ tempo|default('N/A') }}</div>
+                  <div class="stat-label">Tempo (s)</div>
+                </div>
+                <div class="col-4">
+                  <div class="stat-value">{{ tokens_entrada|default('N/A') }}</div>
+                  <div class="stat-label">Tokens Entrada</div>
+                </div>
+                <div class="col-4">
+                  <div class="stat-value">{{ tokens_saida|default('N/A') }}</div>
+                  <div class="stat-label">Tokens Saída</div>
+                </div>
+              </div>
+            </div>
+            
+          {% else %}
+            <div class="alert alert-info py-5 text-center">
+              <i class="fas fa-robot fa-3x mb-3"></i>
+              <p>Execute o teste para ver o resultado do processamento pelo agente.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+  
+  .json-view, .log-view {
+    max-height: 500px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+  }
+  
+  .resultado-texto {
+    white-space: pre-wrap;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+</style>
+{% endblock %}

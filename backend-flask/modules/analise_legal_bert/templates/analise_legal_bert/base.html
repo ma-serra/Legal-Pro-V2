@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Análise Legal BERTimbau{% endblock %} - Sistema Jurídico Hub Legal Pro</title>
+    
+    <!-- CSS Framework e Estilos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos Customizados Barufaldi -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avenir-barufaldi.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avenir-system.css') }}">
+    
+    <!-- Estilo específico do módulo -->
+    <style>
+        :root {
+            --cor-primaria: #2c5530;
+            --cor-secundaria: #4a7c59;
+            --cor-accent: #7cb342;
+            --cor-bg-light: #f8fdf9;
+            --cor-text-dark: #1a1a1a;
+            --cor-success: #28a745;
+            --cor-warning: #ffc107;
+            --cor-danger: #dc3545;
+            --cor-info: #17a2b8;
+        }
+
+        body {
+            font-family: 'Avenir Next LT Pro', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--cor-bg-light);
+            color: var(--cor-text-dark);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--cor-primaria) !important;
+        }
+
+        .btn-primary {
+            background-color: var(--cor-primaria);
+            border-color: var(--cor-primaria);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--cor-secundaria);
+            border-color: var(--cor-secundaria);
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        .card-header {
+            background-color: var(--cor-primaria);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            background-color: var(--cor-accent);
+        }
+
+        .badge-success {
+            background-color: var(--cor-success);
+        }
+
+        .badge-warning {
+            background-color: var(--cor-warning);
+        }
+
+        .badge-danger {
+            background-color: var(--cor-danger);
+        }
+
+        .badge-info {
+            background-color: var(--cor-info);
+        }
+
+        .legal-analyzer-header {
+            background: linear-gradient(135deg, var(--cor-primaria), var(--cor-secundaria));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .entity-badge {
+            margin: 0.2rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .entity-pessoa { background-color: #e3f2fd; color: #1976d2; }
+        .entity-empresa { background-color: #f3e5f5; color: #7b1fa2; }
+        .entity-data { background-color: #e8f5e8; color: #388e3c; }
+        .entity-valor { background-color: #fff3e0; color: #f57c00; }
+        .entity-documento { background-color: #fce4ec; color: #c2185b; }
+        .entity-default { background-color: #f5f5f5; color: #616161; }
+
+        .confidence-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--cor-accent);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--cor-primaria);
+            background-color: rgba(44, 85, 48, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--cor-primaria);
+            background-color: rgba(44, 85, 48, 0.1);
+        }
+
+        .result-summary {
+            background: linear-gradient(135deg, #f8fdf9, #e8f5e8);
+            border-left: 4px solid var(--cor-accent);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Garantir scroll adequado em todas as páginas */
+        html {
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .container {
+            overflow: visible;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="fas fa-brain me-2"></i>
+                <span>Análise Legal BERTimbau</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('analise_legal_bert.index') }}">
+                    <i class="fas fa-brain me-1"></i> Análise Legal
+                </a>
+                <a class="nav-link" href="{{ url_for('analise_legal_bert.historico') }}">
+                    <i class="fas fa-history me-1"></i> Histórico
+                </a>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i> Painel Principal
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header específico do módulo -->
+    <div class="legal-analyzer-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-brain me-3"></i>
+                        {% block page_title %}Análise Legal com BERTimbau{% endblock %}
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        {% block page_description %}
+                        Sistema avançado de análise de documentos jurídicos usando processamento de linguagem natural
+                        {% endblock %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <div class="text-end">
+                            <div class="small opacity-75">Modelo Ativo</div>
+                            <div class="fw-bold">Legal Analyzer v1.0</div>
+                        </div>
+                        <i class="fas fa-robot ms-3 fs-1 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        <strong>Sistema Jurídico Hub Legal Pro</strong> - Análise Legal BERTimbau
+                    </p>
+                    <small class="text-muted">
+                        Processamento otimizado para CPU • Análise em tempo real • Segurança garantida
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Dados processados localmente • LGPD Compliant
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Scripts específicos do módulo -->
+    <script>
+        // Configurações globais do módulo
+        window.analiseConfig = {
+            apiBase: '/analise-legal-bert/api',
+            uploadMaxSize: 25 * 1024 * 1024, // 25MB
+            allowedExtensions: ['txt', 'pdf', 'docx', 'doc']
+        };
+
+        // Função para mostrar notificações
+        function showNotification(message, type = 'info') {
+            const alertDiv = $(`
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+            
+            $('.container').first().prepend(alertDiv);
+            
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                alertDiv.alert('close');
+            }, 5000);
+        }
+
+        // Função para formatar tempo de processamento
+        function formatarTempo(segundos) {
+            if (segundos < 1) {
+                return `${Math.round(segundos * 1000)}ms`;
+            } else if (segundos < 60) {
+                return `${segundos.toFixed(1)}s`;
+            } else {
+                const minutos = Math.floor(segundos / 60);
+                const segs = Math.round(segundos % 60);
+                return `${minutos}m ${segs}s`;
+            }
+        }
+
+        // Função para obter classe CSS da entidade
+        function getEntityClass(tipo) {
+            const tipoLower = tipo.toLowerCase();
+            if (tipoLower.includes('cpf') || tipoLower.includes('nome') || tipoLower.includes('pessoa')) {
+                return 'entity-pessoa';
+            } else if (tipoLower.includes('cnpj') || tipoLower.includes('empresa')) {
+                return 'entity-empresa';
+            } else if (tipoLower.includes('data')) {
+                return 'entity-data';
+            } else if (tipoLower.includes('valor') || tipoLower.includes('monetario')) {
+                return 'entity-valor';
+            } else if (tipoLower.includes('processo') || tipoLower.includes('lei') || tipoLower.includes('artigo')) {
+                return 'entity-documento';
+            } else {
+                return 'entity-default';
+            }
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

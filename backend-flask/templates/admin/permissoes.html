@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}Gerenciamento de Permissões - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gerenciamento de Permissões</h1>
+        <div>
+            <a href="{{ url_for('admin_permissoes_areas_juridicas') }}" class="btn btn-danger me-2">
+                <i class="fas fa-gavel me-1"></i> Permissões Áreas Jurídicas
+            </a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaPermissao">
+                <i class="fas fa-plus me-2"></i>Nova Permissão
+            </button>
+        </div>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Permissões do Sistema</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Código</th>
+                            <th>Descrição</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for permissao in permissoes %}
+                        <tr>
+                            <td>{{ permissao.id }}</td>
+                            <td>{{ permissao.name }}</td>
+                            <td><code>{{ permissao.code }}</code></td>
+                            <td>{{ permissao.description }}</td>
+                            <td>{{ permissao.created_at|datetimeformat }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarPermissao{{ permissao.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalExcluirPermissao{{ permissao.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para adicionar nova permissão -->
+<div class="modal fade" id="modalNovaPermissao" tabindex="-1" aria-labelledby="modalNovaPermissaoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalNovaPermissaoLabel">Adicionar Nova Permissão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('admin_permissao_novo') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <small class="form-text text-muted">Ex: Gerenciar Usuários</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="code" name="code" required>
+                        <small class="form-text text-muted">Ex: user_manage (use apenas letras, números e underscore)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <small class="form-text text-muted">Descrição detalhada do que esta permissão permite fazer</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modais para editar e excluir permissões -->
+{% for permissao in permissoes %}
+<!-- Modal para editar permissão -->
+<div class="modal fade" id="modalEditarPermissao{{ permissao.id }}" tabindex="-1" aria-labelledby="modalEditarPermissaoLabel{{ permissao.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalEditarPermissaoLabel{{ permissao.id }}">Editar Permissão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('admin_permissao_editar', id=permissao.id) }}">
+                    <div class="mb-3">
+                        <label for="name{{ permissao.id }}" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name{{ permissao.id }}" name="name" value="{{ permissao.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code{{ permissao.id }}" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="code{{ permissao.id }}" name="code" value="{{ permissao.code }}" required>
+                        <small class="form-text text-muted">Ex: user_manage (use apenas letras, números e underscore)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description{{ permissao.id }}" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description{{ permissao.id }}" name="description" rows="3">{{ permissao.description or '' }}</textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para excluir permissão -->
+<div class="modal fade" id="modalExcluirPermissao{{ permissao.id }}" tabindex="-1" aria-labelledby="modalExcluirPermissaoLabel{{ permissao.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalExcluirPermissaoLabel{{ permissao.id }}">Excluir Permissão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a permissão <strong>{{ permissao.name }}</strong> ({{ permissao.code }})?</p>
+                <p class="text-danger">Esta ação não pode ser desfeita! Note que você não pode excluir permissões que estão sendo utilizadas por papéis.</p>
+                <form method="POST" action="{{ url_for('admin_permissao_excluir', id=permissao.id) }}">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

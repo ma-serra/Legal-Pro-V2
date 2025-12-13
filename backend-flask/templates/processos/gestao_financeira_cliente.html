@@ -1,0 +1,727 @@
+{% extends "layout.html" %}
+
+{% block title %}Visões Financeiras - Cliente - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    .chart-container {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    .content-fade {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+    
+    .content-fade.loading {
+        opacity: 0.7;
+    }
+    
+    .chart-title {
+        color: #4a8eb8;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        text-align: center;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .filter-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-select.bg-dark {
+        background-color: #7b8c93 !important;
+        border: 1px solid #404040 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+    }
+    
+    .form-label {
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .form-label.text-info { color: #4a8eb8 !important; }
+    .form-label.text-warning { color: #ffc107 !important; }
+    .form-label.text-success { color: #28a745 !important; }
+    
+    .metric-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%);
+        border: 1px solid #505050;
+        border-radius: 10px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    .timeline-item {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #4a8eb8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid content-fade" id="mainContent">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">👥 Visões Financeiras - Cliente</h1>
+                    <p class="text-muted">Dashboard financeiro, fluxo de caixa processual e análise de risco</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('gestao_financeira') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar à Gestão Financeira
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Obrigatórios -->
+    <div class="filter-card">
+        <form method="GET" id="filtroForm">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="filtro_cliente" class="form-label text-info">
+                        <i class="fas fa-user me-1"></i>Cliente
+                    </label>
+                    <select id="filtro_cliente" name="filtro_cliente" class="form-select bg-dark">
+                        <option value="todos">📋 Todos os Clientes</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente }}" {% if filtros.cliente == cliente %}selected{% endif %}>{{ cliente }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_advogado" class="form-label text-warning">
+                        <i class="fas fa-user-tie me-1"></i>Advogado
+                    </label>
+                    <select id="filtro_advogado" name="filtro_advogado" class="form-select bg-dark">
+                        <option value="todos">👨‍💼 Todos os Advogados</option>
+                        {% for advogado in advogados %}
+                        <option value="{{ advogado }}" {% if filtros.advogado == advogado %}selected{% endif %}>{{ advogado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_area" class="form-label text-success">
+                        <i class="fas fa-balance-scale me-1"></i>Área Jurídica
+                    </label>
+                    <select id="filtro_area" name="filtro_area" class="form-select bg-dark">
+                        <option value="todos">⚖️ Todas as Áreas</option>
+                        {% for area in areas %}
+                        <option value="{{ area }}" {% if filtros.area == area %}selected{% endif %}>{{ area }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_polo" class="form-label text-danger">
+                        <i class="fas fa-users me-1"></i>Polo
+                    </label>
+                    <select id="filtro_polo" name="filtro_polo" class="form-select bg-dark">
+                        <option value="todos">👥 Todos os Polos</option>
+                        {% for polo in polos %}
+                        <option value="{{ polo }}" {% if filtros.polo == polo %}selected{% endif %}>{{ polo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_risco" class="form-label text-info">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Risco
+                    </label>
+                    <select id="filtro_risco" name="filtro_risco" class="form-select bg-dark">
+                        <option value="todos">📊 Todos os Riscos</option>
+                        <option value="Alto" {% if filtros.risco == 'Alto' %}selected{% endif %}>🔴 Alto</option>
+                        <option value="Médio" {% if filtros.risco == 'Médio' %}selected{% endif %}>🟡 Médio</option>
+                        <option value="Baixo" {% if filtros.risco == 'Baixo' %}selected{% endif %}>🟢 Baixo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_numero" class="form-label text-warning">
+                        <i class="fas fa-hashtag me-1"></i>Nº Processo
+                    </label>
+                    <input type="text" id="filtro_numero" name="filtro_numero" class="form-control bg-dark text-white" placeholder="CNJ..." value="{{ filtros.numero }}">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-2"></i>Aplicar Filtros
+                    </button>
+                    <a href="{{ url_for('gestao_financeira_cliente') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Limpar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Dashboard Financeiro do Processo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">💰 Dashboard Financeiro do Processo</h3>
+                <!-- Primeira Linha de Métricas-Chave para Provisões -->
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-primary">📊 Processos</h5>
+                            <h3 class="text-white">{{ dashboard.total_processos }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-warning">💰 Valor das Causas</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.valor_total_causas).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-info">📈 Provisões</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.total_provisoes).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-primary">✅ Pagamento Realizado</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.pagamento_realizado).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-success">💸 Desembolsado</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.total_desembolsado).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="metric-card">
+                            <h5 class="text-danger">🔒 Depositado</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.total_depositado).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Segunda Linha de Métricas -->
+                <div class="row mt-3">
+                    <div class="col-md-2 offset-md-5">
+                        <div class="metric-card">
+                            <h5 class="text-warning">🤝 Acordos</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.total_acordos).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Segunda Linha de Métricas - NOVOS CAMPOS -->
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h5 class="text-primary">🔮 Previsão Custos Futuros</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.previsao_custos_futuros).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h5 class="text-info">⚖️ Honorários Periciais</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.honorarios_periciais_total).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h5 class="text-warning">🏛️ Depósitos Judiciais</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.depositos_judiciais_total).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h5 class="text-danger">📋 Custas Processuais</h5>
+                            <h4 class="text-white">R$ {{ "{:,.0f}".format(dashboard.custas_processuais_total).replace(',', '.') }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fluxo de Caixa Processual -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container" style="height: 900px;">
+                <h3 class="chart-title">📊 Fluxo de Caixa por Área Jurídica</h3>
+                <div id="chartFluxoCaixa" class="chart-wrapper" style="height: 820px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Risco Financeiro -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container" style="height: 350px;">
+                <h3 class="chart-title">⚠️ Análise de Risco Financeiro</h3>
+                <div id="chartRiscoFinanceiro" style="height: 280px;"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container" style="height: 350px;">
+                <h3 class="chart-title">📈 Métricas de Provisão</h3>
+                <div class="table-responsive" style="height: 280px; overflow-y: auto;">
+                    <table class="table table-dark table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th style="font-size: 0.8rem;">Risco</th>
+                                <th style="font-size: 0.8rem;">Processos</th>
+                                <th style="font-size: 0.8rem;">Valor Total</th>
+                                <th style="font-size: 0.8rem;">Valor Médio</th>
+                                <th style="font-size: 0.8rem;">Provisão Total</th>
+                                <th style="font-size: 0.8rem;">Melhor Caso</th>
+                                <th style="font-size: 0.8rem;">Pior Caso</th>
+                                <th style="font-size: 0.8rem;">Viabilidade</th>
+                                <th style="font-size: 0.8rem;">% Sucesso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for risco in analise_risco %}
+                            <tr>
+                                <td style="font-size: 0.75rem;">
+                                    {% if risco.risco == 'Provável' %}🔴 Provável
+                                    {% elif risco.risco == 'Possível' %}🟡 Possível
+                                    {% elif risco.risco == 'Remoto' %}🟢 Remoto
+                                    {% elif risco.risco == 'Alto' %}🔴 Alto
+                                    {% elif risco.risco == 'Médio' %}🟡 Médio
+                                    {% else %}🟢 Baixo{% endif %}
+                                </td>
+                                <td style="font-size: 0.75rem;">{{ risco.quantidade }}</td>
+                                <td style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(risco.valor_total or 0).replace(',', '.') }}</td>
+                                <td style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(risco.valor_medio or 0).replace(',', '.') }}</td>
+                                <td style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(risco.provisao_total or 0).replace(',', '.') }}</td>
+                                <td style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(risco.cenario_melhor_medio or 0).replace(',', '.') }}</td>
+                                <td style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(risco.cenario_pior_medio or 0).replace(',', '.') }}</td>
+                                <td style="font-size: 0.75rem;">{{ "{:.0f}%".format(risco.viabilidade_media or 0) }}</td>
+                                <td style="font-size: 0.75rem;">{{ "{:.0f}%".format(risco.probabilidade_sucesso or 0) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Pagamentos e Fluxo de Caixa - Layout Otimizado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <div class="row">
+                    <!-- Timeline de Pagamentos - Coluna Esquerda -->
+                    <div class="col-md-7">
+                        <h3 class="chart-title">💳 Timeline de Pagamentos</h3>
+                        <div class="timeline" style="max-height: 450px; overflow-y: auto;">
+                            <div class="row g-2">
+                                {% for pagamento in timeline_pagamentos %}
+                                {% if loop.index0 % 2 == 0 %}
+                                <div class="col-md-6">
+                                {% endif %}
+                                    <div class="timeline-item mb-2 p-2" style="font-size: 0.85rem;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="text-white" style="font-size: 0.8rem;">{{ pagamento.tipo_pagamento }}</strong>
+                                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else 'N/A' }}</span>
+                                        </div>
+                                        <div class="text-info fw-bold mb-1" style="font-size: 0.75rem;">{{ pagamento.numero_processo_cnj }}</div>
+                                        <div class="text-muted mb-1" style="font-size: 0.7rem;">{{ pagamento.cliente }}</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong class="text-warning" style="font-size: 0.8rem;">R$ {{ "{:,.0f}".format(pagamento.valor or 0).replace(',', '.') }}</strong>
+                                            <small class="text-muted" style="font-size: 0.65rem;">{{ pagamento.descricao }}</small>
+                                        </div>
+                                    </div>
+                                {% if loop.index0 % 2 == 1 or loop.last %}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fluxo de Caixa - Coluna Direita -->
+                    <div class="col-md-5">
+                        <h3 class="chart-title">📊 Fluxo de Caixa por Área</h3>
+                        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                            <table class="table table-dark table-striped table-sm" style="font-size: 0.8rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="font-size: 0.75rem;">Área</th>
+                                        <th style="font-size: 0.75rem;">Custas</th>
+                                        <th style="font-size: 0.75rem;">Periciais</th>
+                                        <th style="font-size: 0.75rem;">Depósitos</th>
+                                        <th style="font-size: 0.75rem;">Previsão</th>
+                                        <th style="font-size: 0.75rem;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in fluxo_caixa %}
+                                    <tr>
+                                        <td><span class="badge bg-primary" style="font-size: 0.65rem;">{{ item.area_juridica }}</span></td>
+                                        <td style="font-size: 0.7rem;">R$ {{ "{:,.0f}".format(item.custas_processuais or 0).replace(',', '.') }}</td>
+                                        <td style="font-size: 0.7rem;">R$ {{ "{:,.0f}".format(item.honorarios_periciais or 0).replace(',', '.') }}</td>
+                                        <td style="font-size: 0.7rem;">R$ {{ "{:,.0f}".format(item.depositos_judiciais or 0).replace(',', '.') }}</td>
+                                        <td style="font-size: 0.7rem;">R$ {{ "{:,.0f}".format(item.previsao_custos_futuros or 0).replace(',', '.') }}</td>
+                                        <td><strong class="text-warning" style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format((item.custas_processuais or 0) + (item.honorarios_periciais or 0) + (item.depositos_judiciais or 0) + (item.previsao_custos_futuros or 0)).replace(',', '.') }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Timeline de Processos Recentes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">🕒 Timeline de Processos Recentes</h3>
+                <div class="timeline">
+                    {% for processo in processos_recentes %}
+                    <div class="timeline-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <h6 class="text-white" style="font-size: 0.85rem;">{{ processo.numero_processo_cnj }}</h6>
+                                <small class="text-muted">{{ processo.data_distribuicao.strftime('%d/%m/%Y') if processo.data_distribuicao else 'N/A' }}</small>
+                            </div>
+                            <div class="col-md-1">
+                                <span class="badge bg-primary" style="font-size: 0.65rem;">{{ processo.area_juridica }}</span>
+                            </div>
+                            <div class="col-md-1">
+                                <span class="text-white" style="font-size: 0.75rem;">{{ processo.cliente }}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="text-info" style="font-size: 0.75rem;">
+                                    <i class="fas fa-user-tie me-1"></i>{{ processo.advogado_do_caso or 'N/A' }}
+                                </span>
+                            </div>
+                            <div class="col-md-1">
+                                <span class="text-info" style="font-size: 0.75rem;">
+                                    <i class="fas fa-users me-1"></i>{{ processo.polo or 'N/A' }}
+                                </span>
+                            </div>
+                            <div class="col-md-1">
+                                <span class="badge {% if processo.risco == 'Alto' %}bg-danger{% elif processo.risco == 'Médio' %}bg-warning{% else %}bg-success{% endif %}" style="font-size: 0.65rem;">
+                                    {{ processo.risco }}
+                                </span>
+                            </div>
+                            <div class="col-md-2">
+                                <strong class="text-warning" style="font-size: 0.75rem;">R$ {{ "{:,.0f}".format(processo.valor_da_causa or 0).replace(',', '.') }}</strong>
+                            </div>
+                            <div class="col-md-2">
+                                <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                                    <i class="fas fa-eye"></i> Visualizar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Fluxo de Caixa por Área
+    var fluxoCaixaOptions = {
+        series: [{
+            name: 'Provisão',
+            data: [{% for item in fluxo_caixa %}{{ item.provisao or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }, {
+            name: 'Pagamento',
+            data: [{% for item in fluxo_caixa %}{{ item.pagamento or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }, {
+            name: 'Bloqueio',
+            data: [{% for item in fluxo_caixa %}{{ item.bloqueio or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }, {
+            name: 'Acordo',
+            data: [{% for item in fluxo_caixa %}{{ item.acordo or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }],
+        chart: {
+            type: 'bar',
+            height: 820,
+            background: 'transparent',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            },
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                barHeight: '80%',
+                endingShape: 'rounded',
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'center'
+                }
+            }
+        },
+        dataLabels: { 
+            enabled: true,
+            style: {
+                fontSize: '11px',
+                fontWeight: 'bold',
+                colors: ['#FFFFFF']
+            },
+            formatter: function(val) {
+                return 'R$ ' + val.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            },
+            offsetX: 10
+        },
+        stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent']
+        },
+        xaxis: {
+            categories: [{% for item in fluxo_caixa %}'{{ item.area_juridica }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                rotate: 0,
+                formatter: function(value) {
+                    return 'R$ ' + value.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        yaxis: {
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        fill: { opacity: 1 },
+        tooltip: {
+            theme: 'dark',
+            style: {
+                fontSize: '13px',
+                fontFamily: 'Inter, system-ui, sans-serif'
+            },
+            y: {
+                formatter: function (val) {
+                    return "R$ " + val.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    })
+                }
+            }
+        },
+        colors: ['#2E5266', '#1B4332', '#8B1538', '#B8860B'],
+        theme: { 
+            mode: 'dark',
+            palette: 'palette2'
+        },
+        grid: {
+            borderColor: '#404040',
+            strokeDashArray: 3
+        },
+        legend: {
+            labels: {
+                colors: '#E5E7EB',
+                fontSize: '13px'
+            }
+        }
+    };
+
+    var fluxoCaixaChart = new ApexCharts(document.querySelector("#chartFluxoCaixa"), fluxoCaixaOptions);
+    fluxoCaixaChart.render();
+
+    // Gráfico de Risco Financeiro
+    var riscoOptions = {
+        series: [{% for risco in analise_risco %}{{ risco.quantidade }}{% if not loop.last %},{% endif %}{% endfor %}],
+        chart: {
+            type: 'donut',
+            height: 280,
+            background: 'transparent',
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        labels: [{% for risco in analise_risco %}'{{ risco.risco }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        colors: ['#1B4332', '#8B1538', '#B8860B'],
+        legend: {
+            labels: { 
+                colors: '#E5E7EB',
+                fontSize: '12px',
+                fontWeight: 500
+            },
+            position: 'bottom',
+            horizontalAlign: 'center',
+            fontSize: '12px',
+            offsetY: -10
+        },
+        dataLabels: {
+            enabled: true,
+            style: {
+                fontSize: '12px',
+                fontWeight: 'bold',
+                colors: ['#FFFFFF']
+            },
+            formatter: function(val) {
+                return val.toFixed(1) + '%';
+            },
+            dropShadow: {
+                enabled: true,
+                top: 1,
+                left: 1,
+                blur: 1,
+                color: '#000',
+                opacity: 0.45
+            }
+        },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '60%',
+                    labels: {
+                        show: true,
+                        name: {
+                            show: true,
+                            fontSize: '13px',
+                            color: '#E5E7EB',
+                            offsetY: -15
+                        },
+                        value: {
+                            show: true,
+                            fontSize: '16px',
+                            color: '#FFFFFF',
+                            fontWeight: 600,
+                            offsetY: 15
+                        },
+                        total: {
+                            show: true,
+                            label: 'Total',
+                            color: '#E5E7EB',
+                            fontSize: '12px',
+                            fontWeight: 400
+                        }
+                    }
+                }
+            }
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    height: 250
+                },
+                legend: {
+                    fontSize: '11px'
+                }
+            }
+        }],
+        theme: { mode: 'dark' }
+    };
+
+    var riscoChart = new ApexCharts(document.querySelector("#chartRiscoFinanceiro"), riscoOptions);
+    riscoChart.render();
+
+    // Auto-submit form on filter change with smooth transition
+    document.querySelectorAll('#filtroForm select, #filtroForm input').forEach(element => {
+        element.addEventListener('change', function() {
+            // Add loading effect
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                mainContent.classList.add('loading');
+            }
+            
+            // Small delay to show transition effect before submitting
+            setTimeout(function() {
+                document.getElementById('filtroForm').submit();
+            }, 100);
+        });
+    });
+});
+</script>
+{% endblock %}

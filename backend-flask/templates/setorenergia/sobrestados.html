@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Processos Sobrestados</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .kpi-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #F89728;
+            transition: transform 0.2s;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .table-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .table-responsive {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        table.dataTable {
+            width: 100% !important;
+            color: #ffffff;
+        }
+        
+        table.dataTable thead th {
+            background-color: #003366;
+            color: #ffffff;
+            border-bottom: 2px solid #0089CF;
+            padding: 1rem;
+        }
+        
+        table.dataTable tbody tr {
+            background-color: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background-color: #3a3a3a;
+        }
+        
+        table.dataTable tbody td {
+            padding: 0.75rem 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #3a3a3a;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .dataTables_wrapper .dataTables_length select {
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #3a3a3a;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #ffffff;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .btn-energia-blue {
+            background-color: #0089CF;
+            color: white;
+            border: none;
+        }
+        
+        .btn-energia-blue:hover {
+            background-color: #006ba8;
+            color: white;
+        }
+        
+        .btn-energia-green {
+            background-color: #8DC63F;
+            color: white;
+            border: none;
+        }
+        
+        .btn-energia-green:hover {
+            background-color: #7ab82f;
+            color: white;
+        }
+        
+        /* FORÇA: Cards KPI com texto branco */
+        .kpi-card,
+        .kpi-card *,
+        .kpi-card h1,
+        .kpi-card h2,
+        .kpi-card h3,
+        .kpi-card h4,
+        .kpi-card h5,
+        .kpi-card h6,
+        .kpi-card p,
+        .kpi-card span {
+            color: #ffffff !important;
+        }
+        
+        .kpi-card .text-muted {
+            color: #b0b0b0 !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item active">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-pause-circle me-2"></i>Processos Sobrestados</h2>
+            <p class="mb-0 mt-2">Análise detalhada de <strong id="total-sobrestados">-</strong> processos sobrestados</p>
+        </div>
+        
+        <!-- KPIs -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <h6 class="text-muted mb-2"><i class="fas fa-pause-circle me-2"></i>Total Sobrestados</h6>
+                    <h2 id="kpi-total">-</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #E30613;">
+                    <h6 class="text-muted mb-2"><i class="fas fa-dollar-sign me-2"></i>Valor em Risco</h6>
+                    <h2 id="kpi-valor">-</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #0089CF;">
+                    <h6 class="text-muted mb-2"><i class="fas fa-percentage me-2"></i>% do Portfolio</h6>
+                    <h2 id="kpi-percentual">-</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left-color: #8DC63F;">
+                    <h6 class="text-muted mb-2"><i class="fas fa-chart-line me-2"></i>Valor Médio</h6>
+                    <h2 id="kpi-valor-medio">-</h2>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela -->
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Lista Completa de Sobrestados</h5>
+                <div class="btn-group">
+                    <a href="/setorenergia/api/export/sobrestados/excel" class="btn btn-sm btn-energia-green">
+                        <i class="fas fa-file-excel me-1"></i> Excel
+                    </a>
+                    <a href="/setorenergia/api/export/sobrestados/csv" class="btn btn-sm btn-energia-green">
+                        <i class="fas fa-file-csv me-1"></i> CSV
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label text-muted">
+                        <i class="fas fa-search me-1"></i>Número do Processo
+                    </label>
+                    <input type="text" id="filtro-numero" class="form-control" placeholder="Digite o número do processo..." style="background-color: #1a1a1a; color: #ffffff; border-color: #3a3a3a;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>Comarca
+                    </label>
+                    <select id="filtro-comarca" class="form-select" style="background-color: #1a1a1a; color: #ffffff; border-color: #3a3a3a;">
+                        <option value="">Todas as Comarcas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">
+                        <i class="fas fa-list-alt me-1"></i>Causa-Raiz
+                    </label>
+                    <select id="filtro-causa" class="form-select" style="background-color: #1a1a1a; color: #ffffff; border-color: #3a3a3a;">
+                        <option value="">Todas as Causas</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">
+                        <i class="fas fa-list-ol me-1"></i>Exibir
+                    </label>
+                    <select id="filtro-limite" class="form-select" style="background-color: #1a1a1a; color: #ffffff; border-color: #3a3a3a;">
+                        <option value="20">20 processos</option>
+                        <option value="50">50 processos</option>
+                        <option value="100">100 processos</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Contador de Processos -->
+            <div class="mb-3">
+                <small class="text-muted" id="contador-processos">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mostrando <strong id="count-exibidos">0</strong> de <strong id="count-total">0</strong> processos
+                </small>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="table-sobrestados" class="table table-striped" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Número Processo</th>
+                            <th>Comarca</th>
+                            <th>Causa-Raiz</th>
+                            <th>Valor Envolvido</th>
+                            <th>Data Criação</th>
+                            <th>Dias na Fase</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Modal de Detalhes do Processo -->
+    <div class="modal fade" id="modalDetalhes" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="background-color: #f8f9fa; color: #000000;">
+                <div class="modal-header" style="background-color: #003366; color: #ffffff; border-bottom: none;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Detalhes do Processo <span id="modal-numero-processo"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Coluna Esquerda -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                            </h6>
+                            <table class="table table-sm table-borderless" style="background-color: #ffffff;">
+                                <tr>
+                                    <td style="color: #6c757d; width: 40%;">Número do Processo:</td>
+                                    <td id="det-numero" style="color: #000000; font-weight: 600;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Cadastro Interno:</td>
+                                    <td id="det-cadastro" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Situação:</td>
+                                    <td id="det-situacao" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Fase:</td>
+                                    <td><span id="det-fase" class="badge bg-warning" style="color: #000000;">-</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Na fase desde:</td>
+                                    <td id="det-fase-desde" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Tempo na Fase:</td>
+                                    <td id="det-tempo-fase" style="color: #000000;">-</td>
+                                </tr>
+                            </table>
+                            
+                            <h6 class="mb-3 mt-4" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-gavel me-2"></i>Partes e Advogados
+                            </h6>
+                            <table class="table table-sm table-borderless" style="background-color: #ffffff;">
+                                <tr>
+                                    <td style="color: #6c757d; width: 40%;">Parte Contrária:</td>
+                                    <td id="det-parte" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Escritório:</td>
+                                    <td id="det-escritorio" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Advogado Responsável:</td>
+                                    <td id="det-advogado" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Advogado Adverso:</td>
+                                    <td id="det-advogado-adverso" style="color: #000000;">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Coluna Direita -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-dollar-sign me-2"></i>Valores e Riscos
+                            </h6>
+                            <table class="table table-sm table-borderless" style="background-color: #ffffff;">
+                                <tr>
+                                    <td style="color: #6c757d; width: 40%;">Valor Envolvido:</td>
+                                    <td id="det-valor" class="fw-bold" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Valor Provável:</td>
+                                    <td id="det-valor-provavel" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Valor Possível:</td>
+                                    <td id="det-valor-possivel" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Valor Remoto:</td>
+                                    <td id="det-valor-remoto" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Classificação:</td>
+                                    <td><span id="det-classificacao" class="badge">-</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Valor Provisionado:</td>
+                                    <td id="det-provisionado" style="color: #000000;">-</td>
+                                </tr>
+                            </table>
+                            
+                            <h6 class="mb-3 mt-4" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-map-marker-alt me-2"></i>Local e Datas
+                            </h6>
+                            <table class="table table-sm table-borderless" style="background-color: #ffffff;">
+                                <tr>
+                                    <td style="color: #6c757d; width: 40%;">Comarca:</td>
+                                    <td id="det-comarca" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Vara:</td>
+                                    <td id="det-vara" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Estado:</td>
+                                    <td id="det-estado" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Distribuído em:</td>
+                                    <td id="det-distribuido" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Data Criação:</td>
+                                    <td id="det-criacao" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Última Movimentação:</td>
+                                    <td id="det-ultima-mov" style="color: #000000;">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Detalhes Adicionais -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="mb-3" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-clipboard-list me-2"></i>Detalhes do Processo
+                            </h6>
+                            <table class="table table-sm table-borderless" style="background-color: #ffffff;">
+                                <tr>
+                                    <td style="color: #6c757d; width: 20%;">Causa-Raiz:</td>
+                                    <td id="det-causa-raiz" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Objeto:</td>
+                                    <td id="det-objeto" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Tipo de Ação:</td>
+                                    <td id="det-tipo-acao" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Decisão (1ª Instância):</td>
+                                    <td id="det-decisao-1" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Possui Liminar:</td>
+                                    <td id="det-liminar" style="color: #000000;">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #6c757d;">Acordo/Defesa:</td>
+                                    <td id="det-acordo" style="color: #000000;">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumo do Processo -->
+                    <div class="row mt-4" id="resumo-section" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="mb-3" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-file-contract me-2"></i>Resumo do Processo
+                            </h6>
+                            <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <p id="det-resumo" class="mb-0" style="color: #000000;">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Justificativa de Contingenciamento -->
+                    <div class="row mt-4" id="justificativa-section" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="mb-3" style="color: #000000; font-weight: 600;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Justificativa para Contingenciamento
+                            </h6>
+                            <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <p id="det-justificativa" class="mb-0" style="color: #000000;">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background-color: #e9ecef; border-top: 1px solid #dee2e6;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery PRIMEIRO (necessário para DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables (depois do jQuery) -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        let tabelaSobrestados = null;
+        
+        async function loadSobrestados() {
+            try {
+                console.log('🔄 Carregando dados de sobrestados...');
+                const response = await fetch('/setorenergia/api/sobrestados');
+                const result = await response.json();
+                
+                console.log('📊 Resposta da API:', result);
+                
+                if (result.success && result.data && result.stats) {
+                    const processos = result.data;
+                    const stats = result.stats;
+                    
+                    // Atualizar KPIs
+                    document.getElementById('total-sobrestados').textContent = stats.total.toLocaleString('pt-BR');
+                    document.getElementById('kpi-total').textContent = stats.total.toLocaleString('pt-BR');
+                    document.getElementById('kpi-valor').textContent = formatarMoeda(stats.valor_total);
+                    document.getElementById('kpi-percentual').textContent = `${stats.percentual_portfolio}%`;
+                    document.getElementById('kpi-valor-medio').textContent = formatarMoeda(stats.valor_medio);
+                    
+                    console.log('✅ KPIs atualizados');
+                    
+                    // Preencher filtros com valores únicos
+                    preencherFiltros(processos);
+                    
+                    // Destruir tabela existente
+                    if (tabelaSobrestados) {
+                        tabelaSobrestados.destroy();
+                    }
+                    
+                    // Preencher tabela
+                    const tbody = document.querySelector('#table-sobrestados tbody');
+                    tbody.innerHTML = '';
+                    
+                    processos.forEach(p => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${p['Número do Processo'] || '-'}</td>
+                            <td>${p['Comarca Desdobramento'] || '-'}</td>
+                            <td>${p['Causa-Raiz'] || '-'}</td>
+                            <td>${formatarMoeda(p['Valor Envolvido Atual - Passiva'] || 0)}</td>
+                            <td>${formatarData(p['Data criação'])}</td>
+                            <td>${Math.round(p['tempo_na_fase_atual'] || 0)} dias</td>
+                            <td>
+                                <button class="btn btn-sm btn-energia-blue" onclick="verDetalhes(${p['ID Processo']})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    console.log(`✅ ${processos.length} processos adicionados à tabela`);
+                    
+                    // Inicializar DataTable com tratamento de erro
+                    try {
+                        // Verificar se jQuery e DataTable estão disponíveis
+                        if (typeof $ === 'undefined') {
+                            throw new Error('jQuery não está carregado');
+                        }
+                        
+                        if (typeof $.fn.DataTable === 'undefined') {
+                            throw new Error('DataTables não está carregado');
+                        }
+                        
+                        tabelaSobrestados = $('#table-sobrestados').DataTable({
+                            language: {
+                                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                            },
+                            pageLength: 20,
+                            order: [[3, 'desc']], // Ordenar por valor
+                            columnDefs: [
+                                { orderable: false, targets: 6 } // Coluna de ações não ordenável
+                            ],
+                            drawCallback: function() {
+                                // Atualizar contador automaticamente após cada redesenho
+                                atualizarContador();
+                            }
+                        });
+                        
+                        console.log('✅ DataTable inicializado com sucesso');
+                        
+                        // Atualizar contador inicial
+                        atualizarContador();
+                        
+                    } catch (dtError) {
+                        console.error('❌ Erro ao inicializar DataTable:', dtError);
+                        // A tabela ainda funciona, só sem os recursos do DataTables
+                    }
+                    
+                } else {
+                    console.error('❌ Formato de resposta inválido:', result);
+                    alert('Erro ao carregar dados. Verifique o console.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar sobrestados:', error);
+                alert('Erro ao carregar dados: ' + error.message);
+            }
+        }
+        
+        function formatarMoeda(valor) {
+            if (!valor) return 'R$ 0,00';
+            return new Intl.NumberFormat('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+            }).format(valor);
+        }
+        
+        function formatarData(data) {
+            if (!data) return '-';
+            const d = new Date(data);
+            return d.toLocaleDateString('pt-BR');
+        }
+        
+        function preencherFiltros(processos) {
+            // Extrair valores únicos
+            const comarcas = [...new Set(processos.map(p => p['Comarca Desdobramento']).filter(c => c))].sort();
+            const causas = [...new Set(processos.map(p => p['Causa-Raiz']).filter(c => c))].sort();
+            
+            // Preencher comarca
+            const selectComarca = document.getElementById('filtro-comarca');
+            selectComarca.innerHTML = '<option value="">Todas as Comarcas</option>';
+            comarcas.forEach(comarca => {
+                const option = document.createElement('option');
+                option.value = comarca;
+                option.textContent = comarca;
+                selectComarca.appendChild(option);
+            });
+            
+            // Preencher causa-raiz
+            const selectCausa = document.getElementById('filtro-causa');
+            selectCausa.innerHTML = '<option value="">Todas as Causas</option>';
+            causas.forEach(causa => {
+                const option = document.createElement('option');
+                option.value = causa;
+                option.textContent = causa;
+                selectCausa.appendChild(option);
+            });
+            
+            // Adicionar event listeners para os filtros
+            document.getElementById('filtro-numero').addEventListener('keyup', aplicarFiltros);
+            document.getElementById('filtro-comarca').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtro-causa').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtro-limite').addEventListener('change', aplicarLimite);
+        }
+        
+        function aplicarFiltros() {
+            if (!tabelaSobrestados) return;
+            
+            const filtroNumero = document.getElementById('filtro-numero').value;
+            const filtroComarca = document.getElementById('filtro-comarca').value;
+            const filtroCausa = document.getElementById('filtro-causa').value;
+            
+            // Aplicar filtros usando DataTables API
+            tabelaSobrestados
+                .column(0).search(filtroNumero)  // Número do Processo
+                .column(1).search(filtroComarca) // Comarca
+                .column(2).search(filtroCausa)   // Causa-Raiz
+                .draw();
+            
+            // Atualizar contador
+            atualizarContador();
+        }
+        
+        function aplicarLimite() {
+            if (!tabelaSobrestados) return;
+            
+            const limite = parseInt(document.getElementById('filtro-limite').value);
+            tabelaSobrestados.page.len(limite).draw();
+            
+            // Atualizar contador
+            atualizarContador();
+        }
+        
+        function atualizarContador() {
+            if (!tabelaSobrestados) return;
+            
+            const info = tabelaSobrestados.page.info();
+            const totalFiltrados = info.recordsDisplay;
+            const totalGeral = info.recordsTotal;
+            const exibidos = Math.min(info.length, totalFiltrados);
+            
+            document.getElementById('count-exibidos').textContent = exibidos;
+            document.getElementById('count-total').textContent = totalFiltrados;
+        }
+        
+        let processoAtual = null;
+        
+        async function verDetalhes(idProcesso) {
+            try {
+                console.log('🔍 Carregando detalhes do processo ID:', idProcesso);
+                
+                // Buscar processo nos dados já carregados
+                const response = await fetch('/setorenergia/api/sobrestados');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    processoAtual = result.data.find(p => p['ID Processo'] === idProcesso);
+                    
+                    if (processoAtual) {
+                        preencherModalDetalhes(processoAtual);
+                        
+                        // Abrir modal
+                        const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
+                        modal.show();
+                    } else {
+                        alert('Processo não encontrado!');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+                alert('Erro ao carregar detalhes do processo');
+            }
+        }
+        
+        function preencherModalDetalhes(p) {
+            // Título
+            document.getElementById('modal-numero-processo').textContent = p['Número do Processo'] || 'N/A';
+            
+            // Informações Básicas
+            document.getElementById('det-numero').textContent = p['Número do Processo'] || '-';
+            document.getElementById('det-cadastro').textContent = p['Cadastro Interno'] || '-';
+            document.getElementById('det-situacao').textContent = p['Situação'] || '-';
+            document.getElementById('det-fase').textContent = p['Fase'] || '-';
+            document.getElementById('det-fase-desde').textContent = formatarData(p['Na fase desde']) || '-';
+            document.getElementById('det-tempo-fase').textContent = p['tempo_na_fase_atual'] ? 
+                `${Math.round(p['tempo_na_fase_atual'])} dias` : '-';
+            
+            // Partes e Advogados
+            document.getElementById('det-parte').textContent = p['Parte Contraria'] || '-';
+            document.getElementById('det-escritorio').textContent = p['Escritório'] || '-';
+            document.getElementById('det-advogado').textContent = p['Advogado Responsável'] || '-';
+            document.getElementById('det-advogado-adverso').textContent = p['Advogado Adverso'] || 'Não informado';
+            
+            // Valores e Riscos
+            document.getElementById('det-valor').textContent = formatarMoeda(p['Valor Envolvido Atual - Passiva'] || 0);
+            document.getElementById('det-valor-provavel').textContent = formatarMoeda(p['Valor Provável (atual) - Passiva'] || 0);
+            document.getElementById('det-valor-possivel').textContent = formatarMoeda(p['Valor possível (atual) - Passiva'] || 0);
+            document.getElementById('det-valor-remoto').textContent = formatarMoeda(p['Valor Remoto (atual) - Passiva'] || 0);
+            document.getElementById('det-provisionado').textContent = formatarMoeda(p['Valor Provisionado'] || 0);
+            
+            // Classificação de Risco
+            const classificacao = p['Classificação - Passiva'] || 'N/A';
+            const badgeClassificacao = document.getElementById('det-classificacao');
+            badgeClassificacao.textContent = classificacao;
+            badgeClassificacao.className = 'badge';
+            
+            if (classificacao === 'Provável') {
+                badgeClassificacao.classList.add('bg-danger');
+            } else if (classificacao === 'Possível') {
+                badgeClassificacao.classList.add('bg-warning');
+            } else if (classificacao === 'Remoto') {
+                badgeClassificacao.classList.add('bg-success');
+            } else {
+                badgeClassificacao.classList.add('bg-secondary');
+            }
+            
+            // Local e Datas
+            document.getElementById('det-comarca').textContent = p['Comarca Desdobramento'] || '-';
+            document.getElementById('det-vara').textContent = p['Vara Desdobramento'] || '-';
+            document.getElementById('det-estado').textContent = p['Estado'] || '-';
+            document.getElementById('det-distribuido').textContent = formatarData(p['Distribuído em']) || '-';
+            document.getElementById('det-criacao').textContent = formatarData(p['Data criação']) || '-';
+            document.getElementById('det-ultima-mov').textContent = formatarData(p['Data última movimentação']) || '-';
+            
+            // Detalhes do Processo
+            document.getElementById('det-causa-raiz').textContent = p['Causa-Raiz'] || '-';
+            document.getElementById('det-objeto').textContent = p['Objeto'] || '-';
+            document.getElementById('det-tipo-acao').textContent = p['Tipo de Ação'] || '-';
+            document.getElementById('det-decisao-1').textContent = p['Decisão (1ª Instância)'] || '-';
+            document.getElementById('det-liminar').textContent = p['Possui Liminar?'] || 'Não';
+            document.getElementById('det-acordo').textContent = p['Acordo/Defesa'] || '-';
+            
+            // Resumo do Processo
+            if (p['Resumo do Processo'] && p['Resumo do Processo'].trim()) {
+                document.getElementById('det-resumo').textContent = p['Resumo do Processo'];
+                document.getElementById('resumo-section').style.display = 'block';
+            } else {
+                document.getElementById('resumo-section').style.display = 'none';
+            }
+            
+            // Justificativa de Contingenciamento
+            if (p['Justificativa para Contingenciamento'] && p['Justificativa para Contingenciamento'].trim()) {
+                document.getElementById('det-justificativa').textContent = p['Justificativa para Contingenciamento'];
+                document.getElementById('justificativa-section').style.display = 'block';
+            } else {
+                document.getElementById('justificativa-section').style.display = 'none';
+            }
+        }
+        
+        // Inicializar ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadSobrestados);
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente IA - Demo</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #121212;
+            color: #f8f9fa;
+        }
+        
+        .chat-container {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+        
+        .chat-header {
+            background-color: #252525;
+            border-bottom: 1px solid #333;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .messages-container {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .user-message {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            margin-left: auto;
+        }
+        
+        .assistant-message {
+            background-color: #333;
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            max-width: 80%;
+        }
+        
+        .config-item {
+            margin-bottom: 10px;
+        }
+        
+        .form-control {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+        }
+        
+        .form-control:focus {
+            background-color: #333;
+            color: white;
+            border-color: #0d6efd;
+        }
+        
+        .form-select {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="mb-4">Assistente IA - Demonstração</h1>
+        
+        <div class="chat-container">
+            <div class="chat-header">
+                <h3 class="mb-3">Configurações</h3>
+                <form id="configForm" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="modelo_llm"><i class="fas fa-brain"></i> Modelo de Linguagem</label>
+                            <select id="modelo_llm" class="form-select">
+                                <option value="openai/gpt-4o">GPT-4o</option>
+                                <option value="anthropic/claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="personalidade"><i class="fas fa-user-tie"></i> Personalidade Jurídica</label>
+                            <select id="personalidade" class="form-select">
+                                <option value="advogado">Advogado</option>
+                                <option value="juiz">Juiz</option>
+                                <option value="promotor">Promotor</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="tom_voz"><i class="fas fa-comment-dots"></i> Tom de Voz</label>
+                            <select id="tom_voz" class="form-select">
+                                <option value="formal">Formal</option>
+                                <option value="natural">Natural</option>
+                                <option value="simples">Simplificado</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Nova linha com opções de fontes de contexto -->
+                    <div class="col-12 mt-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="usar_pesquisa_web">
+                                    <label class="form-check-label" for="usar_pesquisa_web">
+                                        <i class="fas fa-globe"></i> Usar Pesquisa Web
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="usar_documentos">
+                                    <label class="form-check-label" for="usar_documentos">
+                                        <i class="fas fa-file-alt"></i> Usar Documentos Enviados
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Salvar Configurações
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="messages-container" id="messages">
+                <div class="text-center my-4">
+                    <h4>Bem-vindo ao seu assistente especializado!</h4>
+                    <p>Você pode fazer perguntas, enviar documentos para análise, e obter respostas baseadas em conhecimento jurídico.</p>
+                </div>
+            </div>
+            
+            <div class="p-3 border-top border-dark">
+                <form id="chatForm" class="d-flex">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-success dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false" 
+                                style="background-color: #1f5981; color: white; border-color: #25a56a;">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <label class="dropdown-item" for="fileUpload">
+                                    <i class="fas fa-file-upload"></i> Enviar Arquivo
+                                </label>
+                                <input id="fileUpload" type="file" style="display: none;">
+                            </li>
+                            <!-- Opção de pesquisa web removida e movida para configurações -->
+                        </ul>
+                    </div>
+                    <input type="text" id="userInput" class="form-control me-2" placeholder="Digite sua mensagem aqui...">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messagesContainer = document.getElementById('messages');
+            const chatForm = document.getElementById('chatForm');
+            const userInput = document.getElementById('userInput');
+            const configForm = document.getElementById('configForm');
+            const fileUpload = document.getElementById('fileUpload');
+            
+            // Manipular o envio de mensagens
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                // Adicionar mensagem do usuário
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'user-message';
+                userMessageDiv.textContent = message;
+                messagesContainer.appendChild(userMessageDiv);
+                
+                // Limpar o campo de entrada
+                userInput.value = '';
+                
+                // Obter valores das configurações
+                const modelo = document.getElementById('modelo_llm').value;
+                const personalidade = document.getElementById('personalidade').value;
+                const tom = document.getElementById('tom_voz').value;
+                const usarPesquisaWeb = document.getElementById('usar_pesquisa_web').checked;
+                const usarDocumentos = document.getElementById('usar_documentos').checked;
+                
+                // Adicionar resposta do assistente (simulada)
+                setTimeout(() => {
+                    const assistantMessageDiv = document.createElement('div');
+                    assistantMessageDiv.className = 'assistant-message';
+                    assistantMessageDiv.innerHTML = `
+                        <p>Essa é uma resposta simulada do assistente.</p>
+                        <p><strong>Modelo:</strong> ${modelo}</p>
+                        <p><strong>Personalidade:</strong> ${personalidade}</p>
+                        <p><strong>Tom:</strong> ${tom}</p>
+                        <p><strong>Pesquisa Web:</strong> ${usarPesquisaWeb ? 'Ativada' : 'Desativada'}</p>
+                        <p><strong>Documentos:</strong> ${usarDocumentos ? 'Ativos' : 'Inativos'}</p>
+                    `;
+                    messagesContainer.appendChild(assistantMessageDiv);
+                    
+                    // Rolar para o final
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 500);
+            });
+            
+            // Manipular configurações
+            configForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Adicionar uma mensagem informativa
+                const configMessageDiv = document.createElement('div');
+                configMessageDiv.className = 'assistant-message';
+                configMessageDiv.innerHTML = `
+                    <p><i class="fas fa-cog"></i> <strong>Configurações atualizadas com sucesso!</strong></p>
+                `;
+                messagesContainer.appendChild(configMessageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+            
+            // Manipular upload de arquivo
+            fileUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const fileMessageDiv = document.createElement('div');
+                    fileMessageDiv.className = 'assistant-message';
+                    fileMessageDiv.innerHTML = `
+                        <p><i class="fas fa-file-alt"></i> <strong>Arquivo recebido:</strong> ${file.name}</p>
+                        <p>Tamanho: ${Math.round(file.size / 1024)} KB</p>
+                    `;
+                    messagesContainer.appendChild(fileMessageDiv);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

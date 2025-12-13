@@ -1,0 +1,263 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Agente Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card {% if agente.categoria.codigo == 'penal' %}border-danger border-2{% endif %}">
+                <div class="card-header {% if agente.categoria.codigo == 'penal' %}bg-danger text-white{% endif %}">
+                    <h4 class="card-title">
+                        Editar Agente Jurídico: {{ agente.nome }}
+                        {% if agente.categoria.codigo == 'penal' %}
+                        <i class="fas fa-balance-scale-right ms-2"></i>
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('editar_agente_juridico', agente_id=agente.id) }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="nome" class="form-control-label">Nome</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" value="{{ agente.nome }}" required style="color: #212529; background-color: #fff;">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="categoria_id" class="form-control-label">Categoria</label>
+                                    <select class="form-control" id="categoria_id" name="categoria_id" required style="color: #212529; background-color: #fff;">
+                                        {% for categoria in categorias %}
+                                        <option value="{{ categoria.id }}" {% if categoria.id == agente.categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="descricao" class="form-control-label">Descrição</label>
+                                    <textarea class="form-control" id="descricao" name="descricao" rows="3" required style="color: #212529; background-color: #fff;">{{ agente.descricao }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="nivel_especializacao" class="form-control-label">Nível de Especialização</label>
+                                    <select class="form-control" id="nivel_especializacao" name="nivel_especializacao" style="color: #212529; background-color: #fff;">
+                                        <option value="1" {% if agente.nivel_especializacao == 1 %}selected{% endif %}>1 - Básico</option>
+                                        <option value="2" {% if agente.nivel_especializacao == 2 %}selected{% endif %}>2 - Intermediário</option>
+                                        <option value="3" {% if agente.nivel_especializacao == 3 %}selected{% endif %}>3 - Avançado</option>
+                                        <option value="4" {% if agente.nivel_especializacao == 4 %}selected{% endif %}>4 - Especialista</option>
+                                        <option value="5" {% if agente.nivel_especializacao == 5 %}selected{% endif %}>5 - Autoridade</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="modelo_ai" class="form-control-label">Modelo de IA</label>
+                                    <select class="form-control" id="modelo_ai" name="modelo_ai" style="color: #212529; background-color: #fff;">
+                                        <!-- OpenAI Models - 2025 -->
+                                        <optgroup label="OpenAI">
+                                            <option value="gpt-5" {% if agente.modelo_ai == 'gpt-5' %}selected{% endif %}>GPT-5 🚀 (Mais Avançado)</option>
+                                            <option value="gpt-5-mini" {% if agente.modelo_ai == 'gpt-5-mini' %}selected{% endif %}>GPT-5 Mini ⚡ (Rápido)</option>
+                                            <option value="gpt-4.1" {% if agente.modelo_ai == 'gpt-4.1' %}selected{% endif %}>GPT-4.1 (Principal)</option>
+                                            <option value="gpt-4.1-mini" {% if agente.modelo_ai == 'gpt-4.1-mini' %}selected{% endif %}>GPT-4.1 Mini (Custo-benefício)</option>
+                                            <option value="gpt-4o" {% if agente.modelo_ai == 'gpt-4o' %}selected{% endif %}>GPT-4o (Multimodal)</option>
+                                            <option value="gpt-4o-mini" {% if agente.modelo_ai == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini</option>
+                                            <option value="o1-preview" {% if agente.modelo_ai == 'o1-preview' %}selected{% endif %}>o1-preview (Raciocínio)</option>
+                                            <option value="o1-mini" {% if agente.modelo_ai == 'o1-mini' %}selected{% endif %}>o1-mini</option>
+                                        </optgroup>
+                                        <!-- Anthropic Models - 2025 -->
+                                        <optgroup label="Anthropic">
+                                            <option value="claude-haiku-4-5" {% if agente.modelo_ai == 'claude-haiku-4-5' %}selected{% endif %}>Claude Haiku 4.5 ⚡ (Rápido & Preciso)</option>
+                                            <option value="claude-sonnet-4-5" {% if agente.modelo_ai == 'claude-sonnet-4-5' %}selected{% endif %}>Claude Sonnet 4.5 💎 (Melhor Código)</option>
+                                            <option value="claude-opus-4" {% if agente.modelo_ai == 'claude-opus-4' %}selected{% endif %}>Claude Opus 4 (Máxima capacidade)</option>
+                                            <option value="claude-sonnet-4" {% if agente.modelo_ai == 'claude-sonnet-4' %}selected{% endif %}>Claude Sonnet 4 (Equilíbrio)</option>
+                                            <option value="claude-sonnet-4-20250514" {% if agente.modelo_ai == 'claude-sonnet-4-20250514' %}selected{% endif %}>Claude Sonnet 4 (Legacy)</option>
+                                            <option value="claude-3-5-sonnet-20241022" {% if agente.modelo_ai == 'claude-3-5-sonnet-20241022' %}selected{% endif %}>Claude 3.5 Sonnet</option>
+                                            <option value="claude-3-5-haiku-20241022" {% if agente.modelo_ai == 'claude-3-5-haiku-20241022' %}selected{% endif %}>Claude 3.5 Haiku</option>
+                                        </optgroup>
+                                        <!-- Google Gemini Models - 2025 -->
+                                        <optgroup label="Google Gemini">
+                                            <option value="gemini-2.5-flash" {% if agente.modelo_ai == 'gemini-2.5-flash' %}selected{% endif %}>Gemini 2.5 Flash 🔥 (Otimizado)</option>
+                                            <option value="gemini-2.5-flash-lite" {% if agente.modelo_ai == 'gemini-2.5-flash-lite' %}selected{% endif %}>Gemini 2.5 Flash Lite ⚡</option>
+                                            <option value="gemini-2.5-pro" {% if agente.modelo_ai == 'gemini-2.5-pro' %}selected{% endif %}>Gemini 2.5 Pro (Máxima capacidade)</option>
+                                            <option value="gemini-1.5-pro" {% if agente.modelo_ai == 'gemini-1.5-pro' %}selected{% endif %}>Gemini 1.5 Pro (Contexto longo)</option>
+                                            <option value="gemini-1.5-flash" {% if agente.modelo_ai == 'gemini-1.5-flash' %}selected{% endif %}>Gemini 1.5 Flash (Velocidade)</option>
+                                            <option value="gemini-2.0-flash-preview-image-generation" {% if agente.modelo_ai == 'gemini-2.0-flash-preview-image-generation' %}selected{% endif %}>Gemini 2.0 Flash (Image Gen)</option>
+                                        </optgroup>
+                                        <!-- DeepSeek Models - 2025 -->
+                                        <optgroup label="DeepSeek">
+                                            <option value="deepseek-r1" {% if agente.modelo_ai == 'deepseek-r1' %}selected{% endif %}>DeepSeek R1 🧠 (Raciocínio Avançado - 128K)</option>
+                                            <option value="deepseek-v3" {% if agente.modelo_ai == 'deepseek-v3' %}selected{% endif %}>DeepSeek V3 💎 (Principal - 128K)</option>
+                                            <option value="deepseek-v3.1" {% if agente.modelo_ai == 'deepseek-v3.1' %}selected{% endif %}>DeepSeek V3.1 ⚡ (Híbrido Otimizado)</option>
+                                            <option value="deepseek-v3.2-exp" {% if agente.modelo_ai == 'deepseek-v3.2-exp' %}selected{% endif %}>DeepSeek V3.2 Experimental 🚀</option>
+                                            <option value="deepseek-chat" {% if agente.modelo_ai == 'deepseek-chat' %}selected{% endif %}>DeepSeek Chat (Conversacional)</option>
+                                            <option value="deepseek-coder" {% if agente.modelo_ai == 'deepseek-coder' %}selected{% endif %}>DeepSeek Coder (Programação)</option>
+                                        </optgroup>
+                                        <!-- Grok X.AI Models - 2025 -->
+                                        <optgroup label="Grok X.AI">
+                                            <option value="grok-4-fast-reasoning" {% if agente.modelo_ai == 'grok-4-fast-reasoning' %}selected{% endif %}>Grok 4 Fast Reasoning 🧠 (2M contexto)</option>
+                                            <option value="grok-4-fast-non-reasoning" {% if agente.modelo_ai == 'grok-4-fast-non-reasoning' %}selected{% endif %}>Grok 4 Fast ⚡ (2M contexto)</option>
+                                            <option value="grok-4-latest" {% if agente.modelo_ai == 'grok-4-latest' %}selected{% endif %}>Grok 4 Latest 💎 (256K)</option>
+                                            <option value="grok-4-0709" {% if agente.modelo_ai == 'grok-4-0709' %}selected{% endif %}>Grok 4-0709 (Premium - 256K)</option>
+                                            <option value="grok-3" {% if agente.modelo_ai == 'grok-3' %}selected{% endif %}>Grok 3 (131K)</option>
+                                            <option value="grok-3-mini" {% if agente.modelo_ai == 'grok-3-mini' %}selected{% endif %}>Grok 3 Mini (131K)</option>
+                                            <option value="grok-code-fast-1" {% if agente.modelo_ai == 'grok-code-fast-1' %}selected{% endif %}>Grok Code Fast 💻 (256K)</option>
+                                            <option value="grok-2-vision-1212-us" {% if agente.modelo_ai == 'grok-2-vision-1212-us' %}selected{% endif %}>Grok 2 Vision US 👁️ (32K)</option>
+                                            <option value="grok-2-vision-1212-eu" {% if agente.modelo_ai == 'grok-2-vision-1212-eu' %}selected{% endif %}>Grok 2 Vision EU 👁️ (32K)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="temperatura" class="form-control-label">Temperatura</label>
+                                    <input type="number" class="form-control" id="temperatura" name="temperatura" value="{{ temperatura }}" min="0" max="2" step="0.1" style="color: #212529; background-color: #fff;">
+                                    <small class="form-text text-muted">Valores entre 0 (mais determinístico) e 2 (mais aleatório)</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="ativo" class="form-control-label">Status</label>
+                                    <select class="form-control" id="ativo" name="ativo" style="color: #212529; background-color: #fff;">
+                                        <option value="1" {% if agente.ativo %}selected{% endif %}>Ativo</option>
+                                        <option value="0" {% if not agente.ativo %}selected{% endif %}>Inativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="top_p" class="form-control-label">Top P</label>
+                                    <input type="number" class="form-control" id="top_p" name="top_p" value="{{ top_p }}" min="0" max="1" step="0.05" style="color: #212529; background-color: #fff;">
+                                    <small class="form-text text-muted">Valores entre 0 e 1. Menores valores = mais focado, maiores valores = mais diversidade</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="max_tokens" class="form-control-label">Max Tokens</label>
+                                    <input type="number" class="form-control" id="max_tokens" name="max_tokens" value="{{ max_tokens }}" min="1" max="32000" step="1" style="color: #212529; background-color: #fff;">
+                                    <small class="form-text text-muted">Limite máximo de tokens na resposta</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="detalhes_tecnicos" class="form-control-label">Detalhes Técnicos (JSON)</label>
+                                    <textarea class="form-control" id="detalhes_tecnicos" name="detalhes_tecnicos" rows="8" style="color: #000000; background-color: #fff; font-weight: normal;">{{ detalhes_json }}</textarea>
+                                    <small class="form-text text-muted">Configure parâmetros técnicos como temperatura, max_tokens, etc. em formato JSON.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="prompt_template" class="form-control-label">Template de Prompt</label>
+                                    <textarea class="form-control" id="prompt_template" name="prompt_template" rows="10" style="color: #000000; background-color: #fff; font-weight: normal;">{{ prompt_template }}</textarea>
+                                    <small class="form-text text-muted">Template de prompt usado pelo agente. Variáveis disponíveis: {{entrada}}, {{contexto}}, etc.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                                <a href="{{ url_for('detalhe_agente', agente_id=agente.id) }}" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos do formulário
+        const detalhesField = document.getElementById('detalhes_tecnicos');
+        const temperatureField = document.getElementById('temperatura');
+        const topPField = document.getElementById('top_p');
+        const maxTokensField = document.getElementById('max_tokens');
+        
+        // Função para atualizar o JSON a partir dos campos individuais
+        function updateJsonFromFields() {
+            try {
+                let detalhes = {};
+                // Se já houver um JSON válido, mantém os valores existentes
+                if (detalhesField.value.trim()) {
+                    try {
+                        detalhes = JSON.parse(detalhesField.value);
+                    } catch (e) {
+                        // Se não for um JSON válido, usa um objeto vazio
+                        detalhes = {};
+                    }
+                }
+                
+                // Atualiza os valores com base nos campos individuais
+                detalhes.temperature = parseFloat(temperatureField.value);
+                detalhes.top_p = parseFloat(topPField.value);
+                detalhes.max_tokens = parseInt(maxTokensField.value);
+                
+                // Atualiza o campo JSON com os novos valores
+                detalhesField.value = JSON.stringify(detalhes, null, 2);
+                detalhesField.classList.remove('is-invalid');
+            } catch (e) {
+                console.error('Erro ao atualizar JSON:', e);
+            }
+        }
+        
+        // Função para atualizar os campos individuais a partir do JSON
+        function updateFieldsFromJson() {
+            try {
+                if (detalhesField.value.trim()) {
+                    const detalhes = JSON.parse(detalhesField.value);
+                    
+                    // Atualiza os campos individuais
+                    if (detalhes.temperature !== undefined) {
+                        temperatureField.value = detalhes.temperature;
+                    }
+                    if (detalhes.top_p !== undefined) {
+                        topPField.value = detalhes.top_p;
+                    }
+                    if (detalhes.max_tokens !== undefined) {
+                        maxTokensField.value = detalhes.max_tokens;
+                    }
+                    
+                    detalhesField.classList.remove('is-invalid');
+                }
+            } catch (e) {
+                detalhesField.classList.add('is-invalid');
+                alert('O formato JSON dos detalhes técnicos é inválido!');
+            }
+        }
+        
+        // Eventos para atualizar o JSON quando os campos individuais são alterados
+        temperatureField.addEventListener('change', updateJsonFromFields);
+        topPField.addEventListener('change', updateJsonFromFields);
+        maxTokensField.addEventListener('change', updateJsonFromFields);
+        
+        // Evento para atualizar os campos individuais quando o JSON é alterado
+        detalhesField.addEventListener('blur', updateFieldsFromJson);
+        
+        // Verifica se o campo detalhes_tecnicos tem um JSON válido inicialmente
+        updateFieldsFromJson();
+    });
+</script>
+{% endblock %}

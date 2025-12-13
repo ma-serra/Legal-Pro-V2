@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciador de Banco de Dados - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .db-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .db-card.active {
+        border-color: #3b576f;
+        box-shadow: 0 4px 6px rgba(59, 87, 111, 0.2);
+    }
+    
+    .db-status-badge {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+    }
+    
+    .progress-container {
+        min-height: 200px;
+        display: none;
+    }
+    
+    .progress-container.active {
+        display: block;
+    }
+    
+    .log-entry {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 3px solid #dee2e6;
+        background: #f8f9fa;
+    }
+    
+    .log-entry.info { border-left-color: #0dcaf0; }
+    .log-entry.success { border-left-color: #198754; }
+    .log-entry.warning { border-left-color: #ffc107; }
+    .log-entry.error { border-left-color: #dc3545; }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #3b576f 0%, #2a3f52 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-database"></i> Gerenciador de Banco de Dados</h2>
+            <p class="text-muted">Administre configurações, sincronizações e backups dos bancos de dados</p>
+        </div>
+    </div>
+
+    <!-- Dashboard de Status -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-tables">-</div>
+                <div class="stat-label"><i class="fas fa-table"></i> Tabelas</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-records">-</div>
+                <div class="stat-label"><i class="fas fa-file-alt"></i> Registros</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-size">-</div>
+                <div class="stat-label"><i class="fas fa-hdd"></i> Tamanho</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-jobs">-</div>
+                <div class="stat-label"><i class="fas fa-tasks"></i> Jobs Ativos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bancos de Dados Disponíveis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">Bancos de Dados</h4>
+        </div>
+
+        <!-- Neon Cloud -->
+        <div class="col-md-4">
+            <div class="card db-card" id="card-neon">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cloud"></i> Neon Cloud
+                        </h5>
+                        <span class="badge db-status-badge" id="badge-neon">-</span>
+                    </div>
+                    <p class="card-text text-muted" id="info-neon">Carregando...</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="switchToDatabase('neon')" disabled id="btn-neon">
+                        <i class="fas fa-exchange-alt"></i> Usar Este Banco
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PostgreSQL Local -->
+        <div class="col-md-4">
+            <div class="card db-card" id="card-postgres">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-server"></i> PostgreSQL Local
+                        </h5>
+                        <span class="badge db-status-badge" id="badge-postgres">-</span>
+                    </div>
+                    <p class="card-text text-muted" id="info-postgres">Carregando...</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="switchToDatabase('postgres')" disabled id="btn-postgres">
+                        <i class="fas fa-exchange-alt"></i> Usar Este Banco
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQLite Local -->
+        <div class="col-md-4">
+            <div class="card db-card" id="card-sqlite">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt"></i> SQLite Local
+                        </h5>
+                        <span class="badge db-status-badge" id="badge-sqlite">-</span>
+                    </div>
+                    <p class="card-text text-muted" id="info-sqlite">Carregando...</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="switchToDatabase('sqlite')" disabled id="btn-sqlite">
+                        <i class="fas fa-exchange-alt"></i> Usar Este Banco
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">Ações Rápidas</h4>
+        </div>
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary" onclick="syncDatabase()">
+                            <i class="fas fa-sync"></i> Sincronizar Neon → Local
+                        </button>
+                        <button class="btn btn-success" onclick="initDatabase()">
+                            <i class="fas fa-plus-circle"></i> Inicializar Banco Local
+                        </button>
+                        <button class="btn btn-info" onclick="backupDatabase()">
+                            <i class="fas fa-download"></i> Criar Backup
+                        </button>
+                        <button class="btn btn-secondary" onclick="testConnection()">
+                            <i class="fas fa-heartbeat"></i> Testar Conexão
+                        </button>
+                        <button class="btn btn-warning" onclick="refreshStatus()">
+                            <i class="fas fa-redo"></i> Atualizar Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área de Progresso -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="progress-container" id="progress-container">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-spinner fa-spin"></i> Operação em Andamento</h5>
+                            <span class="badge badge-light" id="progress-percentage-badge" style="font-size: 1.1rem; padding: 8px 15px;">0%</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 id="progress-title" class="mb-3">Sincronizando banco de dados...</h6>
+                        
+                        <!-- Barra de Progresso Aprimorada -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">Progresso da Operação</small>
+                                <small id="progress-percentage-text" class="font-weight-bold text-primary" style="font-size: 1rem;">0%</small>
+                            </div>
+                            <div class="progress" style="height: 35px; border-radius: 8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                     role="progressbar" 
+                                     id="progress-bar" 
+                                     style="width: 0%; font-size: 1.1rem; font-weight: bold;"
+                                     aria-valuenow="0" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                     <span id="progress-bar-text">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Logs da Operação -->
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-list-ul"></i> Logs da Operação
+                            </h6>
+                            <div id="progress-logs" 
+                                 style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa; 
+                                        padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
+                                <!-- Logs aparecem aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Operações -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Histórico de Operações</h4>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Status</th>
+                                    <th>Origem → Destino</th>
+                                    <th>Usuário</th>
+                                    <th>Iniciado</th>
+                                    <th>Duração</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">Carregando histórico...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalTitle">Confirmar Ação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Tem certeza que deseja executar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmModalButton">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin/database.js') }}"></script>
+<script>
+    // Inicializar ao carregar página
+    document.addEventListener('DOMContentLoaded', function() {
+        DatabaseManager.init();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1003 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios e Análises - Fintechs Analytics{% endblock %}
+
+{% block head %}
+<style>
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .reports-header {
+    background: linear-gradient(135deg, #eb001b 0%, #ff5f00 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .report-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+    height: 100%;
+    border-left: 4px solid #eb001b;
+  }
+  
+  .report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .report-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+  
+  .btn-generate {
+    background: linear-gradient(135deg, #eb001b 0%, #ff5f00 100%);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+  
+  .btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(235, 0, 27, 0.3);
+    color: white;
+  }
+  
+  .btn-generate:disabled {
+    opacity: 0.6;
+    transform: none;
+    cursor: not-allowed;
+  }
+  
+  .report-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .status-ready {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .status-loading {
+    background: #fff3cd;
+    color: #856404;
+  }
+  
+  .status-error {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .progress-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    display: none;
+  }
+  
+  .progress-section.active {
+    display: block;
+  }
+  
+  .report-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: none;
+  }
+  
+  .report-content.active {
+    display: block;
+  }
+  
+  .metric-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #eb001b;
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+  }
+  
+  .alert-item {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .alert-high {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+  }
+  
+  .alert-medium {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+  }
+  
+  .alert-low {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+  }
+  
+  .actions-toolbar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="reports-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2">
+          <i class="fas fa-chart-line me-3"></i>
+          Relatórios e Análises
+        </h1>
+        <p class="mb-0 lead">
+          Sistema completo de relatórios com dados reais e insights estratégicos
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="/fintechs/" class="btn btn-light">
+          <i class="fas fa-arrow-left me-2"></i>Voltar ao Menu
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  
+  <!-- Barra de Ações -->
+  <div class="actions-toolbar">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h5 class="text-white mb-2">
+          <i class="fas fa-bolt me-2"></i>Ações Rápidas
+        </h5>
+        <p class="text-white-50 mb-0">Gere todos os relatórios ou escolha tipos específicos</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <button class="btn btn-success me-2" onclick="generateAllReports()">
+          <i class="fas fa-magic me-2"></i>Gerar Todos
+        </button>
+        <button class="btn btn-outline-light" onclick="clearAllReports()">
+          <i class="fas fa-trash me-2"></i>Limpar
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grid de Relatórios -->
+  <div class="row">
+    
+    <!-- 1. Performance dos Modelos -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-performance">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-primary report-icon">
+            <i class="fas fa-robot"></i>
+          </div>
+          <h5 class="card-title">Performance dos Modelos</h5>
+          <p class="card-text text-muted">
+            Análise detalhada da acurácia, precisão e métricas dos 3 modelos ML treinados.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('performance')" id="btn-performance">
+              <i class="fas fa-chart-bar me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 2. Análise Temporal -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-temporal">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-success report-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h5 class="card-title">Análise Temporal</h5>
+          <p class="card-text text-muted">
+            Evolução temporal dos casos jurídicos e previsões de tendências futuras.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('temporal')" id="btn-temporal">
+              <i class="fas fa-chart-line me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 3. Distribuição Geográfica -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-geographic">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-info report-icon">
+            <i class="fas fa-map-marked-alt"></i>
+          </div>
+          <h5 class="card-title">Distribuição Geográfica</h5>
+          <p class="card-text text-muted">
+            Análise por estado e região das decisões jurídicas e padrões regionais.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('geographic')" id="btn-geographic">
+              <i class="fas fa-map me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 4. Alertas e Riscos -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-alerts">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-warning report-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h5 class="card-title">Alertas e Riscos</h5>
+          <p class="card-text text-muted">
+            Sistema de alertas identificados pelos modelos preditivos com priorização.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('alerts')" id="btn-alerts">
+              <i class="fas fa-bell me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 5. Relatório Executivo -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-executive">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-dark report-icon">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <h5 class="card-title">Relatório Executivo</h5>
+          <p class="card-text text-muted">
+            Síntese executiva completa com insights, recomendações e plano de ação.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('executive')" id="btn-executive">
+              <i class="fas fa-crown me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 6. Qualidade dos Dados -->
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="report-card position-relative">
+        <div class="report-status status-ready" id="status-data-quality">Pronto</div>
+        <div class="card-body text-center p-4">
+          <div class="text-secondary report-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <h5 class="card-title">Qualidade dos Dados</h5>
+          <p class="card-text text-muted">
+            Análise sobre limpeza, qualidade e integridade dos dados processados.
+          </p>
+          <div class="mt-auto">
+            <button class="btn btn-generate" onclick="generateReport('data_quality')" id="btn-data-quality">
+              <i class="fas fa-check-circle me-2"></i>Gerar Relatório
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Seção de Progresso -->
+  <div class="progress-section" id="progressSection">
+    <h4 class="text-white mb-3">
+      <i class="fas fa-spinner fa-spin me-2"></i>
+      Gerando Relatório
+    </h4>
+    <div class="progress mb-3" style="height: 20px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated" 
+           id="progressBar" 
+           role="progressbar" 
+           style="width: 0%">
+        0%
+      </div>
+    </div>
+    <div id="progressMessages" class="text-white">
+      <p class="mb-1">Iniciando geração de relatório...</p>
+    </div>
+  </div>
+  
+  <!-- Conteúdo dos Relatórios -->
+  <div class="report-content" id="reportContent">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 id="reportTitle">Relatório Gerado</h3>
+      <div>
+        <button class="btn btn-outline-primary me-2" onclick="downloadReport()">
+          <i class="fas fa-download me-2"></i>Download JSON
+        </button>
+        <button class="btn btn-outline-secondary" onclick="closeReport()">
+          <i class="fas fa-times me-2"></i>Fechar
+        </button>
+      </div>
+    </div>
+    <div id="reportData"></div>
+  </div>
+  
+</div>
+
+<script>
+// Estado global dos relatórios
+let currentReport = null;
+let reportCache = {};
+
+// Função para gerar relatório específico
+function generateReport(reportType) {
+  updateReportStatus(reportType, 'loading', 'Gerando...');
+  disableButton(reportType, true);
+  showProgress();
+  
+  updateProgress(20, `Iniciando geração do relatório ${getReportName(reportType)}...`);
+  
+  fetch(`/fintechs/api/reports/${reportType}`)
+    .then(response => response.json())
+    .then(data => {
+      hideProgress();
+      
+      if (data.success) {
+        updateReportStatus(reportType, 'ready', 'Concluído');
+        updateProgress(100, 'Relatório gerado com sucesso!');
+        
+        // Cache do relatório
+        reportCache[reportType] = data.data;
+        
+        // Exibir relatório
+        displayReport(reportType, data.data);
+        
+      } else {
+        updateReportStatus(reportType, 'error', 'Erro');
+        console.error('Erro no relatório:', data);
+        alert('Erro ao gerar relatório: ' + (data.error || 'Erro desconhecido'));
+      }
+    })
+    .catch(error => {
+      hideProgress();
+      updateReportStatus(reportType, 'error', 'Erro');
+      console.error('Erro:', error);
+      alert('Erro de conexão: ' + error.message);
+    })
+    .finally(() => {
+      disableButton(reportType, false);
+    });
+}
+
+// Função para gerar todos os relatórios
+function generateAllReports() {
+  const reportTypes = ['performance', 'temporal', 'geographic', 'alerts', 'executive', 'data_quality'];
+  
+  // Resetar estados
+  reportTypes.forEach(type => {
+    updateReportStatus(type, 'loading', 'Aguardando...');
+    disableButton(type, true);
+  });
+  
+  showProgress();
+  updateProgress(10, 'Iniciando geração de todos os relatórios...');
+  
+  fetch('/fintechs/api/reports/all')
+    .then(response => response.json())
+    .then(data => {
+      hideProgress();
+      
+      if (data.success) {
+        // Atualizar status de cada relatório
+        reportTypes.forEach(type => {
+          if (data.reports[type] && !data.reports[type].error) {
+            updateReportStatus(type, 'ready', 'Concluído');
+            reportCache[type] = data.reports[type];
+          } else {
+            updateReportStatus(type, 'error', 'Erro');
+          }
+        });
+        
+        alert(`✅ Todos os relatórios gerados com sucesso!\n\nTotal: ${data.total_reports} relatórios`);
+        
+      } else {
+        alert('Erro ao gerar relatórios: ' + (data.error || 'Erro desconhecido'));
+      }
+    })
+    .catch(error => {
+      hideProgress();
+      console.error('Erro:', error);
+      alert('Erro de conexão: ' + error.message);
+    })
+    .finally(() => {
+      // Reabilitar botões
+      reportTypes.forEach(type => {
+        disableButton(type, false);
+      });
+    });
+}
+
+// Função para exibir relatório
+function displayReport(reportType, reportData) {
+  currentReport = {type: reportType, data: reportData};
+  
+  const reportContent = document.getElementById('reportContent');
+  const reportTitle = document.getElementById('reportTitle');
+  const reportDataDiv = document.getElementById('reportData');
+  
+  reportTitle.textContent = getReportName(reportType);
+  
+  // Gerar HTML baseado no tipo de relatório
+  let html = '';
+  
+  switch(reportType) {
+    case 'performance':
+      html = generatePerformanceHTML(reportData);
+      break;
+    case 'temporal':
+      html = generateTemporalHTML(reportData);
+      break;
+    case 'geographic':
+      html = generateGeographicHTML(reportData);
+      break;
+    case 'alerts':
+      html = generateAlertsHTML(reportData);
+      break;
+    case 'executive':
+      html = generateExecutiveHTML(reportData);
+      break;
+    case 'data_quality':
+      html = generateDataQualityHTML(reportData);
+      break;
+    default:
+      html = '<pre>' + JSON.stringify(reportData, null, 2) + '</pre>';
+  }
+  
+  reportDataDiv.innerHTML = html;
+  reportContent.classList.add('active');
+  
+  // Scroll para o relatório
+  reportContent.scrollIntoView({behavior: 'smooth'});
+}
+
+// Geradores de HTML específicos
+function generatePerformanceHTML(data) {
+  const models = data.models || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${data.summary?.total_models || 0}</div>
+          <div class="metric-label">Modelos Treinados</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${(data.summary?.avg_accuracy * 100).toFixed(1)}%</div>
+          <div class="metric-label">Acurácia Média</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${data.summary?.best_model || 'N/A'}</div>
+          <div class="metric-label">Melhor Modelo</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${(data.summary?.total_predictions || 0).toLocaleString()}</div>
+          <div class="metric-label">Predições Feitas</div>
+        </div>
+      </div>
+    </div>
+    
+    <h5>Detalhes dos Modelos</h5>
+    <div class="row">
+  `;
+  
+  Object.values(models).forEach(model => {
+    html += `
+      <div class="col-lg-4 mb-3">
+        <div class="card">
+          <div class="card-header">
+            <h6>${model.name}</h6>
+          </div>
+          <div class="card-body">
+            <p><strong>Acurácia:</strong> ${(model.accuracy * 100).toFixed(1)}%</p>
+            <p><strong>Precisão:</strong> ${(model.precision * 100).toFixed(1)}%</p>
+            <p><strong>Recall:</strong> ${(model.recall * 100).toFixed(1)}%</p>
+            <p><strong>F1-Score:</strong> ${(model.f1_score * 100).toFixed(1)}%</p>
+            <p><strong>Tempo de Treinamento:</strong> ${model.training_time}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  
+  if (data.recommendations) {
+    html += '<h5>Recomendações</h5><ul>';
+    data.recommendations.forEach(rec => {
+      html += `<li>${rec}</li>`;
+    });
+    html += '</ul>';
+  }
+  
+  return html;
+}
+
+function generateTemporalHTML(data) {
+  const analysis = data.analysis || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${data.data_period?.total_years || 0}</div>
+          <div class="metric-label">Anos de Dados</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${analysis.trends?.peak_year || 'N/A'}</div>
+          <div class="metric-label">Ano de Pico</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${(analysis.trends?.peak_volume || 0).toLocaleString()}</div>
+          <div class="metric-label">Volume Máximo</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  if (analysis.yearly_evolution) {
+    html += '<h5>Evolução Anual</h5><div class="table-responsive"><table class="table table-striped"><thead><tr><th>Ano</th><th>Total de Casos</th><th>Taxa de Favorabilidade</th></tr></thead><tbody>';
+    
+    Object.entries(analysis.yearly_evolution).forEach(([year, data]) => {
+      html += `<tr><td>${year}</td><td>${data.total_cases.toLocaleString()}</td><td>${(data.favorable_rate * 100).toFixed(1)}%</td></tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+  }
+  
+  if (data.insights) {
+    html += '<h5>Insights</h5><ul>';
+    data.insights.forEach(insight => {
+      html += `<li>${insight}</li>`;
+    });
+    html += '</ul>';
+  }
+  
+  return html;
+}
+
+function generateGeographicHTML(data) {
+  const analysis = data.analysis || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${data.summary?.total_states || 0}</div>
+          <div class="metric-label">Estados</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${data.summary?.total_regions || 0}</div>
+          <div class="metric-label">Regiões</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-value">${(data.summary?.national_favorable_rate * 100).toFixed(1)}%</div>
+          <div class="metric-label">Taxa Nacional</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  if (analysis.rankings) {
+    html += '<h5>Rankings</h5>';
+    html += '<div class="row">';
+    
+    if (analysis.rankings.highest_volume) {
+      html += '<div class="col-md-6"><h6>Maior Volume</h6><ol>';
+      analysis.rankings.highest_volume.forEach(state => {
+        html += `<li>${state}</li>`;
+      });
+      html += '</ol></div>';
+    }
+    
+    if (analysis.rankings.highest_favorable_rate) {
+      html += '<div class="col-md-6"><h6>Maior Taxa de Favorabilidade</h6><ol>';
+      analysis.rankings.highest_favorable_rate.forEach(state => {
+        html += `<li>${state}</li>`;
+      });
+      html += '</ol></div>';
+    }
+    
+    html += '</div>';
+  }
+  
+  if (data.alerts && data.alerts.length > 0) {
+    html += '<h5>Alertas Geográficos</h5>';
+    data.alerts.forEach(alert => {
+      html += `<div class="alert-item alert-${alert.severity}">
+        <strong>${alert.location}</strong>: ${alert.type} (${alert.value})
+      </div>`;
+    });
+  }
+  
+  return html;
+}
+
+function generateAlertsHTML(data) {
+  const summary = data.summary || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${summary.total_alerts || 0}</div>
+          <div class="metric-label">Total de Alertas</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${summary.high_severity || 0}</div>
+          <div class="metric-label">Alta Severidade</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${summary.medium_severity || 0}</div>
+          <div class="metric-label">Média Severidade</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${summary.low_severity || 0}</div>
+          <div class="metric-label">Baixa Severidade</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  if (data.alerts && data.alerts.length > 0) {
+    html += '<h5>Alertas Ativos</h5>';
+    data.alerts.forEach(alert => {
+      html += `
+        <div class="alert-item alert-${alert.severity}">
+          <div class="d-flex justify-content-between">
+            <div>
+              <strong>${alert.title}</strong>
+              <p class="mb-1">${alert.description}</p>
+              <small>Prioridade: ${alert.priority} | Criado: ${new Date(alert.created_at).toLocaleString()}</small>
+            </div>
+            <span class="badge bg-${alert.severity === 'high' ? 'danger' : alert.severity === 'medium' ? 'warning' : 'info'}">${alert.severity}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  if (data.risk_assessment) {
+    html += '<h5>Avaliação de Riscos</h5>';
+    html += `<p><strong>Nível Geral de Risco:</strong> ${data.risk_assessment.overall_risk_level}</p>`;
+    
+    if (data.risk_assessment.recommendations) {
+      html += '<h6>Recomendações</h6><ul>';
+      data.risk_assessment.recommendations.forEach(rec => {
+        html += `<li>${rec}</li>`;
+      });
+      html += '</ul>';
+    }
+  }
+  
+  return html;
+}
+
+function generateExecutiveHTML(data) {
+  const summary = data.executive_summary || {};
+  const metrics = summary.key_metrics || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${(metrics.total_cases || 0).toLocaleString()}</div>
+          <div class="metric-label">Total de Casos</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${(metrics.favorable_rate * 100).toFixed(1)}%</div>
+          <div class="metric-label">Taxa Favorável</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${metrics.states_coverage || 0}</div>
+          <div class="metric-label">Estados</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${metrics.time_span_years || 0}</div>
+          <div class="metric-label">Anos</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${(metrics.ml_models_accuracy * 100).toFixed(1)}%</div>
+          <div class="metric-label">Acurácia ML</div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="metric-card">
+          <div class="metric-value">${metrics.critical_alerts || 0}</div>
+          <div class="metric-label">Alertas Críticos</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  if (data.strategic_insights) {
+    html += '<h5>Insights Estratégicos</h5><ul>';
+    data.strategic_insights.forEach(insight => {
+      html += `<li>${insight}</li>`;
+    });
+    html += '</ul>';
+  }
+  
+  if (data.key_findings) {
+    html += '<h5>Principais Achados</h5>';
+    html += '<div class="row">';
+    
+    if (data.key_findings.strengths) {
+      html += '<div class="col-md-4"><h6 class="text-success">Pontos Fortes</h6><ul>';
+      data.key_findings.strengths.forEach(strength => {
+        html += `<li>${strength}</li>`;
+      });
+      html += '</ul></div>';
+    }
+    
+    if (data.key_findings.opportunities) {
+      html += '<div class="col-md-4"><h6 class="text-info">Oportunidades</h6><ul>';
+      data.key_findings.opportunities.forEach(opp => {
+        html += `<li>${opp}</li>`;
+      });
+      html += '</ul></div>';
+    }
+    
+    if (data.key_findings.risks) {
+      html += '<div class="col-md-4"><h6 class="text-warning">Riscos</h6><ul>';
+      data.key_findings.risks.forEach(risk => {
+        html += `<li>${risk}</li>`;
+      });
+      html += '</ul></div>';
+    }
+    
+    html += '</div>';
+  }
+  
+  if (data.recommendations) {
+    html += '<h5>Recomendações Estratégicas</h5>';
+    data.recommendations.forEach(rec => {
+      html += `
+        <div class="card mb-2">
+          <div class="card-body">
+            <h6 class="card-title">${rec.category}</h6>
+            <p class="card-text">${rec.recommendation}</p>
+            <div class="d-flex justify-content-between">
+              <small class="text-muted">Prioridade: ${rec.priority}</small>
+              <small class="text-muted">Prazo: ${rec.timeline}</small>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  return html;
+}
+
+function generateDataQualityHTML(data) {
+  const overall = data.overall_quality || {};
+  
+  let html = `
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${(data.quality_score * 100).toFixed(1)}%</div>
+          <div class="metric-label">Score de Qualidade</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${(overall.total_records || 0).toLocaleString()}</div>
+          <div class="metric-label">Total de Registros</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${(overall.overall_completeness * 100).toFixed(1)}%</div>
+          <div class="metric-label">Completude</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="metric-card">
+          <div class="metric-value">${overall.duplicate_records || 0}</div>
+          <div class="metric-label">Duplicatas</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  if (data.data_issues && data.data_issues.length > 0) {
+    html += '<h5>Issues Identificados</h5>';
+    data.data_issues.forEach(issue => {
+      html += `
+        <div class="alert-item alert-${issue.severity}">
+          <strong>${issue.column}</strong>: ${issue.description}
+          <br><small><em>Recomendação: ${issue.recommendation}</em></small>
+        </div>
+      `;
+    });
+  }
+  
+  if (data.etl_history) {
+    html += '<h5>Histórico ETL</h5>';
+    html += `<p><strong>Última Execução:</strong> ${new Date(data.etl_history.last_execution).toLocaleString()}</p>`;
+    html += `<p><strong>Registros Processados:</strong> ${(data.etl_history.records_processed || 0).toLocaleString()}</p>`;
+    
+    if (data.etl_history.cleaning_rules_applied) {
+      html += '<h6>Regras de Limpeza Aplicadas</h6><ul>';
+      data.etl_history.cleaning_rules_applied.forEach(rule => {
+        html += `<li>${rule}</li>`;
+      });
+      html += '</ul>';
+    }
+  }
+  
+  return html;
+}
+
+// Funções auxiliares
+function getReportName(reportType) {
+  const names = {
+    'performance': 'Performance dos Modelos',
+    'temporal': 'Análise Temporal',
+    'geographic': 'Distribuição Geográfica',
+    'alerts': 'Alertas e Riscos',
+    'executive': 'Relatório Executivo',
+    'data_quality': 'Qualidade dos Dados'
+  };
+  return names[reportType] || reportType;
+}
+
+function updateReportStatus(reportType, status, text) {
+  const statusElement = document.getElementById(`status-${reportType}`);
+  if (statusElement) {
+    statusElement.className = `report-status status-${status}`;
+    statusElement.textContent = text;
+  }
+}
+
+function disableButton(reportType, disabled) {
+  const button = document.getElementById(`btn-${reportType}`);
+  if (button) {
+    button.disabled = disabled;
+  }
+}
+
+function showProgress() {
+  document.getElementById('progressSection').classList.add('active');
+}
+
+function hideProgress() {
+  document.getElementById('progressSection').classList.remove('active');
+}
+
+function updateProgress(percentage, message) {
+  const progressBar = document.getElementById('progressBar');
+  const progressMessages = document.getElementById('progressMessages');
+  
+  progressBar.style.width = percentage + '%';
+  progressBar.textContent = Math.round(percentage) + '%';
+  progressMessages.innerHTML = `<p class="mb-1">${message}</p>`;
+}
+
+function closeReport() {
+  document.getElementById('reportContent').classList.remove('active');
+}
+
+function clearAllReports() {
+  if (confirm('Tem certeza que deseja limpar todos os relatórios?')) {
+    reportCache = {};
+    closeReport();
+    
+    const reportTypes = ['performance', 'temporal', 'geographic', 'alerts', 'executive', 'data_quality'];
+    reportTypes.forEach(type => {
+      updateReportStatus(type, 'ready', 'Pronto');
+    });
+  }
+}
+
+function downloadReport() {
+  if (currentReport) {
+    const dataStr = JSON.stringify(currentReport.data, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `relatorio_${currentReport.type}_${new Date().toISOString().slice(0,10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📊 Sistema de Relatórios Fintechs carregado');
+});
+</script>
+
+{% endblock %}

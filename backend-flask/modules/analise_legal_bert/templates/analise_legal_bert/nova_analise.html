@@ -1,0 +1,1133 @@
+{% extends "analise_legal_bert/base.html" %}
+
+{% block title %}Nova Análise{% endblock %}
+
+{% block page_title %}Nova Análise de Documento{% endblock %}
+{% block page_description %}Insira o texto do documento para análise jurídica detalhada{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Área Unificada de Análise -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>
+                    Nova Análise de Documento Jurídico
+                </h5>
+                <p class="mb-0 mt-2" style="color: white;">Arraste arquivos, cole texto ou digite diretamente</p>
+            </div>
+            <div class="card-body">
+                <!-- Área de Drop Zone Integrada -->
+                <div id="drop-zone-integrated" class="drop-zone-integrated mb-4">
+                    <div class="drop-message">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>
+                        Arraste um arquivo aqui ou clique para selecionar (PDF, DOCX, DOC, TXT)
+                    </div>
+                    <input type="file" id="file-input" class="d-none" accept=".pdf,.docx,.doc,.txt">
+                </div>
+                
+                
+                <form method="POST" id="analise-form">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label for="titulo" class="form-label">
+                                <i class="fas fa-file-signature me-1"></i>
+                                Título do Documento
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="titulo" 
+                                   name="titulo" 
+                                   placeholder="Ex: Contrato"
+                                   required
+                                   maxlength="255">
+                            <div class="form-text">
+                                Um título descritivo ajuda na organização e busca posterior.
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12 mb-4">
+                            <label for="conteudo" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>
+                                Conteúdo do Documento
+                            </label>
+                            <textarea class="form-control" 
+                                      id="conteudo" 
+                                      name="conteudo" 
+                                      rows="15" 
+                                      placeholder="Cole ou digite aqui o texto completo do documento jurídico que deseja analisar..."
+                                      required
+                                      minlength="50"></textarea>
+                            <div class="form-text d-flex justify-content-between">
+                                <span>Mínimo 50 caracteres. O sistema identifica automaticamente entidades, classifica o documento e gera resumo.</span>
+                                <span id="char-count" class="text-muted">0 caracteres</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Opções de Análise Específica -->
+                    <div class="accordion mb-4" id="opcoes-analise">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-opcoes">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Configurações de Análise
+                                </button>
+                            </h2>
+                            <div id="collapse-opcoes" class="accordion-collapse collapse show">
+                                <div class="accordion-body">
+                                    <!-- Tipo de Documento -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-file-contract me-1"></i>
+                                            Tipo de Documento (Auto-detectado)
+                                        </label>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="tipo-documento" id="tipo-auto" value="auto" checked>
+                                                    <label class="form-check-label" for="tipo-auto">
+                                                        <strong>Automático</strong><br>
+                                                        <small class="text-muted">Detectar automaticamente</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="tipo-documento" id="tipo-contrato" value="contrato">
+                                                    <label class="form-check-label" for="tipo-contrato">
+                                                        <strong>Contrato</strong><br>
+                                                        <small class="text-muted">Análise de cláusulas</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="tipo-documento" id="tipo-peticao" value="peticao">
+                                                    <label class="form-check-label" for="tipo-peticao">
+                                                        <strong>Petição</strong><br>
+                                                        <small class="text-muted">Análise de pedidos</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="tipo-documento" id="tipo-sentenca" value="sentenca">
+                                                    <label class="form-check-label" for="tipo-sentenca">
+                                                        <strong>Sentença</strong><br>
+                                                        <small class="text-muted">Análise de decisão</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Funcionalidades de Análise -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-search me-1"></i>
+                                                Análise Básica
+                                            </label>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="extrair-entidades" checked>
+                                                <label class="form-check-label" for="extrair-entidades">
+                                                    <strong>Extração de Entidades</strong><br>
+                                                    <small class="text-muted">CPF, CNPJ, datas, valores, endereços</small>
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="classificar-documento" checked>
+                                                <label class="form-check-label" for="classificar-documento">
+                                                    <strong>Classificação Jurídica</strong><br>
+                                                    <small class="text-muted">Tipo, área do direito, urgência</small>
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="gerar-resumo" checked>
+                                                <label class="form-check-label" for="gerar-resumo">
+                                                    <strong>Resumo Inteligente</strong><br>
+                                                    <small class="text-muted">Síntese dos pontos principais</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-shield-alt me-1"></i>
+                                                Análise Avançada
+                                            </label>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="detectar-problemas" checked>
+                                                <label class="form-check-label" for="detectar-problemas">
+                                                    <strong>Detecção de Problemas</strong><br>
+                                                    <small class="text-muted">Cláusulas abusivas, inconsistências</small>
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="analise-sentimento" checked>
+                                                <label class="form-check-label" for="analise-sentimento">
+                                                    <strong>Análise de Sentimento</strong><br>
+                                                    <small class="text-muted">Tom jurídico do documento</small>
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="buscar-similaridade">
+                                                <label class="form-check-label" for="buscar-similaridade">
+                                                    <strong>Busca por Similaridade</strong><br>
+                                                    <small class="text-muted">Comparar com documentos existentes</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('analise_legal_bert.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar
+                        </a>
+                        
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="limparTudo()">
+                                <i class="fas fa-trash me-1"></i>
+                                Limpar Tudo
+                            </button>
+                            <!-- Botão unificado para análise -->
+                            <button type="button" class="btn btn-primary" id="btn-analisar-unificado" onclick="iniciarAnaliseUnificada()">
+                                <i class="fas fa-brain me-2"></i>
+                                Iniciar Análise
+                            </button>
+                            <!-- Botão tradicional para texto (oculto por padrão) -->
+                            <button type="submit" class="btn btn-primary d-none" id="btn-analisar-texto">
+                                <i class="fas fa-edit me-2"></i>
+                                Analisar Texto
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Preview da Análise -->
+        <div class="card mt-4 d-none" id="preview-card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>
+                    Preview da Análise
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-file-alt fs-1 text-muted mb-2"></i>
+                            <div class="fw-bold">Palavras</div>
+                            <div id="preview-words" class="text-primary fs-5">0</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-clock fs-1 text-muted mb-2"></i>
+                            <div class="fw-bold">Tempo Estimado</div>
+                            <div id="preview-time" class="text-info fs-5">~0s</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <i class="fas fa-tags fs-1 text-muted mb-2"></i>
+                            <div class="fw-bold">Tipo Previsto</div>
+                            <div id="preview-type" class="text-success fs-6">Analisando...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Processamento -->
+<div class="modal fade" id="processamento-modal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-brain me-2"></i>
+                    Analisando Documento
+                </h5>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-robot fa-3x text-primary mb-3 spinning"></i>
+                    <h5>Processamento em Andamento</h5>
+                    <p class="text-muted">
+                        O sistema está analisando seu documento usando técnicas avançadas de processamento de linguagem natural.
+                    </p>
+                </div>
+                
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         style="width: 100%" 
+                         id="progress-bar">
+                    </div>
+                </div>
+                
+                <div class="row text-start">
+                    <div class="col-md-6">
+                        <div class="small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-search me-1"></i> Extração de Entidades</span>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-tags me-1"></i> Classificação</span>
+                                <span class="text-success"><i class="fas fa-check"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-file-alt me-1"></i> Resumo Automático</span>
+                                <span class="text-warning"><i class="fas fa-spinner spinning"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-exclamation-triangle me-1"></i> Detecção de Problemas</span>
+                                <span class="text-muted"><i class="fas fa-clock"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-chart-line me-1"></i> Cálculo de Confiança</span>
+                                <span class="text-muted"><i class="fas fa-clock"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span><i class="fas fa-save me-1"></i> Salvando Resultados</span>
+                                <span class="text-muted"><i class="fas fa-clock"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Este processo pode levar alguns segundos dependendo do tamanho do documento.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Área de Drop Zone Integrada */
+.drop-zone-integrated {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: rgba(0, 123, 255, 0.05);
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.drop-zone-integrated:hover, .drop-zone-integrated.dragover {
+    border-color: #0056b3;
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: scale(1.01);
+}
+
+.drop-zone-integrated.dragover {
+    border-style: solid;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
+}
+
+.drop-message {
+    color: #6c757d;
+    font-size: 0.9rem;
+    padding: 8px;
+}
+
+.drop-zone-integrated.has-files {
+    border-color: #198754;
+    background-color: rgba(25, 135, 84, 0.05);
+}
+
+.drop-zone-integrated.has-files .drop-message {
+    color: #198754;
+}
+
+.file-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+    margin-right: 12px;
+    width: 30px;
+    text-align: center;
+}
+
+.file-icon.pdf { color: #dc3545; }
+.file-icon.docx, .file-icon.doc { color: #0d6efd; }
+.file-icon.txt { color: #6c757d; }
+
+.file-size {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.processing {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Contador de caracteres
+document.getElementById('conteudo').addEventListener('input', function() {
+    const count = this.value.length;
+    document.getElementById('char-count').textContent = `${count} caracteres`;
+    
+    // Atualizar preview
+    atualizarPreview();
+    
+    // Validação visual
+    if (count >= 50) {
+        this.classList.remove('is-invalid');
+        this.classList.add('is-valid');
+    } else if (count > 0) {
+        this.classList.add('is-invalid');
+        this.classList.remove('is-valid');
+    } else {
+        this.classList.remove('is-invalid', 'is-valid');
+    }
+});
+
+// Atualizar preview da análise
+function atualizarPreview() {
+    const conteudo = document.getElementById('conteudo').value;
+    const words = conteudo.trim().split(/\s+/).length;
+    
+    document.getElementById('preview-words').textContent = words > 1 ? words : 0;
+    
+    // Estimar tempo (baseado em ~1000 palavras por segundo)
+    const estimatedTime = Math.max(1, Math.ceil(words / 1000));
+    document.getElementById('preview-time').textContent = `~${estimatedTime}s`;
+    
+    // Tentar detectar tipo de documento
+    const tipoDetectado = detectarTipoDocumento(conteudo.toLowerCase());
+    document.getElementById('preview-type').textContent = tipoDetectado;
+    
+    // Mostrar/esconder preview
+    if (words > 10) {
+        document.getElementById('preview-card').classList.remove('d-none');
+    } else {
+        document.getElementById('preview-card').classList.add('d-none');
+    }
+}
+
+function detectarTipoDocumento(texto) {
+    if (texto.includes('contrato') || texto.includes('contratante')) {
+        return 'Contrato';
+    } else if (texto.includes('petição') || texto.includes('excelentíssimo')) {
+        return 'Petição';
+    } else if (texto.includes('sentença') || texto.includes('julgo')) {
+        return 'Sentença';
+    } else if (texto.includes('acordo') || texto.includes('transação')) {
+        return 'Acordo';
+    } else {
+        return 'Geral';
+    }
+}
+
+function limparFormulario() {
+    if (confirm('Tem certeza que deseja limpar todos os campos?')) {
+        document.getElementById('analise-form').reset();
+        document.getElementById('char-count').textContent = '0 caracteres';
+        document.getElementById('preview-card').classList.add('d-none');
+        document.getElementById('conteudo').classList.remove('is-valid', 'is-invalid');
+    }
+}
+
+// Interceptar envio do formulário
+document.getElementById('analise-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validações
+    const titulo = document.getElementById('titulo').value.trim();
+    const conteudo = document.getElementById('conteudo').value.trim();
+    
+    if (!titulo) {
+        showNotification('Título é obrigatório', 'error');
+        document.getElementById('titulo').focus();
+        return;
+    }
+    
+    if (conteudo.length < 50) {
+        showNotification('Conteúdo deve ter pelo menos 50 caracteres', 'error');
+        document.getElementById('conteudo').focus();
+        return;
+    }
+    
+    // Mostrar modal de processamento
+    const modal = new bootstrap.Modal(document.getElementById('processamento-modal'));
+    modal.show();
+    
+    // Submeter formulário
+    this.submit();
+});
+
+// Auto-save no localStorage
+setInterval(function() {
+    const titulo = document.getElementById('titulo').value;
+    const conteudo = document.getElementById('conteudo').value;
+    
+    if (titulo || conteudo) {
+        localStorage.setItem('analise_draft', JSON.stringify({
+            titulo: titulo,
+            conteudo: conteudo,
+            timestamp: Date.now()
+        }));
+    }
+}, 30000); // Salvar a cada 30 segundos
+
+// Restaurar draft ao carregar página
+window.addEventListener('load', function() {
+    const draft = localStorage.getItem('analise_draft');
+    if (draft) {
+        try {
+            const data = JSON.parse(draft);
+            const ageDays = (Date.now() - data.timestamp) / (1000 * 60 * 60 * 24);
+            
+            if (ageDays < 1) { // Apenas se for menos de 1 dia
+                if (confirm('Encontrado rascunho salvo. Deseja restaurar?')) {
+                    document.getElementById('titulo').value = data.titulo || '';
+                    document.getElementById('conteudo').value = data.conteudo || '';
+                    atualizarPreview();
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao restaurar draft:', e);
+        }
+    }
+});
+
+// ==================== UNIFIED ANALYSIS FUNCTIONALITY ====================
+
+let selectedFiles = [];
+
+// Elementos da interface unificada
+const dropZone = document.getElementById('drop-zone-integrated');
+const fileInput = document.getElementById('file-input');
+const textArea = document.getElementById('conteudo');
+
+// Prevenir comportamento padrão
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+// Highlight drop zone when item is dragged over it
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+// Handle dropped files
+dropZone.addEventListener('drop', handleDrop, false);
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFileSelect);
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    dropZone.classList.add('dragover');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('dragover');
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+}
+
+function handleFileSelect(e) {
+    const files = e.target.files;
+    handleFiles(files);
+}
+
+async function handleFiles(files) {
+    // Processar apenas o primeiro arquivo para extração de texto
+    const file = files[0];
+    
+    if (!validateFile(file)) {
+        return;
+    }
+    
+    // Obter elementos necessários
+    const dropZone = document.getElementById('drop-zone-integrated');
+    const conteudoTextarea = document.getElementById('conteudo');
+    const tituloInput = document.getElementById('titulo');
+    
+    if (!dropZone || !conteudoTextarea || !tituloInput) {
+        console.error('Elementos não encontrados');
+        return;
+    }
+    
+    // Mostrar indicador de carregamento
+    const dropMessage = dropZone.querySelector('.drop-message');
+    const originalMessage = dropMessage.innerHTML;
+    dropMessage.innerHTML = `
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Extraindo texto de ${file.name}...
+    `;
+    dropZone.style.pointerEvents = 'none';
+    
+    try {
+        // Criar FormData e enviar para extração
+        const formData = new FormData();
+        formData.append('arquivo', file);
+        
+        const response = await fetch('/analise-legal-bert/extrair-texto', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.sucesso) {
+            // Preencher campos automaticamente
+            conteudoTextarea.value = result.texto;
+            
+            // Sugerir título baseado no nome do arquivo (se não houver título)
+            if (!tituloInput.value.trim()) {
+                const nomeSemExtensao = file.name.replace(/\.[^/.]+$/, "");
+                tituloInput.value = nomeSemExtensao;
+            }
+            
+            // Atualizar contador de caracteres
+            const charCount = document.getElementById('char-count');
+            if (charCount) {
+                charCount.textContent = `${result.caracteres} caracteres`;
+            }
+            
+            // Mostrar sucesso temporariamente
+            dropMessage.innerHTML = `
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Texto extraído com sucesso! ${result.caracteres} caracteres
+            `;
+            
+            // Scroll para a área de conteúdo
+            conteudoTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+        } else {
+            // Mostrar erro
+            dropMessage.innerHTML = `
+                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                Erro: ${result.erro}
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Erro ao extrair texto:', error);
+        dropMessage.innerHTML = `
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            Erro de conexão ao processar arquivo
+        `;
+    }
+    
+    // Restaurar interface após 3 segundos
+    setTimeout(() => {
+        dropMessage.innerHTML = originalMessage;
+        dropZone.style.pointerEvents = 'auto';
+    }, 3000);
+}
+
+function validateFile(file) {
+    const allowedExtensions = ['pdf', 'docx', 'doc', 'txt'];
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    
+    // Verificar extensão
+    const extension = file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(extension)) {
+        if (typeof showNotification === 'function') {
+            showNotification(`Tipo de arquivo não suportado: ${file.name}. Use: PDF, DOCX, DOC ou TXT`, 'error');
+        } else {
+            alert(`Tipo de arquivo não suportado: ${file.name}. Use: PDF, DOCX, DOC ou TXT`);
+        }
+        return false;
+    }
+    
+    if (file.size > maxSize) {
+        if (typeof showNotification === 'function') {
+            showNotification(`Arquivo muito grande: ${file.name}. Máximo 25MB.`, 'error');
+        } else {
+            alert(`Arquivo muito grande: ${file.name}. Máximo 25MB.`);
+        }
+        return false;
+    }
+    
+    return true;
+}
+
+function updateFileList() {
+    const fileList = document.getElementById('file-list');
+    const selectedFilesDiv = document.getElementById('selected-files');
+    const processSection = document.getElementById('process-files-section');
+    
+    if (selectedFiles.length === 0) {
+        fileList.classList.add('d-none');
+        processSection.classList.add('d-none');
+        return;
+    }
+    
+    fileList.classList.remove('d-none');
+    processSection.classList.remove('d-none');
+    
+    selectedFilesDiv.innerHTML = selectedFiles.map((file, index) => {
+        const extension = file.name.split('.').pop().toLowerCase();
+        const icon = getFileIcon(extension);
+        const size = formatFileSize(file.size);
+        
+        return `
+            <div class="file-item" data-index="${index}">
+                <div class="file-info">
+                    <i class="fas ${icon} file-icon ${extension}"></i>
+                    <div>
+                        <div class="fw-medium">${file.name}</div>
+                        <div class="file-size">${size}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function getFileIcon(extension) {
+    const icons = {
+        'pdf': 'fa-file-pdf',
+        'docx': 'fa-file-word',
+        'doc': 'fa-file-word',
+        'txt': 'fa-file-alt'
+    };
+    return icons[extension] || 'fa-file';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateFileList();
+}
+
+function clearFiles() {
+    selectedFiles = [];
+    fileInput.value = '';
+    updateFileList();
+}
+
+// ==================== ANÁLISE UNIFICADA ====================
+
+function iniciarAnaliseUnificada() {
+    const temTexto = textArea.value.trim().length > 0;
+    const temArquivos = selectedFiles.length > 0;
+    
+    if (!temTexto && !temArquivos) {
+        alert('Por favor, digite um texto ou selecione arquivos para análise.');
+        return;
+    }
+    
+    if (temTexto && temArquivos) {
+        alert('Por favor, escolha apenas uma opção: texto digitado OU arquivos. Não ambos.');
+        return;
+    }
+    
+    // Coletar configurações de análise
+    const configuracoes = coletarConfiguracoes();
+    
+    if (temTexto) {
+        analisarTexto(configuracoes);
+    } else {
+        analisarArquivos(configuracoes);
+    }
+}
+
+function coletarConfiguracoes() {
+    const tipoDocChecked = document.querySelector('input[name="tipo-documento"]:checked');
+    
+    return {
+        tipoDocumento: tipoDocChecked ? tipoDocChecked.value : 'geral',
+        extrairEntidades: document.getElementById('extrair-entidades') ? document.getElementById('extrair-entidades').checked : true,
+        classificarDocumento: document.getElementById('classificar-documento') ? document.getElementById('classificar-documento').checked : true,
+        gerarResumo: document.getElementById('gerar-resumo') ? document.getElementById('gerar-resumo').checked : true,
+        detectarProblemas: document.getElementById('detectar-problemas') ? document.getElementById('detectar-problemas').checked : true,
+        analiseSentimento: document.getElementById('analise-sentimento') ? document.getElementById('analise-sentimento').checked : false,
+        buscarSimilaridade: document.getElementById('buscar-similaridade') ? document.getElementById('buscar-similaridade').checked : false
+    };
+}
+
+function analisarTexto(configuracoes) {
+    const titulo = document.getElementById('titulo').value.trim();
+    const conteudo = textArea.value.trim();
+    
+    if (!titulo) {
+        alert('Por favor, insira um título para o documento.');
+        return;
+    }
+    
+    if (conteudo.length < 50) {
+        alert('O texto deve ter pelo menos 50 caracteres.');
+        return;
+    }
+    
+    // Criar FormData com texto e configurações
+    const formData = new FormData();
+    formData.append('titulo', titulo);
+    formData.append('conteudo', conteudo);
+    formData.append('configuracoes', JSON.stringify(configuracoes));
+    
+    enviarParaAnalise(formData, 'texto');
+}
+
+function analisarArquivos(configuracoes) {
+    if (selectedFiles.length === 0) {
+        alert('Nenhum arquivo selecionado.');
+        return;
+    }
+    
+    // Mostrar modal de processamento
+    const modal = new bootstrap.Modal(document.getElementById('processamento-modal'));
+    modal.show();
+    
+    // Processar cada arquivo com configurações
+    processFilesWithConfig(0, configuracoes);
+}
+
+async function processFilesWithConfig(index, configuracoes) {
+    if (index >= selectedFiles.length) {
+        // Todos os arquivos processados
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('processamento-modal'));
+            modal.hide();
+            window.location.href = '/analise-legal-bert/historico';
+        }, 1000);
+        return;
+    }
+    
+    const file = selectedFiles[index];
+    const fileItem = document.querySelector(`[data-index="${index}"]`);
+    
+    if (fileItem) {
+        fileItem.classList.add('processing');
+    }
+    
+    // Atualizar modal com arquivo atual
+    document.querySelector('#processamento-modal .modal-body').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Processando...</span>
+            </div>
+            <h5>Processando: ${file.name}</h5>
+            <p class="text-muted">Arquivo ${index + 1} de ${selectedFiles.length}</p>
+            <div class="progress mb-3">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     style="width: ${((index + 1) / selectedFiles.length) * 100}%"></div>
+            </div>
+            <small class="text-muted">Aplicando configurações: ${Object.keys(configuracoes).filter(k => configuracoes[k]).join(', ')}</small>
+        </div>
+    `;
+    
+    try {
+        await uploadAndAnalyzeFileWithConfig(file, configuracoes);
+        
+        if (fileItem) {
+            fileItem.classList.remove('processing');
+            fileItem.style.background = '#d4edda';
+            fileItem.style.borderColor = '#c3e6cb';
+        }
+        
+        setTimeout(() => processFilesWithConfig(index + 1, configuracoes), 500);
+        
+    } catch (error) {
+        console.error('Erro ao processar arquivo:', error);
+        
+        if (fileItem) {
+            fileItem.classList.remove('processing');
+            fileItem.style.background = '#f8d7da';
+            fileItem.style.borderColor = '#f5c6cb';
+        }
+        
+        setTimeout(() => processFilesWithConfig(index + 1, configuracoes), 500);
+    }
+}
+
+async function uploadAndAnalyzeFileWithConfig(file, configuracoes) {
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    formData.append('configuracoes', JSON.stringify(configuracoes));
+    
+    const response = await fetch('/analise-legal-bert/upload', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.sucesso) {
+        throw new Error(result.erro || 'Erro desconhecido');
+    }
+    
+    return result;
+}
+
+async function enviarParaAnalise(formData, tipo) {
+    // Mostrar modal de processamento
+    const modal = new bootstrap.Modal(document.getElementById('processamento-modal'));
+    modal.show();
+    
+    // Atualizar modal
+    document.querySelector('#processamento-modal .modal-body').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Analisando...</span>
+            </div>
+            <h5>Analisando ${tipo === 'texto' ? 'texto digitado' : 'documento'}...</h5>
+            <p class="text-muted">Aplicando análises específicas</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/analise-legal-bert/nova-analise', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.text();
+            if (result.includes('redirect')) {
+                // Redirecionar conforme resposta
+                window.location.href = '/analise-legal-bert/historico';
+            } else {
+                // Mostrar resultado
+                document.body.innerHTML = result;
+            }
+        } else {
+            throw new Error('Erro na análise');
+        }
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        modal.hide();
+        alert('Erro na análise. Tente novamente.');
+    }
+}
+
+function limparTudo() {
+    if (confirm('Tem certeza que deseja limpar todos os campos e arquivos?')) {
+        // Limpar formulário
+        document.getElementById('analise-form').reset();
+        
+        // Limpar arquivos
+        selectedFiles = [];
+        fileInput.value = '';
+        updateFileList();
+        
+        // Resetar UI
+        document.getElementById('char-count').textContent = '0 caracteres';
+        document.getElementById('preview-card').classList.add('d-none');
+        textArea.classList.remove('is-valid', 'is-invalid');
+        
+        // Resetar drop zone
+        dropZone.classList.remove('has-files');
+    }
+}
+
+// Atualizar função updateFileList para mostrar status no drop zone
+function updateFileListOriginal() {
+    const fileList = document.getElementById('file-list');
+    const selectedFilesDiv = document.getElementById('selected-files');
+    
+    if (selectedFiles.length === 0) {
+        fileList.classList.add('d-none');
+        dropZone.classList.remove('has-files');
+        dropZone.querySelector('.drop-message').innerHTML = `
+            <i class="fas fa-cloud-upload-alt me-2"></i>
+            Arraste arquivos aqui ou clique para selecionar
+        `;
+        return;
+    }
+    
+    fileList.classList.remove('d-none');
+    dropZone.classList.add('has-files');
+    dropZone.querySelector('.drop-message').innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${selectedFiles.length} arquivo(s) selecionado(s) - clique para adicionar mais
+    `;
+    
+    selectedFilesDiv.innerHTML = selectedFiles.map((file, index) => {
+        const extension = file.name.split('.').pop().toLowerCase();
+        const icon = getFileIcon(extension);
+        const size = formatFileSize(file.size);
+        
+        return `
+            <div class="file-item" data-index="${index}">
+                <div class="file-info">
+                    <i class="fas ${icon} file-icon ${extension}"></i>
+                    <div>
+                        <div class="fw-medium">${file.name}</div>
+                        <div class="file-size">${size}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Substituir função updateFileList
+function updateFileList() {
+    updateFileListOriginal();
+}
+
+async function processFilesSequentially(index) {
+    if (index >= selectedFiles.length) {
+        // Todos os arquivos processados
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('processamento-modal'));
+            modal.hide();
+            
+            // Redirecionar para histórico ou mostrar resultados
+            window.location.href = '/analise-legal-bert/historico';
+        }, 1000);
+        return;
+    }
+    
+    const file = selectedFiles[index];
+    const fileItem = document.querySelector(`[data-index="${index}"]`);
+    
+    if (fileItem) {
+        fileItem.classList.add('processing');
+    }
+    
+    // Atualizar modal com arquivo atual
+    document.querySelector('#processamento-modal .modal-body').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Processando...</span>
+            </div>
+            <h5>Processando: ${file.name}</h5>
+            <p class="text-muted">Arquivo ${index + 1} de ${selectedFiles.length}</p>
+            <div class="progress mb-3">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     style="width: ${((index + 1) / selectedFiles.length) * 100}%"></div>
+            </div>
+        </div>
+    `;
+    
+    try {
+        // Enviar arquivo para análise
+        await uploadAndAnalyzeFile(file);
+        
+        if (fileItem) {
+            fileItem.classList.remove('processing');
+            fileItem.style.background = '#d4edda';
+            fileItem.style.borderColor = '#c3e6cb';
+        }
+        
+        // Processar próximo arquivo após delay
+        setTimeout(() => processFilesSequentially(index + 1), 500);
+        
+    } catch (error) {
+        console.error('Erro ao processar arquivo:', error);
+        
+        if (fileItem) {
+            fileItem.classList.remove('processing');
+            fileItem.style.background = '#f8d7da';
+            fileItem.style.borderColor = '#f5c6cb';
+        }
+        
+        // Continuar com próximo arquivo mesmo em caso de erro
+        setTimeout(() => processFilesSequentially(index + 1), 500);
+    }
+}
+
+async function uploadAndAnalyzeFile(file) {
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    
+    const response = await fetch('/analise-legal-bert/upload', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.sucesso) {
+        throw new Error(result.erro || 'Erro desconhecido');
+    }
+    
+    return result;
+}
+</script>
+{% endblock %}

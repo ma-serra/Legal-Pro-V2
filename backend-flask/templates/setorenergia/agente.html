@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente Jurídico IA | Energia Smart Legal Analytics</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background-color: #003366;
+            padding: 1.5rem 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            max-width: 120px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .nav-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            padding: 1rem 1.5rem 0.5rem;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.1);
+            color: #ffffff;
+            border-left-color: #0089CF;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+            border-left-color: #0089CF;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #003366 0%, #0089CF 100%);
+            padding: 1.5rem 2rem;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .chat-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .chat-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #1a1a1a;
+            overflow: hidden;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .message {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #0089CF 0%, #003366 100%);
+        }
+        
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #28a745 0%, #155724 100%);
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+        
+        .message.user .message-content {
+            background-color: #003366;
+            color: #ffffff;
+        }
+        
+        .message.assistant .message-content {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+        }
+        
+        .message-content strong {
+            color: #0089CF;
+        }
+        
+        .message-meta {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+        
+        .processos-consultados {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: rgba(0, 137, 207, 0.1);
+            border-left: 3px solid #0089CF;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .processos-consultados h6 {
+            color: #0089CF;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .processo-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .processo-item:last-child {
+            border-bottom: none;
+        }
+        
+        .input-container {
+            padding: 1.5rem 2rem;
+            background-color: #2a2a2a;
+            border-top: 1px solid #333;
+        }
+        
+        .input-group-custom {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .query-input {
+            flex: 1;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            color: #ffffff;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .query-input:focus {
+            outline: none;
+            border-color: #0089CF;
+            background-color: #222;
+        }
+        
+        .send-button {
+            background: linear-gradient(135deg, #0089CF 0%, #003366 100%);
+            color: #ffffff;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 137, 207, 0.3);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .filters-panel {
+            background-color: #2a2a2a;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .filters-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-item {
+            flex: 1;
+        }
+        
+        .filter-item label {
+            color: #b0b0b0;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        
+        .filter-item select {
+            width: 100%;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            color: #ffffff;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .stats-badge {
+            display: inline-block;
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #0089CF;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #444;
+        }
+        
+        .empty-state h3 {
+            color: #b0b0b0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state p {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item active">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="chat-header">
+            <h2><i class="fas fa-robot me-2"></i>Agente Jurídico Setor de Energia com RAG - 2025</h2>
+            <p>Assistente com modelos de IA de última geração e acesso à base de 3.216 processos jurídicos
+                {% if qdrant_stats and qdrant_stats.total_pontos %}
+                <span class="stats-badge">
+                    <i class="fas fa-database me-1"></i>{{ qdrant_stats.total_pontos }} vetores indexados
+                </span>
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Filters Panel -->
+        <div class="filters-panel">
+            <div class="filters-row">
+                <div class="filter-item">
+                    <label>Modelo IA (2025)</label>
+                    <select id="modelSelect">
+                        <option value="gpt-5" selected>GPT-5 🚀 (Mais Avançado)</option>
+                        <option value="gpt-5-mini">GPT-5 Mini ⚡ (Rápido)</option>
+                        <option value="claude-sonnet-4.5">Claude Sonnet 4.5 💎 (Melhor Código)</option>
+                        <option value="claude-haiku-4.5">Claude Haiku 4.5 ⚡ (Rápido & Preciso)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash 🔥</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite ⚡</option>
+                        <option value="gpt-4o">GPT-4o (Anterior)</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Causa Raiz (Filtro)</label>
+                    <select id="causaRaizFilter">
+                        <option value="">Todas</option>
+                        <option value="Revisão Tarifária">Revisão Tarifária</option>
+                        <option value="Qualidade de Energia">Qualidade de Energia</option>
+                        <option value="Cobrança Indevida">Cobrança Indevida</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>Resultados</label>
+                    <select id="maxProcessos">
+                        <option value="3">3 processos</option>
+                        <option value="5" selected>5 processos</option>
+                        <option value="10">10 processos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="messages-container" id="messagesContainer">
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <h3>Bem-vindo ao Agente Jurídico Lampadinha <i class="fas fa-lightbulb" style="color: #ffc107;"></i></h3>
+                    <p>Modelos 2025: GPT-5, Claude Sonnet 4.5, Claude Haiku 4.5, Gemini 2.5 Flash</p>
+                    <p>Faça perguntas sobre processos, solicite análises ou peça geração de peças processuais</p>
+                    <p class="mt-3"><strong>Exemplos:</strong></p>
+                    <ul style="list-style: none; padding: 0; color: #b0b0b0;">
+                        <li>• Quais processos de revisão tarifária foram favoráveis?</li>
+                        <li>• Analise a estratégia em casos de qualidade de energia</li>
+                        <li>• Gere uma contestação baseada em precedentes similares</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-group-custom">
+                    <textarea 
+                        class="query-input" 
+                        id="queryInput" 
+                        rows="2" 
+                        placeholder="Digite sua consulta jurídica..."
+                    ></textarea>
+                    <button class="send-button" id="sendButton">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <script>
+        const messagesContainer = document.getElementById('messagesContainer');
+        const queryInput = document.getElementById('queryInput');
+        const sendButton = document.getElementById('sendButton');
+        const modelSelect = document.getElementById('modelSelect');
+        const causaRaizFilter = document.getElementById('causaRaizFilter');
+        const maxProcessos = document.getElementById('maxProcessos');
+        
+        let isProcessing = false;
+        
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuery();
+            }
+        });
+        
+        sendButton.addEventListener('click', sendQuery);
+        
+        function addMessage(text, type) {
+            const emptyState = messagesContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            if (type === 'assistant' && text !== 'loading') {
+                content.innerHTML = marked.parse(text);
+            } else if (text === 'loading') {
+                content.innerHTML = '<div class="loading"></div>';
+            } else {
+                content.textContent = text;
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+        
+        function addProcessosConsultados(processos) {
+            if (!processos || processos.length === 0) return;
+            
+            const lastMessage = messagesContainer.lastElementChild;
+            if (!lastMessage) return;
+            
+            const processosDiv = document.createElement('div');
+            processosDiv.className = 'processos-consultados';
+            
+            let html = `<h6><i class="fas fa-database me-2"></i>Processos Consultados (${processos.length})</h6>`;
+            
+            processos.forEach((item, index) => {
+                const proc = item.processo;
+                html += `
+                    <div class="processo-item">
+                        <strong>${proc.numero_processo || 'N/A'}</strong> 
+                        (${(item.score * 100).toFixed(1)}% similaridade)<br>
+                        <small>${proc.causa_raiz || ''} • ${proc.comarca || ''} • R$ ${(proc.valor_envolvido || 0).toLocaleString('pt-BR')}</small>
+                    </div>
+                `;
+            });
+            
+            processosDiv.innerHTML = html;
+            lastMessage.querySelector('.message-content').appendChild(processosDiv);
+        }
+        
+        async function sendQuery() {
+            if (isProcessing) return;
+            
+            const query = queryInput.value.trim();
+            if (!query) return;
+            
+            isProcessing = true;
+            sendButton.disabled = true;
+            
+            addMessage(query, 'user');
+            queryInput.value = '';
+            
+            const loadingMessage = addMessage('loading', 'assistant');
+            
+            try {
+                const filters = {};
+                if (causaRaizFilter.value) {
+                    filters.causa_raiz = causaRaizFilter.value;
+                }
+                
+                const response = await fetch('/setorenergia/api/agente/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        model: modelSelect.value,
+                        filters: filters,
+                        max_processos: parseInt(maxProcessos.value)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                loadingMessage.remove();
+                
+                if (data.success) {
+                    addMessage(data.response, 'assistant');
+                    if (data.processos && data.processos.length > 0) {
+                        addProcessosConsultados(data.processos);
+                    }
+                } else {
+                    addMessage(`Erro: ${data.error}`, 'assistant');
+                }
+                
+            } catch (error) {
+                loadingMessage.remove();
+                addMessage(`Erro ao processar consulta: ${error.message}`, 'assistant');
+            } finally {
+                isProcessing = false;
+                sendButton.disabled = false;
+                queryInput.focus();
+            }
+        }
+    </script>
+</body>
+</html>

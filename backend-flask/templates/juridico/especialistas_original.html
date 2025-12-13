@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}Especialistas Jurídicos{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #1a1a2e;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .header-section {
+        background: #16213e;
+        padding: 20px 0;
+        border-bottom: 2px solid #0f3460;
+    }
+    
+    .page-title {
+        color: white;
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .filter-tabs {
+        background: #16213e;
+        padding: 15px 0;
+        border-bottom: 1px solid #0f3460;
+    }
+    
+    .nav-tabs {
+        border-bottom: none;
+    }
+    
+    .nav-tabs .nav-link {
+        background: transparent;
+        border: 1px solid #0f3460;
+        color: #8892b0;
+        margin-right: 5px;
+        border-radius: 5px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background: #4a90e2;
+        border-color: #4a90e2;
+        color: white;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background: #2a5aa0;
+        border-color: #2a5aa0;
+        color: white;
+    }
+    
+    .especialistas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 20px;
+        padding: 30px 20px;
+    }
+    
+    .area-card {
+        background: #0f3460;
+        border-radius: 10px;
+        border: 1px solid #1e3a5f;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .area-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    
+    .area-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-bottom: 1px solid #1e3a5f;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .area-header.criminal {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+    
+    .area-header.civil {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+    }
+    
+    .area-header.empresarial {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+    }
+    
+    .area-header.trabalhista {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+    
+    .area-header.bancario {
+        background: linear-gradient(135deg, #007bff, #007bff);
+    }
+    
+    .area-header.recuperacao {
+        background: linear-gradient(135deg, #1abc9c, #16a085);
+    }
+    
+    .area-title {
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .area-title i {
+        margin-right: 10px;
+        font-size: 20px;
+    }
+    
+    .area-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .especialistas-list {
+        padding: 20px;
+    }
+    
+    .especialista-item {
+        background: #1a2332;
+        border: 1px solid #2c3e50;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .especialista-item:hover {
+        background: #243447;
+        border-color: #4a90e2;
+    }
+    
+    .especialista-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .especialista-nome {
+        color: #4a90e2;
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0;
+    }
+    
+    .especialista-nivel {
+        background: #27ae60;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .especialista-descricao {
+        color: #8892b0;
+        font-size: 14px;
+        line-height: 1.4;
+        margin-bottom: 12px;
+    }
+    
+    .especialista-capacidades {
+        margin-bottom: 12px;
+    }
+    
+    .capacidade-tag {
+        display: inline-block;
+        background: #34495e;
+        color: #ecf0f1;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        margin: 2px;
+        border: 1px solid #4a90e2;
+    }
+    
+    .especialista-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-consultar {
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+    
+    .btn-consultar:hover {
+        background: linear-gradient(135deg, #357abd, #2968a3);
+        transform: translateY(-1px);
+    }
+    
+    .btn-info-especialista {
+        background: #7f8c8d;
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-info-especialista:hover {
+        background: #95a5a6;
+    }
+    
+    .stats-section {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: #0f3460;
+        border: 1px solid #1e3a5f;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #4a90e2;
+        margin: 0;
+    }
+    
+    .stat-label {
+        color: #8892b0;
+        font-size: 12px;
+        margin: 5px 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .btn-action {
+        background: #4a90e2;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        background: #357abd;
+        transform: translateY(-1px);
+    }
+    
+    .btn-segunda {
+        background: #f39c12;
+    }
+    
+    .btn-segunda:hover {
+        background: #e67e22;
+    }
+    
+    @media (max-width: 768px) {
+        .especialistas-grid {
+            grid-template-columns: 1fr;
+            padding: 20px 10px;
+        }
+        
+        .stats-section {
+            flex-direction: column;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header da Página -->
+<div class="header-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title">Especialistas Jurídicos</h1>
+            </div>
+            <div class="col-md-4">
+                <div class="action-buttons">
+                    <button class="btn-action" onclick="personalizarTemas()">
+                        <i class="fas fa-palette me-1"></i> Personalizar Temas
+                    </button>
+                    <button class="btn-action btn-segunda" onclick="segundaOpiniao()">
+                        <i class="fas fa-search-plus me-1"></i> Segunda Opinião
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Estatísticas -->
+<div class="container mt-3">
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_agentes or 0 }}</div>
+            <div class="stat-label">Especialistas Disponíveis</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ categorias_permitidas|length or 0 }}</div>
+            <div class="stat-label">Áreas Especializadas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros por Área -->
+<div class="filter-tabs">
+    <div class="container">
+        <ul class="nav nav-tabs" id="areasTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="todas-tab" data-bs-toggle="tab" data-bs-target="#todas" type="button" role="tab">
+                    <i class="fas fa-th-large me-1"></i> Especialistas Disponíveis
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">
+                    <i class="fas fa-file-alt me-1"></i> Templates Jurídicos (42)
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Conteúdo das Abas -->
+<div class="tab-content" id="areasTabContent">
+    <!-- Aba dos Especialistas -->
+    <div class="tab-pane fade show active" id="todas" role="tabpanel">
+        <div class="especialistas-grid">
+            <!-- Especialistas em Direito Trabalhista -->
+            <div class="area-card">
+                <div class="area-header trabalhista">
+                    <div class="area-title">
+                        <i class="fas fa-briefcase"></i>
+                        Especialistas em Direito Trabalhista
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialista em Direito Trabalhista</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especialista em análise de questões trabalhistas</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Análise de demissão irregular</span>
+                            <span class="capacidade-tag">Cálculo de verbas rescisórias</span>
+                            <span class="capacidade-tag">Análise de jornada de trabalho</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('trabalhista', 'Especialista em Direito Trabalhista')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analista de Estabilidade Criminal -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-handcuffs"></i>
+                        Analista de Estabilidade Criminal
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Analista de Estabilidade Criminal</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Análise da relação de provas e estabilidade probatória</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Fragilidade das evidências</span>
+                            <span class="capacidade-tag">Análise da credibilidade de provas</span>
+                            <span class="capacidade-tag">Avaliação das testemunhas</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Analista de Estabilidade Criminal')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessor de Sustentação Oral no Júri -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-users"></i>
+                        Assessor de Sustentação Oral no Júri
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Assessor de Sustentação Oral no Júri</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Auxilia na preparação de sustentações orais para o tribunal do júri</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Preparo de argumentação persuasiva</span>
+                            <span class="capacidade-tag">Teoria dos tipos criminais</span>
+                            <span class="capacidade-tag">Sustentação estratégica para jurados</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Assessor de Sustentação Oral no Júri')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revisor de Direito Empresarial -->
+            <div class="area-card">
+                <div class="area-header empresarial">
+                    <div class="area-title">
+                        <i class="fas fa-building"></i>
+                        Revisor de Direito Empresarial
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Revisor de Direito Empresarial</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado na análise e revisão de documentos empresariais</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Estruturas societárias e contratuais</span>
+                            <span class="capacidade-tag">Operações de compliance empresarial</span>
+                            <span class="capacidade-tag">Verificações de conformidade legal</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('empresarial', 'Revisor de Direito Empresarial')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revisor de Direito Bancário -->
+            <div class="area-card">
+                <div class="area-header bancario">
+                    <div class="area-title">
+                        <i class="fas fa-university"></i>
+                        Revisor de Direito Bancário
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Revisor de Direito Bancário</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado na análise de operações financeiras e bancárias</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Análise de operações bancárias</span>
+                            <span class="capacidade-tag">Contratos financeiros e empréstimos</span>
+                            <span class="capacidade-tag">Conformidade regulatória bancária</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('bancario', 'Revisor de Direito Bancário')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revisor de Direito Trabalhista -->
+            <div class="area-card">
+                <div class="area-header trabalhista">
+                    <div class="area-title">
+                        <i class="fas fa-hard-hat"></i>
+                        Revisor de Direito Trabalhista
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Revisor de Direito Trabalhista</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado na revisão e análise de questões trabalhistas</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Análise de relações de trabalho</span>
+                            <span class="capacidade-tag">Verificação de direitos trabalhistas</span>
+                            <span class="capacidade-tag">Consultoria estratégica empresarial</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('trabalhista', 'Revisor de Direito Trabalhista')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialistas em Direito Criminal -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-balance-scale"></i>
+                        Especialistas em Direito Criminal
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialistas em Direito Criminal</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Análise especial de competência do Tribunal do Júri</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Análise de crimes contra a vida</span>
+                            <span class="capacidade-tag">Preparo para defesa no Júri</span>
+                            <span class="capacidade-tag">Estratégias processuais criminais</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Especialistas em Direito Criminal')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialistas em Tribunal do Júri -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-users"></i>
+                        Especialistas em Tribunal do Júri
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialistas em Tribunal do Júri</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Análise especial de competência do Tribunal do Júri</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Estratégias para alegações iniciais</span>
+                            <span class="capacidade-tag">Preparação para sustentação oral</span>
+                            <span class="capacidade-tag">Análise de argumentação apresentada</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Especialistas em Tribunal do Júri')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialistas em Execução Penal -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-gavel"></i>
+                        Especialistas em Execução Penal
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialistas em Execução Penal</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Análise geral da execução da pena e da medida de segurança</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Progressão de regime e benefícios</span>
+                            <span class="capacidade-tag">Remição e comutação de penas</span>
+                            <span class="capacidade-tag">Questões sobre reabilitação penal</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Especialistas em Execução Penal')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revisor de Direito Penal -->
+            <div class="area-card">
+                <div class="area-header criminal">
+                    <div class="area-title">
+                        <i class="fas fa-check-double"></i>
+                        Revisor de Direito Penal
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Revisor de Direito Penal</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado na análise e revisão de casos penais</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Revisão de análise inicial</span>
+                            <span class="capacidade-tag">Verificação das adequações típicas</span>
+                            <span class="capacidade-tag">Compreensão dogmática ampla</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('criminal', 'Revisor de Direito Penal')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialistas em Direito Securitário -->
+            <div class="area-card">
+                <div class="area-header civil">
+                    <div class="area-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Especialistas em Direito Securitário
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialistas em Direito Securitário</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado em análise de contratos de seguro</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Análise de apólices de seguro</span>
+                            <span class="capacidade-tag">Cláusulas limitativas e excludentes</span>
+                            <span class="capacidade-tag">Cobertura securitária específica</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('civil', 'Especialistas em Direito Securitário')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Especialistas em Direito Empresarial -->
+            <div class="area-card">
+                <div class="area-header empresarial">
+                    <div class="area-title">
+                        <i class="fas fa-briefcase"></i>
+                        Especialistas em Direito Empresarial
+                    </div>
+                    <div class="area-badge">6 especialistas</div>
+                </div>
+                <div class="especialistas-list">
+                    <div class="especialista-item">
+                        <div class="especialista-header">
+                            <h6 class="especialista-nome">Especialistas em Direito Empresarial</h6>
+                            <span class="especialista-nivel">Especialista</span>
+                        </div>
+                        <div class="especialista-descricao">Especializado em questões societárias, análise e Auditoria de contratos sociais</div>
+                        <div class="especialista-capacidades">
+                            <span class="capacidade-tag">Constituição societária</span>
+                            <span class="capacidade-tag">Questões empresariais complexas</span>
+                            <span class="capacidade-tag">Orientação governança corporativa</span>
+                        </div>
+                        <div class="especialista-actions">
+                            <button class="btn-consultar" onclick="consultarEspecialista('empresarial', 'Especialistas em Direito Empresarial')">
+                                <i class="fas fa-comments me-1"></i> Consultar
+                            </button>
+                            <button class="btn-info-especialista" title="Informações">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Aba dos Templates -->
+    <div class="tab-pane fade" id="templates" role="tabpanel">
+        <div class="container py-4">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Templates jurídicos especializados disponíveis para seus agentes.
+                <a href="/juridico/templates" class="btn btn-sm btn-primary ms-3">
+                    <i class="fas fa-external-link-alt me-1"></i> Acessar Templates
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function consultarEspecialista(area, nomeEspecialista) {
+    // Redirecionar para a página de consulta específica
+    window.location.href = `/modulos/${area}/consultar?especialista=${encodeURIComponent(nomeEspecialista)}`;
+}
+
+function infoEspecialista(agenteId) {
+    // Redirecionar para a página de detalhes do agente
+    window.location.href = `/agente/${agenteId}`;
+}
+
+function personalizarTemas() {
+    window.location.href = '/admin/temas';
+}
+
+function segundaOpiniao() {
+    window.location.href = '/juridico/segunda-opiniao';
+}
+
+// Efeito de aparecer gradualmente
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.area-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

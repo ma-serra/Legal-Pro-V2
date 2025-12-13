@@ -1,0 +1,495 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Monitoramento Legislativo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-gavel me-2"></i>
+                    Monitoramento de Atualizações Legislativas
+                </h1>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" onclick="verificarAtualizacoes()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Verificar Agora
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="mostrarScrapingDOU()">
+                        <i class="fas fa-newspaper me-2"></i>
+                        Scraping DOU
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alertas -->
+            <div id="alertas-container"></div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Verificações (30 dias)
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ stats[0] if stats else 0 }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-search fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Alertas Detectados
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ stats[1] if stats else 0 }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Última Verificação
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        {% if stats and stats[2] %}
+                                            {{ stats[2].strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                            Nunca
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Status Sistema
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        <span class="badge badge-success">Ativo</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurações do Monitoramento -->
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-cog me-2"></i>
+                                Configurações do Monitoramento
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="form-configuracao">
+                                <div class="form-group">
+                                    <label for="intervalo-horas">Intervalo de Verificação (horas):</label>
+                                    <select class="form-control" id="intervalo-horas" name="intervalo_horas">
+                                        <option value="1" {{ 'selected' if configuracao.intervalo_horas == 1 }}>A cada 1 hora</option>
+                                        <option value="6" {{ 'selected' if configuracao.intervalo_horas == 6 }}>A cada 6 horas</option>
+                                        <option value="12" {{ 'selected' if configuracao.intervalo_horas == 12 }}>A cada 12 horas</option>
+                                        <option value="24" {{ 'selected' if configuracao.intervalo_horas == 24 }}>A cada 24 horas (padrão)</option>
+                                        <option value="48" {{ 'selected' if configuracao.intervalo_horas == 48 }}>A cada 48 horas</option>
+                                        <option value="168" {{ 'selected' if configuracao.intervalo_horas == 168 }}>Semanal</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Define com que frequência o sistema verificará por atualizações nas leis.
+                                    </small>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>
+                                    Salvar Configuração
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Fontes Monitoradas
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Código Penal</strong>
+                                        <br><small class="text-muted">Planalto, Senado, Câmara</small>
+                                    </div>
+                                    <span class="badge badge-success badge-pill">Ativo</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Código de Processo Penal</strong>
+                                        <br><small class="text-muted">Planalto, Senado</small>
+                                    </div>
+                                    <span class="badge badge-success badge-pill">Ativo</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Diário Oficial da União</strong>
+                                        <br><small class="text-muted">Scraping automático a cada 30 dias</small>
+                                    </div>
+                                    <span class="badge badge-info badge-pill">DOU</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs de Atividade -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>
+                        Logs de Monitoramento
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="atualizarLogs()">
+                        <i class="fas fa-refresh me-1"></i>
+                        Atualizar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="tabela-logs" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Tipo</th>
+                                    <th>Fonte</th>
+                                    <th>Status</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs_recentes %}
+                                <tr>
+                                    <td>{{ log[4].strftime('%d/%m/%Y %H:%M:%S') if log[4] else '' }}</td>
+                                    <td>
+                                        {% if log[0] == 'alerta_alteracao' %}
+                                            <span class="badge badge-danger">Alerta</span>
+                                        {% elif log[0] == 'verificacao_cp' %}
+                                            <span class="badge badge-info">Verificação CP</span>
+                                        {% elif log[0] == 'verificacao_cpp' %}
+                                            <span class="badge badge-info">Verificação CPP</span>
+                                        {% elif log[0] == 'configuracao_periodica' %}
+                                            <span class="badge badge-secondary">Configuração</span>
+                                        {% else %}
+                                            <span class="badge badge-light">{{ log[0] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log[1] %}
+                                            <small>{{ log[1][:50] }}{% if log[1]|length > 50 %}...{% endif %}</small>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-success">{{ log[3] }}</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-info" 
+                                                onclick="mostrarDetalhes({{ log[2]|tojson|e if log[2] else '{}' }})">  <!-- Alterado: |safe removido por segurança -->
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Detalhes -->
+<div class="modal fade" id="modal-detalhes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Log</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="detalhes-json" class="bg-light p-3 rounded"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Scraping DOU -->
+<div class="modal fade" id="modal-scraping-dou" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-newspaper me-2"></i>
+                    Scraping Diário Oficial da União
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form action="{{ url_for('admin_executar_scraping_dou') }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Scraping Automático:</strong> O sistema executa automaticamente a cada 30 dias.
+                        Use esta opção para execução manual ou período específico.
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo-scraping">Tipo de Scraping:</label>
+                        <select class="form-control" id="tipo-scraping" onchange="togglePeriodoCustomizado()">
+                            <option value="automatico">Automático (últimos 30 dias)</option>
+                            <option value="customizado">Período Customizado</option>
+                        </select>
+                    </div>
+                    
+                    <div id="periodo-customizado" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="data_inicio">Data Início:</label>
+                                    <input type="date" class="form-control" id="data_inicio" name="data_inicio">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="data_fim">Data Fim:</label>
+                                    <input type="date" class="form-control" id="data_fim" name="data_fim">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Atenção:</strong> O scraping pode levar alguns minutos dependendo do período selecionado.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play me-2"></i>
+                        Executar Scraping
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Verificar atualizações manualmente
+function verificarAtualizacoes() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+    btn.disabled = true;
+    
+    fetch('{{ url_for("admin_verificar_atualizacoes") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarAlerta('success', data.message);
+            // Recarregar a página após 2 segundos para mostrar novos dados
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            mostrarAlerta('danger', 'Erro: ' + data.error);
+        }
+    })
+    .catch(error => {
+        mostrarAlerta('danger', 'Erro na comunicação: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Configurar monitoramento
+document.getElementById('form-configuracao').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    fetch('{{ url_for("admin_configurar_monitor") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarAlerta('success', data.message);
+        } else {
+            mostrarAlerta('danger', 'Erro: ' + data.error);
+        }
+    })
+    .catch(error => {
+        mostrarAlerta('danger', 'Erro na comunicação: ' + error.message);
+    });
+});
+
+// Mostrar detalhes do log
+function mostrarDetalhes(detalhes) {
+    document.getElementById('detalhes-json').textContent = JSON.stringify(detalhes, null, 2);
+    $('#modal-detalhes').modal('show');
+}
+
+// Atualizar logs
+function atualizarLogs() {
+    fetch('{{ url_for("admin_logs_legislativo") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Aqui você pode implementar a atualização da tabela
+            mostrarAlerta('info', 'Logs atualizados com sucesso');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    })
+    .catch(error => {
+        mostrarAlerta('danger', 'Erro ao atualizar logs: ' + error.message);
+    });
+}
+
+// Mostrar alertas
+function mostrarAlerta(tipo, mensagem) {
+    const alertaHtml = `
+        <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+            ${mensagem}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    
+    document.getElementById('alertas-container').innerHTML = alertaHtml;
+    
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+        const alerta = document.querySelector('#alertas-container .alert');
+        if (alerta) {
+            alerta.remove();
+        }
+    }, 5000);
+}
+
+// Função para mostrar modal de scraping DOU
+function mostrarScrapingDOU() {
+    $('#modal-scraping-dou').modal('show');
+}
+
+// Função para alternar período customizado
+function togglePeriodoCustomizado() {
+    const tipoScraping = document.getElementById('tipo-scraping').value;
+    const periodoDiv = document.getElementById('periodo-customizado');
+    const dataInicio = document.getElementById('data_inicio');
+    const dataFim = document.getElementById('data_fim');
+    
+    if (tipoScraping === 'customizado') {
+        periodoDiv.style.display = 'block';
+        dataInicio.required = true;
+        dataFim.required = true;
+        
+        // Definir data padrão como últimos 7 dias
+        const hoje = new Date();
+        const semanaAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        dataFim.value = hoje.toISOString().split('T')[0];
+        dataInicio.value = semanaAtras.toISOString().split('T')[0];
+    } else {
+        periodoDiv.style.display = 'none';
+        dataInicio.required = false;
+        dataFim.required = false;
+        dataInicio.value = '';
+        dataFim.value = '';
+    }
+}
+
+// Verificação automática a cada 5 minutos para mostrar status em tempo real
+setInterval(() => {
+    fetch('{{ url_for("admin_logs_legislativo") }}?silent=true')
+    .then(response => response.json())
+    .then(data => {
+        // Atualização silenciosa do status
+        console.log('Status atualizado:', new Date());
+    })
+    .catch(error => {
+        console.log('Erro na atualização automática:', error);
+    });
+}, 300000); // 5 minutos
+</script>
+{% endblock %}

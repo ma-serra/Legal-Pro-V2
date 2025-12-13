@@ -1,0 +1,557 @@
+{% extends "layout.html" %}
+
+{% block title %}Progresso da Transcrição{% endblock %}
+
+{% block head %}
+<style>
+.progress-container {
+    margin: 30px 0;
+}
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.steps-container {
+    margin-top: 40px;
+}
+.step-card {
+    transition: all 0.3s ease;
+    border-left: 5px solid #ccc;
+}
+.step-card.active {
+    border-left: 5px solid #007bff;
+}
+.step-card.completed {
+    border-left: 5px solid #1f5981;
+}
+.step-card.error {
+    border-left: 5px solid #dc3545;
+}
+.step-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+.step-icon.waiting {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+.step-icon.active {
+    background-color: #cfe2ff;
+    color: #0d6efd;
+}
+.step-icon.completed {
+    background-color: #d1e7dd;
+    color: #1f5981;
+}
+.step-icon.error {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+.step-content {
+    flex: 1;
+}
+.status-badge {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+.transcription-preview {
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: monospace;
+    margin-top: 10px;
+}
+.refresh-container {
+    display: flex;
+    align-items: center;
+}
+.refresh-text {
+    margin-left: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Progresso da Transcrição</h1>
+                <div class="refresh-container">
+                    <div id="refreshSpinner" class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Atualizando...</span>
+                    </div>
+                    <span class="refresh-text">Atualizando automaticamente a cada <span id="countdown">5</span>s</span>
+                </div>
+            </div>
+            
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                Seu arquivo está sendo processado. Esta página atualizará automaticamente o status.
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary bg-opacity-75 text-white">
+                    <h5 class="card-title mb-0" id="arquivoNome">Processando: arquivo_audio.mp3</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span id="statusText">Transcrevendo áudio...</span>
+                            <span id="percentText">20%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="steps-container">
+                        <div class="step-card active card mb-3">
+                            <div class="card-body d-flex align-items-start">
+                                <div class="step-icon active">
+                                    <i class="fas fa-cog fa-spin"></i>
+                                </div>
+                                <div class="step-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">Transcrição de Áudio</h5>
+                                        <span class="badge bg-primary status-badge">Em Andamento</span>
+                                    </div>
+                                    <p class="card-text text-muted">Convertendo áudio em texto usando API de reconhecimento de fala.</p>
+                                    <div class="transcription-preview">
+                                        <p class="mb-0" id="transcriptionPreview">Processando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step-card card mb-3">
+                            <div class="card-body d-flex align-items-start">
+                                <div class="step-icon waiting">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <div class="step-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">Análise de Sentimento</h5>
+                                        <span class="badge bg-secondary status-badge">Aguardando</span>
+                                    </div>
+                                    <p class="card-text text-muted">Analisando tom emocional do conteúdo transcrito.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step-card card mb-3">
+                            <div class="card-body d-flex align-items-start">
+                                <div class="step-icon waiting">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="step-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">Identificação de Falantes</h5>
+                                        <span class="badge bg-secondary status-badge">Aguardando</span>
+                                    </div>
+                                    <p class="card-text text-muted">Identificando diferentes vozes na transcrição.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step-card card mb-3">
+                            <div class="card-body d-flex align-items-start">
+                                <div class="step-icon waiting">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="step-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">Geração de Resumo</h5>
+                                        <span class="badge bg-secondary status-badge">Aguardando</span>
+                                    </div>
+                                    <p class="card-text text-muted">Criando resumo inteligente do conteúdo transcrito.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step-card card mb-3">
+                            <div class="card-body d-flex align-items-start">
+                                <div class="step-icon waiting">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="step-content">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">Finalização</h5>
+                                        <span class="badge bg-secondary status-badge">Aguardando</span>
+                                    </div>
+                                    <p class="card-text text-muted">Combinando todos os resultados e finalizando o processamento.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Iniciado em: <span id="startTime">12/05/2025 20:05</span></small>
+                        </div>
+                        <div>
+                            <small class="text-muted">Tempo estimado restante: <span id="estimatedTimeLeft">2 minutos</span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('whisper.index') }}" class="btn btn-secondary text-white">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar para Transcrições
+                </a>
+                <button type="button" class="btn btn-secondary text-white" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="fas fa-times-circle me-2"></i>Cancelar Processamento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelModalLabel">Confirmar Cancelamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar o processamento desta transcrição?</p>
+                <p>Esta ação não pode ser desfeita e todo o progresso será perdido.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary text-white" data-bs-dismiss="modal">Voltar</button>
+                <button id="btn-cancel-transcription" type="button" class="btn btn-secondary text-white">Sim, Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicialização da página de progresso para dados reais
+    const transcriptId = '{{ transcript_id }}';
+    let countdownValue = 5;
+    let countdownInterval;
+    
+    // Inicializar valores da UI
+    const progressBar = document.getElementById('progressBar');
+    const statusText = document.getElementById('statusText');
+    const percentText = document.getElementById('percentText');
+    const arquivoNome = document.getElementById('arquivoNome');
+    const estimatedTimeLeft = document.getElementById('estimatedTimeLeft');
+    const startTime = document.getElementById('startTime');
+    const transcriptionPreview = document.getElementById('transcriptionPreview');
+    
+    // Configurar valores iniciais
+    arquivoNome.textContent = 'Processando: {{ arquivo_nome }}';
+    startTime.textContent = '{{ inicio_formatado }}';
+    progressBar.style.width = '{{ progresso }}%';
+    progressBar.setAttribute('aria-valuenow', {{ progresso }});
+    percentText.textContent = '{{ progresso }}%';
+    statusText.textContent = '{{ status | capitalize }}';
+    
+    {% if tempo_estimado %}
+    estimatedTimeLeft.textContent = '{{ tempo_estimado }}';
+    {% else %}
+    estimatedTimeLeft.textContent = 'Calculando...';
+    {% endif %}
+    
+    {% if previa_texto %}
+    transcriptionPreview.textContent = '{{ previa_texto }}';
+    {% else %}
+    transcriptionPreview.textContent = 'Processando...';
+    {% endif %}
+    
+    // Definir etapas iniciais com base no status atual
+    const etapaAtual = '{{ etapa_atual }}';
+    initializeSteps(etapaAtual);
+    
+    function updateCountdown() {
+        countdownValue--;
+        document.getElementById('countdown').textContent = countdownValue;
+        
+        if (countdownValue <= 0) {
+            countdownValue = 5;
+            document.getElementById('countdown').textContent = countdownValue;
+            updateProgress();
+        }
+    }
+    
+    function startCountdown() {
+        countdownInterval = setInterval(updateCountdown, 1000);
+    }
+    
+    function stopCountdown() {
+        clearInterval(countdownInterval);
+    }
+    
+    function updateProgress() {
+        // Mostrar spinner durante atualização
+        document.getElementById('refreshSpinner').style.display = 'inline-block';
+        
+        // Fazer requisição AJAX para obter o progresso atual
+        fetch(`/whisper/api/progresso/${transcriptId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Esconder spinner após atualização
+                document.getElementById('refreshSpinner').style.display = 'none';
+                
+                // Verificar se há erro
+                if (data.erro) {
+                    showError(data.erro);
+                    return;
+                }
+                
+                // Atualizar progresso
+                progressBar.style.width = data.progresso + '%';
+                progressBar.setAttribute('aria-valuenow', data.progresso);
+                percentText.textContent = data.progresso + '%';
+                
+                // Atualizar status e etapa atual
+                statusText.textContent = data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Processando...';
+                
+                // Atualizar prévia da transcrição
+                if (data.previa_texto) {
+                    transcriptionPreview.textContent = data.previa_texto;
+                }
+                
+                // Atualizar etapas
+                updateStepsFromData(data);
+                
+                // Verificar se está concluído
+                if (data.concluido) {
+                    // Redirecionar para a página principal de transcrição (histórico)
+                    stopCountdown();
+                    showSuccess('Processamento concluído! Redirecionando para a página de histórico...');
+                    
+                    // Exibir mensagem mais detalhada
+                    const alertContainer = document.createElement('div');
+                    alertContainer.className = 'alert alert-success mt-3';
+                    alertContainer.innerHTML = '<strong>Transcrição concluída com sucesso!</strong> Você pode visualizar os resultados na seção de histórico.';
+                    document.querySelector('.container').prepend(alertContainer);
+                    
+                    setTimeout(function() {
+                        window.location.href = `/historico`;
+                    }, 3000);
+                    return;
+                }
+                
+                // Atualizar tempo estimado
+                if (data.tempo_estimado) {
+                    estimatedTimeLeft.textContent = data.tempo_estimado;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar progresso:', error);
+                document.getElementById('refreshSpinner').style.display = 'none';
+            });
+    }
+    
+    function updateStepStatus(stepIndex, status) {
+        const stepCards = document.querySelectorAll('.step-card');
+        const stepIcons = document.querySelectorAll('.step-icon');
+        const statusBadges = document.querySelectorAll('.status-badge');
+        
+        // Reset classes
+        stepCards[stepIndex].className = 'step-card card mb-3';
+        stepIcons[stepIndex].className = 'step-icon';
+        
+        // Add appropriate classes based on status
+        if (status === 'active') {
+            stepCards[stepIndex].classList.add('active');
+            stepIcons[stepIndex].classList.add('active');
+            statusBadges[stepIndex].className = 'badge bg-primary status-badge';
+            statusBadges[stepIndex].textContent = 'Em Andamento';
+            
+            // Adicionar ícone giratório
+            const iconElement = stepIcons[stepIndex].querySelector('i');
+            iconElement.className = iconElement.className.replace('fa-spin', '');
+            iconElement.className += ' fa-spin';
+        } else if (status === 'completed') {
+            stepCards[stepIndex].classList.add('completed');
+            stepIcons[stepIndex].classList.add('completed');
+            statusBadges[stepIndex].className = 'badge bg-success status-badge';
+            statusBadges[stepIndex].textContent = 'Concluído';
+            
+            // Substituir ícone por verificação
+            const iconElement = stepIcons[stepIndex].querySelector('i');
+            iconElement.className = 'fas fa-check';
+        } else if (status === 'error') {
+            stepCards[stepIndex].classList.add('error');
+            stepIcons[stepIndex].classList.add('error');
+            statusBadges[stepIndex].className = 'badge bg-danger status-badge';
+            statusBadges[stepIndex].textContent = 'Erro';
+            
+            // Substituir ícone por erro
+            const iconElement = stepIcons[stepIndex].querySelector('i');
+            iconElement.className = 'fas fa-exclamation-triangle';
+        } else {
+            stepIcons[stepIndex].classList.add('waiting');
+            statusBadges[stepIndex].className = 'badge bg-secondary status-badge';
+            statusBadges[stepIndex].textContent = 'Aguardando';
+        }
+    }
+    
+    // Função para inicializar as etapas com base no status atual
+    function initializeSteps(etapaAtual) {
+        // Mapear etapas para índices no DOM
+        const etapasParaIndices = {
+            'preparacao': 0,
+            'transcricao': 0,
+            'sentimento': 1,
+            'falantes': 2,
+            'resumo': 3,
+            'finalizacao': 4
+        };
+        
+        // Definir etapas com base na etapa atual
+        let etapaIndex = etapasParaIndices[etapaAtual] || 0;
+        
+        // Marcar todas as etapas anteriores como concluídas
+        for (let i = 0; i < etapaIndex; i++) {
+            updateStepStatus(i, 'completed');
+        }
+        
+        // Marcar etapa atual como ativa
+        updateStepStatus(etapaIndex, 'active');
+        
+        // Marcar próximas etapas como aguardando
+        for (let i = etapaIndex + 1; i <= 4; i++) {
+            updateStepStatus(i, 'waiting');
+        }
+    }
+    
+    // Função para atualizar as etapas com base nos dados recebidos da API
+    function updateStepsFromData(data) {
+        // Atualizar os cards de etapas com base nos dados recebidos
+        const etapasObj = data.etapas || {};
+        
+        // Mapear etapas para índices no DOM
+        const etapasParaIndices = {
+            'preparacao': 0,
+            'transcricao': 0,
+            'sentimento': 1,
+            'falantes': 2,
+            'resumo': 3,
+            'finalizacao': 4
+        };
+        
+        // Status possíveis: pendente, em_andamento, concluido, erro
+        const etapas = Object.keys(etapasObj);
+        
+        // Para cada etapa conhecida, atualizar o status no card correspondente
+        etapas.forEach(etapa => {
+            if (etapa in etapasParaIndices) {
+                const index = etapasParaIndices[etapa];
+                const status = etapasObj[etapa];
+                
+                let cardStatus = 'waiting';
+                if (status === 'concluido') {
+                    cardStatus = 'completed';
+                } else if (status === 'em_andamento') {
+                    cardStatus = 'active';
+                } else if (status === 'erro') {
+                    cardStatus = 'error';
+                }
+                
+                updateStepStatus(index, cardStatus);
+            }
+        });
+        
+        // Se tivermos etapa atual, garantir que está marcada como ativa
+        if (data.etapa_atual && data.etapa_atual in etapasParaIndices) {
+            const currentIndex = etapasParaIndices[data.etapa_atual];
+            updateStepStatus(currentIndex, 'active');
+        }
+    }
+    
+    // Funções para notificações
+    function showError(message) {
+        // Adiciona uma mensagem de erro no topo da página
+        const alertContainer = document.createElement('div');
+        alertContainer.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        alertContainer.setAttribute('role', 'alert');
+        alertContainer.innerHTML = `
+            <i class="fas fa-exclamation-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        `;
+        
+        document.querySelector('.container').prepend(alertContainer);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            alertContainer.classList.remove('show');
+            setTimeout(() => alertContainer.remove(), 150);
+        }, 5000);
+    }
+    
+    function showSuccess(message) {
+        // Adiciona uma mensagem de sucesso no topo da página
+        const alertContainer = document.createElement('div');
+        alertContainer.className = 'alert alert-success alert-dismissible fade show mt-3';
+        alertContainer.setAttribute('role', 'alert');
+        alertContainer.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        `;
+        
+        document.querySelector('.container').prepend(alertContainer);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            alertContainer.classList.remove('show');
+            setTimeout(() => alertContainer.remove(), 150);
+        }, 5000);
+    }
+    
+    // Configurar botão de cancelamento da transcrição
+    document.getElementById('btn-cancel-transcription').addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Fazer requisição para cancelar transcrição
+        fetch(`/whisper/api/cancelar/{{ transcript_id }}`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '{{ url_for("whisper.index") }}';
+            } else {
+                throw new Error('Erro ao cancelar transcrição');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showError('Não foi possível cancelar a transcrição. Tente novamente.');
+        });
+    });
+    
+    // Iniciar processo de atualização
+    updateProgress();
+    startCountdown();
+});
+</script>
+{% endblock %}

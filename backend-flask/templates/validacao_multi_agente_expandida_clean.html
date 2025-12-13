@@ -1,0 +1,470 @@
+{% extends "layout.html" %}
+
+{% block title %}Análise Multi-Agente Expandida{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header text-white" style="background-color: #585b5c !important;">
+          <h4 class="mb-0">
+            <i class="fas fa-users-cog me-2"></i>
+            Análise Multi-Agente com Seleção Personalizada
+          </h4>
+          <p class="mb-0 mt-2 text-light">
+            Selecione manualmente os agentes especialistas para análise customizada
+          </p>
+        </div>
+        
+        <div class="card-body">
+          <form action="/validacao-multi-agente-expandida" method="POST" id="formAnaliseExpandida" enctype="multipart/form-data">
+            
+            <!-- Configurações Básicas -->
+            <div class="row mb-4">
+              <div class="col-md-8">
+                <!-- Área de Upload e Entrada de Texto -->
+                <div class="mb-3">
+                  <label class="form-label fw-bold">
+                    <i class="fas fa-file-text me-1"></i>
+                    Documento para Análise Multi-Agente
+                  </label>
+                  
+                  <!-- Área de Drag & Drop -->
+                  <div id="dropZone" class="border-2 border-dashed border-primary rounded p-4 text-center mb-3" style="min-height: 120px; transition: all 0.3s ease;">
+                    <div id="dropContent">
+                      <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                      <p class="mb-2">
+                        <strong>Arraste e solte arquivos aqui</strong><br>
+                        <small class="text-muted">ou clique para selecionar</small>
+                      </p>
+                      <p class="small text-muted mb-0">
+                        Formatos suportados: PDF, DOCX, TXT (até 10MB)
+                      </p>
+                    </div>
+                    <input type="file" id="fileInput" name="arquivo" accept=".pdf,.docx,.txt,.doc" style="display: none;">
+                    <div id="filePreview" style="display: none;">
+                      <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                      <p id="fileName" class="fw-bold mb-1"></p>
+                      <p id="fileSize" class="small text-muted mb-2"></p>
+                      <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
+                        <i class="fas fa-times me-1"></i>Remover
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Divisor -->
+                  <div class="text-center mb-3">
+                    <span class="badge bg-light text-dark">OU</span>
+                  </div>
+                  
+                  <!-- Área de Texto Manual -->
+                  <textarea 
+                    class="form-control" 
+                    id="texto_documento" 
+                    name="texto_documento" 
+                    rows="6" 
+                    placeholder="Cole ou digite aqui o texto do documento que deseja analisar..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+              
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Configurações de Análise</label>
+                
+                <div class="mb-3">
+                  <label for="area_foco" class="form-label">Área de Foco</label>
+                  <select class="form-select" id="area_foco" name="area_foco" required>
+                    <option value="">Selecione a área jurídica</option>
+                    {% if areas_juridicas %}
+                      {% for area_id, area_nome in areas_juridicas.items() %}
+                      <option value="{{ area_id }}">{{ area_nome }}</option>
+                      {% endfor %}
+                    {% else %}
+                      <option value="direito_empresarial">Direito Empresarial</option>
+                      <option value="direito_penal">Direito Penal</option>
+                      <option value="direito_trabalhista">Direito Trabalhista</option>
+                      <option value="direito_civil">Direito Civil</option>
+                      <option value="direito_tributario">Direito Tributário</option>
+                      <option value="direito_consumidor">Direito do Consumidor</option>
+                    {% endif %}
+                  </select>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="modo_analise" class="form-label">Modo de Análise</label>
+                  <select class="form-select" id="modo_analise" name="modo_analise">
+                    <option value="completa">Análise Completa</option>
+                    <option value="rapida">Análise Rápida</option>
+                    <option value="detalhada">Análise Detalhada</option>
+                  </select>
+                </div>
+                
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="usar_validacao" name="usar_validacao" checked>
+                  <label class="form-check-label" for="usar_validacao">
+                    Validação Multi-API
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Informações dos Agentes Disponíveis -->
+            <div class="alert alert-info mb-4">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>{{ total_agentes or 0 }} agentes especialistas disponíveis</strong> organizados em {{ agentes_por_categoria|length }} categorias jurídicas
+            </div>
+
+            <!-- Navegação por Tabs - Dinâmica -->
+            <ul class="nav nav-tabs mb-4" id="agentTabs" role="tablist">
+              {% set ns = namespace(first=true) %}
+              {% for categoria_nome, dados in agentes_por_categoria.items() %}
+              <li class="nav-item" role="presentation">
+                <button class="nav-link {% if ns.first %}active{% endif %}" 
+                        id="{{ categoria_nome|lower|replace(' ', '-')|replace('ã', 'a')|replace('ç', 'c') }}-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#{{ categoria_nome|lower|replace(' ', '-')|replace('ã', 'a')|replace('ç', 'c') }}" 
+                        type="button" role="tab">
+                  <i class="fas fa-{{ 'cogs' if 'processamento' in categoria_nome|lower else 'balance-scale' }} me-1"></i> 
+                  {{ categoria_nome }} ({{ dados.agentes|length }})
+                </button>
+              </li>
+              {% if ns.first %}{% set ns.first = false %}{% endif %}
+              {% endfor %}
+            </ul>
+            
+            <!-- Conteúdo das Tabs - Dinâmico -->
+            <div class="tab-content" id="agentTabsContent">
+              {% set ns = namespace(first=true) %}
+              {% for categoria_nome, dados in agentes_por_categoria.items() %}
+              <div class="tab-pane fade {% if ns.first %}show active{% endif %}" 
+                   id="{{ categoria_nome|lower|replace(' ', '-')|replace('ã', 'a')|replace('ç', 'c') }}" 
+                   role="tabpanel">
+                <div class="card">
+                  <div class="card-header text-white" style="background-color: #585b5c !important;">
+                    <h6 class="mb-0">{{ categoria_nome }} - {{ dados.agentes|length }} especialistas</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      {% for agente in dados.agentes %}
+                      <div class="col-md-4 col-lg-3 mb-3">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" 
+                                 name="agentes_selecionados" 
+                                 value="{{ agente.id }}" 
+                                 id="agente_{{ agente.id }}">
+                          <label class="form-check-label" for="agente_{{ agente.id }}">
+                            <strong>{{ agente.nome }}</strong><br>
+                            {% if agente.descricao %}
+                            <small class="text-muted">{{ agente.descricao[:80] }}{% if agente.descricao|length > 80 %}...{% endif %}</small>
+                            {% else %}
+                            <small class="text-muted">Especialista em {{ categoria_nome }}</small>
+                            {% endif %}
+                          </label>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% if ns.first %}{% set ns.first = false %}{% endif %}
+              {% endfor %}
+            </div>
+            
+            <!-- Resumo da Seleção e Botões de Ação -->
+            <div class="row mt-4">
+              <div class="col-md-8">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title">Resumo da Seleção</h6>
+                    <div id="resumoSelecao" class="text-muted">
+                      Nenhum agente selecionado
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-outline-primary" id="selecionarTodos">
+                    <i class="fas fa-check-square me-2"></i>Selecionar Todos da Aba
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" id="limparSelecao">
+                    <i class="fas fa-times me-2"></i>Limpar Seleção
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Botão de Execução -->
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-success btn-lg px-5" id="btnExecutar" disabled>
+                <i class="fas fa-rocket me-2"></i>
+                Executar Análise Multi-Agente
+              </button>
+            </div>
+            
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="agentes_selecionados"]');
+    const resumoSelecao = document.getElementById('resumoSelecao');
+    const btnExecutar = document.getElementById('btnExecutar');
+    const selecionarTodos = document.getElementById('selecionarTodos');
+    const limparSelecao = document.getElementById('limparSelecao');
+    
+    // Elementos do upload
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const dropContent = document.getElementById('dropContent');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFile');
+    const textoArea = document.getElementById('texto_documento');
+    
+    let currentFile = null;
+    const MAX_AGENTES = 3; // Limite máximo de agentes selecionados
+    
+    // Funcionalidades de upload de arquivo
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function showFilePreview(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        dropContent.style.display = 'none';
+        filePreview.style.display = 'block';
+        dropZone.classList.remove('border-primary');
+        dropZone.classList.add('border-success');
+        currentFile = file;
+    }
+    
+    function hideFilePreview() {
+        dropContent.style.display = 'block';
+        filePreview.style.display = 'none';
+        dropZone.classList.remove('border-success');
+        dropZone.classList.add('border-primary');
+        currentFile = null;
+        fileInput.value = '';
+        textoArea.value = '';
+    }
+    
+    function processFile(file) {
+        // Validar tipo de arquivo
+        const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Tipo de arquivo não suportado. Use PDF, DOCX ou TXT.');
+            return;
+        }
+        
+        // Validar tamanho (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Arquivo muito grande. Tamanho máximo: 10MB');
+            return;
+        }
+        
+        showFilePreview(file);
+        
+        // Para arquivos de texto, mostrar preview
+        if (file.type === 'text/plain') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                textoArea.value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+    }
+    
+    // Event listeners para drag and drop
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-success', 'bg-light');
+        });
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-success', 'bg-light');
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Só remove o destaque se estiver saindo da dropZone completamente
+            if (!dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('border-success', 'bg-light');
+            }
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-success', 'bg-light');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files; // Atribui o arquivo ao input
+                processFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                processFile(e.target.files[0]);
+            }
+        });
+    }
+    
+    removeFileBtn.addEventListener('click', hideFilePreview);
+    
+    // Atualizar resumo da seleção
+    function atualizarResumo() {
+        const selecionados = Array.from(checkboxes).filter(cb => cb.checked);
+        
+        if (selecionados.length === 0) {
+            resumoSelecao.innerHTML = '<span class="text-muted">Nenhum agente selecionado</span>';
+            btnExecutar.disabled = true;
+        } else if (selecionados.length > MAX_AGENTES) {
+            resumoSelecao.innerHTML = `
+                <span class="badge bg-danger me-1">${selecionados.length} agentes</span>
+                <small class="text-warning">Máximo permitido: ${MAX_AGENTES} agentes</small>
+            `;
+            btnExecutar.disabled = true;
+        } else {
+            const nomes = selecionados.map(cb => {
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                const nome = label.querySelector('strong').textContent;
+                return nome;
+            });
+            
+            resumoSelecao.innerHTML = `
+                <span class="badge bg-success me-1">${selecionados.length} agentes</span>
+                <small class="text-muted">${nomes.join(', ')}</small>
+            `;
+            btnExecutar.disabled = false;
+        }
+    }
+    
+    // Event listeners para checkboxes com controle de limite
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const selecionados = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            // Se exceder o limite, desmarcar este checkbox
+            if (selecionados.length > MAX_AGENTES && this.checked) {
+                this.checked = false;
+                alert(`Máximo de ${MAX_AGENTES} agentes podem ser selecionados para análise.`);
+            }
+            
+            atualizarResumo();
+        });
+    });
+    
+    // Selecionar todos da tab ativa (respeitando o limite)
+    selecionarTodos.addEventListener('click', function() {
+        const tabAtiva = document.querySelector('.tab-pane.active');
+        const checkboxesTab = tabAtiva.querySelectorAll('input[name="agentes_selecionados"]');
+        const jasSelecionados = Array.from(checkboxes).filter(cb => cb.checked).length;
+        let contador = 0;
+        
+        checkboxesTab.forEach(cb => {
+            if (!cb.checked && (jasSelecionados + contador) < MAX_AGENTES) {
+                cb.checked = true;
+                contador++;
+            }
+        });
+        
+        if (contador === 0 && jasSelecionados >= MAX_AGENTES) {
+            alert(`Máximo de ${MAX_AGENTES} agentes já foram selecionados.`);
+        }
+        
+        atualizarResumo();
+    });
+    
+    // Limpar seleção
+    limparSelecao.addEventListener('click', function() {
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+        });
+        atualizarResumo();
+    });
+    
+    // Funcionalidade de pré-seleção de agente
+    function preselecionarAgente() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const agenteId = urlParams.get('agente');
+        
+        if (agenteId) {
+            const checkbox = document.querySelector(`input[value="${agenteId}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                
+                // Ativar a aba que contém o agente
+                const tabPane = checkbox.closest('.tab-pane');
+                if (tabPane) {
+                    const tabId = tabPane.id;
+                    const tabButton = document.querySelector(`button[data-bs-target="#${tabId}"]`);
+                    if (tabButton) {
+                        tabButton.click();
+                    }
+                }
+                
+                atualizarResumo();
+            }
+        }
+    }
+    
+    // Validação do formulário
+    document.getElementById('formAnaliseExpandida').addEventListener('submit', function(e) {
+        const texto = document.getElementById('texto_documento').value.trim();
+        const selecionados = Array.from(checkboxes).filter(cb => cb.checked);
+        
+        // Verificar se há texto ou arquivo
+        if (!texto && !currentFile) {
+            e.preventDefault();
+            alert('Por favor, insira o texto do documento ou faça upload de um arquivo para análise.');
+            return;
+        }
+        
+        if (selecionados.length === 0) {
+            e.preventDefault();
+            alert('Por favor, selecione pelo menos um agente para análise.');
+            return;
+        }
+        
+        if (selecionados.length > MAX_AGENTES) {
+            e.preventDefault();
+            alert(`Máximo de ${MAX_AGENTES} agentes podem ser selecionados para análise.`);
+            return;
+        }
+        
+        // Mostrar indicador de carregamento
+        btnExecutar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando...';
+        btnExecutar.disabled = true;
+    });
+    
+    // Inicializar
+    atualizarResumo();
+    preselecionarAgente(); // Verificar se há agente pré-selecionado na URL
+});
+</script>
+{% endblock %}

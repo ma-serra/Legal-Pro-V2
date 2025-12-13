@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Multi-Agente{% endblock %}</title>
+    
+    <!-- Bootstrap CSS (Replit-themed) -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Tema escuro cinza chumbo -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-theme.css') }}">
+    
+    <!-- Correção definitiva para botões sem hover -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/no-hover-fix.css') }}">
+    
+    <!-- Override absoluto para botões problemáticos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/button-override.css') }}">
+    
+    <!-- Padronização de ícones jurídicos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/juridico-icons-standard.css') }}">
+    
+    <!-- Tema CSS personalizado removido temporariamente para corrigir erro 500 -->
+    
+    <!-- Estilos do navbar replicando estrutura do dashboard -->
+    <style>
+        :root {
+            --dashboard-header-bg: #1a1f2e;
+            --dashboard-header-text: #ffffff;
+            --dashboard-logo-color: #0066cc;
+            --dashboard-menu-hover: #0066cc;
+            --dashboard-cards-bg: #323749;
+            --dashboard-cards-text: #ffffff;
+            --dashboard-cards-border: #2d3748;
+            --dashboard-cards-icons: #0066cc;
+            --dashboard-btn-primary: #0066cc;
+            --dashboard-links: #0066cc;
+            --dashboard-bg-main: #0a0e1a;
+        }
+        
+        /* Navbar replicando padrão do dashboard */
+        .navbar {
+            background-color: #1a1f2e !important;
+            border-bottom: 1px solid #2d3748 !important;
+            padding: 0.75rem 1rem !important;
+            min-height: 60px !important;
+        }
+        
+        .navbar .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 1.25rem !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .navbar-brand:hover {
+            color: #ffffff !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .navbar-brand i {
+            color: #ffffff !important;
+            font-size: 1.1rem !important;
+        }
+        
+        .navbar .nav-link {
+            color: #ffffff !important;
+            transition: all 0.3s ease !important;
+            padding: 0.625rem 1rem !important;
+            border-radius: 6px !important;
+            margin: 0 2px !important;
+            font-weight: 500 !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .nav-link:hover {
+            color: #4fc3f7 !important;
+            background-color: rgba(0, 102, 204, 0.1) !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .nav-link.active {
+            color: #336b69 !important;
+            background-color: transparent !important;
+            border-bottom: 3px solid #336b69 !important;
+        }
+        
+        /* Ícones dos menus com cores padronizadas */
+        .navbar .nav-link i {
+            color: #ffffff !important;
+            margin-right: 0.5rem !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .navbar .dropdown-toggle::after {
+            color: #ffffff !important;
+            border-top-color: #ffffff !important;
+        }
+        
+        .navbar .dropdown-menu {
+            background-color: #1a1f2e !important;
+            border: 1px solid #2d3748 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            margin-top: 0.5rem !important;
+        }
+        
+        .navbar .dropdown-item {
+            color: #ffffff !important;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.3s ease !important;
+            background-color: transparent !important;
+            border: none !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .dropdown-item:hover,
+        .navbar .dropdown-item:focus {
+            background-color: rgba(0, 102, 204, 0.15) !important;
+            color: #4fc3f7 !important;
+            text-decoration: none !important;
+        }
+        
+        .navbar .dropdown-item i {
+            color: #ffffff !important;
+            width: 20px !important;
+            text-align: center !important;
+            margin-right: 0.5rem !important;
+        }
+        
+        .navbar .dropdown-item:hover i {
+            color: #4fc3f7 !important;
+        }
+        
+        .navbar .dropdown-divider {
+            border-color: #2d3748 !important;
+            margin: 0.5rem 0 !important;
+        }
+        
+        /* Navbar toggler para mobile */
+        .navbar-toggler {
+            border-color: var(--dashboard-cards-border);
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25);
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* Menu do usuário à direita */
+        .navbar-nav.ms-auto .nav-link {
+            color: #ffffff !important;
+            font-weight: 500 !important;
+        }
+        
+        .navbar-nav.ms-auto .nav-link:hover {
+            color: #4fc3f7 !important;
+            background-color: rgba(0, 102, 204, 0.1) !important;
+        }
+        
+        .navbar-nav.ms-auto .dropdown-menu {
+            right: 0 !important;
+            left: auto !important;
+            background-color: #1a1f2e !important;
+            border: 1px solid #2d3748 !important;
+        }
+        
+        .navbar-nav.ms-auto .dropdown-item {
+            color: #ffffff !important;
+        }
+        
+        .navbar-nav.ms-auto .dropdown-item:hover {
+            background-color: rgba(0, 102, 204, 0.15) !important;
+            color: #4fc3f7 !important;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                margin-top: 0.5rem;
+            }
+            
+            .navbar .nav-link {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body data-page="{{ page|default('') }}">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #1a1f2e !important;">
+            <div class="container-fluid px-3">
+                <!-- Logo/Marca -->
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-balance-scale me-2"></i>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav" style="margin-right: auto; align-items: flex-start;">
+                        <!-- Menu Principal -->
+                        <li class="nav-item">
+                            <a class="nav-link text-white px-3 py-2" href="/">
+                                <i class="fas fa-home me-1"></i> Início
+                            </a>
+                        </li>
+                        
+                        <!-- Dropdown Análise -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" id="analiseDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-alt me-1"></i> Análise
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="analiseDropdown">
+                                <li>
+                                    <a class="dropdown-item text-white" href="/analisar">
+                                        <i class="fas fa-plus-circle me-1"></i> Nova Análise
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/historico">
+                                        <i class="fas fa-history me-1"></i> Histórico
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="{{ url_for('modulos_avancados') }}">
+                                        <i class="fas fa-cubes me-1"></i> Módulos Avançados
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Dropdown Assistentes Jurídicos -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" id="assistentesJuridicosDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-gavel me-1"></i> Assistentes Jurídicos
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="assistentesJuridicosDropdown">
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_civil">
+                                        <i class="fas fa-home me-1"></i> Direito Civil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_penal">
+                                        <i class="fas fa-balance-scale me-1"></i> Direito Penal
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_trabalhista">
+                                        <i class="fas fa-hard-hat me-1"></i> Direito Trabalhista
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_empresarial">
+                                        <i class="fas fa-building me-1"></i> Direito Empresarial
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_consumidor">
+                                        <i class="fas fa-shopping-cart me-1"></i> Direito do Consumidor
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_familia">
+                                        <i class="fas fa-users me-1"></i> Direito de Família
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_administrativo">
+                                        <i class="fas fa-landmark me-1"></i> Direito Administrativo
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_constitucional">
+                                        <i class="fas fa-university me-1"></i> Direito Constitucional
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_tributario">
+                                        <i class="fas fa-receipt me-1"></i> Direito Tributário
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_imobiliario">
+                                        <i class="fas fa-house-user me-1"></i> Direito Imobiliário
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_securitario">
+                                        <i class="fas fa-shield-alt me-1"></i> Direito Securitário
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/negociacao_conflitos">
+                                        <i class="fas fa-handshake me-1"></i> Negociação e Conflitos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_bancario">
+                                        <i class="fas fa-piggy-bank me-1"></i> Direito Bancário
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_previdenciario">
+                                        <i class="fas fa-user-clock me-1"></i> Direito Previdenciário
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/direito_ambiental">
+                                        <i class="fas fa-leaf me-1"></i> Direito Ambiental
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="{{ url_for('juridico_especialistas_init_app') }}">
+                                        <i class="fas fa-user-tie me-1"></i> Todos os Especialistas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistentes/area/negociacao_conflitos">
+                                        <i class="fas fa-handshake me-1" style="color: #6610f2;"></i> Negociação e Conflitos
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/templates-juridicos">
+                                        <i class="fas fa-file-alt me-1"></i> Templates Especializados
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/modulos">
+                                        <i class="fas fa-th-large me-1"></i> Todos os Módulos
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Dropdown Transcrição -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" id="transcricaoDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-microphone me-1"></i> Transcrição
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="transcricaoDropdown">
+                                <li>
+                                    <a class="dropdown-item text-white" href="/transcription/">
+                                        <i class="fas fa-file-audio me-1"></i> Áudio
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/video/">
+                                        <i class="fas fa-video me-1"></i> Vídeo
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Dropdown Agentes -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-microchip me-1"></i> Agentes
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item text-white" href="/agentes">
+                                        <i class="fas fa-list me-1"></i> Listar Agentes
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/agentes/criar">
+                                        <i class="fas fa-plus me-1"></i> Novo Agente
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/templates">
+                                        <i class="fas fa-file-code me-1"></i> Templates
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Assistente IA -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #89878B;">
+                                <i class="fas fa-comment-dots me-1"></i> Assistente
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente">
+                                        <i class="fas fa-robot me-1"></i> Assistente Principal
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/info">
+                                        <i class="fas fa-info-circle me-1"></i> Informações
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/moderno">
+                                        <i class="fas fa-paint-brush me-1"></i> Versão Moderna
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-white" href="/assistente/tecnico">
+                                        <i class="fas fa-gavel me-1"></i> Versão Técnica
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Fluxos -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-project-diagram me-1"></i> Fluxos
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="/fluxos">
+                                        <i class="fas fa-list me-1"></i> Listar Fluxos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/fluxos/criar">
+                                        <i class="fas fa-plus me-1"></i> Novo Fluxo
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Jurídico -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" id="juridicoDropdown" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-balance-scale me-1"></i> Jurídico
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="juridicoDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/juridico/segunda-opiniao">
+                                        <i class="fas fa-search-plus me-1"></i> Segunda Opinião
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/juridico/especialistas">
+                                        <i class="fas fa-user-tie me-1"></i> Especialistas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/documentos-juridicos">
+                                        <i class="fas fa-file-contract me-1"></i> Templates de Documentos
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+
+
+                        
+                        <!-- Administração (Apenas para Admin) -->
+                        {% if current_user.is_admin %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-tools me-1"></i> Admin
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_usuarios') }}">
+                                        <i class="fas fa-users me-1"></i> Usuários
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_permissoes_areas_juridicas') }}">
+                                        <i class="fas fa-shield-alt me-1"></i> Permissões Áreas Jurídicas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_apis') }}">
+                                        <i class="fas fa-key me-1"></i> APIs
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_logs') }}">
+                                        <i class="fas fa-clipboard-list me-1"></i> Logs
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_temas') }}">
+                                        <i class="fas fa-palette me-1"></i> Temas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('analise_avancada.pagina_cache_otimizado') }}">
+                                        <i class="fas fa-database me-1"></i> Cache em Tempo Real
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                    </ul>
+                    
+                    <!-- Menu do usuário (à direita) -->
+                    <ul class="navbar-nav ms-auto">
+                        {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white px-3 py-2" href="#" role="button" 
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i> {{ current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('perfil') }}">
+                                        <i class="fas fa-id-card me-1"></i> Meu Perfil
+                                    </a>
+                                </li>
+                                {% if current_user.is_admin %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_usuarios') }}">
+                                        <i class="fas fa-users-cog me-1"></i> Gerenciar Usuários
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Sair
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link text-white px-3 py-2" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i> Entrar
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <!-- Mensagens Flash (alertas, notificações) -->
+        <div class="container-fluid mt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <!-- Conteúdo principal -->
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sistema Multi-Agente</h5>
+                    <p class="small">Um sistema avançado para análise jurídica, transcrição e processamento de documentos legais.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Links Úteis</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light">Políticas de Privacidade</a></li>
+                        <li><a href="#" class="text-light">Termos de Uso</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Contato</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> denismay@arsdatascience.com.br</li>
+                        <li><i class="fas fa-phone me-2"></i> (51) 98444-8191</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="small mb-0">&copy; 2025 Sistema Multi-Agente. Todos os direitos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Diretório de uploads para mostrar quando o link for clicado -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadsLink = document.getElementById('uploads-folder-link');
+            if (uploadsLink) {
+                uploadsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.open('/uploads', '_blank');
+                });
+            }
+        });
+    </script>
+    
+    <!-- Scripts específicos da página -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

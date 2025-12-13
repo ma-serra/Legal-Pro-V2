@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Design Pro - Editor</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- CSS para Interface Compacta -->
+    <link href="{{ url_for('static', filename='css/compact-interface.css') }}" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #f8f9fa;
+        }
+        .main-container { height: 100vh; display: flex; }
+        .sidebar { 
+            width: 320px; 
+            background: white; 
+            border-right: 1px solid #dee2e6; 
+            overflow-y: auto;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+        .editor-area { flex: 1; display: flex; flex-direction: column; }
+        .toolbar { 
+            padding: 15px; 
+            border-bottom: 1px solid #dee2e6; 
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .editor-content { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            background: white;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Editor personalizado */
+        #editor {
+            min-height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            outline: none;
+            background: white;
+        }
+        
+        #editor:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        
+        /* Toolbar do editor */
+        .editor-toolbar {
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            padding: 8px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .toolbar-btn {
+            border: 1px solid #ddd;
+            background: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: #e9ecef;
+            border-color: #0d6efd;
+        }
+        
+        .toolbar-btn.active {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        
+        /* Templates e ícones */
+        .template-item { 
+            border: 1px solid #e9ecef; 
+            border-radius: 6px; 
+            padding: 12px; 
+            margin: 8px 0; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            background: white;
+        }
+        .template-item:hover { 
+            border-color: #0d6efd; 
+            background: #f8f9fa; 
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .icon-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 8px; 
+            padding: 10px;
+        }
+        .icon-btn { 
+            aspect-ratio: 1; 
+            border: 1px solid #dee2e6; 
+            background: white; 
+            border-radius: 4px; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { 
+            border-color: #0d6efd; 
+            transform: scale(1.05);
+        }
+        .icon-btn img { width: 20px; height: 20px; }
+        
+        /* Notificações */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: #198754; }
+        .notification.error { background: #dc3545; }
+        .notification.info { background: #0dcaf0; }
+        
+        /* Campos editáveis */
+        .editable-field {
+            background: #fff3cd;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px dashed #856404;
+            display: inline-block;
+            min-width: 60px;
+            transition: all 0.2s;
+        }
+        .editable-field:hover { 
+            background: #ffeaa7; 
+            border-color: #fd7e14;
+        }
+        
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; height: auto; max-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-gavel text-primary me-2"></i>
+                    <h5 class="mb-0">Legal Design Pro</h5>
+                </div>
+                
+                <!-- Tabs -->
+                <ul class="nav nav-pills mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active btn-sm" data-bs-toggle="pill" data-bs-target="#templates">
+                            <i class="fas fa-file-alt me-1"></i>Templates
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#icons">
+                            <i class="fas fa-icons me-1"></i>Ícones
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="templates">
+                        <div id="templatesList" class="loading">
+                            <div>
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="small mb-0">Carregando templates...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="icons">
+                        <div id="iconsList" class="loading">
+                            <div>
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="small mb-0">Carregando ícones...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="editor-area">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="saveDocument()">
+                            <i class="fas fa-save me-1"></i> Salvar
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportPDF()">
+                            <i class="fas fa-file-pdf me-1"></i> PDF
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="clearEditor()">
+                            <i class="fas fa-eraser me-1"></i> Limpar
+                        </button>
+                    </div>
+                    <div class="small text-muted">
+                        <i class="fas fa-circle text-success me-1"></i>
+                        Status: <span id="status">Pronto</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-content">
+                <!-- Editor Toolbar -->
+                <div class="editor-toolbar">
+                    <button class="toolbar-btn" onclick="formatText('bold')" title="Negrito">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('italic')" title="Itálico">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('underline')" title="Sublinhado">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <div style="border-left: 1px solid #ddd; margin: 0 5px;"></div>
+                    <button class="toolbar-btn" onclick="formatHeading('h1')" title="Título 1">H1</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h2')" title="Título 2">H2</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h3')" title="Título 3">H3</button>
+                    <div style="border-left: 1px solid #ddd; margin: 0 5px;"></div>
+                    <button class="toolbar-btn" onclick="formatList('ul')" title="Lista">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatList('ol')" title="Lista Numerada">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <div style="border-left: 1px solid #ddd; margin: 0 5px;"></div>
+                    <button class="toolbar-btn" onclick="alignText('left')" title="Alinhar Esquerda">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="alignText('center')" title="Centralizar">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="alignText('right')" title="Alinhar Direita">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                </div>
+                
+                <!-- Editor Area -->
+                <div id="editor" contenteditable="true" spellcheck="false">
+                    <p>Clique aqui para começar a escrever ou selecione um template na barra lateral.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        let templates = new Map();
+        let icons = new Map();
+        let isModified = false;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Editor carregado sem dependências externas');
+            initEditor();
+            loadTemplates();
+            loadIcons();
+        });
+
+        function initEditor() {
+            const editor = document.getElementById('editor');
+            
+            // Eventos do editor
+            editor.addEventListener('input', function() {
+                isModified = true;
+                updateStatus('Editando...');
+                setTimeout(() => updateStatus('Modificado'), 1000);
+            });
+
+            // Lidar com campos editáveis
+            editor.addEventListener('click', function(e) {
+                if (e.target.classList.contains('editable-field')) {
+                    editField(e.target);
+                }
+            });
+
+            // Prevenir perda de formatação ao colar
+            editor.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
+            showNotification('Editor inicializado com sucesso!', 'success');
+        }
+
+        // Funções de formatação
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('editor').focus();
+        }
+
+        function formatHeading(tag) {
+            document.execCommand('formatBlock', false, tag);
+            document.getElementById('editor').focus();
+        }
+
+        function formatList(type) {
+            const command = type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList';
+            document.execCommand(command, false, null);
+            document.getElementById('editor').focus();
+        }
+
+        function alignText(alignment) {
+            const commands = {
+                'left': 'justifyLeft',
+                'center': 'justifyCenter',
+                'right': 'justifyRight'
+            };
+            document.execCommand(commands[alignment], false, null);
+            document.getElementById('editor').focus();
+        }
+
+        // Carregar templates
+        async function loadTemplates() {
+            try {
+                console.log('Iniciando carregamento de templates...');
+                const response = await fetch('/legal-design-pro/api/templates-list');
+                const data = await response.json();
+                
+                console.log('Resposta da API:', data);
+                
+                if (data.success && data.templates && Array.isArray(data.templates)) {
+                    templates.clear();
+                    data.templates.forEach(template => {
+                        templates.set(template.id, template);
+                    });
+                    console.log(`✅ ${templates.size} templates carregados do banco de dados`);
+                    renderTemplates();
+                } else {
+                    console.error('Resposta inválida da API:', data);
+                    // Mostrar templates mesmo se a estrutura for diferente
+                    if (data.templates && data.templates.length > 0) {
+                        templates.clear();
+                        data.templates.forEach(template => {
+                            templates.set(template.id, template);
+                        });
+                        renderTemplates();
+                        console.log(`✅ ${templates.size} templates carregados (formato alternativo)`);
+                    } else {
+                        throw new Error('Nenhum template encontrado');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar templates:', error);
+                document.getElementById('templatesList').innerHTML = 
+                    '<div class="alert alert-danger small">Erro ao carregar templates: ' + error.message + '</div>';
+            }
+        }
+
+        // Renderizar templates
+        function renderTemplates() {
+            const container = document.getElementById('templatesList');
+            
+            console.log('Renderizando templates:', templates.size);
+            
+            if (templates.size === 0) {
+                container.innerHTML = '<div class="alert alert-warning small">Nenhum template encontrado</div>';
+                return;
+            }
+            
+            // Renderização direta e simples
+            let html = '<h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Templates Disponíveis (' + templates.size + ')</h6>';
+            
+            const colors = ['#dc3545', '#fd7e14', '#198754', '#6f42c1', '#0dcaf0', '#ffc107', '#d63384'];
+            let colorIndex = 0;
+            
+            templates.forEach(template => {
+                const color = colors[colorIndex % colors.length];
+                colorIndex++;
+                
+                html += `
+                    <div class="template-item" onclick="insertTemplate(${template.id}, '${template.area_juridica || 'geral'}')" 
+                         style="border-left: 3px solid ${color}; margin-bottom: 8px;">
+                        <div class="fw-bold mb-1" style="font-size: 0.85rem; color: ${color};">${template.nome}</div>
+                        <div class="text-muted small mb-1">${template.descricao || 'Template jurídico'}</div>
+                        <div class="small" style="color: ${color};">
+                            <i class="fas fa-tag me-1"></i>${template.area_juridica || 'Geral'}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            console.log('✅ Templates renderizados na interface');
+        }
+
+        // Inserir template
+        async function insertTemplate(templateId, area) {
+            try {
+                const template = templates.get(templateId);
+                if (!template) return;
+
+                showNotification('Carregando template...', 'info');
+
+                // Tentar obter conteúdo da API
+                const templateKey = template.nome.toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[áàâã]/g, 'a')
+                    .replace(/[éèê]/g, 'e')
+                    .replace(/[íì]/g, 'i')
+                    .replace(/[óòôõ]/g, 'o')
+                    .replace(/[úù]/g, 'u')
+                    .replace(/ç/g, 'c')
+                    .replace(/[^a-z0-9-]/g, '');
+
+                let content = '';
+                try {
+                    const response = await fetch(`/legal-design-pro/api/template-content/${templateKey}?area=${area}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.template && data.template.conteudo_html) {
+                        content = processTemplateContent(data.template.conteudo_html);
+                    } else {
+                        content = createBasicTemplate(template, area);
+                    }
+                } catch (error) {
+                    content = createBasicTemplate(template, area);
+                }
+
+                // Inserir no editor
+                const editor = document.getElementById('editor');
+                if (editor.textContent.trim() === 'Clique aqui para começar a escrever ou selecione um template na barra lateral.') {
+                    editor.innerHTML = content;
+                } else {
+                    editor.innerHTML += '<br><br>' + content;
+                }
+                
+                isModified = true;
+                updateStatus('Template inserido');
+                showNotification(`Template "${template.nome}" inserido!`, 'success');
+                
+            } catch (error) {
+                console.error('Erro ao inserir template:', error);
+                showNotification('Erro ao inserir template', 'error');
+            }
+        }
+
+        // Processar conteúdo do template
+        function processTemplateContent(html) {
+            let processed = html;
+            
+            // Adicionar campos editáveis
+            processed = processed.replace(/\[([^\]]+)\]/g, 
+                '<span class="editable-field" title="Clique para editar">$1</span>'
+            );
+            processed = processed.replace(/___+/g, 
+                '<span class="editable-field" title="Clique para editar">CAMPO EDITÁVEL</span>'
+            );
+            
+            return `<div style="border-left: 4px solid #0d6efd; padding: 20px; margin: 20px 0; background: #f8f9fa; border-radius: 6px;">${processed}</div>`;
+        }
+
+        // Criar template básico
+        function createBasicTemplate(template, area) {
+            const colors = {
+                'criminal': '#dc3545',
+                'trabalhista': '#fd7e14',
+                'empresarial': '#198754',
+                'bancario': '#6f42c1',
+                'consumidor': '#0dcaf0',
+                'agrario': '#ffc107',
+                'securitario': '#d63384'
+            };
+            
+            const color = colors[area] || '#6c757d';
+            
+            return `
+                <div style="border-left: 4px solid ${color}; padding: 20px; margin: 20px 0; background: #f8f9fa; border-radius: 6px;">
+                    <h3 style="color: ${color}; margin-bottom: 15px;">${template.nome.toUpperCase()}</h3>
+                    <p><strong>Área:</strong> ${area.charAt(0).toUpperCase() + area.slice(1)}</p>
+                    <p><strong>Data:</strong> <span class="editable-field">__/__/____</span></p>
+                    <br>
+                    <h5 style="color: ${color};">Conteúdo Principal</h5>
+                    <p><span class="editable-field">Digite aqui o conteúdo principal do documento...</span></p>
+                    <br>
+                    <p><strong>Responsável:</strong> <span class="editable-field">Nome do responsável</span></p>
+                    <p><strong>Local:</strong> <span class="editable-field">Cidade, data</span></p>
+                </div>
+            `;
+        }
+
+        // Carregar ícones
+        async function loadIcons() {
+            try {
+                const response = await fetch('/api/icons/library');
+                const data = await response.json();
+                
+                if (data.success && data.packs) {
+                    icons.clear();
+                    Object.values(data.packs).forEach(pack => {
+                        if (pack.icons) {
+                            pack.icons.forEach(icon => {
+                                icons.set(icon.name, icon);
+                            });
+                        }
+                    });
+                    renderIcons();
+                    console.log(`✅ ${icons.size} ícones carregados`);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar ícones:', error);
+                document.getElementById('iconsList').innerHTML = 
+                    '<div class="alert alert-danger small">Erro ao carregar ícones</div>';
+            }
+        }
+
+        // Renderizar ícones
+        function renderIcons() {
+            const container = document.getElementById('iconsList');
+            let html = '<div class="icon-grid">';
+            
+            let count = 0;
+            icons.forEach(icon => {
+                if (count < 48) {
+                    html += `
+                        <button class="icon-btn" onclick="insertIcon('${icon.path}')" title="${icon.name}">
+                            <img loading="lazy" src="${icon.path}" alt="${icon.name}">
+                        </button>
+                    `;
+                    count++;
+                }
+            });
+            
+            html += '</div>';
+            if (icons.size > 48) {
+                html += `<p class="small text-muted text-center mt-2">Mostrando 48 de ${icons.size} ícones</p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Inserir ícone
+        function insertIcon(iconPath) {
+            const iconHtml = `<img loading="lazy" src="${iconPath}" style="width: 24px; height: 24px; margin: 0 4px; vertical-align: middle;" alt="Ícone">`;
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const div = document.createElement('div');
+                div.innerHTML = iconHtml;
+                range.insertNode(div.firstChild);
+                selection.removeAllRanges();
+            }
+            
+            showNotification('Ícone inserido!', 'success');
+            isModified = true;
+        }
+
+        // Editar campo
+        function editField(field) {
+            const originalText = field.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalText;
+            input.style.cssText = `
+                background: white;
+                border: 2px solid #0d6efd;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-family: inherit;
+                font-size: inherit;
+                min-width: 100px;
+            `;
+            
+            field.parentNode.insertBefore(input, field);
+            field.style.display = 'none';
+            input.focus();
+            input.select();
+            
+            function finish() {
+                field.textContent = input.value || originalText;
+                field.style.display = '';
+                input.remove();
+                showNotification('Campo atualizado!', 'success');
+                isModified = true;
+            }
+            
+            input.addEventListener('blur', finish);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') finish();
+                if (e.key === 'Escape') {
+                    field.style.display = '';
+                    input.remove();
+                }
+            });
+        }
+
+        // Funções utilitárias
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} me-2"></i>${message}`;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function saveDocument() {
+            const content = document.getElementById('editor').innerHTML;
+            showNotification('Documento salvo!', 'success');
+            updateStatus('Salvo');
+            isModified = false;
+            console.log('Documento salvo:', content);
+        }
+
+        function exportPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const content = document.getElementById('editor').innerText;
+                
+                pdf.setFontSize(12);
+                const splitText = pdf.splitTextToSize(content, 180);
+                pdf.text(splitText, 15, 20);
+                
+                pdf.save('documento-legal.pdf');
+                showNotification('PDF exportado com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao exportar PDF:', error);
+                showNotification('Erro ao exportar PDF', 'error');
+            }
+        }
+
+        function clearEditor() {
+            if (confirm('Deseja limpar todo o conteúdo do editor?')) {
+                document.getElementById('editor').innerHTML = '<p>Clique aqui para começar a escrever ou selecione um template na barra lateral.</p>';
+                isModified = false;
+                updateStatus('Pronto');
+                showNotification('Editor limpo!', 'success');
+            }
+        }
+
+        // Carregar template se especificado na URL
+        function loadTemplateFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const templateId = urlParams.get('template');
+            
+            if (templateId) {
+                updateStatus('Carregando template...');
+                
+                fetch(`/legal-design-pro/api/template/${templateId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Template não encontrado');
+                        }
+                        return response.json();
+                    })
+                    .then(template => {
+                        // Verificar ambos os campos possíveis para conteúdo
+                        const conteudo = template.conteudo_html || template.template_conteudo || '';
+                        
+                        if (conteudo && conteudo.length > 50) {
+                            // Converter markdown para HTML se necessário
+                            let htmlContent = conteudo;
+                            if (conteudo.includes('**') || conteudo.includes('##')) {
+                                htmlContent = conteudo
+                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                    .replace(/\n\n/g, '</p><p>')
+                                    .replace(/\n/g, '<br>');
+                                htmlContent = '<p>' + htmlContent + '</p>';
+                            }
+                            
+                            document.getElementById('editor').innerHTML = htmlContent;
+                            updateStatus('Template carregado');
+                            showNotification(`Template "${template.nome}" carregado com sucesso!`, 'success');
+                            isModified = false;
+                        } else {
+                            throw new Error('Template sem conteúdo válido');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar template:', error);
+                        showNotification('Erro ao carregar template', 'error');
+                        updateStatus('Erro');
+                    });
+            }
+        }
+
+        // Carregar template quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTemplateFromURL();
+        });
+
+        // Prevenir perda de dados
+        window.addEventListener('beforeunload', function(e) {
+            if (isModified) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+{% extends "layout.html" %}
+
+{% block title %}Painel Administrativo - Informações do Sistema{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Informações do Sistema</h1>
+            <div class="text-muted">Detalhes técnicos e estado atual</div>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary">Voltar ao Dashboard</a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Sistema Operacional</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th>Sistema:</th>
+                                <td>{{ system_data.sistema.sistema_operacional }}</td>
+                            </tr>
+                            <tr>
+                                <th>Versão:</th>
+                                <td>{{ system_data.sistema.versao_os }}</td>
+                            </tr>
+                            <tr>
+                                <th>Arquitetura:</th>
+                                <td>{{ system_data.sistema.arquitetura }}</td>
+                            </tr>
+                            <tr>
+                                <th>Processador:</th>
+                                <td>{{ system_data.sistema.processador or "N/A" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Python:</th>
+                                <td>{{ system_data.sistema.python_versao }}</td>
+                            </tr>
+                            <tr>
+                                <th>Encoding:</th>
+                                <td>{{ system_data.ambiente.encoding }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recursos</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">CPU</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilização:</span>
+                            <strong>{{ system_data.recursos.cpu_percent }}%</strong>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" 
+                                style="width: {{ system_data.recursos.cpu_percent }}%"
+                                aria-valuenow="{{ system_data.recursos.cpu_percent }}" 
+                                aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Núcleos:</span>
+                            <strong>{{ system_data.recursos.cpu_count }}</strong>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Memória</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilização:</span>
+                            <strong>{{ system_data.recursos.memoria_usada_percent }}%</strong>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" 
+                                style="width: {{ system_data.recursos.memoria_usada_percent }}%"
+                                aria-valuenow="{{ system_data.recursos.memoria_usada_percent }}" 
+                                aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Total:</span>
+                            <strong>{{ (system_data.recursos.memoria_total / (1024**3))|round(2) }} GB</strong>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Disponível:</span>
+                            <strong>{{ (system_data.recursos.memoria_disponivel / (1024**3))|round(2) }} GB</strong>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Disco</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilização:</span>
+                            <strong>{{ system_data.recursos.disco_usado_percent }}%</strong>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                style="width: {{ system_data.recursos.disco_usado_percent }}%"
+                                aria-valuenow="{{ system_data.recursos.disco_usado_percent }}" 
+                                aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Total:</span>
+                            <strong>{{ (system_data.recursos.disco_total / (1024**3))|round(2) }} GB</strong>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Livre:</span>
+                            <strong>{{ (system_data.recursos.disco_livre / (1024**3))|round(2) }} GB</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Ambiente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-muted">Diretório de Trabalho</h6>
+                        <code class="small">{{ system_data.ambiente.diretorio_trabalho }}</code>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-muted">Python Path</h6>
+                        <code class="small">{{ system_data.ambiente.python_path }}</code>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="text-muted">Variáveis de Ambiente Importantes</h6>
+                        <table class="table table-sm table-striped small">
+                            <tbody>
+                                {% set env = system_data.ambiente.variaveis_ambiente %}
+                                {% if env.PYTHONUSERBASE %}<tr><th>PYTHONUSERBASE:</th><td><code>{{ env.PYTHONUSERBASE }}</code></td></tr>{% endif %}
+                                {% if env.PGHOST %}<tr><th>PGHOST:</th><td><code>{{ env.PGHOST }}</code></td></tr>{% endif %}
+                                {% if env.PGPORT %}<tr><th>PGPORT:</th><td><code>{{ env.PGPORT }}</code></td></tr>{% endif %}
+                                {% if env.REPL_ID %}<tr><th>REPL_ID:</th><td><code>{{ env.REPL_ID }}</code></td></tr>{% endif %}
+                                {% if env.REPL_SLUG %}<tr><th>REPL_SLUG:</th><td><code>{{ env.REPL_SLUG }}</code></td></tr>{% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Módulos Python</h5>
+                    <span class="badge bg-primary">{{ modules|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for module in modules %}
+                            <div class="col-md-3 col-sm-4 col-6 mb-2">
+                                <div class="d-flex small">
+                                    <strong class="me-auto text-truncate">{{ module.name }}</strong>
+                                    <span class="ms-2 text-muted">{{ module.version }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

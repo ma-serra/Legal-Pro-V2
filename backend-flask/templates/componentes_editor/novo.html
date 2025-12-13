@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Componente - Legal Design Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-plus text-primary me-2"></i>
+                        Novo Componente
+                    </h1>
+                    <p class="text-muted mb-0">Criar novo componente para o editor de fluxos</p>
+                </div>
+                <div>
+                    <a href="/componentes_editor" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Voltar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Formulário de Criação -->
+            <form method="POST" action="{{ url_for('criar_componente') }}">
+                <div class="row">
+                    <!-- Coluna Principal -->
+                    <div class="col-lg-8">
+                        <!-- Informações Básicas -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informações Básicas
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="nome" class="form-label">Nome do Componente</label>
+                                            <input type="text" class="form-control" id="nome" name="nome" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="categoria" class="form-label">Categoria</label>
+                                            <select class="form-select" id="categoria" name="categoria" required>
+                                                <option value="">Selecione a categoria</option>
+                                                <option value="analisador">Analisador</option>
+                                                <option value="extrator">Extrator</option>
+                                                <option value="processador">Processador</option>
+                                                <option value="gerador">Gerador</option>
+                                                <option value="validador">Validador</option>
+                                                <option value="classificador">Classificador</option>
+                                                <option value="sintetizador">Sintetizador</option>
+                                                <option value="otimizador">Otimizador</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="tipo" class="form-label">Tipo</label>
+                                            <input type="text" class="form-control" id="tipo" name="tipo" 
+                                                   placeholder="Será preenchido automaticamente baseado no nome">
+                                            <small class="text-muted">Identificador único baseado no nome</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <!-- Espaço para possível expansão futura -->
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="descricao" class="form-label">Descrição</label>
+                                    <input type="text" class="form-control" id="descricao" name="descricao" 
+                                           maxlength="200" placeholder="Descrição breve do componente">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="descricao_detalhada" class="form-label">Descrição Detalhada</label>
+                                    <textarea class="form-control" id="descricao_detalhada" name="descricao_detalhada" 
+                                              rows="3" placeholder="Descrição completa das funcionalidades"></textarea>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="icone" class="form-label">Ícone (FontAwesome)</label>
+                                            <input type="text" class="form-control" id="icone" name="icone" 
+                                                   value="fas fa-cog" placeholder="fas fa-cog">
+                                            <small class="text-muted">Ex: fas fa-cog, fas fa-database</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="cor" class="form-label">Cor</label>
+                                            <input type="color" class="form-control form-control-color" id="cor" name="cor" 
+                                                   value="#47b6b5">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompts e Configuração -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-comments me-2"></i>
+                                    Prompts e Configuração
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="prompt_sistema" class="form-label">Prompt do Sistema</label>
+                                    <textarea class="form-control" id="prompt_sistema" name="prompt_sistema" 
+                                              rows="4" placeholder="Instruções base para o funcionamento do componente"></textarea>
+                                    <small class="text-muted">Instruções base para o funcionamento do componente</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="prompt_usuario" class="form-label">Template de Prompt do Usuário</label>
+                                    <textarea class="form-control" id="prompt_usuario" name="prompt_usuario" 
+                                              rows="3" placeholder="Template para prompts específicos do usuário"></textarea>
+                                    <small class="text-muted">Template para prompts específicos do usuário</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="base_conhecimento" class="form-label">Base de Conhecimento (Tabela Vetorial)</label>
+                                    <input type="text" class="form-control" id="base_conhecimento" name="base_conhecimento" 
+                                           placeholder="embeddings_nome_tabela">
+                                    <small class="text-muted">Nome da tabela pgvector associada ao componente</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Capacidades e Parâmetros -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Capacidades e Parâmetros
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="capacidades" class="form-label">Capacidades</label>
+                                    <textarea class="form-control" id="capacidades" name="capacidades" 
+                                              rows="2" placeholder="Separar por vírgulas ou usar formato JSON"></textarea>
+                                    <small class="text-muted">Lista de capacidades do componente (ex: pdf_extraction, text_analysis)</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="parametros" class="form-label">Parâmetros (JSON)</label>
+                                    <textarea class="form-control" id="parametros" name="parametros" 
+                                              rows="3" placeholder='{"parametro": "valor"}'>{}</textarea>
+                                    <small class="text-muted">Parâmetros configuráveis em formato JSON</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="configuracao" class="form-label">Configuração Avançada (JSON)</label>
+                                    <textarea class="form-control" id="configuracao" name="configuracao" 
+                                              rows="3" placeholder='{"config": "valor"}'>{}</textarea>
+                                    <small class="text-muted">Configurações específicas do componente</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="col-lg-4">
+                        <!-- Preview -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-eye me-2"></i>
+                                    Preview
+                                </h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="component-preview mb-3" id="component-preview">
+                                    <i class="fas fa-cog fa-3x mb-2" style="color: #47b6b5;"></i>
+                                    <h6 class="mb-1" id="preview-name">Nome do Componente</h6>
+                                    <small class="text-muted" id="preview-desc">Descrição do componente</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuração de API -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-cloud me-2"></i>
+                                    Provedor de IA
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="provedor" class="form-label">Provedor</label>
+                                            <select class="form-select" id="provedor" name="provedor">
+                                                <option value="openai" selected>OpenAI</option>
+                                                <option value="anthropic">Anthropic Claude</option>
+                                                <option value="google">Google Gemini</option>
+                                                <option value="deepseek">DeepSeek</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="modelo" class="form-label">Modelo</label>
+                                            <select class="form-select" id="modelo" name="modelo">
+                                                <!-- OpenAI Models -->
+                                                <optgroup label="OpenAI" id="openai-models">
+                                                    <option value="gpt-4o" selected>GPT-4o</option>
+                                                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                                    <option value="o1-preview">o1-preview</option>
+                                                    <option value="o1-mini">o1-mini</option>
+                                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                                    <option value="gpt-4">GPT-4</option>
+                                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                                </optgroup>
+                                                <!-- Anthropic Models -->
+                                                <optgroup label="Anthropic Claude" id="anthropic-models" style="display: none;">
+                                                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                                                    <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+                                                    <option value="claude-sonnet-4-20250514">Claude 3.5 Sonnet</option>
+                                                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                                                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                                                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                                                    <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                                                </optgroup>
+                                                <!-- Google Models -->
+                                                <optgroup label="Google Gemini" id="google-models" style="display: none;">
+                                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                                    <option value="gemini-pro">Gemini Pro</option>
+                                                    <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash (Image Gen)</option>
+                                                </optgroup>
+                                                <!-- DeepSeek Models -->
+                                                <optgroup label="DeepSeek" id="deepseek-models" style="display: none;">
+                                                    <option value="deepseek-chat">DeepSeek Chat</option>
+                                                    <option value="deepseek-coder">DeepSeek Coder</option>
+                                                    <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parâmetros Técnicos -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    Parâmetros Técnicos
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="temperatura" class="form-label">Temperatura</label>
+                                    <input type="number" class="form-control" id="temperatura" name="temperatura" 
+                                           value="0.7" min="0" max="2" step="0.1">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="max_tokens" class="form-label">Max Tokens</label>
+                                    <input type="number" class="form-control" id="max_tokens" name="max_tokens" 
+                                           value="4000" min="100" max="8000">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="top_k" class="form-label">Top K</label>
+                                    <input type="number" class="form-control" id="top_k" name="top_k" 
+                                           value="5" min="1" max="20">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="chunk_size" class="form-label">Chunk Size</label>
+                                    <input type="number" class="form-control" id="chunk_size" name="chunk_size" 
+                                           value="1000" min="100" max="2000">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="chunk_overlap" class="form-label">Chunk Overlap</label>
+                                    <input type="number" class="form-control" id="chunk_overlap" name="chunk_overlap" 
+                                           value="200" min="0" max="500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-toggle-on me-2"></i>
+                                    Status
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="ativo" name="ativo" checked>
+                                    <label class="form-check-label" for="ativo">
+                                        Componente Ativo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="card">
+                            <div class="card-body">
+                                <button type="submit" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-save me-1"></i> Criar Componente
+                                </button>
+                                <a href="/componentes_editor" 
+                                   class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview em tempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const nomeInput = document.getElementById('nome');
+    const descricaoInput = document.getElementById('descricao');
+    const iconeInput = document.getElementById('icone');
+    const corInput = document.getElementById('cor');
+    
+    const previewName = document.getElementById('preview-name');
+    const previewDesc = document.getElementById('preview-desc');
+    const previewIcon = document.querySelector('#component-preview i');
+    
+    function updatePreview() {
+        previewName.textContent = nomeInput.value || 'Nome do Componente';
+        previewDesc.textContent = descricaoInput.value || 'Descrição do componente';
+        previewIcon.className = (iconeInput.value || 'fas fa-cog') + ' fa-3x mb-2';
+        previewIcon.style.color = corInput.value || '#47b6b5';
+    }
+    
+    // Event listeners para atualização em tempo real
+    nomeInput.addEventListener('input', updatePreview);
+    descricaoInput.addEventListener('input', updatePreview);
+    iconeInput.addEventListener('input', updatePreview);
+    corInput.addEventListener('input', updatePreview);
+    
+    // Auto-preenchimento do campo tipo baseado no nome
+    const tipoInput = document.getElementById('tipo');
+    nomeInput.addEventListener('input', function() {
+        if (this.value) {
+            tipoInput.value = this.value.toLowerCase()
+                .replace(/[áàâãä]/g, 'a')
+                .replace(/[éèêë]/g, 'e')
+                .replace(/[íìîï]/g, 'i')
+                .replace(/[óòôõö]/g, 'o')
+                .replace(/[úùûü]/g, 'u')
+                .replace(/[ç]/g, 'c')
+                .replace(/[^a-z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+        } else {
+            tipoInput.value = '';
+        }
+    });
+    
+    // Controle de modelos baseado no provedor
+    const provedorSelect = document.getElementById('provedor');
+    const modeloSelect = document.getElementById('modelo');
+    
+    if (provedorSelect && modeloSelect) {
+        provedorSelect.addEventListener('change', function() {
+            const selectedProvider = this.value;
+            
+            // Esconder todos os optgroups
+            const optgroups = modeloSelect.querySelectorAll('optgroup');
+            optgroups.forEach(group => group.style.display = 'none');
+            
+            // Mostrar apenas o optgroup do provedor selecionado
+            const targetGroup = document.getElementById(selectedProvider + '-models');
+            if (targetGroup) {
+                targetGroup.style.display = 'block';
+                
+                // Selecionar o primeiro modelo do grupo
+                const firstOption = targetGroup.querySelector('option');
+                if (firstOption) {
+                    firstOption.selected = true;
+                }
+            }
+        });
+        
+        // Inicializar visibilidade dos modelos
+        provedorSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Validação de JSON
+    const jsonFields = ['parametros', 'configuracao'];
+    jsonFields.forEach(fieldName => {
+        const field = document.getElementById(fieldName);
+        if (field) {
+            field.addEventListener('blur', function() {
+                try {
+                    if (this.value.trim()) {
+                        JSON.parse(this.value);
+                    }
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } catch (e) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+        }
+    });
+    
+    // Auto-preenchimento baseado na categoria
+    const categoriaSelect = document.getElementById('categoria');
+    const descricaoDetalhada = document.getElementById('descricao_detalhada');
+    const promptSistema = document.getElementById('prompt_sistema');
+    
+    categoriaSelect.addEventListener('change', function() {
+        const categoria = this.value;
+        const configs = {
+            'analisador': {
+                desc: 'Componente especializado em análise e avaliação de documentos jurídicos',
+                prompt: 'Você é um especialista em análise de documentos jurídicos. Analise o conteúdo fornecido e extraia informações relevantes.'
+            },
+            'extrator': {
+                desc: 'Componente para extração de dados específicos de documentos',
+                prompt: 'Você é um especialista em extração de dados. Extraia as informações solicitadas do documento fornecido.'
+            },
+            'processador': {
+                desc: 'Componente para processamento e transformação de dados',
+                prompt: 'Você é um especialista em processamento de dados. Processe as informações conforme as instruções fornecidas.'
+            },
+            'gerador': {
+                desc: 'Componente para geração de documentos e conteúdo jurídico',
+                prompt: 'Você é um especialista em redação jurídica. Gere o documento solicitado seguindo as melhores práticas.'
+            },
+            'validador': {
+                desc: 'Componente para validação e verificação de conformidade',
+                prompt: 'Você é um especialista em validação jurídica. Verifique a conformidade do documento com as normas aplicáveis.'
+            },
+            'classificador': {
+                desc: 'Componente para classificação automática de documentos',
+                prompt: 'Você é um especialista em classificação de documentos jurídicos. Classifique o documento fornecido.'
+            },
+            'sintetizador': {
+                desc: 'Componente para síntese e resumo de informações',
+                prompt: 'Você é um especialista em síntese jurídica. Sintetize as informações principais do documento.'
+            },
+            'otimizador': {
+                desc: 'Componente para otimização de processos e workflows',
+                prompt: 'Você é um especialista em otimização de processos jurídicos. Otimize o fluxo conforme necessário.'
+            }
+        };
+        
+        if (categoria && configs[categoria]) {
+            if (!descricaoDetalhada.value) {
+                descricaoDetalhada.value = configs[categoria].desc;
+            }
+            if (!promptSistema.value) {
+                promptSistema.value = configs[categoria].prompt;
+            }
+        }
+    });
+    
+    // Inicializar preview
+    updatePreview();
+});
+</script>
+{% endblock %}

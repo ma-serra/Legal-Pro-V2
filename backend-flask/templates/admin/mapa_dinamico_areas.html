@@ -1,0 +1,1320 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Mapa Dinâmico por Área - Legal Design Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-project-diagram"></i> Mapa Dinâmico por Área Jurídica
+                    </h1>
+                    <p class="mb-0">Visualização hierárquica individual de cada assistente orquestrador e seus agentes especializados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Superiores -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5><i class="fas fa-filter"></i> Seleção de Área</h5>
+                    <select id="area-selector" class="form-select form-select-lg">
+                        <option value="">Selecione uma área jurídica...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5><i class="fas fa-cogs"></i> Controles de Visualização</h5>
+                    <div class="d-flex gap-2">
+                        <button id="btn-zoom-in" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-search-plus"></i> Zoom +
+                        </button>
+                        <button id="btn-zoom-out" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-search-minus"></i> Zoom -
+                        </button>
+                        <button id="btn-reset-view" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-home"></i> Reset
+                        </button>
+                        <button id="btn-toggle-labels" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-tags"></i> Labels
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área Principal do Mapa -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <span id="area-title">Selecione uma área para visualizar</span>
+                        <span id="area-stats" class="badge bg-primary ms-2"></span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="mapa-container" style="height: 700px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <!-- Mensagem inicial -->
+                        <div id="mensagem-inicial" class="d-flex align-items-center justify-content-center h-100 text-muted">
+                            <div class="text-center">
+                                <i class="fas fa-arrow-up fa-3x mb-3"></i>
+                                <h4>Selecione uma área jurídica acima</h4>
+                                <p>Escolha uma das 18 áreas para visualizar o assistente orquestrador e seus agentes especializados</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Container HTML do Mapa -->
+                        <div id="mapa-html-container" style="display: none; width: 100%; height: 700px; border: 1px solid #ddd; background: #f8f9fa; position: relative; overflow: hidden;"></div>
+                        
+                        <!-- SVG do Mapa (backup) -->
+                        <svg id="mapa-svg" width="100%" height="700" viewBox="0 0 1400 700" style="display: none; border: 1px solid #ddd; background: #f8f9fa;">
+                            <defs>
+                                <!-- Gradientes -->
+                                <radialGradient id="gradient-center" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" style="stop-color: #ffffff; stop-opacity: 0.9"/>
+                                    <stop offset="100%" style="stop-color: #007bff; stop-opacity: 0.3"/>
+                                </radialGradient>
+                                
+                                <!-- Filtros para efeitos especiais -->
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                    <feMerge> 
+                                        <feMergeNode in="coloredBlur"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                                
+                                <filter id="crown-glow">
+                                    <feGaussianBlur stdDeviation="6" result="glowBlur"/>
+                                    <feColorMatrix in="glowBlur" values="1 0.8 0 0 0  0 0.8 0.5 0 0  0 0 0.2 0 0  0 0 0 1 0"/>
+                                    <feMerge> 
+                                        <feMergeNode in="coloredBlur"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                                
+                                <filter id="royal-shine">
+                                    <feGaussianBlur stdDeviation="2" result="shine"/>
+                                    <feColorMatrix in="shine" values="1.5 1.2 0.3 0 0  1.2 1.5 0.8 0 0  0.3 0.8 1 0 0  0 0 0 1 0"/>
+                                    <feMerge> 
+                                        <feMergeNode in="shine"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                                
+                                <filter id="shadow">
+                                    <feDropShadow dx="3" dy="3" stdDeviation="4" flood-opacity="0.4"/>
+                                </filter>
+                                
+                                <!-- Gradiente dourado para coroa -->
+                                <radialGradient id="crown-gradient" cx="50%" cy="30%" r="70%">
+                                    <stop offset="0%" style="stop-color: #FFD700; stop-opacity: 1"/>
+                                    <stop offset="50%" style="stop-color: #FFA500; stop-opacity: 0.9"/>
+                                    <stop offset="100%" style="stop-color: #FF8C00; stop-opacity: 0.8"/>
+                                </radialGradient>
+                            </defs>
+                            
+                            <!-- Área de conexões -->
+                            <g id="conexoes-group"></g>
+                            
+                            <!-- Área dos agentes -->
+                            <g id="agentes-group"></g>
+                            
+                            <!-- Área do assistente central -->
+                            <g id="assistente-group"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel de Informações -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Informações da Área</h6>
+                </div>
+                <div class="card-body">
+                    <div id="info-area">
+                        <p class="text-muted">Selecione uma área para ver informações detalhadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-user-tie"></i> Assistente Orquestrador</h6>
+                </div>
+                <div class="card-body">
+                    <div id="info-assistente">
+                        <p class="text-muted">Informações do assistente aparecerão aqui</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-robots"></i> Agentes Especializados</h6>
+                </div>
+                <div class="card-body">
+                    <div id="info-agentes">
+                        <p class="text-muted">Lista de agentes será exibida aqui</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para o mapa dinâmico */
+.assistente-central {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.assistente-central:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+.agente-node {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.agente-node:hover {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.3));
+}
+
+.conexao-linha {
+    transition: all 0.3s ease;
+}
+
+.conexao-linha:hover {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
+}
+
+.node-label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    text-anchor: middle;
+    pointer-events: none;
+    user-select: none;
+}
+
+.node-label.central {
+    font-size: 14px;
+    font-weight: bold;
+    fill: #333;
+}
+
+.area-background {
+    fill: url(#gradient-center);
+    opacity: 0.1;
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.conexao-ativa {
+    animation: pulse 2s infinite;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Animações especiais para o centro real */
+@keyframes royalGlow {
+    0% { 
+        filter: drop-shadow(0 0 10px #FFD700) brightness(1);
+        transform: scale(1);
+    }
+    50% { 
+        filter: drop-shadow(0 0 25px #FFD700) brightness(1.3);
+        transform: scale(1.05);
+    }
+    100% { 
+        filter: drop-shadow(0 0 10px #FFD700) brightness(1);
+        transform: scale(1);
+    }
+}
+
+.royal-center {
+    animation: royalGlow 3s ease-in-out infinite;
+}
+
+@keyframes crownShine {
+    0% { opacity: 0.8; transform: rotate(-2deg); }
+    25% { opacity: 1; transform: rotate(0deg) scale(1.1); }
+    50% { opacity: 0.9; transform: rotate(2deg); }
+    75% { opacity: 1; transform: rotate(0deg) scale(1.05); }
+    100% { opacity: 0.8; transform: rotate(-2deg); }
+}
+
+.crown-element {
+    animation: crownShine 4s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.3; transform: scale(0.8); }
+}
+
+.sparkle-particle {
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes auralRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.royal-aura {
+    animation: auralRotate 20s linear infinite;
+}
+
+.royal-label {
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+/* Cores por área jurídica */
+.area-civil { fill: #E53E3E; }
+.area-criminal { fill: #DD6B20; }
+.area-trabalhista { fill: #38A169; }
+.area-tributario { fill: #3182CE; }
+.area-empresarial { fill: #805AD5; }
+.area-familia { fill: #D53F8C; }
+.area-consumidor { fill: #00B5D8; }
+.area-ambiental { fill: #795548; }
+.area-digital { fill: #E91E63; }
+.area-previdenciario { fill: #3F51B5; }
+.area-processual { fill: #009688; }
+.area-administrativo { fill: #FF5722; }
+.area-constitucional { fill: #8BC34A; }
+.area-internacional { fill: #FFC107; }
+.area-imobiliario { fill: #CDDC39; }
+.area-contratual { fill: #673AB7; }
+.area-educacional { fill: #795548; }
+.area-analise-riscos { fill: #FF9800; }
+</style>
+
+<script>
+// Variáveis globais
+let AREAS_JURIDICAS = [];
+let currentArea = null;
+let currentAreaData = null;
+let zoomLevel = 1;
+let showLabels = true;
+let svgContainer = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarInterface();
+    carregarAreasDoServidor();
+    configurarEventos();
+});
+
+function inicializarInterface() {
+    // Aguardar DOM carregar completamente
+    setTimeout(() => {
+        svgContainer = document.getElementById('mapa-svg');
+        console.log('Interface do mapa dinâmico inicializada');
+        console.log('SVG Container encontrado:', !!svgContainer);
+    }, 100);
+}
+
+async function carregarAreasDoServidor() {
+    try {
+        console.log('🔍 Carregando áreas do servidor...');
+        
+        const response = await fetch('/api/areas-juridicas/dados');
+        const data = await response.json();
+        
+        if (data.success) {
+            AREAS_JURIDICAS = data.areas;
+            console.log(`✅ Carregadas ${data.total_areas} áreas jurídicas`);
+            
+            preencherSeletorAreas();
+        } else {
+            console.error('❌ Erro ao carregar áreas:', data.error);
+            mostrarErro('Erro ao carregar áreas jurídicas');
+        }
+    } catch (error) {
+        console.error('❌ Erro na requisição:', error);
+        mostrarErro('Erro de conexão ao carregar áreas');
+    }
+}
+
+function preencherSeletorAreas() {
+    const selector = document.getElementById('area-selector');
+    
+    // Limpar opções existentes (exceto a primeira)
+    while (selector.children.length > 1) {
+        selector.removeChild(selector.lastChild);
+    }
+    
+    AREAS_JURIDICAS.forEach(area => {
+        const option = document.createElement('option');
+        option.value = area.id;
+        option.textContent = `${area.nome} (${area.total_agentes} agentes)`;
+        selector.appendChild(option);
+    });
+    
+    console.log(`📋 Seletor populado com ${AREAS_JURIDICAS.length} áreas`);
+}
+
+function configurarEventos() {
+    // Seleção de área
+    document.getElementById('area-selector').addEventListener('change', function() {
+        const areaId = this.value;
+        if (areaId) {
+            carregarMapaArea(areaId);
+        } else {
+            limparMapa();
+        }
+    });
+    
+    // Controles de zoom
+    document.getElementById('btn-zoom-in').addEventListener('click', () => ajustarZoom(1.2));
+    document.getElementById('btn-zoom-out').addEventListener('click', () => ajustarZoom(0.8));
+    document.getElementById('btn-reset-view').addEventListener('click', resetarVisualizacao);
+    document.getElementById('btn-toggle-labels').addEventListener('click', alternarLabels);
+}
+
+async function carregarMapaArea(areaId) {
+    const area = AREAS_JURIDICAS.find(a => a.id == areaId);
+    if (!area) {
+        console.error('❌ Área não encontrada:', areaId);
+        return;
+    }
+    
+    try {
+        console.log('🔍 Carregando dados completos da área:', area.nome);
+        
+        // Carregar dados completos da área
+        const [agentesData, assistenteData, performanceData] = await Promise.all([
+            fetch(`/api/areas-juridicas/${areaId}/agentes`).then(r => r.json()),
+            fetch(`/api/areas-juridicas/${areaId}/assistente`).then(r => r.json()),
+            fetch(`/api/areas-juridicas/${areaId}/performance`).then(r => r.json())
+        ]);
+        
+        if (!agentesData.success || !assistenteData.success || !performanceData.success) {
+            throw new Error('Erro ao carregar dados da área');
+        }
+        
+        // Armazenar dados globalmente
+        currentArea = area;
+        currentAreaData = {
+            area: area,
+            agentes: agentesData.agentes,
+            assistente: assistenteData.assistente,
+            performance: performanceData.performance
+        };
+        
+        console.log('✅ Dados carregados:', {
+            agentes: agentesData.agentes.length,
+            assistente: assistenteData.assistente.assistente.nome,
+            performance: performanceData.performance.area_nome
+        });
+        
+        // Atualizar interface
+        document.getElementById('area-title').textContent = `Área: ${area.nome}`;
+        document.getElementById('area-stats').textContent = `${area.total_agentes} agentes especializados`;
+        
+        // Ocultar mensagem inicial e mostrar SVG
+        const mensagemInicial = document.getElementById('mensagem-inicial');
+        if (mensagemInicial) mensagemInicial.style.display = 'none';
+        
+        svgContainer.style.display = 'block';
+        
+        // Gerar mapa com dados reais
+        gerarMapaAreaComDados(currentAreaData);
+        
+        // Atualizar painéis de informação com dados reais
+        atualizarPainelInformacoesReais(currentAreaData);
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar área:', error);
+        mostrarErro('Erro ao carregar dados da área');
+    }
+    
+    // Verificar estrutura DOM do SVG
+    console.log('🔍 VERIFICANDO ESTRUTURA DOM:');
+    console.log('SVG width:', svgContainer.style.width || svgContainer.getAttribute('width'));
+    console.log('SVG height:', svgContainer.style.height || svgContainer.getAttribute('height'));
+    console.log('SVG children:', svgContainer.children.length);
+    
+    // Verificar se os grupos existem
+    const grupos = ['conexoes-group', 'agentes-group', 'assistente-group'];
+    grupos.forEach(grupo => {
+        const elemento = document.getElementById(grupo);
+        console.log(`Grupo ${grupo}:`, !!elemento, elemento ? `(children: ${elemento.children.length})` : '(não encontrado)');
+    });
+    
+    // Aguardar um momento para o SVG aparecer
+    setTimeout(() => {
+        // Gerar mapa da área
+        gerarMapaArea(area);
+        
+        // Atualizar painéis de informação
+        atualizarPainelInformacoes(area);
+    }, 100);
+}
+
+function gerarMapaArea(area) {
+    console.log('Iniciando geração do mapa para:', area.nome);
+    
+    const svg = svgContainer;
+    if (!svg) {
+        console.error('SVG container não encontrado');
+        return;
+    }
+    
+    // Obter dimensões com valores padrão se necessário
+    const width = svg.clientWidth || 800;
+    const height = svg.clientHeight || 700;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    console.log('Dimensões do SVG:', { width, height, centerX, centerY });
+    
+    // Limpar conteúdo anterior
+    const conexoesGroup = document.getElementById('conexoes-group');
+    const agentesGroup = document.getElementById('agentes-group');
+    const assistenteGroup = document.getElementById('assistente-group');
+    
+    if (conexoesGroup) conexoesGroup.innerHTML = '';
+    if (agentesGroup) agentesGroup.innerHTML = '';
+    if (assistenteGroup) assistenteGroup.innerHTML = '';
+    
+    console.log('Grupos limpos, iniciando criação...');
+    
+    try {
+        // Criar assistente orquestrador central
+        console.log('Criando assistente central...');
+        criarAssistenteCentral(centerX, centerY, area);
+        
+        // Agentes especializados são criados pela função gerarMapaAreaComDados()
+        // console.log('Criando agentes especializados...');
+        // criarAgentesEspecializados(centerX, centerY, area);
+        
+        // Criar conexões
+        console.log('Criando conexões...');
+        criarConexoes(centerX, centerY, area);
+        
+        // Aplicar animações
+        console.log('Aplicando animações...');
+        aplicarAnimacoes();
+        
+        console.log('Mapa gerado com sucesso!');
+    } catch (error) {
+        console.error('Erro ao gerar mapa:', error);
+    }
+}
+
+function criarAssistenteCentral(centerX, centerY, area) {
+    console.log('🎯 CRIANDO ASSISTENTE CENTRAL - Início');
+    console.log('Posição:', { centerX, centerY });
+    console.log('Área:', area);
+    
+    const assistenteGroup = document.getElementById('assistente-group');
+    console.log('Assistente Group encontrado:', !!assistenteGroup);
+    
+    if (!assistenteGroup) {
+        console.error('❌ ERRO: assistente-group não encontrado!');
+        return;
+    }
+    
+    // VERSÃO SIMPLIFICADA GARANTIDAMENTE VISÍVEL
+    console.log('📍 Criando elementos básicos...');
+    
+    // Círculo grande vermelho para teste
+    const testeGrande = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    testeGrande.setAttribute('cx', centerX);
+    testeGrande.setAttribute('cy', centerY);
+    testeGrande.setAttribute('r', '50');
+    testeGrande.setAttribute('fill', '#ff0000');
+    testeGrande.setAttribute('stroke', '#000000');
+    testeGrande.setAttribute('stroke-width', '3');
+    testeGrande.setAttribute('opacity', '1');
+    assistenteGroup.appendChild(testeGrande);
+    console.log('🔴 CÍRCULO VERMELHO GRANDE CRIADO');
+    
+    // Texto visível
+    const textoArea = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textoArea.setAttribute('x', centerX);
+    textoArea.setAttribute('y', centerY + 5);
+    textoArea.setAttribute('text-anchor', 'middle');
+    textoArea.setAttribute('fill', '#ffffff');
+    textoArea.setAttribute('font-size', '14');
+    textoArea.setAttribute('font-weight', 'bold');
+    textoArea.textContent = area.nome;
+    assistenteGroup.appendChild(textoArea);
+    console.log('📝 TEXTO ÁREA CRIADO');
+    
+    // Círculo de fundo com gradiente
+    const backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    backgroundCircle.setAttribute('cx', centerX);
+    backgroundCircle.setAttribute('cy', centerY);
+    backgroundCircle.setAttribute('r', '60');
+    backgroundCircle.setAttribute('fill', area.cor);
+    backgroundCircle.setAttribute('fill-opacity', '0.15');
+    backgroundCircle.setAttribute('stroke', area.cor);
+    backgroundCircle.setAttribute('stroke-width', '3');
+    backgroundCircle.setAttribute('stroke-dasharray', '5,5');
+    // Removido filtro e classe problemática
+    assistenteGroup.appendChild(backgroundCircle);
+    
+    // Círculo principal do assistente com brilho real
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', centerX);
+    circle.setAttribute('cy', centerY);
+    circle.setAttribute('r', '45');
+    circle.setAttribute('fill', area.cor);
+    circle.setAttribute('stroke', '#FFD700');
+    circle.setAttribute('stroke-width', '4');
+    // Removido filtros e classes problemáticas
+    circle.onclick = () => mostrarDetalhesAssistente(area);
+    assistenteGroup.appendChild(circle);
+    
+    // Coroa dourada no topo
+    const coroa = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    coroa.setAttribute('transform', `translate(${centerX}, ${centerY - 35})`);
+    // Removido filtros e classes problemáticas da coroa
+    
+    // Base da coroa simplificada
+    const coroaBase = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    coroaBase.setAttribute('x', '-15');
+    coroaBase.setAttribute('y', '5');
+    coroaBase.setAttribute('width', '30');
+    coroaBase.setAttribute('height', '8');
+    coroaBase.setAttribute('fill', '#FFD700');
+    coroaBase.setAttribute('rx', '2');
+    coroa.appendChild(coroaBase);
+    
+    // Pontas da coroa
+    for (let i = 0; i < 5; i++) {
+        const ponta = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        const x = -12 + (i * 6);
+        const altura = i === 2 ? 12 : (i === 1 || i === 3) ? 10 : 8;
+        ponta.setAttribute('points', `${x},5 ${x+3},-${altura-5} ${x+6},5`);
+        ponta.setAttribute('fill', 'url(#crown-gradient)');
+        ponta.setAttribute('stroke', '#FF8C00');
+        ponta.setAttribute('stroke-width', '0.5');
+        coroa.appendChild(ponta);
+    }
+    
+    // Joia central da coroa
+    const joia = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    joia.setAttribute('cx', '0');
+    joia.setAttribute('cy', '-7');
+    joia.setAttribute('r', '3');
+    joia.setAttribute('fill', '#FF0000');
+    joia.setAttribute('stroke', '#FFD700');
+    joia.setAttribute('stroke-width', '1');
+    joia.setAttribute('filter', 'url(#glow)');
+    coroa.appendChild(joia);
+    
+    assistenteGroup.appendChild(coroa);
+    
+    // Ícone do assistente orquestrador
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    icon.setAttribute('x', centerX);
+    icon.setAttribute('y', centerY + 8);
+    icon.setAttribute('text-anchor', 'middle');
+    icon.setAttribute('font-family', 'Font Awesome 5 Free');
+    icon.setAttribute('font-size', '28');
+    icon.setAttribute('font-weight', '900');
+    icon.setAttribute('fill', '#fff');
+    icon.setAttribute('filter', 'url(#glow)');
+    icon.textContent = '⚡';
+    assistenteGroup.appendChild(icon);
+    
+    // Partículas brilhantes ao redor
+    for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI * 2) / 8;
+        const radius = 65;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        const particula = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        particula.setAttribute('cx', x);
+        particula.setAttribute('cy', y);
+        particula.setAttribute('r', '2');
+        particula.setAttribute('fill', '#FFD700');
+        particula.setAttribute('opacity', '0.6');
+        particula.setAttribute('filter', 'url(#glow)');
+        particula.classList.add('sparkle-particle');
+        particula.style.animationDelay = `${i * 0.2}s`;
+        assistenteGroup.appendChild(particula);
+    }
+    
+    // Label do assistente com estilo real
+    if (showLabels) {
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', centerX);
+        label.setAttribute('y', centerY + 80);
+        label.setAttribute('class', 'node-label central royal-label');
+        label.setAttribute('fill', '#333');
+        label.setAttribute('stroke', '#FFD700');
+        label.setAttribute('stroke-width', '0.5');
+        label.textContent = `👑 Assistente ${area.nome}`;
+        assistenteGroup.appendChild(label);
+    }
+}
+
+function criarAgentesEspecializados(centerX, centerY, area) {
+    console.log('🔧 CRIANDO AGENTES ESPECIALIZADOS');
+    console.log('Número de agentes:', area.agentes);
+    
+    const agentesGroup = document.getElementById('agentes-group');
+    console.log('Agentes Group encontrado:', !!agentesGroup);
+    
+    if (!agentesGroup) {
+        console.error('❌ ERRO: agentes-group não encontrado!');
+        return;
+    }
+    
+    const numAgentes = area.agentes;
+    const radius = 200;
+    const angleStep = (2 * Math.PI) / numAgentes;
+    
+    console.log('Parâmetros:', { numAgentes, radius, angleStep });
+    
+    for (let i = 0; i < numAgentes; i++) {
+        const angle = i * angleStep;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        // Círculo do agente
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '15');
+        circle.setAttribute('fill', area.cor);
+        circle.setAttribute('fill-opacity', '0.7');
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        circle.classList.add('agente-node', 'fade-in');
+        circle.style.animationDelay = `${i * 0.1}s`;
+        circle.onclick = () => mostrarDetalhesAgente(area, i + 1);
+        agentesGroup.appendChild(circle);
+        
+        // Número do agente
+        const numero = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        numero.setAttribute('x', x);
+        numero.setAttribute('y', y + 4);
+        numero.setAttribute('text-anchor', 'middle');
+        numero.setAttribute('font-size', '10');
+        numero.setAttribute('font-weight', 'bold');
+        numero.setAttribute('fill', '#fff');
+        numero.textContent = i + 1;
+        agentesGroup.appendChild(numero);
+        
+        // Label do agente
+        if (showLabels) {
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', x);
+            label.setAttribute('y', y + 25);
+            label.setAttribute('class', 'node-label');
+            label.setAttribute('fill', '#666');
+            label.textContent = `Agente ${i + 1}`;
+            agentesGroup.appendChild(label);
+        }
+    }
+}
+
+function criarConexoes(centerX, centerY, area) {
+    const conexoesGroup = document.getElementById('conexoes-group');
+    const numAgentes = area.agentes;
+    const radius = 200;
+    const angleStep = (2 * Math.PI) / numAgentes;
+    
+    for (let i = 0; i < numAgentes; i++) {
+        const angle = i * angleStep;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        // Linha de conexão
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', centerX);
+        line.setAttribute('y1', centerY);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', area.cor);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-opacity', '0.4');
+        line.setAttribute('stroke-dasharray', '3,3');
+        line.classList.add('conexao-linha');
+        conexoesGroup.appendChild(line);
+    }
+}
+
+function aplicarAnimacoes() {
+    // Adicionar animação de pulsação às conexões
+    const conexoes = document.querySelectorAll('.conexao-linha');
+    conexoes.forEach((conexao, index) => {
+        setTimeout(() => {
+            conexao.classList.add('conexao-ativa');
+        }, index * 100);
+    });
+}
+
+function mostrarDetalhesAssistente(area) {
+    alert(`Assistente Orquestrador - ${area.nome}\n\nResponsabilidades:\n• Coordenação de ${area.agentes} agentes especializados\n• Distribuição de documentos por especialidade\n• Síntese de resultados\n• Comunicação inter-áreas\n\nStatus: Ativo e Operacional`);
+}
+
+function mostrarDetalhesAgente(area, numero) {
+    alert(`Agente Especializado ${numero}\n\nÁrea: ${area.nome}\nEspecialização: Análise de documentos ${area.nome.toLowerCase()}\nStatus: Ativo\nPerformance: 98.${Math.floor(Math.random() * 10)}% de precisão`);
+}
+
+function atualizarPainelInformacoes(area) {
+    // Informações da área
+    document.getElementById('info-area').innerHTML = `
+        <h6 class="text-primary">${area.nome}</h6>
+        <p><strong>Total de Agentes:</strong> ${area.agentes}</p>
+        <p><strong>Status:</strong> <span class="badge bg-success">Operacional</span></p>
+        <p><strong>Última Atualização:</strong> ${new Date().toLocaleString()}</p>
+        <div class="progress">
+            <div class="progress-bar" style="width: 95%; background-color: ${area.cor}"></div>
+        </div>
+        <small class="text-muted">95% de eficiência</small>
+    `;
+    
+    // Informações do assistente
+    document.getElementById('info-assistente').innerHTML = `
+        <h6 class="text-primary">Assistente Orquestrador</h6>
+        <p><strong>Área:</strong> ${area.nome}</p>
+        <p><strong>Agentes Subordinados:</strong> ${area.agentes}</p>
+        <p><strong>Função:</strong> Coordenação e Síntese</p>
+        <p><strong>Status:</strong> <span class="text-success">✓ Ativo</span></p>
+    `;
+    
+    // Lista de agentes
+    let agentesHtml = '<div class="row">';
+    for (let i = 1; i <= Math.min(area.agentes, 8); i++) {
+        agentesHtml += `
+            <div class="col-6 mb-2">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle" style="width: 8px; height: 8px; background-color: ${area.cor}; margin-right: 8px;"></div>
+                    <small>Agente ${i}</small>
+                </div>
+            </div>
+        `;
+    }
+    if (area.agentes > 8) {
+        agentesHtml += `<div class="col-12"><small class="text-muted">... e mais ${area.agentes - 8} agentes</small></div>`;
+    }
+    agentesHtml += '</div>';
+    
+    document.getElementById('info-agentes').innerHTML = agentesHtml;
+}
+
+function limparMapa() {
+    document.getElementById('mensagem-inicial').style.display = 'flex';
+    svgContainer.style.display = 'none';
+    document.getElementById('area-title').textContent = 'Selecione uma área para visualizar';
+    document.getElementById('area-stats').textContent = '';
+    
+    // Limpar painéis
+    document.getElementById('info-area').innerHTML = '<p class="text-muted">Selecione uma área para ver informações detalhadas</p>';
+    document.getElementById('info-assistente').innerHTML = '<p class="text-muted">Informações do assistente aparecerão aqui</p>';
+    document.getElementById('info-agentes').innerHTML = '<p class="text-muted">Lista de agentes será exibida aqui</p>';
+}
+
+function ajustarZoom(fator) {
+    zoomLevel *= fator;
+    zoomLevel = Math.max(0.5, Math.min(3, zoomLevel));
+    
+    const grupos = ['conexoes-group', 'agentes-group', 'assistente-group'];
+    grupos.forEach(grupo => {
+        const elemento = document.getElementById(grupo);
+        if (elemento) {
+            elemento.style.transform = `scale(${zoomLevel})`;
+        }
+    });
+}
+
+function resetarVisualizacao() {
+    zoomLevel = 1;
+    const grupos = ['conexoes-group', 'agentes-group', 'assistente-group'];
+    grupos.forEach(grupo => {
+        const elemento = document.getElementById(grupo);
+        if (elemento) {
+            elemento.style.transform = 'scale(1)';
+        }
+    });
+}
+
+function alternarLabels() {
+    showLabels = !showLabels;
+    const labels = document.querySelectorAll('.node-label');
+    labels.forEach(label => {
+        label.style.display = showLabels ? 'block' : 'none';
+    });
+    
+    const btn = document.getElementById('btn-toggle-labels');
+    btn.innerHTML = showLabels ? '<i class="fas fa-tags"></i> Labels' : '<i class="fas fa-eye-slash"></i> Labels';
+}
+
+// Função de inicialização do mapa dinâmico
+function initMapaDinamico() {
+    console.log('🎯 Inicializando mapa dinâmico');
+    
+    // Verificar se elementos necessários existem
+    const svgContainer = document.getElementById('mapa-svg');
+    const seletorArea = document.getElementById('area-selector');
+    
+    if (!svgContainer) {
+        console.error('❌ SVG container não encontrado');
+        return false;
+    }
+    
+    if (!seletorArea) {
+        console.error('❌ Seletor de área não encontrado');
+        return false;
+    }
+    
+    console.log('✅ Elementos necessários encontrados');
+    return true;
+}
+
+// Inicialização completa do mapa dinâmico
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Mapa dinâmico por área inicializado com sucesso');
+    
+    // Aguardar elementos DOM
+    setTimeout(() => {
+        try {
+            initMapaDinamico();
+            console.log('Interface do mapa dinâmico inicializada');
+            
+            // Carregar automaticamente a primeira área para demonstração
+            if (AREAS_JURIDICAS.length > 0) {
+                console.log('Carregando primeira área automaticamente:', AREAS_JURIDICAS[0].nome);
+                carregarMapaArea(AREAS_JURIDICAS[0].id);
+            }
+        } catch (error) {
+            console.error('Erro na inicialização:', error);
+        }
+    }, 500);
+});
+
+// Nova função SVG com lógica simples e garantida
+function criarAssistenteCentralNovo(svgContainer, area) {
+    console.log('🚀 NOVA LÓGICA SVG INICIADA');
+    
+    const centerX = 700;
+    const centerY = 350;
+    const numAgentes = area.agentes;
+    
+    // Criar SVG usando innerHTML diretamente
+    let svgContent = `
+        <defs>
+            <style>
+                .assistente-central { cursor: pointer; }
+                .agente-especializado { cursor: pointer; }
+            </style>
+        </defs>
+        
+        <!-- Assistente Central -->
+        <circle cx="${centerX}" cy="${centerY}" r="60" 
+                fill="${area.cor}" stroke="#FFD700" stroke-width="4" 
+                class="assistente-central" opacity="1"/>
+        
+        <!-- Texto do Assistente -->
+        <text x="${centerX}" y="${centerY + 5}" text-anchor="middle" 
+              fill="white" font-size="14" font-weight="bold">${area.nome}</text>
+        
+        <!-- Coroa -->
+        <rect x="${centerX - 20}" y="${centerY - 45}" width="40" height="12" 
+              fill="#FFD700" rx="3"/>
+        
+        <!-- Círculo Externo -->
+        <circle cx="${centerX}" cy="${centerY}" r="80" 
+                fill="none" stroke="#FFD700" stroke-width="2" 
+                stroke-dasharray="5,5" opacity="0.7"/>
+    `;
+    
+    // Adicionar agentes especializados
+    for (let i = 0; i < numAgentes; i++) {
+        const angle = (i * 360 / numAgentes) * (Math.PI / 180);
+        const radius = 180;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        // Linha de conexão
+        svgContent += `
+            <line x1="${centerX}" y1="${centerY}" x2="${x}" y2="${y}" 
+                  stroke="${area.cor}" stroke-width="1" opacity="0.4"/>
+        `;
+        
+        // Agente
+        svgContent += `
+            <circle cx="${x}" cy="${y}" r="15" 
+                    fill="${area.cor}" stroke="white" stroke-width="2" 
+                    class="agente-especializado" opacity="1"/>
+            <text x="${x}" y="${y + 3}" text-anchor="middle" 
+                  fill="white" font-size="10">${i + 1}</text>
+        `;
+    }
+    
+    // Inserir no SVG
+    svgContainer.innerHTML = svgContent;
+    
+    // Debug: verificar se elementos foram criados
+    console.log('🔍 SVG innerHTML definido:', svgContainer.innerHTML.length, 'caracteres');
+    console.log('🔍 Círculos encontrados:', svgContainer.querySelectorAll('circle').length);
+    console.log('🔍 Textos encontrados:', svgContainer.querySelectorAll('text').length);
+    console.log('🔍 SVG visível?', svgContainer.style.display);
+    console.log('🔍 SVG dimensões:', svgContainer.getBoundingClientRect());
+    
+    // Adicionar evento de clique
+    const assistenteElement = svgContainer.querySelector('.assistente-central');
+    if (assistenteElement) {
+        assistenteElement.addEventListener('click', () => mostrarDetalhesAssistente(area));
+        console.log('✅ Evento de clique adicionado');
+    } else {
+        console.log('❌ Elemento assistente-central não encontrado');
+    }
+    
+    console.log('✅ NOVA LÓGICA SVG CONCLUÍDA');
+}
+
+console.log('Script do mapa dinâmico carregado com sucesso');
+
+// === NOVAS FUNÇÕES PARA DADOS REAIS ===
+
+function gerarMapaAreaComDados(areaData) {
+    console.log('🎨 Gerando mapa com dados reais:', areaData.area.nome);
+    
+    const svg = svgContainer;
+    if (!svg) {
+        console.error('SVG container não encontrado');
+        return;
+    }
+    
+    // Obter dimensões
+    const width = svg.clientWidth || 1400;
+    const height = svg.clientHeight || 700;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    console.log('📐 Dimensões calculadas:', { width, height, centerX, centerY });
+    
+    // Limpar SVG completamente
+    svg.innerHTML = '';
+    
+    // Aguardar um momento para garantir que o DOM foi limpo
+    setTimeout(() => {
+        // Criar estrutura SVG com grupos
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        
+        // Gradiente
+        const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+        gradient.setAttribute('id', 'gradient-center');
+        gradient.setAttribute('cx', '50%');
+        gradient.setAttribute('cy', '50%');
+        gradient.setAttribute('r', '50%');
+        
+        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('style', 'stop-color: #ffffff; stop-opacity: 0.9');
+        
+        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('style', `stop-color: ${areaData.area.cor}; stop-opacity: 0.3`);
+        
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        defs.appendChild(gradient);
+        svg.appendChild(defs);
+        
+        // Criar grupos SVG
+        const conexoesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        conexoesGroup.setAttribute('id', 'conexoes-group');
+        svg.appendChild(conexoesGroup);
+        
+        const agentesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        agentesGroup.setAttribute('id', 'agentes-group');
+        svg.appendChild(agentesGroup);
+        
+        const assistenteGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        assistenteGroup.setAttribute('id', 'assistente-group');
+        svg.appendChild(assistenteGroup);
+        
+        console.log('✅ Grupos SVG criados:', {
+            conexoes: !!document.getElementById('conexoes-group'),
+            agentes: !!document.getElementById('agentes-group'),
+            assistente: !!document.getElementById('assistente-group')
+        });
+        
+        try {
+            // Criar assistente central com dados reais
+            criarAssistenteCentralReal(centerX, centerY, areaData);
+            
+            // Criar agentes especializados reais
+            criarAgentesEspecializadosReais(centerX, centerY, areaData);
+            
+            // Criar conexões
+            criarConexoesReais(centerX, centerY, areaData);
+            
+            console.log('✅ Mapa gerado com sucesso!');
+        } catch (error) {
+            console.error('❌ Erro ao gerar mapa:', error);
+            mostrarErro('Erro ao gerar visualização');
+        }
+    }, 50);
+}
+
+function criarAssistenteCentralReal(centerX, centerY, areaData) {
+    const assistenteGroup = document.getElementById('assistente-group');
+    const assistente = areaData.assistente;
+    const area = areaData.area;
+    
+    // Círculo de fundo
+    const backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    backgroundCircle.setAttribute('cx', centerX);
+    backgroundCircle.setAttribute('cy', centerY);
+    backgroundCircle.setAttribute('r', '70');
+    backgroundCircle.setAttribute('fill', area.cor);
+    backgroundCircle.setAttribute('fill-opacity', '0.15');
+    backgroundCircle.setAttribute('stroke', area.cor);
+    backgroundCircle.setAttribute('stroke-width', '2');
+    backgroundCircle.setAttribute('stroke-dasharray', '5,5');
+    assistenteGroup.appendChild(backgroundCircle);
+    
+    // Círculo principal do assistente
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', centerX);
+    circle.setAttribute('cy', centerY);
+    circle.setAttribute('r', '50');
+    circle.setAttribute('fill', area.cor);
+    circle.setAttribute('stroke', '#FFD700');
+    circle.setAttribute('stroke-width', '4');
+    circle.setAttribute('class', 'assistente-central royal-center');
+    circle.onclick = () => mostrarDetalhesAssistenteReal(areaData);
+    assistenteGroup.appendChild(circle);
+    
+    // Ícone da coroa
+    const coroa = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    coroa.setAttribute('x', centerX);
+    coroa.setAttribute('y', centerY - 25);
+    coroa.setAttribute('text-anchor', 'middle');
+    coroa.setAttribute('fill', '#FFD700');
+    coroa.setAttribute('font-size', '20');
+    coroa.textContent = '👑';
+    assistenteGroup.appendChild(coroa);
+    
+    // Nome do assistente
+    const nomeTexto = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    nomeTexto.setAttribute('x', centerX);
+    nomeTexto.setAttribute('y', centerY + 5);
+    nomeTexto.setAttribute('text-anchor', 'middle');
+    nomeTexto.setAttribute('fill', '#ffffff');
+    nomeTexto.setAttribute('font-size', '12');
+    nomeTexto.setAttribute('font-weight', 'bold');
+    nomeTexto.textContent = assistente.assistente.nome;
+    assistenteGroup.appendChild(nomeTexto);
+    
+    // Nível de especialização
+    const nivelTexto = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    nivelTexto.setAttribute('x', centerX);
+    nivelTexto.setAttribute('y', centerY + 20);
+    nivelTexto.setAttribute('text-anchor', 'middle');
+    nivelTexto.setAttribute('fill', '#FFD700');
+    nivelTexto.setAttribute('font-size', '10');
+    nivelTexto.textContent = `${assistente.assistente.especializacao}%`;
+    assistenteGroup.appendChild(nivelTexto);
+}
+
+function criarAgentesEspecializadosReais(centerX, centerY, areaData) {
+    const agentesGroup = document.getElementById('agentes-group');
+    const agentes = areaData.agentes;
+    const area = areaData.area;
+    
+    if (!agentes || agentes.length === 0) {
+        console.log('⚠️ Nenhum agente encontrado para esta área');
+        return;
+    }
+    
+    const raio = 200;
+    const anguloIncremento = (2 * Math.PI) / agentes.length;
+    
+    agentes.forEach((agente, index) => {
+        const angulo = index * anguloIncremento;
+        const x = centerX + raio * Math.cos(angulo);
+        const y = centerY + raio * Math.sin(angulo);
+        
+        // Círculo do agente
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '25');
+        circle.setAttribute('fill', area.cor);
+        circle.setAttribute('fill-opacity', '0.8');
+        circle.setAttribute('stroke', '#ffffff');
+        circle.setAttribute('stroke-width', '2');
+        circle.setAttribute('class', 'agente-node fade-in');
+        circle.onclick = () => mostrarDetalhesAgenteReal(agente);
+        agentesGroup.appendChild(circle);
+        
+        // Nome do agente
+        const nomeTexto = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        nomeTexto.setAttribute('x', x);
+        nomeTexto.setAttribute('y', y + 3);
+        nomeTexto.setAttribute('text-anchor', 'middle');
+        nomeTexto.setAttribute('fill', '#ffffff');
+        nomeTexto.setAttribute('font-size', '8');
+        nomeTexto.setAttribute('font-weight', 'bold');
+        nomeTexto.textContent = agente.nome.substring(0, 12);
+        agentesGroup.appendChild(nomeTexto);
+        
+        // Especialização
+        if (agente.especializacao) {
+            const especTexto = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            especTexto.setAttribute('x', x);
+            especTexto.setAttribute('y', y + 40);
+            especTexto.setAttribute('text-anchor', 'middle');
+            especTexto.setAttribute('fill', area.cor);
+            especTexto.setAttribute('font-size', '8');
+            especTexto.textContent = `${agente.especializacao}%`;
+            agentesGroup.appendChild(especTexto);
+        }
+    });
+}
+
+function criarConexoesReais(centerX, centerY, areaData) {
+    const conexoesGroup = document.getElementById('conexoes-group');
+    const agentes = areaData.agentes;
+    
+    if (agentes.length === 0) return;
+    
+    const raio = 200;
+    const anguloIncremento = (2 * Math.PI) / agentes.length;
+    
+    agentes.forEach((agente, index) => {
+        const angulo = index * anguloIncremento;
+        const x = centerX + raio * Math.cos(angulo);
+        const y = centerY + raio * Math.sin(angulo);
+        
+        // Linha do centro para o agente
+        const linha = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        linha.setAttribute('x1', centerX);
+        linha.setAttribute('y1', centerY);
+        linha.setAttribute('x2', x);
+        linha.setAttribute('y2', y);
+        linha.setAttribute('stroke', areaData.area.cor);
+        linha.setAttribute('stroke-width', '2');
+        linha.setAttribute('stroke-opacity', '0.6');
+        linha.setAttribute('class', 'conexao-linha');
+        conexoesGroup.appendChild(linha);
+    });
+}
+
+function atualizarPainelInformacoesReais(areaData) {
+    const { area, assistente, agentes, performance } = areaData;
+    
+    // Painel de informações da área
+    document.getElementById('info-area').innerHTML = `
+        <h6><strong>${area.nome}</strong></h6>
+        <p class="text-muted small mb-2">${area.descricao}</p>
+        <div class="row text-center">
+            <div class="col-6">
+                <strong class="text-primary">${area.total_agentes}</strong>
+                <small class="d-block text-muted">Total Agentes</small>
+            </div>
+            <div class="col-6">
+                <strong class="text-success">${area.agentes_ativos}</strong>
+                <small class="d-block text-muted">Ativos</small>
+            </div>
+        </div>
+    `;
+    
+    // Painel do assistente
+    document.getElementById('info-assistente').innerHTML = `
+        <h6><strong>${assistente.assistente.nome}</strong></h6>
+        <p class="text-muted small mb-2">${assistente.assistente.descricao}</p>
+        <div class="mb-2">
+            <small class="text-muted">Modelo:</small>
+            <span class="badge bg-info ms-1">${assistente.assistente.modelo}</span>
+        </div>
+        <div>
+            <small class="text-muted">Especialização:</small>
+            <strong class="text-warning ms-1">${assistente.assistente.especializacao}%</strong>
+        </div>
+    `;
+    
+    // Painel dos agentes
+    document.getElementById('info-agentes').innerHTML = `
+        <div class="mb-2">
+            <strong>${agentes.length} agentes especializados</strong>
+        </div>
+        ${agentes.slice(0, 5).map(agente => `
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                <small>${agente.nome}</small>
+                <span class="badge bg-secondary">${agente.especializacao || 75}%</span>
+            </div>
+        `).join('')}
+        ${agentes.length > 5 ? `<small class="text-muted">e mais ${agentes.length - 5} agentes...</small>` : ''}
+    `;
+}
+
+function mostrarDetalhesAssistenteReal(areaData) {
+    const assistente = areaData.assistente.assistente;
+    alert(`Assistente: ${assistente.nome}\n\nEspecialização: ${assistente.especializacao}%\nModelo: ${assistente.modelo}\n\nDescrição: ${assistente.descricao}`);
+}
+
+function mostrarDetalhesAgenteReal(agente) {
+    const capacidades = agente.capacidades.length > 0 ? agente.capacidades.join(', ') : 'Não especificadas';
+    alert(`Agente: ${agente.nome}\n\nClasse: ${agente.classe}\nNível: ${agente.nivel}\nEspecialização: ${agente.especializacao}%\n\nCapacidades: ${capacidades}\n\nDescrição: ${agente.descricao}`);
+}
+
+function mostrarErro(mensagem) {
+    const container = document.getElementById('mapa-container');
+    container.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100 text-danger">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h4>Erro</h4>
+                <p>${mensagem}</p>
+                <button class="btn btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Tentar Novamente
+                </button>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

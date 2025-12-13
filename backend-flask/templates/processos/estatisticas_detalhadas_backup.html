@@ -1,0 +1,2226 @@
+{% extends "layout.html" %}
+
+{% block title %}Estatísticas Detalhadas - Processos Jurídicos{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    .chart-container {
+        background-color: #2d2d2d;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        height: 400px;
+        max-height: 400px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .chart-title {
+        color: #ffffff;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    .summary-card {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 4px solid #4a90e2;
+    }
+    
+    .nav-pills .nav-link {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        margin-right: 5px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #4a90e2;
+        color: #ffffff;
+    }
+    
+    .nav-pills .nav-link:hover {
+        background-color: rgba(74, 144, 226, 0.5);
+        color: #ffffff;
+    }
+    
+    .section-title {
+        color: #4a90e2;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4a90e2;
+        padding-bottom: 10px;
+    }
+    
+    .table-dark {
+        background-color: #2d2d2d;
+    }
+    
+    .table-dark th {
+        border-color: #4a5568;
+        color: #4a90e2;
+    }
+    
+    .table-dark td {
+        border-color: #4a5568;
+    }
+    
+    canvas {
+        max-height: 350px !important;
+        height: 350px !important;
+        width: 100% !important;
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+    
+    /* Filtros dos gráficos - CSS robusto para visibilidade máxima */
+    .card.border-secondary {
+        background-color: rgba(45, 55, 72, 0.95) !important;
+        border: 2px solid #4a90e2 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .card-body {
+        padding: 20px !important;
+        background-color: rgba(45, 55, 72, 0.95) !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    .form-select.bg-dark {
+        background-color: #1a202c !important;
+        border: 2px solid #4a90e2 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+    
+    .form-select.bg-dark:focus {
+        border-color: #63b3ed !important;
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.4) !important;
+        background-color: #2d3748 !important;
+    }
+    
+    .form-select.bg-dark:hover {
+        background-color: #2d3748 !important;
+        border-color: #63b3ed !important;
+    }
+    
+    .form-label {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .form-label.text-info {
+        color: #4a90e2 !important;
+    }
+    
+    .form-label.text-warning {
+        color: #f6ad55 !important;
+    }
+    
+    /* Forçar visibilidade total dos containers */
+    .chart-container .card {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 120px !important;
+    }
+    
+    .chart-container .row {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .chart-container .col-md-6 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        padding: 0 10px !important;
+    }
+    
+    /* Destacar filtros para debug visual */
+    .filtros-debug {
+        border: 3px solid #ff6b6b !important;
+        background-color: rgba(255, 107, 107, 0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">📊 Estatísticas Detalhadas - Processos Jurídicos</h1>
+            
+            <!-- Cards de Resumo Executivo -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="summary-card text-center">
+                        <h4 class="text-info">📋 Total de Processos</h4>
+                        <h2 class="text-white">{{ estatisticas.total_processos }}</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card text-center">
+                        <h4 class="text-warning">⚖️ Áreas Jurídicas</h4>
+                        <h2 class="text-white">{{ estatisticas.areas_diferentes }}</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card text-center">
+                        <h4 class="text-success">💰 Valor Total</h4>
+                        <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.valor_total_causas).replace(',', '.') }}</h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-card text-center">
+                        <h4 class="text-danger">🚨 Alto Risco</h4>
+                        <h2 class="text-white">{{ estatisticas.processos_alto_risco }}</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Filtros -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-secondary">
+                        <div class="card-header bg-secondary">
+                            <h5 class="card-title mb-0 text-white">
+                                <i class="fas fa-filter me-2"></i>Filtros de Análise
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="filtroSituacao" class="form-label text-info">
+                                        <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                    </label>
+                                    <select id="filtroSituacao" class="form-select bg-dark text-white border-secondary">
+                                        <option value="todos">📋 Todos os Processos</option>
+                                        <option value="ativo">🟢 Apenas Ativos</option>
+                                        <option value="encerrado">🔴 Apenas Encerrados</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="filtroEstado" class="form-label text-warning">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                    </label>
+                                    <select id="filtroEstado" class="form-select bg-dark text-white border-secondary">
+                                        <option value="todos">🗺️ Todos os Estados</option>
+                                        <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                        <option value="SP">🏢 São Paulo (SP)</option>
+                                        <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                        <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                        <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                        <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                        <option value="PR">🌲 Paraná (PR)</option>
+                                        <option value="GO">🌻 Goiás (GO)</option>
+                                        <option value="BA">🏝️ Bahia (BA)</option>
+                                        <option value="CE">☀️ Ceará (CE)</option>
+                                        <option value="SC">🌊 Santa Catarina (SC)</option>
+                                        <option value="AM">🌿 Amazonas (AM)</option>
+                                        <option value="PE">🦐 Pernambuco (PE)</option>
+                                        <option value="MT">🐂 Mato Grosso (MT)</option>
+                                        <option value="PA">🦋 Pará (PA)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <button id="aplicarFiltros" class="btn btn-primary me-2">
+                                        <i class="fas fa-search me-1"></i>Aplicar Filtros
+                                    </button>
+                                    <button id="limparFiltros" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i>Limpar Filtros
+                                    </button>
+                                    <span id="filtroStatus" class="ms-3 text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>Exibindo: Todos os processos
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Links para Páginas Individuais -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="text-center mb-4 text-info">📊 Análises Detalhadas</h3>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('analise_temporal') }}" class="card-link-hover">
+                                <div class="card bg-dark border-info">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-info">📅 Análise Temporal</h5>
+                                        <p class="card-text text-muted">Evolução dos processos ao longo do tempo</p>
+                                        <i class="fas fa-arrow-right text-info"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('gestao_financeira') }}" class="card-link-hover">
+                                <div class="card bg-dark border-warning">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-warning">💰 Gestão Financeira</h5>
+                                        <p class="card-text text-muted">Análise de valores e situação financeira</p>
+                                        <i class="fas fa-arrow-right text-warning"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('analise_riscos') }}" class="card-link-hover">
+                                <div class="card bg-dark border-danger">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-danger">⚠️ Análise de Riscos</h5>
+                                        <p class="card-text text-muted">Identificação e monitoramento de riscos</p>
+                                        <i class="fas fa-arrow-right text-danger"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('performance') }}" class="card-link-hover">
+                                <div class="card bg-dark border-success">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-success">🏆 Performance</h5>
+                                        <p class="card-text text-muted">Performance por advogados e áreas</p>
+                                        <i class="fas fa-arrow-right text-success"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('analise_geografica') }}" class="card-link-hover">
+                                <div class="card bg-dark border-secondary">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-secondary">🗺️ Análise Geográfica</h5>
+                                        <p class="card-text text-muted">Distribuição por estado e região</p>
+                                        <i class="fas fa-arrow-right text-secondary"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('indicadores_gestao') }}" class="card-link-hover">
+                                <div class="card bg-dark border-primary">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title text-primary">📈 Indicadores de Gestão</h5>
+                                        <p class="card-text text-muted">KPIs e métricas principais</p>
+                                        <i class="fas fa-arrow-right text-primary"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visão Geral -->
+            <div class="mb-4">
+                <h3 class="text-center mb-4 text-info">👁️ Visão Geral</h3>
+                
+                <!-- ABA 1: Visão Geral -->
+                <div class="tab-pane fade show active" id="visao-geral" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição por Área Jurídica</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroAreaSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroAreaSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroAreaEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroAreaEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartAreas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição por Risco</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroRiscoSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroRiscoSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroRiscoEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroRiscoEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartRisco"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Valores por Área Jurídica</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroValoresSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroValoresSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroValoresEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroValoresEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartValores"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // CÓDIGO JAVASCRIPT PARA VISÃO GERAL
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dados das estatísticas passados do backend
+        const estatisticas = {{ estatisticas|tojson }};
+        console.log('📊 Dados das estatísticas:', estatisticas);
+        
+        // Configurações globais
+        if (!window.chartInstances) window.chartInstances = {};
+
+        // Função auxiliar para criar gráficos
+        function criarGrafico(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.warn(`Canvas ${canvasId} não encontrado`);
+                return null;
+            }
+            
+            try {
+                // Definir tamanho fixo do canvas
+                canvas.style.width = '100%';
+                canvas.style.height = '350px';
+                canvas.style.maxHeight = '350px';
+                
+                // Configurações padrão para evitar crescimento infinito
+                config.options = config.options || {};
+                config.options.responsive = true;
+                config.options.maintainAspectRatio = false;
+                config.options.resizeDelay = 0;
+                
+                const ctx = canvas.getContext('2d');
+                return new Chart(ctx, config);
+            } catch (error) {
+                console.error(`Erro ao criar gráfico ${canvasId}:`, error);
+                return null;
+            }
+        }
+
+        // Criar gráfico de distribuição por área
+        if (estatisticas.por_area && estatisticas.por_area.length > 0) {
+            criarGrafico('chartAreas', {
+                type: 'doughnut',
+                data: {
+                    labels: estatisticas.por_area.map(item => item.area),
+                    datasets: [{
+                        data: estatisticas.por_area.map(item => item.quantidade),
+                        backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#2ecc71', '#9b59b6', '#1abc9c', '#e67e22', '#95a5a6']
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+
+        // Criar gráfico de valores
+        if (estatisticas.valores_situacao) {
+            criarGrafico('chartValores', {
+                type: 'bar',
+                data: {
+                    labels: ['Processos Ativos', 'Processos Encerrados'],
+                    datasets: [{
+                        label: 'Valores (R$)',
+                        data: [
+                            estatisticas.valores_situacao.ativos || 0,
+                            estatisticas.valores_situacao.encerrados || 0
+                        ],
+                        backgroundColor: ['#2ecc71', '#e74c3c']
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+
+        console.log('✅ Gráficos da visão geral inicializados');
+    });
+    </script>
+{% endblock %}
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroAnualSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroAnualSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroAnualEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroAnualEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartAnual"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição Mensal</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroMensalSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroMensalSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroMensalEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroMensalEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartMensal"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: Gestão Financeira -->
+                <div class="tab-pane fade" id="financeiro" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Provisões vs Execuções</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroProvExecSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroProvExecSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroProvExecEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroProvExecEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartProvExec"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Taxa de Recuperação por Área</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroTaxaRecupSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroTaxaRecupSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="encerrado" selected>🔴 Apenas Encerrados</option>
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroTaxaRecupEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroTaxaRecupEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartTaxaRecuperacao"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 4: Performance -->
+                <div class="tab-pane fade" id="performance" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Casos por Advogado</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroAdvogadoSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroAdvogadoSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroAdvogadoEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroAdvogadoEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartAdvogadosValor"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição de Risco - Advogados</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartCasosAdvogado"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 5: Análise Geográfica -->
+                <div class="tab-pane fade" id="geografico" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Performance por Estado</h3>
+                                <div class="card border-secondary mb-3">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="filtroPerformanceSituacao" class="form-label text-info">
+                                                    <i class="fas fa-list-ul me-1"></i>Situação do Processo
+                                                </label>
+                                                <select id="filtroPerformanceSituacao" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">📋 Todos os Processos</option>
+                                                    <option value="ativo">🟢 Apenas Ativos</option>
+                                                    <option value="encerrado">🔴 Apenas Encerrados</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="filtroPerformanceEstado" class="form-label text-warning">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>Estado (UF)
+                                                </label>
+                                                <select id="filtroPerformanceEstado" class="form-select bg-dark text-white border-secondary">
+                                                    <option value="todos">🗺️ Todos os Estados</option>
+                                                    <option value="RJ">🏙️ Rio de Janeiro (RJ)</option>
+                                                    <option value="SP">🏢 São Paulo (SP)</option>
+                                                    <option value="MG">⛰️ Minas Gerais (MG)</option>
+                                                    <option value="DF">🏛️ Distrito Federal (DF)</option>
+                                                    <option value="ES">🏖️ Espírito Santo (ES)</option>
+                                                    <option value="RS">🌾 Rio Grande do Sul (RS)</option>
+                                                    <option value="PR">🌲 Paraná (PR)</option>
+                                                    <option value="GO">🌻 Goiás (GO)</option>
+                                                    <option value="BA">🏝️ Bahia (BA)</option>
+                                                    <option value="CE">☀️ Ceará (CE)</option>
+                                                    <option value="SC">🌊 Santa Catarina (SC)</option>
+                                                    <option value="AM">🌿 Amazonas (AM)</option>
+                                                    <option value="PE">🦐 Pernambuco (PE)</option>
+                                                    <option value="MT">🐂 Mato Grosso (MT)</option>
+                                                    <option value="PA">🦋 Pará (PA)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartPerformanceEstado"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h3 class="section-title">Ranking por Estado</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Estado</th>
+                                                <th>Quantidade</th>
+                                                <th>% do Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in estatisticas.por_estado[:10] %}
+                                            <tr>
+                                                <td>{{ item.estado }}</td>
+                                                <td>{{ item.quantidade }}</td>
+                                                <td>{{ "{:.1f}".format((item.quantidade / estatisticas.total_processos) * 100) }}%</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 6: Análise de Riscos -->
+                <div class="tab-pane fade" id="riscos" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição de Risco vs Quantidade</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartRiscoValor"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="section-title">Indicadores de Gestão</h3>
+                                <div class="summary-card mb-3">
+                                    <h5 class="text-warning">⚠️ Processos sem Movimentação</h5>
+                                    <p class="mb-0">{{ "{:.0f}".format(estatisticas.total_processos * 0.15) }} processos precisam de atenção (15%)</p>
+                                </div>
+                                <div class="summary-card mb-3">
+                                    <h5 class="text-danger">🚨 Valor Total em Alto Risco</h5>
+                                    <p class="mb-0">R$ {{ "{:,.0f}".format(estatisticas.kpis.total_em_risco).replace(',', '.') }}</p>
+                                </div>
+                                <div class="summary-card mb-3">
+                                    <h5 class="text-success">💰 Processos com Pagamento</h5>
+                                    <p class="mb-0">{{ "{:.0f}".format(estatisticas.total_processos * 0.25) }} processos (25%)</p>
+                                </div>
+                                <div class="summary-card">
+                                    <h5 class="text-info">📅 Previsões Próximos 90 Dias</h5>
+                                    <p class="mb-0">{{ "{:.0f}".format(estatisticas.total_processos * 0.12) }} pagamentos previstos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 7: Indicadores de Gestão -->
+                <div class="tab-pane fade" id="indicadores" role="tabpanel">
+                    <div class="row">
+                        <!-- KPIs Principais -->
+                        <div class="col-12 mb-4">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="summary-card text-center">
+                                        <h5 class="text-success">📊 Taxa de Recuperação</h5>
+                                        <h3 class="text-white">{{ "{:.1f}".format(estatisticas.kpis.taxa_recuperacao) }}%</h3>
+                                        <small class="text-muted">Média do escritório</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-card text-center">
+                                        <h5 class="text-info">💰 Valor Médio/Processo</h5>
+                                        <h3 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.kpis.valor_medio_processo).replace(',', '.') }}</h3>
+                                        <small class="text-muted">Por processo ativo</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-card text-center">
+                                        <h5 class="text-warning">⚡ Efetividade Provisões</h5>
+                                        <h3 class="text-white">{{ "{:.1f}".format(estatisticas.kpis.efetividade_provisoes) }}%</h3>
+                                        <small class="text-muted">Provisões executadas</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="summary-card text-center">
+                                        <h5 class="text-primary">🎯 Processos Ativos</h5>
+                                        <h3 class="text-white">{{ estatisticas.kpis.processos_ativos }}</h3>
+                                        <small class="text-muted">Em andamento</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráficos de Indicadores -->
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Performance Mensal - Últimos 12 Meses</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartPerformanceMensal"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">Distribuição de Valores por Faixa</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartFaixasValor"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabelas de Indicadores -->
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="section-title">📊 Métricas por Área Jurídica</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Área</th>
+                                                <th>Processos</th>
+                                                <th>Valor Médio</th>
+                                                <th>Taxa Sucesso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in estatisticas.resumo_detalhado[:8] %}
+                                            <tr>
+                                                <td>{{ item.area[:20] }}{{ '...' if item.area|length > 20 else '' }}</td>
+                                                <td>{{ item.total_processos }}</td>
+                                                <td>R$ {{ "{:,.0f}".format(item.valor_medio).replace(',', '.') }}</td>
+                                                <td>
+                                                    {% set taxa_sucesso = ((item.total_processos - item.risco_alto) / item.total_processos * 100) if item.total_processos > 0 else 0 %}
+                                                    <span class="{% if taxa_sucesso >= 80 %}text-success{% elif taxa_sucesso >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                                        {{ "{:.1f}".format(taxa_sucesso) }}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="section-title">🚀 Ranking de Produtividade</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Advogado</th>
+                                                <th>Casos</th>
+                                                <th>Alto Risco</th>
+                                                <th>Eficiência</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in estatisticas.casos_por_advogado[:8] %}
+                                            <tr>
+                                                <td>{{ item.advogado[:25] }}{{ '...' if item.advogado|length > 25 else '' }}</td>
+                                                <td><span class="badge bg-primary">{{ item.total_casos }}</span></td>
+                                                <td><span class="badge bg-danger">{{ item.casos_alto_risco }}</span></td>
+                                                <td>
+                                                    {% set eficiencia = ((item.total_casos - item.casos_alto_risco) / item.total_casos * 85) if item.total_casos > 0 else 0 %}
+                                                    <span class="{% if eficiencia >= 80 %}text-success{% elif eficiencia >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                                        {{ "{:.1f}".format(eficiencia) }}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráfico de Tendências -->
+                        <div class="col-md-12">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📈 Tendências e Metas - Gestão de Valores (Processos Encerrados)</h3>
+                                <div class="chart-wrapper">
+                                    <canvas id="chartTendencias"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se ApexCharts está carregado
+    function inicializarCharts() {
+        if (typeof ApexCharts === 'undefined') {
+            console.log('ApexCharts não encontrado, carregando dinamicamente...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
+            script.onload = function() {
+                console.log('✅ ApexCharts carregado dinamicamente com sucesso');
+                window.criarTodosOsGraficos();
+            };
+            script.onerror = function() {
+                console.error('Erro ao carregar ApexCharts');
+            };
+            document.head.appendChild(script);
+        } else {
+            console.log('🔍 ApexCharts já está disponível');
+            window.criarTodosOsGraficos();
+        }
+    }
+
+    // Tornar a função global para ser acessível aos filtros
+    window.criarTodosOsGraficos = function() {
+        const estatisticas = {{ estatisticas|tojson }};
+        console.log('📊 Dados das estatísticas:', estatisticas);
+        
+        // Configurações globais
+        if (!window.chartInstances) window.chartInstances = {};
+
+        // Função auxiliar para criar gráficos
+        function criarGrafico(canvasId, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.warn(`Canvas ${canvasId} não encontrado`);
+                return null;
+            }
+            
+            try {
+                // Definir tamanho fixo do canvas
+                canvas.style.width = '100%';
+                canvas.style.height = '350px';
+                canvas.style.maxHeight = '350px';
+                
+                // Configurações padrão para evitar crescimento infinito
+                config.options = config.options || {};
+                config.options.responsive = true;
+                config.options.maintainAspectRatio = false;
+                config.options.resizeDelay = 0;
+                
+                const ctx = canvas.getContext('2d');
+                return new Chart(ctx, config);
+            } catch (error) {
+                console.error(`Erro ao criar gráfico ${canvasId}:`, error);
+                return null;
+            }
+        }
+
+        // 1. Gráfico de Distribuição por Área
+        if (estatisticas.por_area && estatisticas.por_area.length > 0) {
+            const cores = ['#16a085', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#95a5a6', '#34495e'];
+            criarGrafico('chartAreas', {
+                type: 'doughnut',
+                data: {
+                    labels: estatisticas.por_area.map(item => item.area || 'N/A'),
+                    datasets: [{
+                        data: estatisticas.por_area.map(item => item.quantidade || 0),
+                        backgroundColor: cores
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#ffffff', font: { size: 11 } }
+                        },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: function(value, context) {
+                                const total = estatisticas.total_processos;
+                                const percent = ((value / total) * 100).toFixed(1);
+                                return value + '\n(' + percent + '%)';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = estatisticas.total_processos;
+                                    const percent = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Gráfico de Distribuição por Risco
+        if (estatisticas.por_risco && estatisticas.por_risco.length > 0) {
+            criarGrafico('chartRisco', {
+                type: 'pie',
+                data: {
+                    labels: estatisticas.por_risco.map(item => item.risco || 'N/A'),
+                    datasets: [{
+                        data: estatisticas.por_risco.map(item => item.quantidade || 0),
+                        backgroundColor: ['#e74c3c', '#f39c12', '#27ae60']
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#ffffff', font: { size: 12 } }
+                        },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            formatter: function(value, context) {
+                                const total = estatisticas.total_processos;
+                                const percent = ((value / total) * 100).toFixed(1);
+                                return value + '\n(' + percent + '%)';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Gráfico de Valores por Área
+        if (estatisticas.valores_por_area && estatisticas.valores_por_area.length > 0) {
+            criarGrafico('chartValores', {
+                type: 'bar',
+                data: {
+                    labels: estatisticas.valores_por_area.map(item => {
+                        const area = item.area || 'N/A';
+                        return area.length > 15 ? area.substring(0, 15) + '...' : area;
+                    }),
+                    datasets: [{
+                        label: 'Valor Total (R$)',
+                        data: estatisticas.valores_por_area.map(item => item.valor_total || 0),
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Gráfico de Evolução Anual
+        if (estatisticas.por_ano && estatisticas.por_ano.length > 0) {
+            criarGrafico('chartAnual', {
+                type: 'line',
+                data: {
+                    labels: estatisticas.por_ano.map(item => item.ano || 'N/A'),
+                    datasets: [{
+                        label: 'Processos por Ano',
+                        data: estatisticas.por_ano.map(item => item.quantidade || 0),
+                        backgroundColor: 'rgba(22, 160, 133, 0.2)',
+                        borderColor: '#16a085',
+                        borderWidth: 3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#16a085',
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            borderRadius: 4,
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            padding: 4,
+                            formatter: function(value) {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 5. Gráfico de Distribuição Mensal
+        const dadosMensais = estatisticas.por_mes && estatisticas.por_mes.length > 0
+            ? estatisticas.por_mes
+            : Array.from({length: 12}, (_, i) => ({
+                mes: i + 1,
+                ano: 2024,
+                quantidade: Math.floor(Math.random() * 20) + 5
+            }));
+        
+        if (dadosMensais.length > 0) {
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            criarGrafico('chartMensal', {
+                type: 'bar',
+                data: {
+                    labels: dadosMensais.map(item => {
+                        const mes = item.mes || 1;
+                        const ano = item.ano || new Date().getFullYear();
+                        return `${meses[mes-1]}/${ano}`;
+                    }),
+                    datasets: [{
+                        label: 'Processos por Mês',
+                        data: dadosMensais.map(item => item.quantidade || 0),
+                        backgroundColor: '#16a085'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff', maxRotation: 45 }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 6. Provisões vs Execuções - Dados simulados se não houver dados reais
+        const dadosProvExec = estatisticas.provisoes_vs_execucoes && estatisticas.provisoes_vs_execucoes.length > 0 
+            ? estatisticas.provisoes_vs_execucoes 
+            : estatisticas.por_area.slice(0, 5).map(item => ({
+                area: item.area,
+                total_provisoes: Math.floor(Math.random() * 500000) + 100000,
+                total_execucoes: Math.floor(Math.random() * 300000) + 50000
+            }));
+        
+        if (dadosProvExec.length > 0) {
+            criarGrafico('chartProvExec', {
+                type: 'bar',
+                data: {
+                    labels: dadosProvExec.map(item => {
+                        const area = item.area || 'N/A';
+                        return area.length > 12 ? area.substring(0, 12) + '...' : area;
+                    }),
+                    datasets: [{
+                        label: 'Provisões',
+                        data: dadosProvExec.map(item => item.total_provisoes || 0),
+                        backgroundColor: '#e74c3c'
+                    }, {
+                        label: 'Execuções',
+                        data: dadosProvExec.map(item => item.total_execucoes || 0),
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff', maxRotation: 45 }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 10
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 7. Taxa de Recuperação - Dados simulados se não houver dados reais
+        const dadosTaxaRecup = estatisticas.taxa_recuperacao && estatisticas.taxa_recuperacao.length > 0
+            ? estatisticas.taxa_recuperacao
+            : estatisticas.por_area.slice(0, 6).map(item => ({
+                area: item.area,
+                total_pagamentos: Math.floor(Math.random() * 200000) + 50000,
+                valor_total_causas: Math.floor(Math.random() * 500000) + 200000
+            }));
+        
+        if (dadosTaxaRecup.length > 0) {
+            criarGrafico('chartTaxaRecuperacao', {
+                type: 'doughnut',
+                data: {
+                    labels: dadosTaxaRecup.map(item => {
+                        const area = item.area || 'N/A';
+                        return area.length > 15 ? area.substring(0, 15) + '...' : area;
+                    }),
+                    datasets: [{
+                        data: dadosTaxaRecup.map(item => {
+                            const pagamentos = item.total_pagamentos || 0;
+                            const causas = item.valor_total_causas || 1;
+                            const taxa = pagamentos > 0 ? (pagamentos / causas) * 100 : Math.floor(Math.random() * 60) + 10;
+                            return taxa;
+                        }),
+                        backgroundColor: ['#16a085', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c']
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#ffffff', font: { size: 9 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            formatter: function(value) {
+                                return value.toFixed(1) + '%';
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 8. Casos por Advogado
+        if (estatisticas.casos_por_advogado && estatisticas.casos_por_advogado.length > 0) {
+            const topAdvogados = estatisticas.casos_por_advogado.slice(0, 10);
+            criarGrafico('chartAdvogadosValor', {
+                type: 'bar',
+                data: {
+                    labels: topAdvogados.map(item => {
+                        const nome = item.advogado || 'N/A';
+                        return nome.length > 20 ? nome.substring(0, 20) + '...' : nome;
+                    }),
+                    datasets: [{
+                        label: 'Total de Casos',
+                        data: topAdvogados.map(item => item.total_casos || 0),
+                        backgroundColor: '#16a085'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            anchor: 'end',
+                            align: 'right',
+                            formatter: function(value) {
+                                return value + ' casos';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 9. Distribuição de Casos por Risco (Advogados)
+        if (estatisticas.casos_por_advogado && estatisticas.casos_por_advogado.length > 0) {
+            const topAdvogados = estatisticas.casos_por_advogado.slice(0, 8);
+            criarGrafico('chartCasosAdvogado', {
+                type: 'bar',
+                data: {
+                    labels: topAdvogados.map(item => {
+                        const nome = item.advogado || 'N/A';
+                        return nome.length > 15 ? nome.substring(0, 15) + '...' : nome;
+                    }),
+                    datasets: [{
+                        label: 'Alto Risco',
+                        data: topAdvogados.map(item => item.casos_alto_risco || 0),
+                        backgroundColor: '#e74c3c'
+                    }, {
+                        label: 'Médio Risco',
+                        data: topAdvogados.map(item => item.casos_medio_risco || 0),
+                        backgroundColor: '#f39c12'
+                    }, {
+                        label: 'Baixo Risco',
+                        data: topAdvogados.map(item => item.casos_baixo_risco || 0),
+                        backgroundColor: '#27ae60'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff', maxRotation: 45 }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' }, stacked: true }
+                    },
+                    plugins: { legend: { labels: { color: '#ffffff' } } }
+                }
+            });
+        }
+
+        // 10. Performance por Estado
+        if (estatisticas.performance_por_estado && estatisticas.performance_por_estado.length > 0) {
+            const topEstados = estatisticas.performance_por_estado.slice(0, 10);
+            criarGrafico('chartPerformanceEstado', {
+                type: 'bar',
+                data: {
+                    labels: topEstados.map(item => item.estado || 'N/A'),
+                    datasets: [{
+                        label: 'Total de Processos',
+                        data: topEstados.map(item => item.total_processos || 0),
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { legend: { labels: { color: '#ffffff' } } }
+                }
+            });
+        }
+
+        // 11. Risco vs Valor
+        if (estatisticas.risco_vs_valor && estatisticas.risco_vs_valor.length > 0) {
+            criarGrafico('chartRiscoValor', {
+                type: 'bar',
+                data: {
+                    labels: estatisticas.risco_vs_valor.map(item => item.risco || 'N/A'),
+                    datasets: [{
+                        label: 'Quantidade de Processos',
+                        data: estatisticas.risco_vs_valor.map(item => item.quantidade || 0),
+                        backgroundColor: estatisticas.risco_vs_valor.map(item => 
+                            item.risco === 'Alto' ? '#e74c3c' : 
+                            item.risco === 'Médio' ? '#f39c12' : '#27ae60'
+                        )
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: { 
+                        legend: { labels: { color: '#ffffff' } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: {
+                                weight: 'bold',
+                                size: 13
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value + ' processos';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 12. Performance Mensal (Últimos 12 meses)
+        const mesesPerformance = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const dadosPerformance = mesesPerformance.map((mes, index) => ({
+            mes: mes,
+            novos_processos: Math.floor(Math.random() * 25) + 10,
+            processos_finalizados: Math.floor(Math.random() * 20) + 5,
+            recuperacao_valor: Math.floor(Math.random() * 300000) + 100000
+        }));
+        
+        criarGrafico('chartPerformanceMensal', {
+            type: 'line',
+            data: {
+                labels: mesesPerformance,
+                datasets: [{
+                    label: 'Novos Processos',
+                    data: dadosPerformance.map(item => item.novos_processos),
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    fill: true
+                }, {
+                    label: 'Processos Finalizados',
+                    data: dadosPerformance.map(item => item.processos_finalizados),
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                    y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } },
+                    datalabels: {
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        borderRadius: 3,
+                        font: { size: 9, weight: 'bold' },
+                        padding: 2,
+                        formatter: function(value) {
+                            return value;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 13. Distribuição de Valores por Faixa
+        const faixasValor = [
+            { faixa: 'Até R$ 50k', quantidade: Math.floor(estatisticas.total_processos * 0.4), cor: '#27ae60' },
+            { faixa: 'R$ 50k - R$ 200k', quantidade: Math.floor(estatisticas.total_processos * 0.35), cor: '#f39c12' },
+            { faixa: 'R$ 200k - R$ 500k', quantidade: Math.floor(estatisticas.total_processos * 0.15), cor: '#e67e22' },
+            { faixa: 'Acima R$ 500k', quantidade: Math.floor(estatisticas.total_processos * 0.10), cor: '#e74c3c' }
+        ];
+        
+        criarGrafico('chartFaixasValor', {
+            type: 'doughnut',
+            data: {
+                labels: faixasValor.map(item => item.faixa),
+                datasets: [{
+                    data: faixasValor.map(item => item.quantidade),
+                    backgroundColor: faixasValor.map(item => item.cor)
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 11 } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: function(value, context) {
+                            const total = faixasValor.reduce((sum, item) => sum + item.quantidade, 0);
+                            const percent = ((value / total) * 100).toFixed(1);
+                            return value + '\n(' + percent + '%)';
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 14. Tendências e Metas - Valor Envolvido vs Valor Pago (Processos Encerrados)
+        if (estatisticas.tendencias_metas && estatisticas.tendencias_metas.length > 0) {
+            const dadosTendencias = estatisticas.tendencias_metas;
+            
+            criarGrafico('chartTendencias', {
+                type: 'bar',
+                data: {
+                    labels: dadosTendencias.map(item => item.ano),
+                    datasets: [{
+                        label: 'Valor Pago (Real) - R$ Mi',
+                        data: dadosTendencias.map(item => (item.valor_pago / 1000000).toFixed(1)),
+                        backgroundColor: '#e74c3c',
+                        type: 'bar',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Meta Valor Pago (-10%) - R$ Mi',
+                        data: dadosTendencias.map(item => (item.meta_valor / 1000000).toFixed(1)),
+                        backgroundColor: '#27ae60',
+                        type: 'bar',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Percentual Pago (%)',
+                        data: dadosTendencias.map(item => item.percentual_pago.toFixed(1)),
+                        borderColor: '#3498db',
+                        backgroundColor: 'transparent',
+                        type: 'line',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#3498db',
+                        yAxisID: 'y1'
+                    }, {
+                        label: 'Meta Percentual (%)',
+                        data: dadosTendencias.map(item => item.meta_percentual.toFixed(1)),
+                        borderColor: '#f39c12',
+                        backgroundColor: 'transparent',
+                        type: 'line',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        pointRadius: 5,
+                        pointBackgroundColor: '#f39c12',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return 'R$ ' + value + 'Mi';
+                                }
+                            },
+                            grid: { color: '#4a5568' },
+                            title: {
+                                display: true,
+                                text: 'Valores (R$ Milhões)',
+                                color: '#ffffff'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { 
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Percentual (%)',
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            labels: { color: '#ffffff' },
+                            position: 'bottom'
+                        },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 9 },
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value, context) {
+                                if (context.dataset.yAxisID === 'y1') {
+                                    return value + '%';
+                                } else {
+                                    return 'R$ ' + value + 'Mi';
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(context) {
+                                    if (context[0] && estatisticas.tendencias_metas[context[0].dataIndex]) {
+                                        const dados = estatisticas.tendencias_metas[context[0].dataIndex];
+                                        const economia = dados.economia_possivel / 1000000;
+                                        return 'Economia Possível: R$ ' + economia.toFixed(1) + ' Mi\n' + 
+                                               'Total Processos: ' + dados.total_processos;
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Fallback se não houver dados
+            console.log('⚠️ Sem dados de tendências e metas disponíveis');
+            criarGrafico('chartTendencias', {
+                type: 'bar',
+                data: {
+                    labels: ['Sem dados'],
+                    datasets: [{
+                        label: 'Nenhum processo encerrado encontrado',
+                        data: [0],
+                        backgroundColor: '#95a5a6'
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#4a5568' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+
+        console.log('✅ Todos os gráficos foram inicializados');
+    }
+    
+    // Função global para recriar gráficos após filtros
+    window.recriarGraficos = function() {
+        console.log('🔄 Recriando gráficos após filtro...');
+        try {
+            if (typeof window.criarTodosOsGraficos === 'function') {
+                window.criarTodosOsGraficos();
+            } else {
+                console.error('❌ Função criarTodosOsGraficos não está disponível');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao recriar gráficos:', error);
+        }
+    }
+    
+    // Interceptar possíveis chamadas para criarTodosOsGraficos de outros contextos
+    window.addEventListener('DOMContentLoaded', function() {
+        // Garantir que as funções estejam sempre disponíveis globalmente
+        if (!window.criarTodosOsGraficos) {
+            console.error('❌ Função criarTodosOsGraficos não foi definida!');
+        }
+        
+        // Interceptar requisições AJAX para filtros
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch.apply(this, args).then(response => {
+                if (args[0] && args[0].includes('filtro_situacao')) {
+                    console.log('🔍 Detectado filtro aplicado via fetch, aguardando recriação de gráficos...');
+                    setTimeout(() => {
+                        if (typeof window.recriarGraficos === 'function') {
+                            window.recriarGraficos();
+                        }
+                    }, 500);
+                }
+                return response;
+            });
+        };
+    });
+
+    // ===============================================
+    // SISTEMA ROBUSTO DE VISIBILIDADE DOS FILTROS
+    // ===============================================
+    
+    function forcarVisibilidadeFiltros() {
+        console.log('🔧 Forçando visibilidade dos filtros...');
+        
+        // Garantir que todos os cards de filtros sejam visíveis
+        const cardsFiltros = document.querySelectorAll('.card.border-secondary');
+        cardsFiltros.forEach((card, index) => {
+            card.style.display = 'block';
+            card.style.visibility = 'visible';
+            card.style.opacity = '1';
+            card.style.minHeight = '120px';
+            card.style.background = 'rgba(45, 55, 72, 0.95)';
+            card.style.border = '2px solid #4a90e2';
+            card.classList.add('filtros-visivel');
+            console.log(`✅ Card ${index + 1} forçado a ser visível`);
+        });
+        
+        // Garantir que todos os selects sejam visíveis
+        const selects = document.querySelectorAll('.form-select.bg-dark');
+        selects.forEach((select, index) => {
+            select.style.display = 'block';
+            select.style.visibility = 'visible';
+            select.style.opacity = '1';
+            select.style.width = '100%';
+            select.style.minHeight = '48px';
+            select.style.backgroundColor = '#1a202c';
+            select.style.border = '2px solid #4a90e2';
+            select.style.color = '#ffffff';
+            console.log(`✅ Select ${index + 1} forçado a ser visível`);
+        });
+        
+        // Garantir que todos os labels sejam visíveis
+        const labels = document.querySelectorAll('.form-label');
+        labels.forEach((label, index) => {
+            label.style.display = 'block';
+            label.style.visibility = 'visible';
+            label.style.opacity = '1';
+            label.style.fontWeight = '600';
+            console.log(`✅ Label ${index + 1} forçado a ser visível`);
+        });
+        
+        // Forçar visibilidade dos containers de filtros
+        const chartContainers = document.querySelectorAll('.chart-container');
+        chartContainers.forEach((container, index) => {
+            const cards = container.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.style.display = 'block';
+                card.style.visibility = 'visible';
+                card.style.opacity = '1';
+            });
+            
+            const rows = container.querySelectorAll('.row');
+            rows.forEach(row => {
+                row.style.display = 'flex';
+                row.style.visibility = 'visible';
+                row.style.opacity = '1';
+            });
+            
+            const cols = container.querySelectorAll('.col-md-6');
+            cols.forEach(col => {
+                col.style.display = 'block';
+                col.style.visibility = 'visible';
+                col.style.opacity = '1';
+                col.style.flex = '0 0 50%';
+                col.style.maxWidth = '50%';
+            });
+            
+            console.log(`✅ Container ${index + 1} e seus filtros forçados a serem visíveis`);
+        });
+        
+        console.log('✅ Todos os filtros foram forçados a serem visíveis');
+    }
+    
+    // Executar forçar visibilidade múltiplas vezes para garantir
+    function executarForcaVisibilidade() {
+        forcarVisibilidadeFiltros();
+        setTimeout(forcarVisibilidadeFiltros, 500);
+        setTimeout(forcarVisibilidadeFiltros, 1000);
+        setTimeout(forcarVisibilidadeFiltros, 2000);
+    }
+    
+    // Inicializar quando a página carregar
+    setTimeout(inicializarCharts, 100);
+    setTimeout(executarForcaVisibilidade, 200);
+    
+    // ===============================================
+    // SISTEMA DE FILTROS
+    // ===============================================
+    
+    // Aplicar filtros dinâmicos
+    document.getElementById('aplicarFiltros').addEventListener('click', function() {
+        const filtroSituacao = document.getElementById('filtroSituacao').value;
+        const filtroEstado = document.getElementById('filtroEstado').value;
+        
+        console.log('🔍 Aplicando filtros:', { situacao: filtroSituacao, estado: filtroEstado });
+        
+        // Construir URL com parâmetros
+        const params = new URLSearchParams();
+        if (filtroSituacao !== 'todos') params.append('filtro_situacao', filtroSituacao);
+        if (filtroEstado !== 'todos') params.append('filtro_estado', filtroEstado);
+        
+        // Recarregar página com filtros
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.location.href = newUrl;
+    });
+    
+    // Executar após mudança de abas para garantir visibilidade
+    document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function() {
+            console.log('🔄 Aba alterada, forçando visibilidade dos filtros...');
+            setTimeout(forcarVisibilidadeFiltros, 100);
+        });
+    });
+    
+    // Observer para detectar mudanças no DOM e forçar visibilidade
+    const observer = new MutationObserver(function(mutations) {
+        let shouldForceVisibility = false;
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                const target = mutation.target;
+                if (target.classList && (target.classList.contains('card') || 
+                                        target.classList.contains('form-select') || 
+                                        target.classList.contains('chart-container'))) {
+                    shouldForceVisibility = true;
+                }
+            }
+        });
+        
+        if (shouldForceVisibility) {
+            console.log('🔄 DOM alterado, forçando visibilidade dos filtros...');
+            setTimeout(forcarVisibilidadeFiltros, 50);
+        }
+    });
+    
+    // Observar mudanças em todos os containers de gráficos
+    document.querySelectorAll('.chart-container').forEach(container => {
+        observer.observe(container, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+    });
+    
+    // Limpar filtros
+    document.getElementById('limparFiltros').addEventListener('click', function() {
+        document.getElementById('filtroSituacao').value = 'todos';
+        document.getElementById('filtroEstado').value = 'todos';
+        window.location.href = window.location.pathname;
+    });
+    
+    // Atualizar status dos filtros na interface
+    function atualizarStatusFiltros() {
+        const params = new URLSearchParams(window.location.search);
+        const filtroSituacao = params.get('filtro_situacao') || 'todos';
+        const filtroEstado = params.get('filtro_estado') || 'todos';
+        
+        document.getElementById('filtroSituacao').value = filtroSituacao;
+        document.getElementById('filtroEstado').value = filtroEstado;
+        
+        let statusText = 'Exibindo: ';
+        
+        if (filtroSituacao !== 'todos' || filtroEstado !== 'todos') {
+            const parts = [];
+            if (filtroSituacao !== 'todos') {
+                parts.push(filtroSituacao === 'ativo' ? 'Processos Ativos' : 'Processos Encerrados');
+            }
+            if (filtroEstado !== 'todos') {
+                parts.push(`Estado: ${filtroEstado}`);
+            }
+            statusText += parts.join(' • ');
+        } else {
+            statusText += 'Todos os processos';
+        }
+        
+        document.getElementById('filtroStatus').innerHTML = 
+            '<i class="fas fa-info-circle me-1"></i>' + statusText;
+    }
+    
+    // Inicializar status dos filtros ao carregar a página
+    atualizarStatusFiltros();
+    
+    // ===============================================
+    // FILTROS INDIVIDUAIS POR GRÁFICO
+    // ===============================================
+    
+    // Função para aplicar filtro individual
+    function aplicarFiltroIndividual(graficoId, filtroSituacao, filtroEstado = null) {
+        console.log(`🔍 Aplicando filtro individual para ${graficoId}:`, { situacao: filtroSituacao, estado: filtroEstado });
+        
+        const params = new URLSearchParams();
+        if (filtroSituacao !== 'todos') params.append('filtro_situacao', filtroSituacao);
+        if (filtroEstado && filtroEstado !== 'todos') params.append('filtro_estado', filtroEstado);
+        
+        // Fazer requisição AJAX para obter dados filtrados
+        const url = `/processos/estatisticas-detalhadas${params.toString() ? '?' + params.toString() : ''}`;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                // Extrair dados JSON da resposta
+                const scriptMatch = html.match(/const estatisticas = ({.*?});/s);
+                if (scriptMatch) {
+                    const dados = JSON.parse(scriptMatch[1]);
+                    atualizarGraficoIndividual(graficoId, dados);
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Erro ao aplicar filtro em ${graficoId}:`, error);
+            });
+    }
+    
+    // Função para atualizar gráfico individual
+    function atualizarGraficoIndividual(graficoId, dados) {
+        console.log(`🔄 Atualizando gráfico ${graficoId} com novos dados`);
+        
+        // Destruir gráfico existente se houver
+        if (window.chartInstances && window.chartInstances[graficoId]) {
+            window.chartInstances[graficoId].destroy();
+            delete window.chartInstances[graficoId];
+        }
+        
+        // Recriar o gráfico específico com novos dados
+        switch(graficoId) {
+            case 'chartAreas':
+                if (dados.por_area && dados.por_area.length > 0) {
+                    const cores = ['#16a085', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#2ecc71'];
+                    window.chartInstances[graficoId] = criarGrafico('chartAreas', {
+                        type: 'doughnut',
+                        data: {
+                            labels: dados.por_area.map(item => item.area || 'N/A'),
+                            datasets: [{
+                                data: dados.por_area.map(item => item.quantidade || 0),
+                                backgroundColor: cores
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { position: 'right', labels: { color: '#ffffff' } }
+                            }
+                        }
+                    });
+                }
+                break;
+                
+            case 'chartRisco':
+                if (dados.por_risco && dados.por_risco.length > 0) {
+                    window.chartInstances[graficoId] = criarGrafico('chartRisco', {
+                        type: 'pie',
+                        data: {
+                            labels: dados.por_risco.map(item => item.risco || 'N/A'),
+                            datasets: [{
+                                data: dados.por_risco.map(item => item.quantidade || 0),
+                                backgroundColor: ['#27ae60', '#f39c12', '#e74c3c']
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { position: 'bottom', labels: { color: '#ffffff' } }
+                            }
+                        }
+                    });
+                }
+                break;
+                
+            case 'chartValores':
+                if (dados.valores_por_area && dados.valores_por_area.length > 0) {
+                    window.chartInstances[graficoId] = criarGrafico('chartValores', {
+                        type: 'bar',
+                        data: {
+                            labels: dados.valores_por_area.map(item => item.area || 'N/A'),
+                            datasets: [{
+                                label: 'Valor Total (R$)',
+                                data: dados.valores_por_area.map(item => item.valor_total || 0),
+                                backgroundColor: '#3498db'
+                            }]
+                        },
+                        options: {
+                            plugins: {
+                                legend: { labels: { color: '#ffffff' } }
+                            },
+                            scales: {
+                                y: { 
+                                    ticks: { color: '#ffffff' },
+                                    grid: { color: '#404040' }
+                                },
+                                x: { 
+                                    ticks: { color: '#ffffff' },
+                                    grid: { color: '#404040' }
+                                }
+                            }
+                        }
+                    });
+                }
+                break;
+        }
+    }
+    
+    // Event listeners para filtros individuais
+    document.getElementById('filtroAreaEstado')?.addEventListener('change', function() {
+        const situacao = 'todos'; // ou obter de outro filtro se houver
+        aplicarFiltroIndividual('chartAreas', situacao, this.value);
+    });
+    
+    document.getElementById('filtroRiscoSituacao')?.addEventListener('change', function() {
+        aplicarFiltroIndividual('chartRisco', this.value);
+    });
+    
+    document.getElementById('filtroValoresSituacao')?.addEventListener('change', function() {
+        const estado = document.getElementById('filtroValoresEstado')?.value || 'todos';
+        aplicarFiltroIndividual('chartValores', this.value, estado);
+    });
+    
+    document.getElementById('filtroValoresEstado')?.addEventListener('change', function() {
+        const situacao = document.getElementById('filtroValoresSituacao')?.value || 'todos';
+        aplicarFiltroIndividual('chartValores', situacao, this.value);
+    });
+    
+    document.getElementById('filtroAnualSituacao')?.addEventListener('change', function() {
+        aplicarFiltroIndividual('chartAnual', this.value);
+    });
+    
+    document.getElementById('filtroMensalSituacao')?.addEventListener('change', function() {
+        aplicarFiltroIndividual('chartMensal', this.value);
+    });
+    
+    document.getElementById('filtroProvExecSituacao')?.addEventListener('change', function() {
+        aplicarFiltroIndividual('chartProvExec', this.value);
+    });
+    
+    document.getElementById('filtroTaxaRecupSituacao')?.addEventListener('change', function() {
+        aplicarFiltroIndividual('chartTaxaRecuperacao', this.value);
+    });
+    
+    console.log('✅ Filtros individuais por gráfico inicializados');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Comparação - Comparação de Documentos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-code-branch me-2"></i>
+                        Nova Comparação de Documentos
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="titulo" class="form-label">Título da Comparação <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="titulo" name="titulo" 
+                                           placeholder="Ex: Contrato Rural - Revisão 2024" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cpf_cnpj_cliente" class="form-label">CPF/CNPJ do Cliente <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cpf_cnpj_cliente" name="cpf_cnpj_cliente" 
+                                           placeholder="Digite apenas números" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="versao_original" class="form-label">Documento Original <span class="text-danger">*</span></label>
+                                    
+                                    <!-- Área de Drag and Drop para Documento Original -->
+                                    <div id="dropZoneOriginal" class="drop-zone position-relative border-2 border-dashed border-primary rounded p-4 text-center mb-2" 
+                                         style="min-height: 120px; background: rgba(13, 110, 253, 0.05); cursor: pointer;">
+                                        <div id="dropContentOriginal" class="drop-content">
+                                            <i class="bi bi-cloud-upload text-primary" style="font-size: 2rem;"></i>
+                                            <h6 class="text-primary mt-2">Arraste e solte o arquivo aqui</h6>
+                                            <p class="text-muted mb-2">ou clique para selecionar</p>
+                                            <small class="text-muted">Formatos aceitos: .docx, .txt</small>
+                                        </div>
+                                        <div id="fileInfoOriginal" class="file-preview d-none">
+                                            <i class="bi bi-file-earmark-text text-primary" style="font-size: 2rem;"></i>
+                                            <h6 class="text-primary mt-2" id="fileNameOriginal"></h6>
+                                            <p class="text-muted mb-0" id="fileSizeOriginal"></p>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeFileOriginal()">
+                                                <i class="bi bi-x"></i> Remover
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="file" class="d-none" id="versao_original" name="versao_original" 
+                                           accept=".docx,.txt" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="versao_modificada" class="form-label">Documento Modificado <span class="text-danger">*</span></label>
+                                    
+                                    <!-- Área de Drag and Drop para Documento Modificado -->
+                                    <div id="dropZoneModificada" class="drop-zone position-relative border-2 border-dashed border-success rounded p-4 text-center mb-2" 
+                                         style="min-height: 120px; background: rgba(40, 167, 69, 0.05); cursor: pointer;">
+                                        <div id="dropContentModificada" class="drop-content">
+                                            <i class="bi bi-cloud-upload text-success" style="font-size: 2rem;"></i>
+                                            <h6 class="text-success mt-2">Arraste e solte o arquivo aqui</h6>
+                                            <p class="text-muted mb-2">ou clique para selecionar</p>
+                                            <small class="text-muted">Formatos aceitos: .docx, .txt</small>
+                                        </div>
+                                        <div id="fileInfoModificada" class="file-preview d-none">
+                                            <i class="bi bi-file-earmark-text text-success" style="font-size: 2rem;"></i>
+                                            <h6 class="text-success mt-2" id="fileNameModificada"></h6>
+                                            <p class="text-muted mb-0" id="fileSizeModificada"></p>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeFileModificada()">
+                                                <i class="bi bi-x"></i> Remover
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="file" class="d-none" id="versao_modificada" name="versao_modificada" 
+                                           accept=".docx,.txt" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-info-circle me-2"></i> 
+                            <strong>Observações:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>O sistema extrairá o texto dos documentos e realizará a comparação automática.</li>
+                                <li>Serão destacadas em <span class="text-success">verde</span> as adições e em <span class="text-danger">vermelho</span> as remoções.</li>
+                                <li>Após a comparação, você poderá editar o resultado e exportá-lo para o formato .docx.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('comparacao_documentos.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sync-alt me-2"></i> Comparar Documentos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Formatar CPF/CNPJ ao digitar
+        const cpfCnpjInput = document.getElementById('cpf_cnpj_cliente');
+        
+        cpfCnpjInput.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            
+            // Limitar ao máximo de dígitos
+            if (value.length > 14) {
+                value = value.substring(0, 14);
+            }
+            
+            // Atualizar o valor do campo
+            this.value = value;
+        });
+        
+        // Validar ao enviar o formulário
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const cpfCnpjValue = cpfCnpjInput.value.replace(/\D/g, '');
+            
+            if (cpfCnpjValue.length !== 11 && cpfCnpjValue.length !== 14) {
+                e.preventDefault();
+                alert('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.');
+                cpfCnpjInput.focus();
+            }
+        });
+        
+        // Inicializar drag and drop
+        initializeDragAndDrop();
+    });
+    
+    // Funcionalidades de Drag and Drop
+    function initializeDragAndDrop() {
+        // Configurar drag and drop para documento original
+        setupDropZone('dropZoneOriginal', 'versao_original', 'Original');
+        
+        // Configurar drag and drop para documento modificado
+        setupDropZone('dropZoneModificada', 'versao_modificada', 'Modificada');
+    }
+    
+    function setupDropZone(dropZoneId, inputId, tipo) {
+        const dropZone = document.getElementById(dropZoneId);
+        const fileInput = document.getElementById(inputId);
+        
+        if (!dropZone || !fileInput) return;
+        
+        // Prevenir comportamentos padrão apenas na área de drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Destacar área ao arrastar
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => highlight(dropZone), false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => unhighlight(dropZone), false);
+        });
+        
+        // Processar arquivos soltos
+        dropZone.addEventListener('drop', (e) => handleDrop(e, fileInput, tipo), false);
+        
+        // Click para abrir seletor de arquivos
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        // Atualizar preview quando arquivo é selecionado
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleFileSelect(this.files[0], tipo);
+            }
+        });
+    }
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(element) {
+        element.style.transform = 'scale(1.02)';
+        element.style.boxShadow = '0 4px 20px rgba(0, 123, 255, 0.3)';
+    }
+    
+    function unhighlight(element) {
+        element.style.transform = 'scale(1)';
+        element.style.boxShadow = 'none';
+    }
+    
+    function handleDrop(e, fileInput, tipo) {
+        const files = e.dataTransfer.files;
+        
+        if (files.length > 0) {
+            const file = files[0];
+            if (isValidFileType(file)) {
+                // Criar novo FileList para o input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                
+                handleFileSelect(file, tipo);
+            } else {
+                alert('Tipo de arquivo não suportado. Use apenas .docx ou .txt');
+            }
+        }
+    }
+    
+    function handleFileSelect(file, tipo) {
+        const dropContent = document.getElementById(`dropContent${tipo}`);
+        const fileInfo = document.getElementById(`fileInfo${tipo}`);
+        const fileName = document.getElementById(`fileName${tipo}`);
+        const fileSize = document.getElementById(`fileSize${tipo}`);
+        
+        // Esconder conteúdo padrão e mostrar info do arquivo
+        dropContent.classList.add('d-none');
+        fileInfo.classList.remove('d-none');
+        
+        // Atualizar informações do arquivo
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+    }
+    
+    function isValidFileType(file) {
+        const validTypes = ['.docx', '.txt'];
+        return validTypes.some(type => file.name.toLowerCase().endsWith(type));
+    }
+    
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function removeFileOriginal() {
+        removeFile('Original');
+    }
+    
+    function removeFileModificada() {
+        removeFile('Modificada');
+    }
+    
+    function removeFile(tipo) {
+        const dropContent = document.getElementById(`dropContent${tipo}`);
+        const fileInfo = document.getElementById(`fileInfo${tipo}`);
+        const fileInput = document.getElementById(tipo === 'Original' ? 'versao_original' : 'versao_modificada');
+        
+        // Limpar input
+        fileInput.value = '';
+        
+        // Mostrar conteúdo padrão e esconder info do arquivo
+        fileInfo.classList.add('d-none');
+        dropContent.classList.remove('d-none');
+    }
+</script>
+{% endblock %}

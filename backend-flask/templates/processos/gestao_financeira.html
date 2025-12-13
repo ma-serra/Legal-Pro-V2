@@ -1,0 +1,356 @@
+{% extends "layout.html" %}
+
+{% block title %}Gestão Financeira - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        background-color: #1a202c;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .chart-title {
+        color: #2E5266;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #2E5266;
+        padding-bottom: 10px;
+    }
+    
+    /* CSS idêntico ao template anterior... */
+    .card.border-secondary {
+        background-color: rgba(45, 55, 72, 0.95) !important;
+        border: 2px solid #2E5266 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .form-select.bg-dark {
+        background-color: #1a202c !important;
+        border: 2px solid #2E5266 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+    
+    .form-label {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .form-label.text-info { color: #2E5266 !important; }
+    .form-label.text-warning { color: #B8860B !important; }
+    
+    .summary-card {
+        background-color: #2d3748;
+        border: 1px solid #4a5568;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .hover-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">💰 Gestão Financeira</h1>
+                    <p class="text-muted">Análise de valores e situação financeira dos processos</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('estatisticas_detalhadas') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar à Visão Geral
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Acesso Principal -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-5">
+            <div class="summary-card text-center hover-card" style="border: 2px solid #2E5266; background: linear-gradient(135deg, rgba(74,144,226,0.1) 0%, rgba(74,144,226,0.05) 100%);">
+                <div class="mb-3">
+                    <i class="fas fa-user-tie" style="font-size: 3rem; color: #2E5266;"></i>
+                </div>
+                <h3 class="text-white mb-3">👥 Visões do Cliente</h3>
+                <p class="text-muted mb-4">Dashboard financeiro, fluxo de caixa processual e análise de risco para acompanhamento individual dos processos</p>
+                <a href="{{ url_for('gestao_financeira_cliente') }}" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-chart-line me-2"></i>Acessar Visões do Cliente
+                </a>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="summary-card text-center hover-card" style="border: 2px solid #B8860B; background: linear-gradient(135deg, rgba(246,173,85,0.1) 0%, rgba(246,173,85,0.05) 100%);">
+                <div class="mb-3">
+                    <i class="fas fa-building" style="font-size: 3rem; color: #B8860B;"></i>
+                </div>
+                <h3 class="text-white mb-3">🏢 Visões do Escritório</h3>
+                <p class="text-muted mb-4">Gestão de provisões globais, cash flow operacional e indicadores estratégicos para controle gerencial</p>
+                <a href="{{ url_for('gestao_financeira_escritorio') }}" class="btn btn-warning btn-lg w-100">
+                    <i class="fas fa-chart-bar me-2"></i>Acessar Visões do Escritório
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Geral -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h3 class="chart-title">📊 Resumo Financeiro Geral</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="summary-card text-center">
+                            <h4 class="text-primary">💰 Valor Total</h4>
+                            <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.valor_total_causas).replace(',', '.') }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-card text-center">
+                            <h4 class="text-success">📈 Provisões</h4>
+                            <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.total_provisoes).replace(',', '.') }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-card text-center">
+                            <h4 class="text-info">🔒 Bloqueios</h4>
+                            <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.total_bloqueios).replace(',', '.') }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-card text-center">
+                            <h4 class="text-warning">⚖️ Acordos</h4>
+                            <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.total_acordos).replace(',', '.') }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+                <div class="chart-wrapper">
+                    <div id="chartValores"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Financeiros -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="summary-card text-center">
+                <h4 class="text-success">💰 Valor Total</h4>
+                <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.valor_total_causas).replace(',', '.') }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card text-center">
+                <h4 class="text-info">📊 Valor Médio</h4>
+                <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.valor_total_causas / estatisticas.total_processos if estatisticas.total_processos > 0 else 0).replace(',', '.') }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card text-center">
+                <h4 class="text-warning">⚠️ Em Risco</h4>
+                <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.kpis.total_em_risco).replace(',', '.') }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card text-center">
+                <h4 class="text-success">🎯 Taxa Recuperação</h4>
+                <h2 class="text-white">{{ "{:.1f}".format(estatisticas.kpis.taxa_recuperacao) }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const estatisticas = {{ estatisticas|tojson }};
+    console.log('📊 Dados das estatísticas:', estatisticas);
+    
+    // Configuração tema dark profissional
+    const darkTheme = {
+        theme: { mode: 'dark' },
+        chart: { 
+            background: 'transparent',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: true,
+                    zoom: true,
+                    zoomin: true,
+                    zoomout: true,
+                    pan: true,
+                    reset: true
+                }
+            }
+        },
+        colors: ['#2ecc71', '#e74c3c', '#f39c12', '#2E5266', '#9b59b6'],
+        grid: { 
+            borderColor: '#4a5568',
+            strokeDashArray: 3
+        },
+        legend: { 
+            labels: { colors: '#ffffff' },
+            position: 'bottom'
+        },
+        tooltip: { theme: 'dark' }
+    };
+
+    // Gráfico de valores por situação - Donut profissional
+    if (estatisticas.valores_situacao) {
+        const optionsValores = {
+            ...darkTheme,
+            chart: {
+                ...darkTheme.chart,
+                type: 'donut',
+                height: 400,
+                animations: { 
+                    enabled: true, 
+                    speed: 1200,
+                    animateGradually: { enabled: true, delay: 200 }
+                }
+            },
+            series: [
+                estatisticas.valores_situacao.ativos || 0,
+                estatisticas.valores_situacao.encerrados || 0
+            ],
+            labels: ['Processos Ativos', 'Processos Encerrados'],
+            colors: ['#2ecc71', '#e74c3c'],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '65%',
+                        labels: {
+                            show: true,
+                            name: {
+                                show: true,
+                                fontSize: '22px',
+                                fontWeight: 600,
+                                color: '#ffffff'
+                            },
+                            value: {
+                                show: true,
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: '#ffffff',
+                                formatter: function (val) {
+                                    return 'R$ ' + Number(val).toLocaleString('pt-BR');
+                                }
+                            },
+                            total: {
+                                show: true,
+                                showAlways: true,
+                                label: 'Total Geral',
+                                fontSize: '18px',
+                                fontWeight: 600,
+                                color: '#f39c12',
+                                formatter: function (w) {
+                                    const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                    return 'R$ ' + total.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { 
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                },
+                formatter: function(val, opts) {
+                    return val.toFixed(1) + '%';
+                },
+                dropShadow: {
+                    enabled: true,
+                    top: 1,
+                    left: 1,
+                    blur: 1,
+                    color: '#000',
+                    opacity: 0.45
+                }
+            },
+            title: {
+                text: 'Distribuição Financeira por Situação',
+                align: 'center',
+                style: { 
+                    fontSize: '24px', 
+                    color: '#2ecc71',
+                    fontWeight: 700
+                }
+            },
+            subtitle: {
+                text: 'Valores dos processos ativos vs encerrados',
+                align: 'center',
+                style: { 
+                    fontSize: '16px', 
+                    color: '#94a3b8'
+                }
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        width: 300
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }]
+        };
+        
+        const chartValores = new ApexCharts(document.querySelector("#chartValores"), optionsValores);
+        chartValores.render();
+    }
+
+    console.log('✅ Gráficos profissionais de gestão financeira inicializados');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,365 @@
+{% extends "layout.html" %}
+
+{% block title %}Resultado Análise Completa{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Cabeçalho da Análise -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-brain me-2"></i>
+                        Análise Jurídica Completa Multi-Agente
+                    </h4>
+                    <span class="badge bg-light text-primary">ID: {{ resultado_sessao.id[:8] }}...</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Área Jurídica:</strong><br>
+                            <span class="text-primary">{{ area_juridica|title }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Agentes de Processamento:</strong><br>
+                            <span class="text-success">{{ resultado_sessao.agentes_processamento|length }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>APIs de Validação:</strong><br>
+                            <span class="text-info">{{ resultado_sessao.apis_validacao }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Tempo Total:</strong><br>
+                            <span class="text-warning">{{ "%.2f"|format(resultado_sessao.tempo_total) }}s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="consolidacao-tab" data-bs-toggle="tab" data-bs-target="#consolidacao" type="button" role="tab">
+                <i class="fas fa-file-contract me-2"></i>Consolidação Final
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="processamento-tab" data-bs-toggle="tab" data-bs-target="#processamento" type="button" role="tab">
+                <i class="fas fa-cogs me-2"></i>Processamento por Agentes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="validacao-tab" data-bs-toggle="tab" data-bs-target="#validacao" type="button" role="tab">
+                <i class="fas fa-shield-alt me-2"></i>Validação Multi-API
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="original-tab" data-bs-toggle="tab" data-bs-target="#original" type="button" role="tab">
+                <i class="fas fa-file-alt me-2"></i>Documento Original
+            </button>
+        </li>
+    </ul>
+
+    <!-- Conteúdo das Abas -->
+    <div class="tab-content" id="resultTabsContent">
+        
+        <!-- Aba Consolidação Final -->
+        <div class="tab-pane fade show active" id="consolidacao" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-contract me-2"></i>
+                        Consolidação Executiva Final
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="markdown-content">
+                        {{ resultado.consolidacao_final|e }}  <!-- Alterado: |safe removido por segurança -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Processamento por Agentes -->
+        <div class="tab-pane fade" id="processamento" role="tabpanel">
+            {% if resultado.processamento_agentes %}
+                {% for agente_nome, agente_dados in resultado.processamento_agentes.items() %}
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            {{ agente_dados.agente|title }}
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-light text-primary me-2">
+                                {{ agente_dados.tipo|title }}
+                            </span>
+                            <small class="text-light">
+                                {{ agente_dados.timestamp }}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="agent-result-content">
+                            {{ agente_dados.resultado|e }}  <!-- Alterado: |safe removido por segurança -->
+                        </div>
+                        
+                        {% if agente_dados.configuracao %}
+                        <div class="mt-3 pt-3 border-top">
+                            <small class="text-muted">
+                                <strong>Configuração:</strong>
+                                Modelo: {{ agente_dados.configuracao.modelo }} | 
+                                Temperatura: {{ agente_dados.configuracao.temperatura }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Dados de processamento por agentes não disponíveis.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Aba Validação Multi-API -->
+        <div class="tab-pane fade" id="validacao" role="tabpanel">
+            {% if resultado.validacao_apis %}
+                {% for validacao in resultado.validacao_apis %}
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            {{ validacao.api }}
+                        </h6>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-light text-info me-2">
+                                {{ validacao.especialidade }}
+                            </span>
+                            <small class="text-light">
+                                {{ validacao.timestamp }}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="validation-content">
+                            {{ validacao.validacao|e }}  <!-- Alterado: |safe removido por segurança -->
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Dados de validação multi-API não disponíveis.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Aba Documento Original -->
+        <div class="tab-pane fade" id="original" role="tabpanel">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Documento Original Analisado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="original-text-content">
+                        <pre class="whitespace-pre-wrap">{{ texto_original }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações e Botões -->
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap gap-3">
+                <!-- Botões de Ação -->
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                    <button class="btn btn-outline-success" onclick="exportarPDF()">
+                        <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                    </button>
+                    <button class="btn btn-outline-info" onclick="copiarResultado()">
+                        <i class="fas fa-copy me-2"></i>Copiar
+                    </button>
+                </div>
+
+                <!-- Navegação -->
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Nova Análise
+                    </a>
+                    <a href="{{ url_for('historico_analises') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-history me-2"></i>Histórico
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos Específicos -->
+<style>
+.markdown-content {
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    color: #0d6efd;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content h1 {
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
+}
+
+.markdown-content ul, .markdown-content ol {
+    padding-left: 1.5rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    background-color: #f8f9fa;
+    padding: 1rem;
+}
+
+.agent-result-content {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border-left: 4px solid #0d6efd;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.validation-content {
+    background-color: #f1f9ff;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border-left: 4px solid #17a2b8;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.original-text-content pre {
+    background-color: #f5f5f5;
+    padding: 1.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    font-size: 13px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.card-header h5, .card-header h6 {
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link {
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+@media (max-width: 768px) {
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-group {
+        margin-bottom: 1rem;
+    }
+}
+
+@media print {
+    .nav-tabs, .btn-group, .card-header {
+        display: none !important;
+    }
+    
+    .tab-content > .tab-pane {
+        display: block !important;
+        opacity: 1 !important;
+    }
+}
+</style>
+
+<!-- Scripts -->
+<script>
+function exportarPDF() {
+    // Simular função de exportação PDF
+    alert('Funcionalidade de exportação PDF será implementada em breve.');
+}
+
+function copiarResultado() {
+    // Copiar consolidação final para área de transferência
+    const consolidacao = document.querySelector('#consolidacao .markdown-content').innerText;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(consolidacao).then(() => {
+            // Mostrar feedback visual
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-2"></i>Copiado!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-info');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-info');
+            }, 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar:', err);
+            alert('Erro ao copiar para área de transferência.');
+        });
+    } else {
+        // Fallback para navegadores mais antigos
+        const textArea = document.createElement('textarea');
+        textArea.value = consolidacao;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        alert('Resultado copiado para área de transferência!');
+    }
+}
+
+// Garantir que as abas funcionem corretamente
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips se houver
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

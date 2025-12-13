@@ -1,0 +1,327 @@
+{% extends "layout.html" %}
+
+{% block title %}Administração - Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2><i class="fas fa-tachometer-alt me-2"></i> Dashboard de Sistema</h2>
+    <p class="lead">Visão geral do sistema e monitoramento em tempo real.</p>
+  </div>
+</div>
+
+<!-- Estatísticas rápidas -->
+<div class="row mb-4">
+  <!-- Informações do sistema -->
+  <div class="col-md-6 col-lg-3 mb-3">
+    <div class="card h-100 bg-gradient shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-desktop me-2"></i> Sistema
+        </h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          <li>
+            <strong>OS:</strong> 
+            <span id="system-os">{{ system_info.system }}</span>
+          </li>
+          <li>
+            <strong>Python:</strong> 
+            <span id="system-python">{{ system_info.python_version.split()[0] }}</span>
+          </li>
+          <li>
+            <strong>Uptime:</strong>
+            <span id="system-uptime">
+              {{ system_info.uptime.days }}d 
+              {{ system_info.uptime.hours }}h 
+              {{ system_info.uptime.minutes }}m
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uso de CPU -->
+  <div class="col-md-6 col-lg-3 mb-3">
+    <div class="card h-100 bg-gradient shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-microchip me-2"></i> CPU
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="d-flex justify-content-between">
+            <span>Utilização:</span>
+            <span id="cpu-usage-text" class="badge bg-info">{{ system_info.cpu.usage_percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="cpu-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.cpu.usage_percent }}%;" 
+                aria-valuenow="{{ system_info.cpu.usage_percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <div>
+          <strong>Núcleos:</strong> 
+          <span id="cpu-cores">{{ system_info.cpu.total_cores }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uso de Memória -->
+  <div class="col-md-6 col-lg-3 mb-3">
+    <div class="card h-100 bg-gradient shadow-sm">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-memory me-2"></i> Memória
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="d-flex justify-content-between">
+            <span>Utilização:</span>
+            <span id="memory-usage-text" class="badge bg-info">{{ system_info.memory.percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="memory-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.memory.percent }}%;" 
+                aria-valuenow="{{ system_info.memory.percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <div>
+          <strong>Total:</strong> 
+          <span id="memory-total">{{ (system_info.memory.total / (1024**3))|round(1) }} GB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Uso de Disco -->
+  <div class="col-md-6 col-lg-3 mb-3">
+    <div class="card h-100 bg-gradient shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-hdd me-2"></i> Disco
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="d-flex justify-content-between">
+            <span>Utilização:</span>
+            <span id="disk-usage-text" class="badge bg-info">{{ system_info.disk.percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="disk-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.disk.percent }}%;" 
+                aria-valuenow="{{ system_info.disk.percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <div>
+          <strong>Total:</strong> 
+          <span id="disk-total">{{ (system_info.disk.total / (1024**3))|round(1) }} GB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informações do processo atual -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-tasks me-2"></i> Processo Atual
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <ul class="list-unstyled">
+              <li><strong>PID:</strong> <span id="process-pid">{{ process_info.pid }}</span></li>
+              <li><strong>Nome:</strong> <span id="process-name">{{ process_info.name }}</span></li>
+              <li><strong>Status:</strong> <span id="process-status" class="badge bg-success">{{ process_info.status }}</span></li>
+              <li><strong>Threads:</strong> <span id="process-threads">{{ process_info.cpu.threads }}</span></li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <ul class="list-unstyled">
+              <li><strong>CPU:</strong> <span id="process-cpu-percent">{{ process_info.cpu.percent }}%</span></li>
+              <li><strong>Memória:</strong> <span id="process-memory-percent">{{ process_info.memory.percent }}%</span></li>
+              <li><strong>Memória Física:</strong> <span id="process-memory-rss">{{ (process_info.memory.rss / (1024**2))|round(1) }} MB</span></li>
+              <li><strong>Criado em:</strong> <span id="process-created">{{ process_info.created }}</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Últimos logs -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-file-alt me-2"></i> Logs Recentes
+        </h5>
+        <a href="{{ url_for('admin_logs') }}" class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-external-link-alt me-1"></i> Ver Todos
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if latest_entries %}
+          <div class="log-container p-3">
+            <table class="table table-sm table-striped table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Nível</th>
+                  <th>Logger</th>
+                  <th>Mensagem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for entry in latest_entries %}
+                  <tr class="{% if entry.level == 'ERROR' %}table-danger{% elif entry.level == 'WARNING' %}table-warning{% endif %}">
+                    <td>{{ entry.timestamp }}</td>
+                    <td>
+                      <span class="badge {% if entry.level == 'ERROR' %}bg-danger{% elif entry.level == 'WARNING' %}bg-warning text-dark{% elif entry.level == 'INFO' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                        {{ entry.level }}
+                      </span>
+                    </td>
+                    <td>{{ entry.logger }}</td>
+                    <td class="log-message">{{ entry.message }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-3 text-center text-muted">
+            <i class="fas fa-file-alt fa-2x mb-3"></i>
+            <p>Nenhum log encontrado.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Arquivos de log disponíveis -->
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-folder-open me-2"></i> Arquivos de Log
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        {% if log_files %}
+          <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Tamanho</th>
+                  <th>Modificado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in log_files %}
+                  <tr>
+                    <td>{{ log.filename }}</td>
+                    <td>{{ (log.size / 1024)|round(1) }} KB</td>
+                    <td>{{ log.modified_at }}</td>
+                    <td>
+                      <a href="{{ url_for('admin_logs', log=log.filename) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> Ver
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-3 text-center text-muted">
+            <i class="fas fa-folder-open fa-2x mb-3"></i>
+            <p>Nenhum arquivo de log encontrado.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  // Atualiza as informações do sistema a cada 5 segundos
+  function updateSystemInfo() {
+    fetch('/admin/api/system')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const systemInfo = data.system_info;
+          
+          // Atualiza CPU
+          document.getElementById('cpu-usage-text').textContent = systemInfo.cpu.usage_percent + '%';
+          document.getElementById('cpu-usage-bar').style.width = systemInfo.cpu.usage_percent + '%';
+          document.getElementById('cpu-usage-bar').setAttribute('aria-valuenow', systemInfo.cpu.usage_percent);
+          
+          // Atualiza Memória
+          document.getElementById('memory-usage-text').textContent = systemInfo.memory.percent + '%';
+          document.getElementById('memory-usage-bar').style.width = systemInfo.memory.percent + '%';
+          document.getElementById('memory-usage-bar').setAttribute('aria-valuenow', systemInfo.memory.percent);
+          
+          // Atualiza Disco
+          document.getElementById('disk-usage-text').textContent = systemInfo.disk.percent + '%';
+          document.getElementById('disk-usage-bar').style.width = systemInfo.disk.percent + '%';
+          document.getElementById('disk-usage-bar').setAttribute('aria-valuenow', systemInfo.disk.percent);
+          
+          // Atualiza Uptime
+          document.getElementById('system-uptime').textContent = 
+            `${systemInfo.uptime.days}d ${systemInfo.uptime.hours}h ${systemInfo.uptime.minutes}m`;
+        }
+      })
+      .catch(error => console.error('Erro ao atualizar informações do sistema:', error));
+    
+    // Atualiza informações do processo
+    fetch('/admin/api/process')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const processInfo = data.process_info;
+          
+          document.getElementById('process-cpu-percent').textContent = processInfo.cpu.percent + '%';
+          document.getElementById('process-memory-percent').textContent = processInfo.memory.percent + '%';
+          document.getElementById('process-memory-rss').textContent = 
+            (processInfo.memory.rss / (1024**2)).toFixed(1) + ' MB';
+          document.getElementById('process-status').textContent = processInfo.status;
+          document.getElementById('process-threads').textContent = processInfo.cpu.threads;
+        }
+      })
+      .catch(error => console.error('Erro ao atualizar informações do processo:', error));
+  }
+  
+  // Inicializa atualização periódica
+  document.addEventListener('DOMContentLoaded', function() {
+    // Primeira atualização imediata
+    updateSystemInfo();
+    
+    // Atualização periódica a cada 5 segundos
+    setInterval(updateSystemInfo, 5000);
+  });
+</script>
+{% endblock %}

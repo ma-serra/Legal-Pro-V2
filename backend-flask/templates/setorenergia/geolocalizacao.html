@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Sistema Preditivo de Eventos Climáticos</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Leaflet para mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet.heat para mapas de calor -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Leaflet MarkerCluster para agrupamento de marcadores -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    
+    <!-- Dados meteorológicos Setor de Energia -->
+    <script type="module" src="/static/js/cpfl_weather_data.js"></script>
+    <script type="module" src="/static/js/cpfl_geo_integration.js"></script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .kpi-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+            height: 100%;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .kpi-card,
+        .kpi-card h1,
+        .kpi-card h2,
+        .kpi-card h3,
+        .kpi-card h4,
+        .kpi-card h5,
+        .kpi-card h6,
+        .kpi-card p,
+        .kpi-card small,
+        .kpi-card span,
+        .kpi-card div {
+            color: #000000 !important;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .chart-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 320px;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .tab-nav {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button:hover {
+            background-color: rgba(0, 137, 207, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .tab-button.active {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+            border-bottom-color: #0089CF;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .alert-card {
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+        
+        .alert-critical {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+        
+        .alert-high {
+            background-color: rgba(249, 115, 22, 0.1);
+            border-color: #f97316;
+        }
+        
+        .alert-moderate {
+            background-color: rgba(234, 179, 8, 0.1);
+            border-color: #eab308;
+        }
+        
+        .badge-critical {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .badge-high {
+            background-color: #f97316;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .badge-moderate {
+            background-color: #eab308;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .insight-card {
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+        
+        .insight-blue {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+        }
+        
+        .insight-green {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+        }
+        
+        .insight-yellow {
+            background-color: rgba(234, 179, 8, 0.1);
+            border-color: #eab308;
+        }
+        
+        .insight-purple {
+            background-color: rgba(168, 85, 247, 0.1);
+            border-color: #a855f7;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-item {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #0089CF;
+            border-color: #0089CF;
+        }
+        
+        .btn-primary:hover {
+            background-color: #006a9f;
+            border-color: #006a9f;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item active">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2"><i class="fas fa-cloud-sun-rain me-2"></i>Setor de Energia Predictive Analytics</h2>
+                    <p class="mb-0">Sistema de Predição para Processos Relacionados a Eventos Climáticos</p>
+                </div>
+                <div class="text-end">
+                    <h3 class="mb-0" id="current-date"></h3>
+                    <small style="color: rgba(255, 255, 255, 0.8);">Atualizado em tempo real</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- KPIs Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Processos Previstos (30d)</h6>
+                        <i class="fas fa-chart-line" style="color: #ef4444;"></i>
+                    </div>
+                    <h2 class="mb-0" style="color: #ef4444 !important; font-weight: bold;">487</h2>
+                    <small class="text-danger fw-bold">+12%</small>
+                    <p class="mb-0 mt-1" style="font-size: 0.85rem;">Próximo mês</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left: 4px solid #10b981;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Taxa de Sucesso Média</h6>
+                        <i class="fas fa-shield-alt" style="color: #10b981;"></i>
+                    </div>
+                    <h2 class="mb-0" style="color: #10b981 !important; font-weight: bold;">68.5%</h2>
+                    <p class="mb-0 mt-1" style="font-size: 0.85rem;">Casos favoráveis</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Casos Preveníveis</h6>
+                        <i class="fas fa-chart-area" style="color: #3b82f6;"></i>
+                    </div>
+                    <h2 class="mb-0" style="color: #3b82f6 !important; font-weight: bold;">34%</h2>
+                    <p class="mb-0 mt-1" style="font-size: 0.85rem;">Com ação proativa</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Impacto Financeiro Estimado</h6>
+                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                    </div>
+                    <h2 class="mb-0" style="color: #f59e0b !important; font-weight: bold;">R$ 2.4M</h2>
+                    <p class="mb-0 mt-1" style="font-size: 0.85rem;">Próximo trimestre</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="tab-nav d-flex">
+            <button class="tab-button active" onclick="switchTab('monitoring')" id="tab-monitoring">
+                📡 Monitoramento
+            </button>
+            <button class="tab-button" onclick="switchTab('predictions')" id="tab-predictions">
+                🔮 Predições
+            </button>
+            <button class="tab-button" onclick="switchTab('analysis')" id="tab-analysis">
+                📊 Análise
+            </button>
+            <button class="tab-button" onclick="switchTab('alerts')" id="tab-alerts">
+                🚨 Alertas
+            </button>
+        </div>
+        
+        <!-- Tab: Monitoramento -->
+        <div id="content-monitoring" class="tab-content active">
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-cloud me-2" style="color: #3b82f6;"></i>Monitoramento Climático - Próximos 7 Dias</h5>
+                        <div class="chart-container">
+                            <canvas id="chartWeather"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-map-marked-alt me-2" style="color: #ef4444;"></i>Mapa de Risco por Região</h5>
+                        <div class="chart-container">
+                            <canvas id="chartRegionalRisk"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h5 class="mb-3"><i class="fas fa-bolt me-2" style="color: #eab308;"></i>Correlação: Intensidade Climática vs Processos</h5>
+                <div class="chart-container">
+                    <canvas id="chartCorrelation"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Predições -->
+        <div id="content-predictions" class="tab-content">
+            <div class="row mb-4">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-chart-line me-2" style="color: #3b82f6;"></i>Previsão de Volume de Processos - 6 Meses</h5>
+                        <div class="chart-container">
+                            <canvas id="chartForecast"></canvas>
+                        </div>
+                        <div class="mt-3 p-3" style="background-color: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                            <p class="mb-0" style="color: #93c5fd; font-size: 0.9rem;">
+                                <strong>Insight:</strong> Pico esperado em Janeiro/2025 devido à sazonalidade de verão. 
+                                Recomendação: Reforçar equipes e manutenção preventiva em Dezembro.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-bolt me-2" style="color: #eab308;"></i>Radar de Vulnerabilidade - São Paulo Centro</h5>
+                        <div class="chart-container">
+                            <canvas id="chartVulnerability"></canvas>
+                        </div>
+                        <div class="mt-3 p-3" style="background-color: rgba(234, 179, 8, 0.1); border-radius: 8px;">
+                            <p class="mb-0" style="color: #fde047; font-size: 0.9rem;">
+                                <strong>Alerta:</strong> Densidade populacional alta + exposição climática elevada. 
+                                Priorizar inspeções em equipamentos com mais de 15 anos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h5 class="mb-3"><i class="fas fa-shield-alt me-2" style="color: #10b981;"></i>Fatores Críticos de Sucesso Processual</h5>
+                <div class="chart-container">
+                    <canvas id="chartSuccessFactors"></canvas>
+                </div>
+                <div class="mt-3 p-3" style="background-color: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                    <p class="mb-0" style="color: #6ee7b7; font-size: 0.9rem;">
+                        <strong>Estratégia Recomendada:</strong> Priorizar coleta de dados meteorológicos oficiais (INMET) 
+                        e reduzir tempo de resposta a menos de 2 horas para maximizar taxa de sucesso.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Análise -->
+        <div id="content-analysis" class="tab-content">
+            <div class="chart-card mb-4">
+                <h5 class="mb-3"><i class="fas fa-chart-bar me-2" style="color: #3b82f6;"></i>Correlação: Intensidade Climática vs Resultados Processuais</h5>
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="chartImpactCorrelation"></canvas>
+                </div>
+                <div class="stats-grid mt-3">
+                    <div class="stat-item">
+                        <h6 style="color: #b0b0b0;">Baixa (0-30mm)</h6>
+                        <p class="mb-1">Processos: <strong>8</strong></p>
+                        <p class="mb-1" style="color: #10b981;">Taxa Sucesso: <strong>85%</strong></p>
+                        <p class="mb-0" style="color: #ef4444;">Custo Médio: <strong>R$ 1.200</strong></p>
+                    </div>
+                    <div class="stat-item">
+                        <h6 style="color: #b0b0b0;">Moderada (30-60mm)</h6>
+                        <p class="mb-1">Processos: <strong>24</strong></p>
+                        <p class="mb-1" style="color: #10b981;">Taxa Sucesso: <strong>72%</strong></p>
+                        <p class="mb-0" style="color: #ef4444;">Custo Médio: <strong>R$ 2.800</strong></p>
+                    </div>
+                    <div class="stat-item">
+                        <h6 style="color: #b0b0b0;">Alta (60-90mm)</h6>
+                        <p class="mb-1">Processos: <strong>45</strong></p>
+                        <p class="mb-1" style="color: #10b981;">Taxa Sucesso: <strong>61%</strong></p>
+                        <p class="mb-0" style="color: #ef4444;">Custo Médio: <strong>R$ 4.500</strong></p>
+                    </div>
+                    <div class="stat-item">
+                        <h6 style="color: #b0b0b0;">Severa (90+mm)</h6>
+                        <p class="mb-1">Processos: <strong>78</strong></p>
+                        <p class="mb-1" style="color: #10b981;">Taxa Sucesso: <strong>52%</strong></p>
+                        <p class="mb-0" style="color: #ef4444;">Custo Médio: <strong>R$ 7.200</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-bullseye me-2" style="color: #3b82f6;"></i>Simulador de Risco - Novo Evento</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Intensidade de Chuva (mm/h)</label>
+                            <input type="range" class="form-range" min="0" max="100" value="50" id="rainIntensity">
+                            <div class="d-flex justify-content-between">
+                                <small style="color: #b0b0b0;">0</small>
+                                <small style="color: #b0b0b0;">50</small>
+                                <small style="color: #b0b0b0;">100</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Velocidade do Vento (km/h)</label>
+                            <input type="range" class="form-range" min="0" max="120" value="60" id="windSpeed">
+                            <div class="d-flex justify-content-between">
+                                <small style="color: #b0b0b0;">0</small>
+                                <small style="color: #b0b0b0;">60</small>
+                                <small style="color: #b0b0b0;">120</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Região</label>
+                            <select class="form-select">
+                                <option>São Paulo - Centro</option>
+                                <option>Campinas</option>
+                                <option>Sorocaba</option>
+                                <option>Santos</option>
+                                <option>Ribeirão Preto</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100 mb-3">
+                            🔮 Calcular Risco e Predição
+                        </button>
+                        <div class="p-3" style="background-color: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 8px;">
+                            <h6 style="color: #fca5a5; font-weight: bold;">Resultado da Simulação:</h6>
+                            <ul style="list-style: none; padding-left: 0; margin: 0;">
+                                <li style="color: #fca5a5; font-size: 0.9rem; margin-bottom: 0.5rem;">• <strong>Risco de Interrupção:</strong> 87% (ALTO)</li>
+                                <li style="color: #fca5a5; font-size: 0.9rem; margin-bottom: 0.5rem;">• <strong>Processos Esperados:</strong> 23-28 casos</li>
+                                <li style="color: #fca5a5; font-size: 0.9rem; margin-bottom: 0.5rem;">• <strong>Probabilidade de Sucesso:</strong> 64%</li>
+                                <li style="color: #fca5a5; font-size: 0.9rem;">• <strong>Ação Recomendada:</strong> Manutenção preventiva + comunicação proativa</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-lightbulb me-2" style="color: #eab308;"></i>Insights Estratégicos</h5>
+                        
+                        <div class="insight-card insight-blue mb-3">
+                            <h6 style="color: #93c5fd; font-weight: bold;">🎯 Oportunidade de Prevenção</h6>
+                            <p class="mb-0" style="color: #bfdbfe; font-size: 0.9rem;">
+                                34% dos processos previstos são preveníveis com ação proativa. 
+                                Foco em regiões com infraestrutura antiga identificadas no radar.
+                            </p>
+                        </div>
+                        
+                        <div class="insight-card insight-green mb-3">
+                            <h6 style="color: #6ee7b7; font-weight: bold;">✅ Padrão de Sucesso Identificado</h6>
+                            <p class="mb-0" style="color: #a7f3d0; font-size: 0.9rem;">
+                                Casos com dados meteorológicos oficiais + tempo resposta &lt;2h têm 92% de taxa de sucesso. 
+                                Priorizar documentação imediata.
+                            </p>
+                        </div>
+                        
+                        <div class="insight-card insight-yellow mb-3">
+                            <h6 style="color: #fde047; font-weight: bold;">⚠️ Período Crítico Identificado</h6>
+                            <p class="mb-0" style="color: #fef08a; font-size: 0.9rem;">
+                                Janeiro/2025 terá pico de 212 processos estimados (verão + infraestrutura sobrecarregada). 
+                                Iniciar preparação em Dezembro.
+                            </p>
+                        </div>
+                        
+                        <div class="insight-card insight-purple">
+                            <h6 style="color: #d8b4fe; font-weight: bold;">📊 ROI da Ação Preventiva</h6>
+                            <p class="mb-0" style="color: #e9d5ff; font-size: 0.9rem;">
+                                Investimento em manutenção preventiva tem ROI de 340%. 
+                                Cada R$ 1.000 investido previne R$ 3.400 em indenizações.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Alertas -->
+        <div id="content-alerts" class="tab-content">
+            <div class="chart-card mb-4">
+                <h5 class="mb-3"><i class="fas fa-exclamation-triangle me-2" style="color: #ef4444;"></i>Central de Alertas Ativos</h5>
+                
+                <div class="alert-card alert-critical mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <div class="mb-2">
+                                <span class="badge-critical me-2">CRÍTICO</span>
+                                <span style="color: #b0b0b0; font-size: 0.85rem;">Há 2h</span>
+                            </div>
+                            <h6 style="color: #fca5a5; font-weight: bold;">São Paulo - Zona Leste</h6>
+                            <p style="color: #fca5a5; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                                Previsão de tempestade severa (95mm/h + ventos 110km/h)
+                            </p>
+                            <p style="color: #fca5a5; font-size: 0.9rem; margin-bottom: 0;">
+                                <strong>Ação Requerida:</strong> Acionar protocolo de emergência - Posicionar equipes preventivamente
+                            </p>
+                        </div>
+                        <div class="text-end" style="min-width: 80px;">
+                            <div style="font-size: 2rem; color: #ef4444; font-weight: bold;">95%</div>
+                            <small style="color: #b0b0b0;">Risco</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-card alert-high mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <div class="mb-2">
+                                <span class="badge-high me-2">ALTO</span>
+                                <span style="color: #b0b0b0; font-size: 0.85rem;">Há 6h</span>
+                            </div>
+                            <h6 style="color: #fdba74; font-weight: bold;">Campinas - Centro</h6>
+                            <p style="color: #fdba74; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                                Infraestrutura antiga + previsão de chuva forte
+                            </p>
+                            <p style="color: #fdba74; font-size: 0.9rem; margin-bottom: 0;">
+                                <strong>Ação Requerida:</strong> Inspeção preventiva de transformadores identificados
+                            </p>
+                        </div>
+                        <div class="text-end" style="min-width: 80px;">
+                            <div style="font-size: 2rem; color: #f97316; font-weight: bold;">85%</div>
+                            <small style="color: #b0b0b0;">Risco</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-card alert-moderate">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <div class="mb-2">
+                                <span class="badge-moderate me-2">MODERADO</span>
+                                <span style="color: #b0b0b0; font-size: 0.85rem;">Há 12h</span>
+                            </div>
+                            <h6 style="color: #fef08a; font-weight: bold;">Ribeirão Preto - Norte</h6>
+                            <p style="color: #fef08a; font-size: 0.95rem; margin-bottom: 0.5rem;">
+                                Padrão climático similar a evento anterior com 38 processos
+                            </p>
+                            <p style="color: #fef08a; font-size: 0.9rem; margin-bottom: 0;">
+                                <strong>Ação Requerida:</strong> Monitoramento intensificado + equipes de prontidão
+                            </p>
+                        </div>
+                        <div class="text-end" style="min-width: 80px;">
+                            <div style="font-size: 2rem; color: #eab308; font-weight: bold;">72%</div>
+                            <small style="color: #b0b0b0;">Risco</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-map me-2" style="color: #3b82f6;"></i>Distribuição Geográfica de Alertas</h5>
+                        <div class="chart-container">
+                            <canvas id="chartAlertDistribution"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="fas fa-clock me-2" style="color: #10b981;"></i>Timeline de Eventos - Últimas 24h</h5>
+                        <div style="max-height: 320px; overflow-y: auto;">
+                            <div class="timeline">
+                                <div class="mb-3 p-3" style="background-color: #1a1a1a; border-left: 3px solid #ef4444; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong style="color: #ef4444;">CRÍTICO</strong>
+                                        <small style="color: #b0b0b0;">14:30</small>
+                                    </div>
+                                    <p class="mb-0" style="font-size: 0.9rem;">Alerta meteorológico emitido - SP Zona Leste</p>
+                                </div>
+                                <div class="mb-3 p-3" style="background-color: #1a1a1a; border-left: 3px solid #f97316; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong style="color: #f97316;">ALTO</strong>
+                                        <small style="color: #b0b0b0;">10:15</small>
+                                    </div>
+                                    <p class="mb-0" style="font-size: 0.9rem;">Infraestrutura vulnerável detectada - Campinas</p>
+                                </div>
+                                <div class="mb-3 p-3" style="background-color: #1a1a1a; border-left: 3px solid #eab308; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong style="color: #eab308;">MODERADO</strong>
+                                        <small style="color: #b0b0b0;">04:20</small>
+                                    </div>
+                                    <p class="mb-0" style="font-size: 0.9rem;">Padrão climático suspeito - Ribeirão Preto</p>
+                                </div>
+                                <div class="mb-3 p-3" style="background-color: #1a1a1a; border-left: 3px solid #10b981; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong style="color: #10b981;">RESOLVIDO</strong>
+                                        <small style="color: #b0b0b0;">Ontem 22:45</small>
+                                    </div>
+                                    <p class="mb-0" style="font-size: 0.9rem;">Manutenção preventiva concluída - Santos</p>
+                                </div>
+                                <div class="p-3" style="background-color: #1a1a1a; border-left: 3px solid #10b981; border-radius: 8px;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong style="color: #10b981;">RESOLVIDO</strong>
+                                        <small style="color: #b0b0b0;">Ontem 18:30</small>
+                                    </div>
+                                    <p class="mb-0" style="font-size: 0.9rem;">Equipes mobilizadas com sucesso - Sorocaba</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Set current date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('pt-BR');
+        
+        // Tab switching function
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById('content-' + tabName).classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            // Initialize charts for the active tab
+            if (tabName === 'monitoring') {
+                initMonitoringCharts();
+            } else if (tabName === 'predictions') {
+                initPredictionsCharts();
+            } else if (tabName === 'analysis') {
+                initAnalysisCharts();
+            } else if (tabName === 'alerts') {
+                initAlertsCharts();
+            }
+        }
+        
+        // Data from the provided file
+        const weatherData = [
+            { date: '05/10', rainfall: 45, wind: 65, risk: 75, cases: 12, temp: 28 },
+            { date: '06/10', rainfall: 78, wind: 85, risk: 92, cases: 23, temp: 26 },
+            { date: '07/10', rainfall: 23, wind: 45, risk: 35, cases: 5, temp: 29 },
+            { date: '08/10', rainfall: 12, wind: 35, risk: 22, cases: 2, temp: 31 },
+            { date: '09/10', rainfall: 56, wind: 72, risk: 81, cases: 18, temp: 27 },
+            { date: '10/10', rainfall: 89, wind: 95, risk: 95, cases: 31, temp: 25 },
+            { date: '11/10', rainfall: 34, wind: 52, risk: 48, cases: 8, temp: 28 }
+        ];
+        
+        const regionalRisk = [
+            { region: 'Campinas', risk: 85, cases: 45, infrastructure: 65, population: 1200000 },
+            { region: 'Sorocaba', risk: 72, cases: 32, infrastructure: 70, population: 680000 },
+            { region: 'São Paulo', risk: 91, cases: 78, infrastructure: 55, population: 12300000 },
+            { region: 'Santos', risk: 68, cases: 28, infrastructure: 75, population: 433000 },
+            { region: 'Ribeirão Preto', risk: 79, cases: 38, infrastructure: 68, population: 711000 }
+        ];
+        
+        const processVolumeForecast = [
+            { month: 'Out/24', real: 145, predicted: 142, lower: 125, upper: 160 },
+            { month: 'Nov/24', predicted: 167, lower: 145, upper: 189 },
+            { month: 'Dez/24', predicted: 198, lower: 172, upper: 224 },
+            { month: 'Jan/25', predicted: 212, lower: 185, upper: 239 },
+            { month: 'Fev/25', predicted: 189, lower: 165, upper: 213 },
+            { month: 'Mar/25', predicted: 156, lower: 138, upper: 174 }
+        ];
+        
+        const successFactors = [
+            { factor: 'Dados Meteorológicos', impact: 92 },
+            { factor: 'Tempo de Resposta', impact: 85 },
+            { factor: 'Manutenção Preventiva', impact: 78 },
+            { factor: 'Comunicação Prévia', impact: 71 },
+            { factor: 'Severidade do Evento', impact: 88 },
+            { factor: 'Histórico Regional', impact: 65 }
+        ];
+        
+        const weatherImpactCorrelation = [
+            { intensity: 'Baixa (0-30mm)', cases: 8, success: 85, avgCost: 1200 },
+            { intensity: 'Moderada (30-60mm)', cases: 24, success: 72, avgCost: 2800 },
+            { intensity: 'Alta (60-90mm)', cases: 45, success: 61, avgCost: 4500 },
+            { intensity: 'Severa (90+mm)', cases: 78, success: 52, avgCost: 7200 }
+        ];
+        
+        const infrastructureVulnerability = [
+            { subject: 'Idade Equipamentos', value: 75 },
+            { subject: 'Densidade Populacional', value: 88 },
+            { subject: 'Cobertura Vegetal', value: 62 },
+            { subject: 'Histórico Manutenção', value: 71 },
+            { subject: 'Exposição Climática', value: 85 }
+        ];
+        
+        const alertDistribution = [
+            { region: 'São Paulo', critical: 2, high: 4, moderate: 3 },
+            { region: 'Campinas', critical: 1, high: 3, moderate: 2 },
+            { region: 'Sorocaba', critical: 0, high: 2, moderate: 4 },
+            { region: 'Santos', critical: 0, high: 1, moderate: 2 },
+            { region: 'Ribeirão Preto', critical: 1, high: 2, moderate: 3 }
+        ];
+        
+        // Chart configurations
+        const chartDefaults = {
+            color: '#ffffff',
+            gridColor: 'rgba(255, 255, 255, 0.1)',
+            tickColor: 'rgba(255, 255, 255, 0.6)'
+        };
+        
+        // Monitoring Charts
+        function initMonitoringCharts() {
+            // Weather Monitoring Chart
+            const ctxWeather = document.getElementById('chartWeather').getContext('2d');
+            new Chart(ctxWeather, {
+                type: 'line',
+                data: {
+                    labels: weatherData.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Chuva (mm/h)',
+                            data: weatherData.map(d => d.rainfall),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Vento (km/h)',
+                            data: weatherData.map(d => d.wind),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Risco (%)',
+                            data: weatherData.map(d => d.risk),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+            
+            // Regional Risk Chart
+            const ctxRegional = document.getElementById('chartRegionalRisk').getContext('2d');
+            new Chart(ctxRegional, {
+                type: 'bar',
+                data: {
+                    labels: regionalRisk.map(d => d.region),
+                    datasets: [
+                        {
+                            label: 'Risco (%)',
+                            data: regionalRisk.map(d => d.risk),
+                            backgroundColor: '#ef4444'
+                        },
+                        {
+                            label: 'Infraestrutura',
+                            data: regionalRisk.map(d => d.infrastructure),
+                            backgroundColor: '#3b82f6'
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+            
+            // Correlation Chart
+            const ctxCorr = document.getElementById('chartCorrelation').getContext('2d');
+            new Chart(ctxCorr, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Eventos Climáticos',
+                        data: weatherData.map(d => ({ x: d.rainfall, y: d.cases })),
+                        backgroundColor: '#3b82f6',
+                        pointRadius: 8,
+                        pointHoverRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { 
+                                display: true, 
+                                text: 'Processos',
+                                color: chartDefaults.tickColor
+                            },
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            title: { 
+                                display: true, 
+                                text: 'Chuva (mm)',
+                                color: chartDefaults.tickColor
+                            },
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Predictions Charts
+        function initPredictionsCharts() {
+            // Forecast Chart
+            const ctxForecast = document.getElementById('chartForecast').getContext('2d');
+            new Chart(ctxForecast, {
+                type: 'line',
+                data: {
+                    labels: processVolumeForecast.map(d => d.month),
+                    datasets: [
+                        {
+                            label: 'Limite Superior',
+                            data: processVolumeForecast.map(d => d.upper),
+                            borderColor: '#93c5fd',
+                            backgroundColor: 'rgba(147, 197, 253, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Predição',
+                            data: processVolumeForecast.map(d => d.predicted),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Limite Inferior',
+                            data: processVolumeForecast.map(d => d.lower),
+                            borderColor: '#1e40af',
+                            backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Real',
+                            data: [processVolumeForecast[0].real, null, null, null, null, null],
+                            borderColor: '#10b981',
+                            borderWidth: 3,
+                            pointRadius: 6,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+            
+            // Vulnerability Radar Chart
+            const ctxVuln = document.getElementById('chartVulnerability').getContext('2d');
+            new Chart(ctxVuln, {
+                type: 'radar',
+                data: {
+                    labels: infrastructureVulnerability.map(d => d.subject),
+                    datasets: [{
+                        label: 'Vulnerabilidade',
+                        data: infrastructureVulnerability.map(d => d.value),
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: '#ef4444',
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: chartDefaults.gridColor },
+                            grid: { color: chartDefaults.gridColor },
+                            pointLabels: { color: chartDefaults.tickColor },
+                            ticks: { 
+                                color: chartDefaults.tickColor,
+                                backdropColor: 'transparent'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+            
+            // Success Factors Chart
+            const ctxSuccess = document.getElementById('chartSuccessFactors').getContext('2d');
+            new Chart(ctxSuccess, {
+                type: 'bar',
+                data: {
+                    labels: successFactors.map(d => d.factor),
+                    datasets: [{
+                        label: 'Impacto na Taxa de Sucesso (%)',
+                        data: successFactors.map(d => d.impact),
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor },
+                            beginAtZero: true,
+                            max: 100
+                        },
+                        x: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { 
+                                color: chartDefaults.tickColor,
+                                maxRotation: 45,
+                                minRotation: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Analysis Charts
+        function initAnalysisCharts() {
+            // Impact Correlation Chart
+            const ctxImpact = document.getElementById('chartImpactCorrelation').getContext('2d');
+            new Chart(ctxImpact, {
+                type: 'bar',
+                data: {
+                    labels: weatherImpactCorrelation.map(d => d.intensity),
+                    datasets: [
+                        {
+                            label: 'Número de Processos',
+                            data: weatherImpactCorrelation.map(d => d.cases),
+                            backgroundColor: '#3b82f6',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Taxa de Sucesso (%)',
+                            data: weatherImpactCorrelation.map(d => d.success),
+                            backgroundColor: '#10b981',
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Alerts Charts
+        function initAlertsCharts() {
+            // Alert Distribution Chart
+            const ctxAlerts = document.getElementById('chartAlertDistribution').getContext('2d');
+            new Chart(ctxAlerts, {
+                type: 'bar',
+                data: {
+                    labels: alertDistribution.map(d => d.region),
+                    datasets: [
+                        {
+                            label: 'Crítico',
+                            data: alertDistribution.map(d => d.critical),
+                            backgroundColor: '#ef4444'
+                        },
+                        {
+                            label: 'Alto',
+                            data: alertDistribution.map(d => d.high),
+                            backgroundColor: '#f97316'
+                        },
+                        {
+                            label: 'Moderado',
+                            data: alertDistribution.map(d => d.moderate),
+                            backgroundColor: '#eab308'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: chartDefaults.color }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            stacked: true,
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        },
+                        x: {
+                            stacked: true,
+                            grid: { color: chartDefaults.gridColor },
+                            ticks: { color: chartDefaults.tickColor }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize monitoring charts on page load
+        window.addEventListener('load', () => {
+            initMonitoringCharts();
+        });
+    </script>
+</body>
+</html>

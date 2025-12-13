@@ -1,0 +1,141 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Simples - Teste{% endblock %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='js/upload-validacao.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-upload me-2"></i>
+            Teste de Upload Simples
+          </h4>
+          <p class="mb-0 mt-2 text-light">
+            Sistema de upload corrigido - teste de funcionalidade
+          </p>
+        </div>
+
+        <div class="card-body">
+          <!-- Área de Upload -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div id="areaUpload" class="upload-area text-center p-5 border rounded" 
+                   style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px dashed #007bff !important; cursor: pointer; transition: all 0.3s ease;">
+                <div class="upload-content">
+                  <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                  <h5 class="text-primary mb-2">Clique aqui ou arraste um arquivo</h5>
+                  <p class="text-muted mb-0">Formatos suportados: PDF, DOC, DOCX, TXT</p>
+                  <small class="text-muted">Tamanho máximo: 10MB</small>
+                </div>
+                <input type="file" id="documento" name="documento" class="d-none" accept=".pdf,.doc,.docx,.txt">
+              </div>
+            </div>
+          </div>
+
+          <!-- Área de Texto -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <label for="texto" class="form-label fw-bold">Texto Extraído do Documento:</label>
+              <textarea id="texto" name="texto" class="form-control" rows="10" 
+                        placeholder="O texto extraído do documento aparecerá aqui..."
+                        style="background-color: rgba(248, 252, 255, 0.8); border: 1px solid #dee2e6;"></textarea>
+            </div>
+          </div>
+
+          <!-- Botões de Ação -->
+          <div class="row">
+            <div class="col-12 text-center">
+              <button type="button" id="btnLimpar" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-eraser me-2"></i>
+                Limpar
+              </button>
+              <button type="button" id="btnProcessar" class="btn btn-success" disabled>
+                <i class="fas fa-play me-2"></i>
+                Processar Documento
+              </button>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div id="status" class="alert alert-info d-none" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <span id="statusText">Status do processamento...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Inicializando página de upload simples...');
+    
+    const btnLimpar = document.getElementById('btnLimpar');
+    const btnProcessar = document.getElementById('btnProcessar');
+    const textArea = document.getElementById('texto');
+    const status = document.getElementById('status');
+    const statusText = document.getElementById('statusText');
+    
+    // Botão Limpar
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', function() {
+            if (textArea) {
+                textArea.value = '';
+            }
+            if (btnProcessar) {
+                btnProcessar.disabled = true;
+            }
+            if (status) {
+                status.classList.add('d-none');
+            }
+            console.log('Formulário limpo');
+        });
+    }
+    
+    // Botão Processar
+    if (btnProcessar) {
+        btnProcessar.addEventListener('click', function() {
+            if (textArea && textArea.value.trim()) {
+                showStatus('Processando documento...', 'info');
+                console.log('Processando texto:', textArea.value.length, 'caracteres');
+                
+                setTimeout(() => {
+                    showStatus('Documento processado com sucesso!', 'success');
+                }, 2000);
+            }
+        });
+    }
+    
+    // Habilitar botão quando há texto
+    if (textArea) {
+        textArea.addEventListener('input', function() {
+            if (btnProcessar) {
+                btnProcessar.disabled = !this.value.trim();
+            }
+        });
+    }
+    
+    function showStatus(message, type) {
+        if (status && statusText) {
+            statusText.textContent = message;
+            status.className = `alert alert-${type}`;
+            status.classList.remove('d-none');
+        }
+    }
+    
+    console.log('Sistema de upload simples inicializado');
+});
+</script>
+
+{% endblock %}
