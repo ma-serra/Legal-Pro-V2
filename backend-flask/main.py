@@ -3278,11 +3278,12 @@ app = create_app()
 # ============================================================
 if __name__ != '__main__':
     # Estamos sendo importados por gunicorn/WSGI server
-    from startup_optimizer import HealthCheckMiddleware, initialization_manager
-    app.wsgi_app = HealthCheckMiddleware(app.wsgi_app, initialization_manager)
-    logger.info("✅ HealthCheckMiddleware aplicado automaticamente ao app.wsgi_app")
-    logger.info("   • /health e /healthz respondem instantaneamente (<1s)")
-    logger.info("   • /readyz verifica se inicialização está completa")
+    # from startup_optimizer import HealthCheckMiddleware, initialization_manager  # Módulo não existe
+    # app.wsgi_app = HealthCheckMiddleware(app.wsgi_app, initialization_manager)
+    # logger.info("✅ HealthCheckMiddleware aplicado automaticamente ao app.wsgi_app")
+    # logger.info("   • /health e /healthz respondem instantaneamente (<1s)")
+    # logger.info("   • /readyz verifica se inicialização está completa")
+    pass  # Módulo startup_optimizer não existe
 
 # ============================================================
 # BACKGROUND INITIALIZATION TRIGGER - CRITICAL FOR FAST STARTUP
