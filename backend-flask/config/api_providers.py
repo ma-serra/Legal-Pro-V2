@@ -41,8 +41,8 @@ PROVIDERS_CONFIG = {
             'gemini-pro'
         ],
         'default_model': 'gemini-1.5-pro',
-        'api_key_env': 'GOOGLE_API_KEY_APP',
-        'enabled': bool(os.environ.get('GOOGLE_API_KEY_APP'))
+        'api_key_env': 'GOOGLE_AI_API_KEY',
+        'enabled': bool(os.environ.get('GOOGLE_AI_API_KEY'))
     },
     'deepseek': {
         'name': 'DeepSeek',
