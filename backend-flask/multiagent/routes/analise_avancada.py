@@ -35,11 +35,7 @@ from auth import admin_required, permission_required, log_audit
 
 # Importa os módulos avançados
 from multiagent.modules.analise_comparativa import comparar_analises, listar_analises_documento, listar_comparacoes_analise
-from multiagent.modules.his
-
-torico_versoes import (
-    criar_documento, adicionar_versao, listar_documentos
-)
+from multiagent.modules.historico_versoes import criar_documento, adicionar_versao, listar_documentos
 from multiagent.modules.extracao_entidades import (
     extrair_entidades, extrair_citacoes
 )
