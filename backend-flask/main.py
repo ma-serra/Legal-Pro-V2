@@ -729,23 +729,24 @@ def create_app():
         
         # Integrar o módulo Assistente
         try:
-            from assistente.app import register_routes as register_assistente
-            register_assistente(app)
-            logger.info("Módulo Assistente integrado com sucesso")
-            
-            # Integrar as rotas do gerenciador de prompts
-            from assistente.routes import init_app as init_prompts_routes
-            init_prompts_routes(app)
-            logger.info("Rotas de gerenciamento de prompts do assistente integradas com sucesso")
-            
-            # Inicializar prompts padrão para modelos
-            # SKIPPED durante FAST STARTUP - executado em background via deferred_initialization
-            if not fast_startup:
-                from assistente.prompts import inicializar_prompts_padrao
-                if inicializar_prompts_padrao():
-                    logger.info("Prompts padrão do assistente inicializados com sucesso")
-                else:
-                    logger.warning("Prompts padrão do assistente já existiam ou ocorreu um erro na inicialização")
+            pass  # Módulo 'assistente' não existe
+            # from assistente.app import register_routes as register_assistente
+            # register_assistente(app)
+            # logger.info("Módulo Assistente integrado com sucesso")
+            # 
+            # # Integrar as rotas do gerenciador de prompts
+            # from assistente.routes import init_app as init_prompts_routes
+            # init_prompts_routes(app)
+            # logger.info("Rotas de gerenciamento de prompts do assistente integradas com sucesso")
+            # 
+            # # Inicializar prompts padrão para modelos
+            # # SKIPPED durante FAST STARTUP - executado em background via deferred_initialization
+            # if not fast_startup:
+            #     from assistente.prompts import inicializar_prompts_padrao
+            #     if inicializar_prompts_padrao():
+            #         logger.info("Prompts padrão do assistente inicializados com sucesso")
+            #     else:
+            #         logger.warning("Prompts padrão do assistente já existiam ou ocorreu um erro na inicialização")
         except Exception as e:
             logger.error(f"Erro ao integrar o módulo Assistente: {str(e)}")
             import traceback
@@ -777,17 +778,19 @@ def create_app():
     
     # Registrar API Qdrant para Busca Vetorial
     try:
-        from api_qdrant_integration import registrar_api_qdrant
-        registrar_api_qdrant(app)
-        logger.info("✅ API Qdrant registrada com sucesso")
+        pass  # Módulo 'api_qdrant_integration' não existe
+        # from api_qdrant_integration import registrar_api_qdrant
+        # registrar_api_qdrant(app)
+        # logger.info("✅ API Qdrant registrada com sucesso")
     except Exception as e:
         logger.warning(f"⚠️ API Qdrant não disponível: {e}")
     
     # Registrar API de Chat Jurídico (com nome único)
     try:
-        from api_chat_juridico import chat_juridico
-        app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
-        logger.info("✅ API de Chat Jurídico registrada com sucesso")
+        pass  # Módulo 'api_chat_juridico' não existe
+        # from api_chat_juridico import chat_juridico
+        # app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
+        # logger.info("✅ API de Chat Jurídico registrada com sucesso")
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
     
