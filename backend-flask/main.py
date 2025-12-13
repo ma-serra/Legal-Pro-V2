@@ -9023,13 +9023,32 @@ Forneça uma análise completa, profissional e detalhada em português com MÁXI
     # Função comentada - agora usando api_analise_3_agentes_identica.py
     pass
 
-# API Multi-Agente MANUAL temporariamente desabilitada (conflito de rotas)
+# Módulos Multi-Agente Avançados
 # try:
-#     from api_analise_manual import registrar_api_manual
-#     registrar_api_manual(app)
-#     logger.info("✅ API Multi-Agente MANUAL registrada externamente")
+#     from multiagent.routes.fluxos import init_blueprint as init_fluxos
+#     init_fluxos(app)
+#     from multiagent.routes.analise_avancada import init_blueprint as init_analise_avancada
+#     init_analise_avancada(app)
+#     logger.info("✅ Rotas Multi-Agente registradas")
 # except Exception as e:
-#     logger.warning(f"⚠️ API Manual não registrada: {e}")
+#     logger.warning(f"⚠️ Rotas Multi-Agente não disponíveis: {e}")
+
+# ================================= 
+# MULTIAGENT ADVANCED ANALYSIS ROUTES
+# =================================
+try:
+    from multiagent.routes.analise_avancada import init_blueprint as init_analise_avancada
+    init_analise_avancada(app)
+    
+    logger.info("✅ Multiagent Advanced Analysis ativo")
+    logger.info("   • Análise comparativa de documentos")
+    logger.info("   • Histórico e versionamento")
+    logger.info("   • 44 endpoints de análise avançada")
+    logger.info("   • Endpoints: /api/analise-avancada/*")
+except Exception as e:
+    logger.warning(f"⚠️ Multiagent Routes indisponível: {str(e)}")
+    import traceback
+    logger.warning(traceback.format_exc())
     
     # Registrar API de seleção inteligente com alta confiança (opcional)
 try:
