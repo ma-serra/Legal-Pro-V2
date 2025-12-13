@@ -3293,14 +3293,15 @@ if __name__ != '__main__':
 # Isso permite que health checks respondam imediatamente
 fast_startup_mode = os.environ.get('FAST_STARTUP', 'true').lower() == 'true'
 print(f"[STARTUP] FAST_STARTUP mode: {fast_startup_mode}")
-if fast_startup_mode:
-    from startup_optimizer import initialization_manager, deferred_heavy_initialization
-    print("[STARTUP] 🚀 Disparando inicialização em background...")
-    logger.info("🚀 Disparando inicialização em background...")
-    initialization_manager.initialize_in_background(app, deferred_heavy_initialization)
-    print("[STARTUP] ✅ Background initialization triggered")
-else:
-    print("[STARTUP] ⚠️ FAST_STARTUP disabled - using legacy initialization")
+# Módulo 'startup_optimizer' não existe - comentado
+# if fast_startup_mode:
+#     from startup_optimizer import initialization_manager, deferred_heavy_initialization
+#     print("[STARTUP] 🚀 Disparando inicialização em background...")
+#     logger.info("🚀 Disparando inicialização em background...")
+#     initialization_manager.initialize_in_background(app, deferred_heavy_initialization)
+#     print("[STARTUP] ✅ Background initialization triggered")
+# else:
+#     print("[STARTUP] ⚠️ FAST_STARTUP disabled - using legacy initialization")
 # ============================================================
 
 # Registrar módulo de transcrição de vídeo - SEMPRE registrar (necessário para apresentação)
