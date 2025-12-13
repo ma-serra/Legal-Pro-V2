@@ -816,6 +816,22 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Processos: {e}")
     
+    # Registrar API REST de Assistentes para Frontend
+    try:
+        from modules.api_rest_assistentes import register_assistentes_api
+        register_assistentes_api(app)
+        logger.info("✅ API REST de Assistentes registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Assistentes: {e}")
+    
+    # Registrar API REST de Análises para Frontend
+    try:
+        from modules.api_rest_analises import register_analises_api
+        register_analises_api(app)
+        logger.info("✅ API REST de Análises registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Análises: {e}")
+    
     # Registrar Monitor de Tokens Simplificado (opcional)
     try:
         from token_monitor_simple import token_monitor_bp
