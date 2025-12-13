@@ -808,6 +808,14 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Dashboard: {e}")
     
+    # Registrar API REST de Processos para Frontend
+    try:
+        from modules.api_rest_processos import register_processos_api
+        register_processos_api(app)
+        logger.info("✅ API REST de Processos registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Processos: {e}")
+    
     # Registrar Monitor de Tokens Simplificado (opcional)
     try:
         from token_monitor_simple import token_monitor_bp
