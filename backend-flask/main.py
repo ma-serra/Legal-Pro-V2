@@ -23,6 +23,7 @@ from werkzeug.utils import secure_filename
 from datetime import timedelta
 from utils.permission_decorators import master_required, admin_required, no_master_access
 from sqlalchemy.orm import DeclarativeBase
+from flask_cors import CORS
 import locale
 
 # Configuração de logging otimizada para deploy rápido
@@ -359,6 +360,23 @@ login_manager = LoginManager()
 # Inicialização da aplicação
 def create_app():
     app = Flask(__name__)
+    
+    # ============================================================
+    # CORS CONFIGURATION - ALLOW VERCEL FRONTEND
+    # ============================================================
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "https://hub-legal-pro.vercel.app",
+                "http://localhost:5173",  # Vite dev server
+                "http://localhost:3000"   # React dev server
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    })
+    logger.info("✅ CORS configurado para frontend Vercel")
     
     # ============================================================
     # HEALTH CHECK ENDPOINTS - CRÍTICO PARA REPLIT DEPLOY
@@ -798,20 +816,23 @@ def create_app():
         logger.warning(f"⚠️ API Qdrant não disponível: {e}")
     
     # Registrar API de Chat Jurídico (com nome único)
-    try:
-        from scripts.apis.core.api_chat_juridico import chat_juridico
-        app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
-        logger.info("✅ API de Chat Jurídico registrada com sucesso")
-    except Exception as e:
-        logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
+    # DESATIVADO: Módulo não está pronto ou tem problemas de estrutura
+    # try:
+    #     from scripts.apis.core.api_chat_juridico import chat_juridico
+    #     app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
+    #     logger.info("✅ API de Chat Jurídico registrada com sucesso")
+    # except Exception as e:
+    #     logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
     
     # Registrar API REST de Autenticação para Frontend
-    try:
-        from modules.api_rest_auth import register_auth_rest_api
-        register_auth_rest_api(app)
-        logger.info("✅ API REST de Autenticação registrada com sucesso")
-    except Exception as e:
-        logger.error(f"❌ Erro ao registrar API de Autenticação: {e}")
+    # DESATIVADO: Registrado novamente na linha 5317 (evitar duplicação)
+    # PROBLEMA: Requer módulo PyJWT que foi adicionado ao requirements.txt
+    # try:
+    #     from modules.api_rest_auth import register_auth_rest_api
+    #     register_auth_rest_api(app)
+    #     logger.info("✅ API REST de Autenticação registrada com sucesso")
+    # except Exception as e:
+    #     logger.error(f"❌ Erro ao registrar API de Autenticação: {e}")
     
     # Registrar API REST de Dashboard para Frontend
     try:
@@ -1363,12 +1384,13 @@ Forneça uma resposta técnica e detalhada adequada para profissionais do direit
                 }), 500
         
         # Registrar Rotas Administrativas Qdrant
-        try:
-            from rotas_admin_qdrant import registrar_rotas_qdrant_admin
-            registrar_rotas_qdrant_admin(app)
-            logger.info("✅ Rotas Administrativas Qdrant registradas com sucesso")
-        except Exception as qdrant_e:
-            logger.error(f"❌ Erro ao registrar rotas Qdrant: {qdrant_e}")
+        # DESATIVADO: Arquivo rotas_admin_qdrant.py não existe no projeto
+        # try:
+        #     from rotas_admin_qdrant import registrar_rotas_qdrant_admin
+        #     registrar_rotas_qdrant_admin(app)
+        #     logger.info("✅ Rotas Administrativas Qdrant registradas com sucesso")
+        # except Exception as qdrant_e:
+        #     logger.error(f"❌ Erro ao registrar rotas Qdrant: {qdrant_e}")
         
         # Registrar rotas complementares do Legal Design Pro
         try:
@@ -5284,12 +5306,13 @@ def get_area_estilo_especifico(area_key):
 
 
 # Registrar Sistema de Autenticação Modular
-try:
-    from auth import auth_bp
-    app.register_blueprint(auth_bp)
-    logger.info("✅ Sistema de Autenticação Modular registrado com sucesso")
-except Exception as e:
-    logger.error(f"❌ Erro ao registrar Sistema de Autenticação: {e}")
+# DESATIVADO: auth.py não exporta auth_bp (apenas decorators)
+# try:
+#     from auth import auth_bp
+#     app.register_blueprint(auth_bp)
+#     logger.info("✅ Sistema de Autenticação Modular registrado com sucesso")
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar Sistema de Autenticação: {e}")
 
 # Registrar Sistema de Administração de Banco de Dados
 try:
@@ -5313,11 +5336,13 @@ except Exception as e:
     logger.error(f"❌ Erro ao registrar Módulo Zoom API: {e}")
 
 # Registrar API REST de Autenticação (para Frontend React)
-try:
-    from modules.api_rest_auth import register_auth_rest_api
-    register_auth_rest_api(app)
-except Exception as e:
-    logger.error(f"❌ Erro ao registrar API REST de Autenticação: {e}")
+# DESATIVADO: Requer PyJWT - adicionado ao requirements.txt
+# DESATIVADO: Também era duplicado da linha 810
+# try:
+#     from modules.api_rest_auth import register_auth_rest_api
+#     register_auth_rest_api(app)
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar API REST de Autenticação: {e}")
 
 # =================================================================
 # HEAVY MODULE REGISTRATION - Conditional based on FAST_STARTUP
@@ -6902,15 +6927,17 @@ logger.info("✅ Home dashboard configurado (usando rotas existentes)")
 print("✅ Home dashboard ativo com dados reais")
 
 # Registrar Legal Design Pro V2
-print("Registrando Legal Design Pro V2...")
-try:
-    from routes_legal_design_pro import legal_design_pro_bp
-    app.register_blueprint(legal_design_pro_bp)
-    logger.info("✅ Legal Design Pro V2 registrado")
-    print("✅ Legal Design Pro V2 ativado - Fluxos jurídicos disponíveis")
-except Exception as e:
-    logger.error(f"❌ Erro ao registrar Legal Design Pro: {str(e)}")
-    print(f"❌ Erro Legal Design Pro: {str(e)}")
+# NOTA: Legal Design Pro já é registrado na linha 1378 
+# Comentado para evitar erro de "name already registered"
+# print("Registrando Legal Design Pro V2...")
+# try:
+#     from routes_legal_design_pro import legal_design_pro_bp
+#     app.register_blueprint(legal_design_pro_bp)
+#     logger.info("✅ Legal Design Pro V2 registrado")
+#     print("✅ Legal Design Pro V2 ativado - Fluxos jurídicos disponíveis")
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar Legal Design Pro: {str(e)}")
+#     print(f"❌ Erro Legal Design Pro: {str(e)}")
 
 # Registrar API de Validação Multi-Agente
 print("Registrando API de Validação Multi-Agente...")
