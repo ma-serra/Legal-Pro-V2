@@ -6088,47 +6088,54 @@ except Exception as e:
 # ================================= 
 # MÓDULO SETOR ENERGIA SMART LEGAL ANALYTICS
 # =================================
-# Módulo CPFL Analytics desabilitado - Diretório não existe
-# Há redirect configurado: /cpfl/* → /setorenergia/*
-# try:
-#     cpfl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cpfl-analytics')
-#     if cpfl_path not in sys.path:
-#         sys.path.insert(0, cpfl_path)
-#     import importlib.util
-#     routes_path = os.path.join(cpfl_path, 'routes.py')
-#     spec = importlib.util.spec_from_file_location("cpfl_routes", routes_path)
-#     cpfl_routes_module = importlib.util.module_from_spec(spec)
-#     spec.loader.exec_module(cpfl_routes_module)
-#     app.register_blueprint(cpfl_routes_module.setorenergia_bp)
-#     logger.info("✅ Módulo Setor Energia Smart Legal Analytics registrado com sucesso")
-# except Exception as e:
-#     logger.error(f"❌ Erro ao registrar Módulo Setor Energia: {str(e)}")
-logger.info("⚠️  Módulo Setor Energia: Usar redirect /cpfl/* → /setorenergia/*")
+try:
+    cpfl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cpfl-analytics')
+    if cpfl_path not in sys.path:
+        sys.path.insert(0, cpfl_path)
+    
+    # Importar routes do módulo CPFL
+    import importlib.util
+    routes_path = os.path.join(cpfl_path, 'routes.py')
+    spec = importlib.util.spec_from_file_location("cpfl_routes", routes_path)
+    cpfl_routes_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cpfl_routes_module)
+    
+    # Registrar blueprint
+    app.register_blueprint(cpfl_routes_module.setorenergia_bp)
+    
+    logger.info("✅ CPFL Analytics - Setor Energia ativo")
+    logger.info("   • 3.216 processos do setor energia")
+    logger.info("   • RAG com Qdrant Vector Database")
+    logger.info("   • Endpoints: /setorenergia/*")
+except Exception as e:
+    logger.warning(f"⚠️ CPFL Analytics indisponível: {str(e)}")
+    logger.info("   • Usar redirect /cpfl/* → /setorenergia/*")
 
 # ================================= 
 # MÓDULO FINTECHS ANALYTICS (antigo Fintech)
 # =================================
-# Módulo Fintech Analytics desabilitado - Diretório não existe
-# Há redirect configurado: /fintech/* → /fintechs/*
-# try:
-#     fintech_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fintech-analytics')
-#     if fintech_path not in sys.path:
-#         sys.path.insert(0, fintech_path)
-#     import importlib.util
-#     fintech_routes_path = os.path.join(fintech_path, 'routes.py')
-#     fintech_spec = importlib.util.spec_from_file_location("fintech_routes_module", fintech_routes_path)
-#     fintech_routes_module = importlib.util.module_from_spec(fintech_spec)
-#     fintech_spec.loader.exec_module(fintech_routes_module)
-#     fintech_routes_module.register_fintechs_routes(app)
-#     logger.info("✅ Módulo Fintechs Analytics registrado com sucesso")
-# except Exception as e:
-#     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
-logger.info("⚠️  Módulo Fintechs: Usar redirect /fintech/* → /fintechs/*")
-# logger.info("   • Machine Learning e KPIs estratégicos ativos")
-# except Exception as e:
-#     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
-#     import traceback
-#     logger.error(traceback.format_exc())
+try:
+    fintech_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fintech-analytics')
+    if fintech_path not in sys.path:
+        sys.path.insert(0, fintech_path)
+    
+    # Importar routes do módulo Fintech
+    import importlib.util
+    fintech_routes_path = os.path.join(fintech_path, 'routes.py')
+    fintech_spec = importlib.util.spec_from_file_location("fintech_routes_module", fintech_routes_path)
+    fintech_routes_module = importlib.util.module_from_spec(fintech_spec)
+    fintech_spec.loader.exec_module(fintech_routes_module)
+    
+    # Registrar routes
+    fintech_routes_module.register_fintechs_routes(app)
+    
+    logger.info("✅ Fintech Analytics ativo")
+    logger.info("   • ML Models e análise preditiva")
+    logger.info("   • KPIs estratégicos financeiros")
+    logger.info("   • Endpoints: /fintechs/*")
+except Exception as e:
+    logger.warning(f"⚠️ Fintech Analytics indisponível: {str(e)}")
+    logger.info("   • Usar redirect /fintech/* → /fintechs/*")
 
 # ================================= 
 # MÓDULO /transcricao-audio/ CRIADO DO ZERO - SEM AUTENTICAÇÃO
