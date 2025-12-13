@@ -172,62 +172,94 @@ def analise_multi_agente():
         if not agentes_ids or len(agentes_ids) == 0:
             return jsonify({'error': 'Ao menos um agente deve ser especificado'}), 400
         
-        # Buscar agentes
-        agentes = AgenteJuridico.query.filter(
-            AgenteJuridico.id.in_(agentes_ids),
-            AgenteJuridico.ativo == True
-        ).all()
-        
-        if len(agentes) == 0:
-            return jsonify({'error': 'Nenhum agente válido encontrado'}), 404
-        
-        # Mock: simular análise de cada agente
-        resultados_agentes = []
-        for agente in agentes:
-            resultados_agentes.append({
-                'agente_id': agente.id,
-                'agente_nome': agente.nome,
-                'categoria': agente.categoria.nome if agente.categoria else 'Geral',
-                'analise': f"Análise realizada por {agente.nome}: O documento apresenta características específicas da área de {agente.categoria.nome if agente.categoria else 'Direito'}. Recomenda-se atenção especial aos pontos destacados.",
-                'score_confianca': 0.88,
-                'tokens_usados': 200
-            })
-        
-        # Gerar análise consolidada
-        analise_consolidada = f"""
-# Análise Multi-Agente - {len(agentes)} Especialistas
+        # Integrar com MULTI-AGENT ORCHESTRATOR REAL
+        try:
+            from modules.multi_agent_orchestrator import MultiAgentOrchestrator
+            
+            orchestrator = MultiAgentOrchestrator()
+            
+            # Processar com agentes selecionados
+            resultado = orchestrator.process_document_with_selected_agents(
+                texto=texto,
+                area_juridica='empresarial',  # Pode ser passado como parâmetro
+                agentes_ids=[str(id) for id in agentes_ids],
+                usar_validacao=True  # Usar validação multi-API
+            )
+            
+            if resultado.get('status') == 'success':
+                # Formatar resposta consolidada
+                analise_consolidada = f"""
+# Análise Multi-Agente - {len(agentes_ids)} Especialistas
 
 ## Agentes Participantes
-{', '.join([a.nome for a in agentes])}
+{', '.join(resultado.get('agentes_utilizados', {}).get('especialistas', []))}
 
-## Análise Consolidada
-Este documento foi analisado por {len(agentes)} agentes especializados, cada um trazendo sua perspectiva única.
-
-## Consensos Identificados
-- Todos os agentes concordam quanto à relevância jurídica do documento
-- Elementos principais foram identificados de forma consistente
-- Recomendações convergem para uma estratégia unificada
-
-## Divergências
-- Pequenas variações na interpretação de cláusulas específicas
-- Diferentes níveis de risco atribuídos a determinados aspectos
-
-## Recomendação Final
-Com base na análise combinada, recomenda-se proceder com cautela, considerando todos os pontos levantados pelos especialistas.
-
----
-*Análise multi-agente gerada em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}*
+## Processamento Sequencial
 """
-        
-        response_data = {
-            'analise_consolidada': analise_consolidada,
-            'resultados_individuais': resultados_agentes,
-            'total_agentes': len(agentes),
-            'timestamp': datetime.now().isoformat(),
-            'tokens_totais': sum(r['tokens_usados'] for r in resultados_agentes)
-        }
-        
-        return jsonify(response_data), 200
+                # Adicionar resultados de processamento
+                for agente_nome, result in resultado.get('processamento_agentes', {}).items():
+                    analise_consolidada += f"\n### {agente_nome.title()}\n{result.get('resultado', 'N/A')}\n"
+                
+                analise_consolidada += "\n## Análises dos Especialistas\n"
+                
+                # Adicionar análises de especialistas
+                for esp in resultado.get('especialistas_analises', []):
+                    analise_consolidada += f"\n### {esp['agente']} ({esp['area']})\n{esp['analise']}\n"
+                
+                # Adicionar validações de APIs
+                if resultado.get('validacao_apis'):
+                    analise_consolidada += "\n## Validação Multi-API\n"
+                    for val in resultado['validacao_apis']:
+                        analise_consolidada += f"\n### {val['api']}\n**Especialidade:** {val['especialidade']}\n\n{val['validacao']}\n"
+                
+                analise_consolidada += f"\n## Consolidação Final\n\n{resultado.get('consolidacao_final', '')}\n"
+                analise_consolidada += f"\n---\n*Análise gerada em: {resultado['timestamp']}*\n"
+                analise_consolidada += f"*Tempo total: {resultado['total_processing_time']}s*"
+                
+                return jsonify({
+                    'analise_consolidada': analise_consolidada,
+                    'resultados_individuais': resultado.get('especialistas_analises', []),
+                    'total_agentes': resultado['total_agentes'],
+                    'metricas': resultado.get('metricas', {}),
+                    'timestamp': resultado['timestamp'],
+                    'tokens_totais': 0,  # Seria calculado se implementado
+                    'tipo': 'multi_agente_real',
+                    'status': 'success'
+                }), 200
+            else:
+                # Erro no processamento
+                return jsonify({
+                    'error': resultado.get('message', 'Erro no processamento'),
+                    'status': 'error'
+                }), 500
+                
+        except Exception as e:
+            logger.error(f"Erro ao processar multi-agente: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Fallback para resposta mock
+            analise_consolidada_fallback = f"""
+# Análise Multi-Agente - Modo Fallback
+
+Desculpe, ocorreu um erro ao processar com os agentes especializados.
+
+**Erro:** {str(e)}
+
+Esta funcionalidade requer:
+- Agentes configurados no banco de dados
+- APIs de IA ativas (OpenAI, Anthropic, etc.)
+- Conexão com banco de dados
+
+Por favor, verifique as configurações e tente novamente.
+"""
+            
+            return jsonify({
+                'analise_consolidada': analise_consolidada_fallback,
+                'error': str(e),
+                'tipo': 'fallback',
+                'status': 'partial_error'
+            }), 200
         
     except Exception as e:
         logger.error(f"Erro ao realizar análise multi-agente: {e}")
