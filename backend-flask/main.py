@@ -6887,7 +6887,7 @@ print("⚡ APIs de ML configuradas para carregamento otimizado")
 # Registrar rotas administrativas com dados reais
 print("Registrando rotas administrativas com dados reais...")
 try:
-    from modules.optimized_admin_routes import register_updated_admin_routes
+    from admin_routes_update import register_updated_admin_routes
     register_updated_admin_routes(app)
     logger.info("✅ Rotas administrativas com dados reais registradas")
     print("✅ Admin dashboard com dados reais ativado")
