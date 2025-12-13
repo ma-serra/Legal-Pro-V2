@@ -533,7 +533,7 @@ def create_app():
     with app.app_context():
         # Primeiro importa os modelos para que as tabelas sejam criadas
         import models  # noqa: F401
-        import models_legal_design  # noqa: F401
+        # import models_legal_design  # noqa: F401 - Arquivo não existe
         
 
         
