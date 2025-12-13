@@ -74,7 +74,7 @@ def obter_assistente(assistente_id):
         categoria_nome = assistente.categoria.nome if assistente.categoria else 'Geral'
         detalhes_tecnicos = assistente.get_detalhes_tecnicos()
         
-       return jsonify({
+        return jsonify({
             'id': assistente.id,
             'nome': assistente.nome,
             'classe': assistente.classe,
