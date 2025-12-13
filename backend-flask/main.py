@@ -5350,7 +5350,7 @@ except Exception as e:
 
 # Registrar API de análise sequencial com múltiplas APIs
 try:
-    from api_analise_sequencial import registrar_api_sequencial
+    from scripts.apis.analysis.api_analise_sequencial import registrar_api_sequencial
     registrar_api_sequencial(app)
     logger.info("✅ API de análise sequencial (OpenAI + Anthropic + Gemini) registrada")
 except Exception as e:
@@ -5358,7 +5358,7 @@ except Exception as e:
 
 # Registrar API de exportação
 try:
-    from api_export_analise import registrar_api_export
+    from scripts.apis.analysis.api_export_analise import registrar_api_export
     registrar_api_export(app)
     logger.info("✅ API de exportação (PDF/Word) registrada com sucesso")
 except Exception as e:
@@ -6008,46 +6008,42 @@ except Exception as e:
 # ================================= 
 # MÓDULO SETOR ENERGIA SMART LEGAL ANALYTICS
 # =================================
-try:
-    cpfl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cpfl-analytics')
-    if cpfl_path not in sys.path:
-        sys.path.insert(0, cpfl_path)
-    
-    # Import usando importlib para evitar conflitos com fintech-analytics
-    import importlib.util
-    routes_path = os.path.join(cpfl_path, 'routes.py')
-    spec = importlib.util.spec_from_file_location("cpfl_routes", routes_path)
-    cpfl_routes_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cpfl_routes_module)
-    
-    app.register_blueprint(cpfl_routes_module.setorenergia_bp)
-    logger.info("✅ Módulo Setor Energia Smart Legal Analytics registrado com sucesso")
-    logger.info("   • 3.216 processos do Setor de Energia carregados")
-    logger.info("   • API REST completa disponível em /setorenergia/api/")
-    logger.info("   • Dashboard interativo em /setorenergia/")
-except Exception as e:
-    logger.error(f"❌ Erro ao registrar Módulo Setor Energia: {str(e)}")
-    import traceback
-    logger.error(traceback.format_exc())
+# Módulo CPFL Analytics desabilitado - Diretório não existe
+# Há redirect configurado: /cpfl/* → /setorenergia/*
+# try:
+#     cpfl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cpfl-analytics')
+#     if cpfl_path not in sys.path:
+#         sys.path.insert(0, cpfl_path)
+#     import importlib.util
+#     routes_path = os.path.join(cpfl_path, 'routes.py')
+#     spec = importlib.util.spec_from_file_location("cpfl_routes", routes_path)
+#     cpfl_routes_module = importlib.util.module_from_spec(spec)
+#     spec.loader.exec_module(cpfl_routes_module)
+#     app.register_blueprint(cpfl_routes_module.setorenergia_bp)
+#     logger.info("✅ Módulo Setor Energia Smart Legal Analytics registrado com sucesso")
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar Módulo Setor Energia: {str(e)}")
+logger.info("⚠️  Módulo Setor Energia: Usar redirect /cpfl/* → /setorenergia/*")
 
 # ================================= 
 # MÓDULO FINTECHS ANALYTICS (antigo Fintech)
 # =================================
-try:
-    fintech_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fintech-analytics')
-    if fintech_path not in sys.path:
-        sys.path.insert(0, fintech_path)
-    
-    # Import usando importlib
-    import importlib.util
-    fintech_routes_path = os.path.join(fintech_path, 'routes.py')
-    fintech_spec = importlib.util.spec_from_file_location("fintech_routes_module", fintech_routes_path)
-    fintech_routes_module = importlib.util.module_from_spec(fintech_spec)
-    fintech_spec.loader.exec_module(fintech_routes_module)
-    
-    fintech_routes_module.register_fintechs_routes(app)
-    logger.info("✅ Módulo Fintechs Analytics registrado com sucesso")
-    logger.info("   • Dashboard de análise preditiva disponível em /fintechs/")
+# Módulo Fintech Analytics desabilitado - Diretório não existe
+# Há redirect configurado: /fintech/* → /fintechs/*
+# try:
+#     fintech_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fintech-analytics')
+#     if fintech_path not in sys.path:
+#         sys.path.insert(0, fintech_path)
+#     import importlib.util
+#     fintech_routes_path = os.path.join(fintech_path, 'routes.py')
+#     fintech_spec = importlib.util.spec_from_file_location("fintech_routes_module", fintech_routes_path)
+#     fintech_routes_module = importlib.util.module_from_spec(fintech_spec)
+#     fintech_spec.loader.exec_module(fintech_routes_module)
+#     fintech_routes_module.register_fintechs_routes(app)
+#     logger.info("✅ Módulo Fintechs Analytics registrado com sucesso")
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
+logger.info("⚠️  Módulo Fintechs: Usar redirect /fintech/* → /fintechs/*")
     logger.info("   • Machine Learning e KPIs estratégicos ativos")
 except Exception as e:
     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
@@ -6791,7 +6787,7 @@ print("⚡ APIs de ML configuradas para carregamento otimizado")
 # Registrar rotas administrativas com dados reais
 print("Registrando rotas administrativas com dados reais...")
 try:
-    from admin_routes_update import register_updated_admin_routes
+    from modules.optimized_admin_routes import register_updated_admin_routes
     register_updated_admin_routes(app)
     logger.info("✅ Rotas administrativas com dados reais registradas")
     print("✅ Admin dashboard com dados reais ativado")
@@ -6808,7 +6804,7 @@ print("✅ Home dashboard ativo com dados reais")
 # Registrar Legal Design Pro V2
 print("Registrando Legal Design Pro V2...")
 try:
-    from legal_design_routes import register_legal_design_routes
+    from routes_legal_design_pro import register_legal_design_routes
     register_legal_design_routes(app)
     logger.info("✅ Legal Design Pro V2 registrado")
     print("✅ Legal Design Pro V2 ativado - Fluxos jurídicos disponíveis")
