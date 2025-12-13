@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Menu, LogOut, LayoutDashboard, Gavel, FileSearch, Users, Home } from 'lucide-react'
+import { LogOut, LayoutDashboard, Gavel, FileSearch, Users, Home } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 const navItems = [
@@ -35,11 +35,10 @@ export default function Navigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
-                    isActive
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive
                       ? 'bg-primary/10 text-primary'
                       : 'text-foreground hover:bg-accent hover:text-primary'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden md:inline">{item.label}</span>

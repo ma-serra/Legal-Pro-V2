@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileSearch, Upload, Brain, ChartBar, LineChart, Target, Sparkles } from 'lucide-react'
+import { FileSearch, Upload, Brain, BarChart3, LineChart, Target, Sparkles } from 'lucide-react'
 import PageHeader from '../components/ui/PageHeader'
 import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
@@ -33,7 +33,7 @@ const tiposAnalise = [
     id: 'estatistica' as TipoAnalise,
     nome: 'Análise Estatística',
     descricao: 'Compara com casos similares e apresenta estatísticas de sucesso.',
-    icon: ChartBar,
+    icon: BarChart3,
     cor: 'from-green-600 to-green-800'
   },
   {
@@ -126,7 +126,7 @@ export default function Analises() {
         <div className="space-y-4">
           <div className="bg-card rounded-xl border border-border p-6">
             <h3 className="text-lg font-semibold mb-4">Texto para Análise</h3>
-            
+
             <div className="mb-4">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition">
                 <Upload className="w-8 h-8 text-muted-foreground mb-2" />
@@ -157,11 +157,10 @@ export default function Analises() {
                   <button
                     key={tipo.id}
                     onClick={() => setTipoSelecionado(tipo.id)}
-                    className={`p-4 rounded-lg border text-left transition ${
-                      tipoSelecionado === tipo.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
-                    }`}
+                    className={`p-4 rounded-lg border text-left transition ${tipoSelecionado === tipo.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                      }`}
                   >
                     <Icon className={`w-6 h-6 mb-2 ${tipoSelecionado === tipo.id ? 'text-primary' : 'text-muted-foreground'}`} />
                     <h4 className="font-medium text-sm">{tipo.nome}</h4>
@@ -190,7 +189,7 @@ export default function Analises() {
 
         <div className="bg-card rounded-xl border border-border p-6">
           <h3 className="text-lg font-semibold mb-4">Resultado da Análise</h3>
-          
+
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <LoadingSpinner size="lg" text="Analisando documento..." />
@@ -198,9 +197,8 @@ export default function Analises() {
           ) : resultado ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-4 border-b border-border">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${
-                  tiposAnalise.find(t => t.id === resultado.tipo)?.cor
-                } text-white`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${tiposAnalise.find(t => t.id === resultado.tipo)?.cor
+                  } text-white`}>
                   {tiposAnalise.find(t => t.id === resultado.tipo)?.nome}
                 </span>
                 {resultado.score && (
@@ -209,13 +207,13 @@ export default function Analises() {
                   </span>
                 )}
               </div>
-              
+
               <div className="prose prose-invert max-w-none">
                 <div className="whitespace-pre-wrap text-foreground text-sm leading-relaxed">
                   {resultado.resultado}
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground">
                   Análise realizada em {new Date(resultado.timestamp).toLocaleString('pt-BR')}
