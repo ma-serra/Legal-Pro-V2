@@ -115,22 +115,79 @@ def chat_assistente(assistente_id):
         mensagem = data['mensagem']
         contexto = data.get('contexto', '')
         
-        # Por enquanto, retornar resposta mockada
-        # TODO: Integrar com assistente real usando módulo correspondente
-        resposta_mock = {
-            'assistente_id': assistente.id,
-            'assistente_nome': assistente.nome,
-            'mensagem_usuario': mensagem,
-            'resposta': f"Olá! Sou o assistente {assistente.nome}, especializado em {assistente.categoria.nome if assistente.categoria else 'Direito'}. "
-                       f"Sua mensagem foi recebida: '{mensagem[:100]}...'. "
-                       f"Em breve estarei processando consultas jurídicas reais usando {assistente.modelo_ai or 'IA avançada'}. "
-                       f"Minhas capacidades incluem: {', '.join(assistente.capacidades[:3]) if assistente.capacidades else 'análise jurídica completa'}.",
-            'timestamp': datetime.now().isoformat(),
-            'modelo_utilizado': assistente.modelo_ai or 'gpt-4o',
-            'tokens_usados': 150  # Mock
-        }
+        # Integrar com IA REAL usando multi_api_handler
+        try:
+            from modules.multi_api_handler import multi_api
+            
+            # Buscar configurações do assistente
+            detalhes = assistente.get_detalhes_tecnicos()
+            provider = detalhes.get('provider', 'openai')
+            modelo = assistente.modelo_ai or detalhes.get('default_model', 'gpt-4o')
+            temperatura = assistente.temperatura or 0.7
+            max_tokens = assistente.max_tokens or 2000
+            
+            # Construir contexto do sistema
+            context_system = f"""Você é {assistente.nome}, um assistente jurídico especializado em {assistente.categoria.nome if assistente.categoria else 'Direito'}.
+
+Descrição: {assistente.descricao or 'Assistente jurídico especializado'}
+
+Suas capacidades: {', '.join(assistente.capacidades[:3]) if assistente.capacidades else 'análise jurídica completa'}
+
+Responda de forma profissional, técnica e precisa. Use referências legais quando apropriado."""
+
+            if contexto:
+                context_system += f"\n\nContexto adicional: {contexto}"
+            
+            # Chamar IA
+            resultado = multi_api.generate_response(
+                prompt=mensagem,
+                provider=provider,
+                model=modelo,
+                max_tokens=max_tokens,
+                temperature=temperatura,
+                context=context_system
+            )
+            
+            if resultado['success']:
+                resposta_final = {
+                    'assistente_id': assistente.id,
+                    'assistente_nome': assistente.nome,
+                    'mensagem_usuario': mensagem,
+                    'resposta': resultado['response'],
+                    'timestamp': resultado['timestamp'],
+                    'modelo_utilizado': f"{resultado['provider']} - {resultado['model']}",
+                    'tokens_usados': resultado['tokens_used'],
+                    'tempo_resposta': resultado['response_time'],
+                    'provider': resultado['provider']
+                }
+            else:
+                # Fallback para mock se IA falhar
+                resposta_final = {
+                    'assistente_id': assistente.id,
+                    'assistente_nome': assistente.nome,
+                    'mensagem_usuario': mensagem,
+                    'resposta': f"Desculpe, estou com dificuldades técnicas no momento. Erro: {resultado.get('error', 'Desconhecido')}",
+                    'timestamp': datetime.now().isoformat(),
+                    'modelo_utilizado': 'fallback',
+                    'tokens_usados': 0,
+                    'erro': resultado.get('error')
+                }
         
-        return jsonify(resposta_mock), 200
+        except Exception as e:
+            logger.error(f"Erro ao processar com IA: {e}")
+            # Fallback completo
+            resposta_final = {
+                'assistente_id': assistente.id,
+                'assistente_nome': assistente.nome,
+                'mensagem_usuario': mensagem,
+                'resposta': f"Sou o assistente {assistente.nome}. No momento estou em modo de manutenção. Por favor, tente novamente em alguns instantes.",
+                'timestamp': datetime.now().isoformat(),
+                'modelo_utilizado': 'fallback',
+                'tokens_usados': 0,
+                'erro_tecnico': str(e)
+            }
+        
+        return jsonify(resposta_final), 200
         
     except Exception as e:
         logger.error(f"Erro ao processar chat com assistente {assistente_id}: {e}")
