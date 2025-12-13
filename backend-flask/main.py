@@ -848,6 +848,30 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Transcrição: {e}")
     
+    # Registrar API REST de Legal Design Pro
+    try:
+        from modules.api_rest_legal_design import register_legal_design_api
+        register_legal_design_api(app)
+        logger.info("✅ API REST de Legal Design Pro registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Legal Design: {e}")
+    
+    # Registrar API REST de Modelos Jurídicos
+    try:
+        from modules.api_rest_modelos import register_modelos_api
+        register_modelos_api(app)
+        logger.info("✅ API REST de Modelos Jurídicos registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Modelos: {e}")
+    
+    # Registrar API REST de Export Manager
+    try:
+        from modules.api_rest_export import register_export_api
+        register_export_api(app)
+        logger.info("✅ API REST de Export Manager registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Export: {e}")
+    
     # Registrar Monitor de Tokens Simplificado (opcional)
     try:
         from token_monitor_simple import token_monitor_bp
