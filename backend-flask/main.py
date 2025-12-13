@@ -792,6 +792,14 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
     
+    # Registrar API REST de Autenticação para Frontend
+    try:
+        from modules.api_rest_auth import register_auth_rest_api
+        register_auth_rest_api(app)
+        logger.info("✅ API REST de Autenticação registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Autenticação: {e}")
+    
     # Registrar Monitor de Tokens Simplificado (opcional)
     try:
         from token_monitor_simple import token_monitor_bp
