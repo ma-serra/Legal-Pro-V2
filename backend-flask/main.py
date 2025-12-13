@@ -6124,11 +6124,11 @@ logger.info("⚠️  Módulo Setor Energia: Usar redirect /cpfl/* → /setorener
 # except Exception as e:
 #     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
 logger.info("⚠️  Módulo Fintechs: Usar redirect /fintech/* → /fintechs/*")
-    logger.info("   • Machine Learning e KPIs estratégicos ativos")
-except Exception as e:
-    logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
-    import traceback
-    logger.error(traceback.format_exc())
+# logger.info("   • Machine Learning e KPIs estratégicos ativos")
+# except Exception as e:
+#     logger.error(f"❌ Erro ao registrar Módulo Fintechs Analytics: {str(e)}")
+#     import traceback
+#     logger.error(traceback.format_exc())
 
 # ================================= 
 # MÓDULO /transcricao-audio/ CRIADO DO ZERO - SEM AUTENTICAÇÃO
