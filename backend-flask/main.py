@@ -832,6 +832,22 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Análises: {e}")
     
+    # Registrar API REST de Comparação de Documentos
+    try:
+        from modules.api_rest_comparacao import register_comparacao_api
+        register_comparacao_api(app)
+        logger.info("✅ API REST de Comparação de Documentos registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Comparação: {e}")
+    
+    # Registrar API REST de Transcrição
+    try:
+        from modules.api_rest_transcricao import register_transcricao_api
+        register_transcricao_api(app)
+        logger.info("✅ API REST de Transcrição registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Transcrição: {e}")
+    
     # Registrar Monitor de Tokens Simplificado (opcional)
     try:
         from token_monitor_simple import token_monitor_bp
