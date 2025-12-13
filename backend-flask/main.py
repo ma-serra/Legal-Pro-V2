@@ -575,8 +575,8 @@ def create_app():
                 return 'R$ 0,00'
         
         # Depois importa as rotas
-        from app import init_app
-        init_app(app)
+        # from app import init_app  # Módulo 'app' não existe
+        # init_app(app)
         
         # As rotas dos agentes executores são registradas automaticamente através de init_app
         
