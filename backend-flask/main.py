@@ -778,19 +778,17 @@ def create_app():
     
     # Registrar API Qdrant para Busca Vetorial
     try:
-        pass  # Módulo 'api_qdrant_integration' não existe
-        # from api_qdrant_integration import registrar_api_qdrant
-        # registrar_api_qdrant(app)
-        # logger.info("✅ API Qdrant registrada com sucesso")
+        from scripts.apis.core.api_qdrant_integration import registrar_api_qdrant
+        registrar_api_qdrant(app)
+        logger.info("✅ API Qdrant registrada com sucesso")
     except Exception as e:
         logger.warning(f"⚠️ API Qdrant não disponível: {e}")
     
     # Registrar API de Chat Jurídico (com nome único)
     try:
-        pass  # Módulo 'api_chat_juridico' não existe
-        # from api_chat_juridico import chat_juridico
-        # app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
-        # logger.info("✅ API de Chat Jurídico registrada com sucesso")
+        from scripts.apis.core.api_chat_juridico import chat_juridico
+        app.register_blueprint(chat_juridico, url_prefix='/api/chat', name='api_chat_juridico_main')
+        logger.info("✅ API de Chat Jurídico registrada com sucesso")
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
     
