@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico de Conversas | Assistente Jurídico{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('assistente.static', filename='css/assistente.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Histórico de Conversas</h2>
+        <a href="{{ url_for('assistente.chat') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Conversa
+        </a>
+    </div>
+    
+    {% if conversas %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Título</th>
+                        <th>Modelo</th>
+                        <th>Personalidade</th>
+                        <th>Tom de Voz</th>
+                        <th>Atualizada em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conversa in conversas %}
+                    <tr>
+                        <td>{{ conversa.titulo }}</td>
+                        <td>{{ conversa.modelo_llm.split('/')[1] }}</td>
+                        <td>{{ conversa.personalidade.capitalize() }}</td>
+                        <td>{{ conversa.tom_voz.capitalize() }}</td>
+                        <td>{{ conversa.atualizado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Ações">
+                                <a href="{{ url_for('assistente.chat', conversa_id=conversa.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-comments"></i> Abrir
+                                </a>
+                                <button class="btn btn-sm btn-danger btn-excluir" data-conversa-id="{{ conversa.id }}">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <h4 class="alert-heading">Nenhuma conversa encontrada!</h4>
+            <p>Você ainda não iniciou nenhuma conversa com o assistente.</p>
+            <hr>
+            <p class="mb-0">Clique no botão "Nova Conversa" para começar.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botões de excluir conversa
+        const btnsExcluir = document.querySelectorAll('.btn-excluir');
+        btnsExcluir.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const conversaId = this.getAttribute('data-conversa-id');
+                if (confirm('Tem certeza que deseja excluir esta conversa?')) {
+                    fetch('/assistente/chat/excluir/' + conversaId, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Recarrega a página após excluir
+                            window.location.reload();
+                        } else {
+                            alert('Erro ao excluir conversa: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Ocorreu um erro ao processar sua solicitação.');
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

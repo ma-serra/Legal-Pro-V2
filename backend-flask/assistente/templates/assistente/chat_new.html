@@ -1,0 +1,394 @@
+{% extends "layout.html" %}
+
+{% block title %}Assistente IA{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        /* Estilos específicos para a página do assistente */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Barra lateral de conversas */
+        .sidebar {
+            width: 280px;
+            background-color: #252525;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+        
+        .sidebar-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .sidebar-title h4 {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        .sidebar-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .conversation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .conversation-item {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #333;
+            color: #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .conversation-item:hover {
+            background-color: #444;
+        }
+        
+        .conversation-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .conversation-item .title {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .conversation-item .date {
+            font-size: 0.8em;
+            color: #aaa;
+        }
+        
+        .active .date {
+            color: #d0d0ff;
+        }
+        
+        /* Área principal de chat */
+        .main-chat {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Cabeçalho com configurações */
+        .chat-header {
+            padding: 15px;
+            background-color: #252525;
+            border-bottom: 1px solid #333;
+        }
+        
+        .config-item {
+            margin-bottom: 10px;
+        }
+        
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ddd;
+            font-size: 0.95em;
+        }
+        
+        .config-item i {
+            margin-right: 5px;
+            color: #0d6efd;
+        }
+        
+        /* Área de mensagens */
+        .chat-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .messages-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .message {
+            color: #ffffff;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            background-color: #0d6efd;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .assistant-message {
+            background-color: #333;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        
+        .message-content {
+            padding: 5px;
+        }
+        
+        .empty-chat-message {
+            text-align: center;
+            margin: auto;
+            padding: 20px;
+            color: #ffffff;
+        }
+        
+        .empty-chat-message h3 {
+            color: #0d6efd;
+            margin-bottom: 15px;
+        }
+        
+        textarea.form-control {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+        }
+        
+        textarea.form-control:focus {
+            background-color: #333;
+            color: #fff;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        /* Estilos responsivos */
+        @media (min-width: 992px) {
+            .chat-container {
+                flex-direction: row;
+            }
+        }
+        
+        @media (max-width: 991.98px) {
+            .chat-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #333;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-3 text-white">Assistente IA</h2>
+            
+            <div class="chat-container">
+                <!-- Painel de configurações -->
+                <div class="chat-header">
+                    <form id="configForm" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="modelo_llm"><i class="fas fa-brain"></i> Modelo de Linguagem</label>
+                                <select id="modelo_llm" name="modelo_llm" class="form-select">
+                                    <!-- Opções de modelo fixas para demonstração -->
+                                    <option value="openai/gpt-4o">GPT-4o</option>
+                                    <option value="anthropic/claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                    <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="personalidade"><i class="fas fa-user-tie"></i> Personalidade Jurídica</label>
+                                <select id="personalidade" name="personalidade" class="form-select">
+                                    <!-- Opções de personalidade fixas para demonstração -->
+                                    <option value="advogado">Advogado</option>
+                                    <option value="juiz">Juiz</option>
+                                    <option value="promotor">Promotor</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="config-item">
+                                <label for="tom_voz"><i class="fas fa-comment-dots"></i> Tom de Voz</label>
+                                <select id="tom_voz" name="tom_voz" class="form-select">
+                                    <!-- Opções de tom de voz fixas para demonstração -->
+                                    <option value="formal">Formal</option>
+                                    <option value="natural">Natural</option>
+                                    <option value="simples">Simplificado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Nova linha com opções de fontes de contexto -->
+                        <div class="col-12 mt-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usar_pesquisa_web" name="usar_pesquisa_web">
+                                        <label class="form-check-label" for="usar_pesquisa_web" style="color: white;">
+                                            <i class="fas fa-globe"></i> Usar Pesquisa Web
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usar_documentos" name="usar_documentos">
+                                        <label class="form-check-label" for="usar_documentos" style="color: white;">
+                                            <i class="fas fa-file-alt"></i> Usar Documentos Enviados
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-save"></i> Salvar Configurações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Área de mensagens -->
+                <div class="chat-area">
+                    <div id="messages" class="messages-container">
+                        <div class="empty-chat-message">
+                            <h3>Assistente AI</h3>
+                            <p>Bem-vindo ao seu assistente especializado para questões jurídicas!</p>
+                            <p>Você pode fazer perguntas, enviar documentos para análise, e obter respostas baseadas em conhecimento jurídico.</p>
+                            <p>Utilize as configurações acima para ajustar o modelo, personalidade e tom das respostas.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário de mensagem -->
+                    <form id="chatForm" action="#" method="post">
+                        <div class="input-group">
+                            <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #1f5981; color: white; border-color: #25a56a;">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <label class="dropdown-item" for="fileUpload">
+                                        <i class="fas fa-file-upload"></i> Enviar Arquivo
+                                    </label>
+                                    <input id="fileUpload" type="file" name="file" style="display: none;">
+                                </li>
+                                <!-- Opção de Pesquisa Web removida e movida para configurações -->
+                            </ul>
+                            <textarea id="userInput" name="content" class="form-control" 
+                                      placeholder="Digite sua mensagem aqui..." rows="1"></textarea>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Config form handling
+            const configForm = document.getElementById('configForm');
+            if (configForm) {
+                configForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    alert('Configurações salvas! (Demonstração)');
+                });
+            }
+            
+            // Chat form handling with message display
+            const chatForm = document.getElementById('chatForm');
+            if (chatForm) {
+                chatForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Obter o texto da mensagem
+                    const userInput = document.getElementById('userInput');
+                    const mensagem = userInput.value.trim();
+                    
+                    if (!mensagem) {
+                        return; // Não envia mensagens vazias
+                    }
+                    
+                    // Obter os valores do formulário
+                    const modelo = document.getElementById('modelo_llm').value;
+                    const personalidade = document.getElementById('personalidade').value;
+                    const tom = document.getElementById('tom_voz').value;
+                    
+                    // Adicionar a mensagem do usuário à interface
+                    const messagesContainer = document.getElementById('messages');
+                    const userMessageDiv = document.createElement('div');
+                    userMessageDiv.className = 'message user-message';
+                    userMessageDiv.innerHTML = `<div class="message-content">${mensagem}</div>`;
+                    messagesContainer.appendChild(userMessageDiv);
+                    
+                    // Limpar o campo de entrada
+                    userInput.value = '';
+                    
+                    // Adicionar mensagem de resposta simulada
+                    const assistantMessageDiv = document.createElement('div');
+                    assistantMessageDiv.className = 'message assistant-message';
+                    assistantMessageDiv.innerHTML = `
+                        <div class="message-content">
+                            <p>Essa é uma resposta simulada do assistente.</p>
+                            <p>Modelo: ${modelo}</p>
+                            <p>Personalidade: ${personalidade}</p>
+                            <p>Tom: ${tom}</p>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(assistantMessageDiv);
+                    
+                    // Rolar para o final das mensagens
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+            }
+            
+            // File upload handling
+            const fileUpload = document.getElementById('fileUpload');
+            if (fileUpload) {
+                fileUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        alert(`Arquivo selecionado: ${file.name} (Demonstração)`);
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

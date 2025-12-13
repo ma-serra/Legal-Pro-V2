@@ -389,6 +389,19 @@ def create_app():
     app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ECHO'] = False
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+    
+    # ====================================
+    # AUTO-LOGIN BYPASS (SEM AUTENTICAÇÃO)
+    # ====================================
+    app.config['LOGIN_DISABLED'] = True  # Desabilita login requirement
+    logger.info("🔓 AUTO-LOGIN ATIVADO - Sistema acessível sem login")
+    
+    # ==========================
+    # Database Configuration
+    # ==========================
     # Configurações otimizadas do banco para produção
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "pool_pre_ping": True,
@@ -14594,6 +14607,26 @@ def gestao_financeira_cliente():
         logger.error(f"Traceback completo: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@app.route('/')
+def index():
+    """Rota raiz - Redireciona direto para home (SEM LOGIN)"""
+    try:
+        # Auto-login bypass - ir direto para home
+        return redirect('/home')
+    except Exception as e:
+        logger.error(f"Erro na rota raiz: {e}")
+        # Fallback para home mesmo com erro
+        return redirect('/home')
+
+@app.route('/home')
+def home_dashboard():
+    """Home dashboard - ACESSÍVEL SEM LOGIN"""
+    try:
+        return render_template('home_dashboard.html')
+    except Exception as e:
+        logger.error(f"Erro ao carregar home: {e}")
+        return jsonify({'error': 'Erro ao carregar dashboard'}), 500
 
 @app.route('/debug/financeiro')
 def debug_financeiro():
