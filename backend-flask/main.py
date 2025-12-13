@@ -412,10 +412,10 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     
     # ====================================
-    # AUTO-LOGIN BYPASS (SEM AUTENTICAÇÃO)
+    # AUTHENTICATION ENABLED
     # ====================================
-    app.config['LOGIN_DISABLED'] = True  # Desabilita login requirement
-    logger.info("🔓 AUTO-LOGIN ATIVADO - Sistema acessível sem login")
+    app.config['LOGIN_DISABLED'] = False  # Habilita autenticação real
+    logger.info("🔐 AUTENTICAÇÃO ATIVADA - Login obrigatório")
     
     # ==========================
     # Database Configuration
@@ -501,40 +501,13 @@ def create_app():
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
     
-    # BYPASS GLOBAL PARA APRESENTAÇÃO GOOGLE FOR STARTUPS - Nenhuma autenticação necessária
-    @app.before_request
-    def bypass_auth_global_demo():
-        from flask import g
-        from flask_login import login_user
-        
-        # Simular usuário autenticado GLOBALMENTE para apresentação
-        class FakeUser:
-            is_authenticated = True
-            is_active = True
-            is_anonymous = False
-            id = 1
-            username = 'demo'
-            email = 'demo@legalpro.com'
-            is_admin = True
-            is_master = True
-            
-            class FakeRole:
-                name = 'Admin'
-            
-            roles = [FakeRole()]
-            role = FakeRole()
-            
-            def get_id(self): 
-                return str(self.id)
-        
-        fake_user = FakeUser()
-        g._login_user = fake_user
-        # Forçar usuário autenticado globalmente para bypass
-        try:
-            login_user(fake_user, remember=True)
-        except:
-            pass
-        return None
+    # BYPASS GLOBAL REMOVIDO - Autenticação real contra PostgreSQL ativada
+    # Login agora valida credenciais contra o banco de dados Railway
+    # Use: dmay / C4rn31r0$425#401! para login
+    # @app.before_request
+    # def bypass_auth_global_demo():
+    #     # DESATIVADO: Bypass removido para habilitar autenticação real
+    #     pass
     
     # Lista de rotas que não requerem autenticação (usada para referência)
     # As rotas /transcription/* agora funcionam sem autenticação
