@@ -9026,25 +9026,19 @@ Forneça uma análise completa, profissional e detalhada em português com MÁXI
 # ================================= 
 # MULTIAGENT ADVANCED ANALYSIS ROUTES
 # =================================
-# TEMPORARIAMENTE DESABILITADO - Circular import error
-# Erro: analise_avancada.py tenta "from main import db" causando circular import
-# Solução: Criar módulo de database separado ou ajustar imports
-# try:
-#     from multiagent.routes.analise_avancada import init_blueprint as init_analise_avancada
-#     init_analise_avancada(app)
-#     
-#     logger.info("✅ Multiagent Advanced Analysis ativo")
-#     logger.info("   • Análise comparativa de documentos")
-#     logger.info("   • Histórico e versionamento")
-#     logger.info("   • 44 endpoints de análise avançada")
-#     logger.info("   • Endpoints: /api/analise-avancada/*")
-# except Exception as e:
-#     logger.warning(f"⚠️ Multiagent Routes indisponível: {str(e)}")
-#     import traceback
-#     logger.warning(traceback.format_exc())
-logger.warning("⚠️ Multiagent Advanced Routes desabilitado temporariamente")
-logger.warning("   • Motivo: Circular import (analise_avancada.py → main.py → db)")
-logger.warning("   • Solução em desenvolvimento")
+try:
+    from multiagent.routes.analise_avancada import init_blueprint as init_analise_avancada
+    init_analise_avancada(app)
+    
+    logger.info("✅ Multiagent Advanced Analysis ativo")
+    logger.info("   • Análise comparativa de documentos")
+    logger.info("   • Histórico e versionamento")
+    logger.info("   • 44 endpoints de análise avançada")
+    logger.info("   • Endpoints: /avancado/*")
+except Exception as e:
+    logger.warning(f"⚠️ Multiagent Routes indisponível: {str(e)}")
+    import traceback
+    logger.warning(traceback.format_exc())
     
     # Registrar API de seleção inteligente com alta confiança (opcional)
 try:
