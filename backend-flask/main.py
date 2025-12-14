@@ -1423,6 +1423,19 @@ Forneça uma resposta técnica e detalhada adequada para profissionais do direit
     except Exception as e:
         logger.warning(f"⚠️ Erro ao registrar Monitor de Tokens: {e}")
 
+    # ============================================================
+    # REGISTRAR ROTAS SAAS - Multi-Tenancy
+    # ============================================================
+    try:
+        from routes_saas import register_saas_routes
+        register_saas_routes(app)
+        logger.info("✅ SaaS API routes registradas - Multi-tenant ativo")
+    except ImportError as e:
+        logger.warning("⚠️ Rotas SaaS não disponíveis - routes_saas.py não encontrado")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar rotas SaaS: {e}")
+
+
     
     # Orquestrador de Direito Imobiliário com agente especializado em análise de matrículas
     @app.route('/assistente/direito_imobiliario')
