@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/login', { email, password })
+      const response = await api.post('/api/auth/login', { email, password })
       const { token: newToken } = response.data
       localStorage.setItem('token', newToken)
       setToken(newToken)

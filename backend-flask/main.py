@@ -798,14 +798,15 @@ def create_app():
     #     logger.error(f"❌ Erro ao registrar API de Chat Jurídico: {e}")
     
     # Registrar API REST de Autenticação para Frontend
-    # DESATIVADO: Registrado novamente na linha 5317 (evitar duplicação)
-    # PROBLEMA: Requer módulo PyJWT que foi adicionado ao requirements.txt
-    # try:
-    #     from modules.api_rest_auth import register_auth_rest_api
-    #     register_auth_rest_api(app)
-    #     logger.info("✅ API REST de Autenticação registrada com sucesso")
-    # except Exception as e:
-    #     logger.error(f"❌ Erro ao registrar API de Autenticação: {e}")
+    # DESATIVADO: Registrado novamente na linha 5317 (evitar duplicação)    
+    # Registrar API REST de Autenticação
+    try:
+        from modules.api_rest_auth import register_auth_api
+        register_auth_api(app)
+        logger.info("✅ API REST de Autenticação registrada com sucesso")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Autenticação: {e}")
+
     
     # Registrar API REST de Dashboard para Frontend
     try:
