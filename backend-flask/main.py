@@ -1388,6 +1388,41 @@ Forneça uma resposta técnica e detalhada adequada para profissionais do direit
         except Exception as e2:
             logger.error(f"❌ Erro ao registrar fallback: {e2}")
     
+    # ============================================================
+    # MÓDULOS OPCIONAIS - APIs complementares
+    # ============================================================
+    
+    # Registrar API de Template Content
+    try:
+        from scripts.apis.core.api_template_content import register_template_content_api
+        register_template_content_api(app)
+        logger.info("✅ API de template content registrada com sucesso")
+    except ImportError as e:
+        logger.info("⚠️ API de template content não disponível (módulo opcional)")
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao registrar API de template content: {e}")
+    
+    # Registrar API de Especialistas
+    try:
+        from scripts.apis.core.api_especialistas import registrar_api_especialistas
+        registrar_api_especialistas(app)
+        logger.info("✅ API de especialistas registrada com sucesso")
+    except ImportError as e:
+        logger.info("⚠️ API de especialistas não disponível (módulo opcional)")
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao registrar API de especialistas: {e}")
+    
+    # Registrar Monitor de Tokens (se disponível)
+    try:
+        from token_monitor_simple import token_monitor_bp
+        app.register_blueprint(token_monitor_bp)
+        logger.info("✅ Monitor de Tokens Simplificado registrado com sucesso")
+    except ImportError:
+        logger.info("⚠️ Monitor de Tokens não disponível (módulo opcional)")
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao registrar Monitor de Tokens: {e}")
+
+    
     # Orquestrador de Direito Imobiliário com agente especializado em análise de matrículas
     @app.route('/assistente/direito_imobiliario')
     @app.route('/area/direito_imobiliario')
