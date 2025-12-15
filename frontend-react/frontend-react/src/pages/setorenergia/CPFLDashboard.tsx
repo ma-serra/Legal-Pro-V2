@@ -4,7 +4,7 @@ import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { PageHeader, StatCard } from '../../components/ui/AdminComponents'
 import {
     TrendingUp, AlertTriangle, MapPin, Calendar,
-    FileText, DollarSign, Users, BarChart3
+    FileText, DollarSign, BarChart3
 } from 'lucide-react'
 import api from '../../lib/api'
 
@@ -92,29 +92,23 @@ export default function CPFLDashboard() {
                     title="Total de Processos"
                     value={stats.total_processos.toString()}
                     icon={FileText}
-                    trend={`${stats.processos_ativos} ativos`}
-                    trendUp={true}
+                    trend={{ value: 5.2, isPositive: true }}
                 />
                 <StatCard
                     title="Processos Sobrestados"
                     value={stats.processos_sobrestados.toString()}
                     icon={AlertTriangle}
-                    iconColor="text-orange-600"
-                    trend="Requer atenção"
                 />
                 <StatCard
                     title="Valor Total em Causa"
                     value={formatCurrency(stats.valor_total_causa)}
                     icon={DollarSign}
-                    iconColor="text-green-600"
                 />
                 <StatCard
                     title="Taxa de Sucesso"
                     value={`${stats.taxa_sucesso}%`}
                     icon={TrendingUp}
-                    iconColor="text-blue-600"
-                    trend="Últimos 6 meses"
-                    trendUp={true}
+                    trend={{ value: stats.taxa_sucesso, isPositive: stats.taxa_sucesso > 70 }}
                 />
             </div>
 
