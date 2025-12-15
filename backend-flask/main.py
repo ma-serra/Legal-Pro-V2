@@ -864,6 +864,22 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Processos Tributário: {e}")
     
+    # Registrar API REST de Processos Trabalhista (Fase 3)
+    try:
+        from modules.processos_trabalhista.routes import registrar_rotas as registrar_trabalhista
+        registrar_trabalhista(app)
+        logger.info("✅ API REST de Processos Trabalhista registrada com sucesso (8 endpoints)")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Processos Trabalhista: {e}")
+    
+    # Registrar API REST de Processos Cível (Fase 3)
+    try:
+        from modules.processos_civel.routes import registrar_rotas as registrar_civel
+        registrar_civel(app)
+        logger.info("✅ API REST de Processos Cível registrada com sucesso (8 endpoints)")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Processos Cível: {e}")
+    
     # Registrar API REST de Transcrição
     try:
         from modules.api_rest_transcricao import register_transcricao_api
