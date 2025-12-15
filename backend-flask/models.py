@@ -572,8 +572,8 @@ class Conversa(db.Model):
     ativa = Column(Boolean, default=True)
     
     # Relacionamentos
-    assistente = relationship("AgenteJuridico", backref="conversas")
-    usuario = relationship("User", backref="conversas", foreign_keys=[usuario_id])
+    assistente = relationship("AgenteJuridico", backref="chat_conversas")
+    usuario = relationship("User", backref="chat_conversas", foreign_keys=[usuario_id])
     
     # Índices
     __table_args__ = (
