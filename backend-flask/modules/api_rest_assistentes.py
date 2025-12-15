@@ -146,12 +146,16 @@ def chat_assistente(assistente_id):
         try:
             from modules.multi_api_handler import multi_api
             
-            # Buscar configurações LLM do assistente (NOVO - usar configuracoes_llm)
             config_llm = assistente.configuracoes_llm if assistente.configuracoes_llm else {}
             
-            # Extrair provider e model das configuracoes_llm
-            provider = config_llm.get('llm_provider', 'openai')
-            modelo = config_llm.get('llm_model', 'gpt-4o')
+            # NOVO: Aceitar override de provider/model do request
+            conversa_id = data.get('conversa_id')  # ID da conversa (opcional)
+            provider_override = data.get('provider')  # Override de provider
+            model_override = data.get('model')  # Override de model
+            
+            # Extrair provider e model das configuracoes_llm (com override)
+            provider = provider_override or config_llm.get('llm_provider', 'openai')
+            modelo = model_override or config_llm.get('llm_model', 'gpt-4o')
             temperatura = config_llm.get('temperatura', 0.3)
             max_tokens = config_llm.get('max_tokens', 8000)
             
@@ -230,6 +234,40 @@ Responda de forma profissional, técnica e precisa. Use referências legais quan
                 'tokens_usados': 0,
                 'erro_tecnico': str(e)
             }
+        
+        # NOVO: Salvar mensagem na conversa se conversa_id fornecido
+        if conversa_id and resposta_final.get('resposta'):
+            try:
+                from models import Conversa
+                from datetime import datetime
+                
+                conversa = Conversa.query.filter_by(id=conversa_id, assistente_id=assistente_id, ativa=True).first()
+                if conversa:
+                    # Adicionar mensagens (user + assistant)
+                    mensagens_atuais = conversa.mensagens or []
+                    mensagens_atuais.append({
+                        'role': 'user',
+                        'content': mensagem,
+                        'timestamp': datetime.now().isoformat()
+                    })
+                    mensagens_atuais.append({
+                        'role': 'assistant',
+                        'content': resposta_final['resposta'],
+                        'timestamp': resposta_final.get('timestamp', datetime.now().isoformat()),
+                        'provider': resposta_final.get('provider'),
+                        'model': resposta_final.get('modelo_utilizado')
+                    })
+                    
+                    conversa.mensagens = mensagens_atuais
+                    conversa.provider_usado = provider
+                    conversa.modelo_usado = modelo
+                    conversa.data_atualizacao = datetime.now()
+                    
+                    db.session.commit()
+                    logger.info(f"Mensagens salvas na conversa {conversa_id}")
+            except Exception as e:
+                logger.error(f"Erro ao salvar na conversa: {e}")
+                # Não bloqueia a resposta se falhar ao salvar
         
         return jsonify(resposta_final), 200
         
