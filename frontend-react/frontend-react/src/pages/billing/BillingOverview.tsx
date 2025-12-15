@@ -1,11 +1,10 @@
-import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { PageHeader, StatCard } from '../../components/ui/AdminComponents'
 import { CreditCard, Calendar, Download, DollarSign } from 'lucide-react'
 
 export default function BillingOverview() {
-    const { slug } = useParams()
+    // const { slug } = useParams()
 
     // Mock data
     const billingData = {

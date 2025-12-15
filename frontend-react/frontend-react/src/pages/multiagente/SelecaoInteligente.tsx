@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { PageHeader } from '../../components/ui/AdminComponents'
 import { Brain, Sparkles, FileText, Play } from 'lucide-react'
-import api from '../../lib/api'
+// import api from '../../lib/api'
 
 interface AgentSuggestion {
     agente_id: number
@@ -160,8 +160,8 @@ export default function SelecaoInteligente() {
                                 <label
                                     key={suggestion.agente_id}
                                     className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${selectedAgents.includes(suggestion.agente_id)
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:bg-gray-50'
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
                                     <input

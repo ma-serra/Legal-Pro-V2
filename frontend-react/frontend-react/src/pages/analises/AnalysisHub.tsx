@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { PageHeader } from '../../components/ui/AdminComponents'
@@ -97,8 +97,8 @@ export default function AnalysisHub() {
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedCategory === cat
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                             }`}
                     >
                         {cat === 'all' ? 'Todas' : cat}
