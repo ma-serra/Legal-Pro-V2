@@ -2903,19 +2903,19 @@ class HistoricoPagamento(db.Model):
 
  
  #   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
- #   S I S T E M A   D E   P R O C E S S O S   D I N Ã  M I C O S  
+ #   S I S T E M A   D E   P R O C E S S O S   D I N   M I C O S  
  #   A d i c i o n a d o   e m :   1 5   D e z e m b r o   2 0 2 5  
  #   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
   
  c l a s s   P r o c e s s o ( d b . M o d e l ) :  
-         " " " T a b e l a   p r i n c i p a l   d e   p r o c e s s o s   j u r Ã ­ d i c o s   c o m   c a m p o s   d i n Ã ¢ m i c o s " " "  
+         " " " T a b e l a   p r i n c i p a l   d e   p r o c e s s o s   j u r   d i c o s   c o m   c a m p o s   d i n   m i c o s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o s '  
           
          i d _ p r o c e s s o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          u u i d   =   C o l u m n ( U U I D ( a s _ u u i d = T r u e ) ,   d e f a u l t = u u i d . u u i d 4 ,   u n i q u e = T r u e ,   n u l l a b l e = F a l s e )  
          t e n a n t _ i d   =   C o l u m n ( I n t e g e r ,   n u l l a b l e = T r u e )  
           
-         #   D a d o s   B Ã ¡ s i c o s  
+         #   D a d o s   B   s i c o s  
          n u m e r o _ c n j   =   C o l u m n ( S t r i n g ( 2 5 ) )  
          p a s t a   =   C o l u m n ( S t r i n g ( 5 0 ) )  
          s t a t u s _ i d   =   C o l u m n ( I n t e g e r )  
@@ -2925,12 +2925,12 @@ class HistoricoPagamento(db.Model):
          c l i e n t e _ i d   =   C o l u m n ( I n t e g e r )  
          p o s i c a o _ c l i e n t e _ i d   =   C o l u m n ( I n t e g e r )  
           
-         #   C l a s s i f i c a Ã § Ã £ o   J u r Ã ­ d i c a  
+         #   C l a s s i f i c a     o   J u r   d i c a  
          a c a o _ i d   =   C o l u m n ( I n t e g e r )  
          p r o c e d i m e n t o _ i d   =   C o l u m n ( I n t e g e r )  
          f a s e _ i d   =   C o l u m n ( I n t e g e r )  
           
-         #   L o c a l i z a Ã § Ã £ o   P r o c e s s u a l  
+         #   L o c a l i z a     o   P r o c e s s u a l  
          o r g a o _ i d   =   C o l u m n ( I n t e g e r )  
          c o m a r c a _ i d   =   C o l u m n ( I n t e g e r )  
          v a r a _ t u r m a _ i d   =   C o l u m n ( I n t e g e r )  
@@ -2952,7 +2952,7 @@ class HistoricoPagamento(db.Model):
          v a l o r _ e n v o l v i d o _ a t u a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          c o n t i n g e n c i a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
           
-         #   P r o g n Ã ³ s t i c o  
+         #   P r o g n   s t i c o  
          t i p o _ p r o b a b i l i d a d e _ i d   =   C o l u m n ( I n t e g e r )  
          r i s c o _ i d   =   C o l u m n ( I n t e g e r )  
           
@@ -2973,7 +2973,7 @@ class HistoricoPagamento(db.Model):
                  r e t u r n   f ' < P r o c e s s o   { s e l f . i d _ p r o c e s s o } :   { s e l f . n u m e r o _ c n j   o r   s e l f . p a s t a } > '  
           
          d e f   t o _ d i c t ( s e l f ) :  
-                 " " " S e r i a l i z a Ã § Ã £ o   b Ã ¡ s i c a " " "  
+                 " " " S e r i a l i z a     o   b   s i c a " " "  
                  r e t u r n   {  
                          ' i d _ p r o c e s s o ' :   s e l f . i d _ p r o c e s s o ,  
                          ' u u i d ' :   s t r ( s e l f . u u i d ) ,  
@@ -2988,7 +2988,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o C a m p o s E s p e c i f i c o s ( d b . M o d e l ) :  
-         " " " C a m p o s   e s p e c Ã ­ f i c o s   p o r   n a t u r e z a   a r m a z e n a d o s   e m   J S O N B " " "  
+         " " " C a m p o s   e s p e c   f i c o s   p o r   n a t u r e z a   a r m a z e n a d o s   e m   J S O N B " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ c a m p o s _ e s p e c i f i c o s '  
           
          i d _ c a m p o _ e s p e c i f i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3033,7 +3033,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   T e s e T r i b u t a r i a ( d b . M o d e l ) :  
-         " " " T e s e s   j u r Ã ­ d i c a s   t r i b u t Ã ¡ r i a s " " "  
+         " " " T e s e s   j u r   d i c a s   t r i b u t   r i a s " " "  
          _ _ t a b l e n a m e _ _   =   ' t e s e s _ t r i b u t a r i a s '  
           
          i d _ t e s e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3043,15 +3043,15 @@ class HistoricoPagamento(db.Model):
          d e s c r i c a o   =   C o l u m n ( T e x t )  
          t r i b u t o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t r i b u t o s . i d _ t r i b u t o ' ) )  
           
-         #   J u r i s p r u d Ã ª n c i a  
+         #   J u r i s p r u d   n c i a  
          t e m a _ r e p e r c u s s a o _ g e r a l   =   C o l u m n ( S t r i n g ( 5 0 ) )  
          t e m a _ r e p e t i t i v o   =   C o l u m n ( S t r i n g ( 5 0 ) )  
          t r i b u n a l _ o r i g e m   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
           
-         #   P r o g n Ã ³ s t i c o   p a d r Ã £ o  
+         #   P r o g n   s t i c o   p a d r   o  
          p r o b a b i l i d a d e _ s u c e s s o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) )  
          f u n d a m e n t a c a o   =   C o l u m n ( T e x t )  
-         s i t u a c a o   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   F a v o r Ã ¡ v e l ,   D e s f a v o r Ã ¡ v e l ,   P e n d e n t e ,   S u p e r a d a  
+         s i t u a c a o   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   F a v o r   v e l ,   D e s f a v o r   v e l ,   P e n d e n t e ,   S u p e r a d a  
           
          a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
           
@@ -3079,7 +3079,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o T r i b u t a r i o ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c Ã ­ f i c o s   d e   p r o c e s s o s   t r i b u t Ã ¡ r i o s " " "  
+         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   t r i b u t   r i o s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t r i b u t a r i o '  
           
          i d _ p r o c e s s o _ t r i b u t a r i o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3093,7 +3093,7 @@ class HistoricoPagamento(db.Model):
          n u m e r o _ c d a   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
          d a t a _ l a n c a m e n t o   =   C o l u m n ( D a t e T i m e )  
           
-         #   V a l o r e s   E s p e c Ã ­ f i c o s  
+         #   V a l o r e s   E s p e c   f i c o s  
          v a l o r _ i n s c r i t o _ c d a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          v a l o r _ p r i n c i p a l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          v a l o r _ m u l t a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
@@ -3123,16 +3123,16 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o T e s e ( d b . M o d e l ) :  
-         " " " R e l a c i o n a m e n t o   N : N   e n t r e   p r o c e s s o s   e   t e s e s   t r i b u t Ã ¡ r i a s " " "  
+         " " " R e l a c i o n a m e n t o   N : N   e n t r e   p r o c e s s o s   e   t e s e s   t r i b u t   r i a s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t e s e '  
           
          i d _ p r o c e s s o _ t e s e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
          t e s e _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
           
-         #   O r d e m   d e   i m p o r t Ã ¢ n c i a  
+         #   O r d e m   d e   i m p o r t   n c i a  
          o r d e m   =   C o l u m n ( I n t e g e r ,   d e f a u l t = 1 )  
-         s t a t u s   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   A g u a r d a n d o ,   E m   a n Ã ¡ l i s e ,   A c e i t a ,   R e j e i t a d a  
+         s t a t u s   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   A g u a r d a n d o ,   E m   a n   l i s e ,   A c e i t a ,   R e j e i t a d a  
           
          d a t a _ v i n c u l a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
           
@@ -3146,23 +3146,23 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o P r o g n o s t i c o T r i b u t a r i o ( d b . M o d e l ) :  
-         " " " P r o g n Ã ³ s t i c o   d e t a l h a d o   p a r a   p r o c e s s o s   t r i b u t Ã ¡ r i o s " " "  
+         " " " P r o g n   s t i c o   d e t a l h a d o   p a r a   p r o c e s s o s   t r i b u t   r i o s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ t r i b u t a r i o '  
           
          i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ t r i b u t a r i o . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
           
-         #   Ã `x i t o   P r o v Ã ¡ v e l   ( 7 0 % )  
+         #    `x i t o   P r o v   v e l   ( 7 0 % )  
          t e s e _ p r o v a v e l _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
          v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
           
-         #   Ã `x i t o   P o s s Ã ­ v e l   ( 5 0 % )  
+         #    `x i t o   P o s s   v e l   ( 5 0 % )  
          t e s e _ p o s s i v e l _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
          v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
           
-         #   Ã `x i t o   R e m o t o   ( 2 5 % )  
+         #    `x i t o   R e m o t o   ( 2 5 % )  
          t e s e _ r e m o t a _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
          v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
@@ -3184,7 +3184,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o T r a b a l h i s t a ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c Ã ­ f i c o s   d e   p r o c e s s o s   t r a b a l h i s t a s " " "  
+         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   t r a b a l h i s t a s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t r a b a l h i s t a '  
           
          i d _ p r o c e s s o _ t r a b a l h i s t a   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3206,23 +3206,23 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o P r o g n o s t i c o T r a b a l h i s t a ( d b . M o d e l ) :  
-         " " " P r o g n Ã ³ s t i c o   p a r a   p r o c e s s o s   t r a b a l h i s t a s " " "  
+         " " " P r o g n   s t i c o   p a r a   p r o c e s s o s   t r a b a l h i s t a s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ t r a b a l h i s t a '  
           
          i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ t r a b a l h i s t a . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
           
-         #   Ã `x i t o   P r o v Ã ¡ v e l  
+         #    `x i t o   P r o v   v e l  
          t e s e _ p r o v a v e l   =   C o l u m n ( T e x t )  
          v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
           
-         #   Ã `x i t o   P o s s Ã ­ v e l  
+         #    `x i t o   P o s s   v e l  
          t e s e _ p o s s i v e l   =   C o l u m n ( T e x t )  
          v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
           
-         #   Ã `x i t o   R e m o t o  
+         #    `x i t o   R e m o t o  
          t e s e _ r e m o t a   =   C o l u m n ( T e x t )  
          v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
@@ -3241,7 +3241,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o C i v e l ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c Ã ­ f i c o s   d e   p r o c e s s o s   c Ã ­ v e i s " " "  
+         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   c   v e i s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ c i v e l '  
           
          i d _ p r o c e s s o _ c i v e l   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3263,23 +3263,23 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o P r o g n o s t i c o C i v e l ( d b . M o d e l ) :  
-         " " " P r o g n Ã ³ s t i c o   p a r a   p r o c e s s o s   c Ã ­ v e i s " " "  
+         " " " P r o g n   s t i c o   p a r a   p r o c e s s o s   c   v e i s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ c i v e l '  
           
          i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ c i v e l . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
           
-         #   Ã `x i t o   P r o v Ã ¡ v e l  
+         #    `x i t o   P r o v   v e l  
          t e s e _ p r o v a v e l   =   C o l u m n ( T e x t )  
          v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
           
-         #   Ã `x i t o   P o s s Ã ­ v e l  
+         #    `x i t o   P o s s   v e l  
          t e s e _ p o s s i v e l   =   C o l u m n ( T e x t )  
          v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
           
-         #   Ã `x i t o   R e m o t o  
+         #    `x i t o   R e m o t o  
          t e s e _ r e m o t a   =   C o l u m n ( T e x t )  
          v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
          p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
@@ -3298,7 +3298,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   I n d i c e M o n e t a r i o ( d b . M o d e l ) :  
-         " " " C a d a s t r o   d e   Ã ­ n d i c e s   d e   c o r r e Ã § Ã £ o   m o n e t Ã ¡ r i a " " "  
+         " " " C a d a s t r o   d e     n d i c e s   d e   c o r r e     o   m o n e t   r i a " " "  
          _ _ t a b l e n a m e _ _   =   ' i n d i c e s _ m o n e t a r i o s '  
           
          i d _ i n d i c e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3316,7 +3316,7 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   H i s t o r i c o I n d i c e ( d b . M o d e l ) :  
-         " " " H i s t Ã ³ r i c o   d e   v a l o r e s   d o s   Ã ­ n d i c e s   m o n e t Ã ¡ r i o s " " "  
+         " " " H i s t   r i c o   d e   v a l o r e s   d o s     n d i c e s   m o n e t   r i o s " " "  
          _ _ t a b l e n a m e _ _   =   ' h i s t o r i c o _ i n d i c e s '  
           
          i d _ h i s t o r i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
@@ -3337,13 +3337,13 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   P r o c e s s o A t u a l i z a c a o M o n e t a r i a ( d b . M o d e l ) :  
-         " " " R e g i s t r o   d e   a t u a l i z a Ã § Ã µ e s   m o n e t Ã ¡ r i a s   r e a l i z a d a s " " "  
+         " " " R e g i s t r o   d e   a t u a l i z a     e s   m o n e t   r i a s   r e a l i z a d a s " " "  
          _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ a t u a l i z a c a o _ m o n e t a r i a '  
           
          i d _ a t u a l i z a c a o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
           
-         #   C o n f i g u r a Ã § Ã £ o  
+         #   C o n f i g u r a     o  
          i n d i c e _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' i n d i c e s _ m o n e t a r i o s . i d _ i n d i c e ' ) ,   n u l l a b l e = F a l s e )  
          d a t a _ b a s e   =   C o l u m n ( D a t e T i m e ,   n u l l a b l e = F a l s e )  
          v a l o r _ b a s e   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) ,   n u l l a b l e = F a l s e )  
@@ -3361,20 +3361,20 @@ class HistoricoPagamento(db.Model):
   
   
  c l a s s   C o n f i g u r a c a o F o r m u l a r i o ( d b . M o d e l ) :  
-         " " " C o n f i g u r a Ã § Ã £ o   d i n Ã ¢ m i c a   d e   f o r m u l Ã ¡ r i o s   p o r   n a t u r e z a " " "  
+         " " " C o n f i g u r a     o   d i n   m i c a   d e   f o r m u l   r i o s   p o r   n a t u r e z a " " "  
          _ _ t a b l e n a m e _ _   =   ' c o n f i g u r a c a o _ f o r m u l a r i o '  
           
          i d _ c o n f i g u r a c a o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
          t e n a n t _ i d   =   C o l u m n ( I n t e g e r )  
          n a t u r e z a _ i d   =   C o l u m n ( I n t e g e r )  
           
-         #   E s t r u t u r a   d o   f o r m u l Ã ¡ r i o   e m   J S O N  
+         #   E s t r u t u r a   d o   f o r m u l   r i o   e m   J S O N  
          c a m p o s _ o b r i g a t o r i o s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = [ ] )  
          c a m p o s _ o p c i o n a i s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = [ ] )  
          v a l i d a c o e s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = { } )  
          l a y o u t   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = { } )  
           
-         #   V e r s Ã £ o  
+         #   V e r s   o  
          v e r s a o   =   C o l u m n ( I n t e g e r ,   d e f a u l t = 1 )  
          a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
           
