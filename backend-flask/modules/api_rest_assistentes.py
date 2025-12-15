@@ -146,15 +146,29 @@ def chat_assistente(assistente_id):
         try:
             from modules.multi_api_handler import multi_api
             
-            # Buscar configurações do assistente
-            detalhes = assistente.get_detalhes_tecnicos()
-            provider = detalhes.get('provider', 'openai')
-            modelo = assistente.modelo_ai or detalhes.get('default_model', 'gpt-4o')
-            temperatura = assistente.temperatura or 0.7
-            max_tokens = assistente.max_tokens or 2000
+            # Buscar configurações LLM do assistente (NOVO - usar configuracoes_llm)
+            config_llm = assistente.configuracoes_llm if assistente.configuracoes_llm else {}
+            
+            # Extrair provider e model das configuracoes_llm
+            provider = config_llm.get('llm_provider', 'openai')
+            modelo = config_llm.get('llm_model', 'gpt-4o')
+            temperatura = config_llm.get('temperatura', 0.3)
+            max_tokens = config_llm.get('max_tokens', 8000)
+            
+            # Usar prompt_template se disponível
+            prompt_template = assistente.prompt_template or assistente.template_prompt
             
             # Construir contexto do sistema
-            context_system = f"""Você é {assistente.nome}, um assistente jurídico especializado em {assistente.categoria.nome if assistente.categoria else 'Direito'}.
+            if prompt_template:
+                # Se tem template, substituir placeholders básicos
+                context_system = prompt_template.replace('{input}', mensagem)
+                # Substituir outros placeholders comuns
+                context_system = context_system.replace('{parametros.profundidade}', 'completa')
+                context_system = context_system.replace('{parametros.perspectiva}', 'neutra')
+                context_system = context_system.replace('{parametros.jurisdicao}', 'Brasil')
+            else:
+                # Fallback para contexto padrão
+                context_system = f"""Você é {assistente.nome}, um assistente jurídico especializado em {assistente.categoria.nome if assistente.categoria else 'Direito'}.
 
 Descrição: {assistente.descricao or 'Assistente jurídico especializado'}
 
@@ -165,7 +179,9 @@ Responda de forma profissional, técnica e precisa. Use referências legais quan
             if contexto:
                 context_system += f"\n\nContexto adicional: {contexto}"
             
-            # Chamar IA
+            logger.info(f"Chamando {provider}/{modelo} para assistente {assistente.nome}")
+            
+            # Chamar IA com configurações reais do assistente
             resultado = multi_api.generate_response(
                 prompt=mensagem,
                 provider=provider,
@@ -189,6 +205,7 @@ Responda de forma profissional, técnica e precisa. Use referências legais quan
                 }
             else:
                 # Fallback para mock se IA falhar
+                logger.error(f"Erro na API de IA: {resultado.get('error')}")
                 resposta_final = {
                     'assistente_id': assistente.id,
                     'assistente_nome': assistente.nome,
@@ -201,13 +218,13 @@ Responda de forma profissional, técnica e precisa. Use referências legais quan
                 }
         
         except Exception as e:
-            logger.error(f"Erro ao processar com IA: {e}")
+            logger.error(f"Erro ao processar com IA: {e}", exc_info=True)
             # Fallback completo
             resposta_final = {
                 'assistente_id': assistente.id,
                 'assistente_nome': assistente.nome,
                 'mensagem_usuario': mensagem,
-                'resposta': f"Sou o assistente {assistente.nome}. No momento estou em modo de manutenção. Por favor, tente novamente em alguns instantes.",
+                'resposta': f"Sou o assistente {assistente.nome}. No momento estou em modo de manutenção. Erro técnico: {str(e)}",
                 'timestamp': datetime.now().isoformat(),
                 'modelo_utilizado': 'fallback',
                 'tokens_usados': 0,
