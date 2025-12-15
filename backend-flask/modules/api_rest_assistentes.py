@@ -560,6 +560,71 @@ def deletar_conversa(assistente_id, conversa_id):
         logger.error(f"Erro ao deletar conversa: {e}")
         return jsonify({'error': 'Erro ao deletar'}), 500
 
+# === UPLOAD DE ARQUIVOS ===
+import os
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
+import uuid
+
+UPLOAD_FOLDER = 'uploads/conversas'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xlsx', 'csv', 'zip'}
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@assistentes_api.route('/<int:assistente_id>/conversas/<int:conversa_id>/upload', methods=['POST'])
+def upload_arquivo(assistente_id, conversa_id):
+    """Upload de arquivo"""
+    try:
+        from models import Conversa
+        conversa = Conversa.query.filter_by(id=conversa_id, assistente_id=assistente_id, ativa=True).first_or_404()
+        
+        if 'file' not in request.files:
+            return jsonify({'error': 'Nenhum arquivo'}), 400
+        
+        file = request.files['file']
+        if file.filename == '' or not allowed_file(file.filename):
+            return jsonify({'error': 'Arquivo inválido'}), 400
+        
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        upload_path = os.path.join(UPLOAD_FOLDER, str(conversa_id))
+        os.makedirs(upload_path, exist_ok=True)
+        
+        filepath = os.path.join(upload_path, unique_filename)
+        file.save(filepath)
+        
+        arquivo_info = {
+            'id': uuid.uuid4().hex,
+            'nome': filename,
+            'nome_unico': unique_filename,
+            'tipo': file.content_type or 'application/octet-stream',
+            'tamanho': os.path.getsize(filepath),
+            'url': f'/api/assistentes/{assistente_id}/conversas/{conversa_id}/files/{unique_filename}',
+            'data_upload': datetime.now().isoformat()
+        }
+        
+        arquivos = conversa.arquivos_anexados or []
+        arquivos.append(arquivo_info)
+        conversa.arquivos_anexados = arquivos
+        db.session.commit()
+        
+        return jsonify({'arquivo': arquivo_info}), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro upload: {e}")
+        return jsonify({'error': 'Erro ao fazer upload'}), 500
+
+@assistentes_api.route('/<int:assistente_id>/conversas/<int:conversa_id>/files/<filename>', methods=['GET'])
+def download_arquivo(assistente_id, conversa_id, filename):
+    """Download de arquivo"""
+    try:
+        upload_path = os.path.join(UPLOAD_FOLDER, str(conversa_id))
+        return send_from_directory(upload_path, filename)
+    except Exception as e:
+        return jsonify({'error': 'Arquivo não encontrado'}), 404
+
 def register_assistentes_api(app):
     """Registra o blueprint de assistentes no app"""
     app.register_blueprint(assistentes_api)
