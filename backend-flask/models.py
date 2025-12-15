@@ -416,7 +416,15 @@ class AgenteJuridico(db.Model):
     max_tokens = Column(Integer, default=2000)  # Limite de tokens
     icone = Column(String(100), nullable=True)  # Ícone Font Awesome
     cor_destaque = Column(String(20), nullable=True)  # Cor em hexadecimal
-    template_prompt = Column(Text, nullable=True)  # Template de prompt personalizado
+    
+    # NOVOS CAMPOS - Integração Frontend
+    tipo = Column(String(50), default='juridico')  # juridico, resumidor, sentimento, extrator, tradutor, classificador, gerador, sintetizador, formatador
+    customizado = Column(Boolean, default=False)  # True = criado pelo usuário, False = pré-configurado
+    prompt_template = Column(Text, nullable=True)  # Template de prompt personalizado (renomeado de template_prompt)
+    configuracoes_llm = Column(JSONB, default={})  # Configurações LLM completas (provider, model, temperatura, parâmetros, etc.)
+    total_conversas = Column(Integer, default=0)  # Total de conversas realizadas
+    created_by = Column(Integer, ForeignKey('user.id'), nullable=True)  # Usuário que criou (para customizados)
+    template_prompt = Column(Text, nullable=True)  # DEPRECATED - usar prompt_template
     
     # Configurações de fragmentação de texto
     modo_fragmentacao = Column(String(20), default='geral')  # geral, paragrafo, doc_completo
