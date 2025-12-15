@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+
+{% block title %}Legal Design Pro - Biblioteca de Templates{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .template-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .template-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Times New Roman', serif;
+        font-size: 0.9rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .template-meta {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .template-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .complexity-1, .complexity-2 { background: #d1edff; color: #155724; }
+    .complexity-3, .complexity-4 { background: #fff3cd; color: #856404; }
+    .complexity-5 { background: #f8d7da; color: #721c24; }
+    
+    .search-filters {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .visual-elements-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .element-showcase {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .element-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-layer-group text-primary me-3"></i>Biblioteca de Templates</h2>
+            <p class="text-muted">Templates especializados com Legal Design para todas as áreas jurídicas</p>
+        </div>
+        <div>
+            <a href="{{ url_for('legal_design_pro_v2.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+            </a>
+            <a href="{{ url_for('legal_design_pro_v2.editor') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Criar Nova Peça
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="search-filters">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Buscar Templates</label>
+                <input type="text" class="form-control" placeholder="Digite nome ou descrição..." id="searchInput">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Área Jurídica</label>
+                <select class="form-control" id="areaFilter">
+                    <option value="">Todas as Áreas</option>
+                    <option value="Direito Penal">Direito Penal</option>
+                    <option value="Direito Civil">Direito Civil</option>
+                    <option value="Direito Trabalhista">Direito Trabalhista</option>
+                    <option value="Direito Empresarial">Direito Empresarial</option>
+                    <option value="Direito do Consumidor">Direito do Consumidor</option>
+                    <option value="Direito Bancário">Direito Bancário</option>
+                    <option value="Direito Securitário">Direito Securitário</option>
+                    <option value="Direito Ambiental">Direito Ambiental</option>
+                    <option value="Negociação e Conflitos">Negociação e Conflitos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tipo de Documento</label>
+                <select class="form-control" id="typeFilter">
+                    <option value="">Todos os Tipos</option>
+                    <option value="Petição Inicial">Petição Inicial</option>
+                    <option value="Contrato">Contrato</option>
+                    <option value="Recurso">Recurso</option>
+                    <option value="Acordo">Acordo</option>
+                    <option value="Parecer">Parecer</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Complexidade</label>
+                <select class="form-control" id="complexityFilter">
+                    <option value="">Todas</option>
+                    <option value="1">Nível 1-2 (Básico)</option>
+                    <option value="3">Nível 3-4 (Intermediário)</option>
+                    <option value="5">Nível 5 (Avançado)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" style="margin-top: 32px;" onclick="applyFilters()">
+                    <i class="fas fa-search me-2"></i>Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Grid -->
+    <div id="templatesContainer">
+        <!-- Templates serão carregados aqui via JavaScript -->
+    </div>
+
+    <!-- Showcase de Elementos Visuais -->
+    <div class="mt-5">
+        <h3 class="mb-4">
+            <i class="fas fa-palette text-success me-2"></i>Elementos Visuais Disponíveis
+        </h3>
+        <p class="text-muted mb-4">Elementos de Legal Design que podem ser utilizados em seus templates</p>
+        
+        <div class="visual-elements-showcase">
+            <div class="element-showcase">
+                <div class="element-icon text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h6>Alertas e Avisos</h6>
+                <p class="text-muted small">Destacar informações importantes e riscos</p>
+            </div>
+            
+            <div class="element-showcase">
+                <div class="element-icon text-info">
+                    <i class="fas fa-comment-alt"></i>
+                </div>
+                <h6>Balões Explicativos</h6>
+                <p class="text-muted small">Explicações detalhadas e contextuais</p>
+            </div>
+            
+            <div class="element-showcase">
+                <div class="element-icon text-primary">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h6>Fluxogramas</h6>
+                <p class="text-muted small">Processos e sequências visuais</p>
+            </div>
+            
+            <div class="element-showcase">
+                <div class="element-icon text-success">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <h6>Seções Estruturadas</h6>
+                <p class="text-muted small">Organização visual de conteúdo</p>
+            </div>
+            
+            <div class="element-showcase">
+                <div class="element-icon text-dark">
+                    <i class="fas fa-list-check"></i>
+                </div>
+                <h6>Checklists</h6>
+                <p class="text-muted small">Listas de verificação interativas</p>
+            </div>
+            
+            <div class="element-showcase">
+                <div class="element-icon text-purple">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h6>Cronologias</h6>
+                <p class="text-muted small">Linhas do tempo e marcos temporais</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Visualização de Template -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="templateModalTitle">Visualização do Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="template-preview" id="templatePreview">
+                            <!-- Conteúdo do template -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Informações do Template</h6>
+                        <div id="templateInfo">
+                            <!-- Informações detalhadas -->
+                        </div>
+                        
+                        <h6 class="mt-4">Campos Necessários</h6>
+                        <div id="templateFields">
+                            <!-- Lista de campos -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="useTemplateBtn">
+                    <i class="fas fa-edit me-2"></i>Usar Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allTemplates = [];
+let currentTemplateId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTemplates();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('areaFilter').addEventListener('change', applyFilters);
+    document.getElementById('typeFilter').addEventListener('change', applyFilters);
+    document.getElementById('complexityFilter').addEventListener('change', applyFilters);
+    
+    document.getElementById('useTemplateBtn').addEventListener('click', function() {
+        if (currentTemplateId) {
+            window.location.href = `/legal-design-pro/editor?template_id=${currentTemplateId}`;
+        }
+    });
+}
+
+function loadTemplates() {
+    // Simular carregamento de templates (em produção, viria de API)
+    fetch('/api/templates')
+        .then(response => response.json())
+        .then(data => {
+            allTemplates = data.templates || [];
+            displayTemplates(allTemplates);
+        })
+        .catch(error => {
+            console.error('Erro ao carregar templates:', error);
+            // Fallback com templates mockados para demonstração
+            loadMockTemplates();
+        });
+}
+
+function loadMockTemplates() {
+    allTemplates = [
+        {
+            id: 1,
+            nome: "Petição Inicial Trabalhista",
+            descricao: "Template para ações trabalhistas com elementos visuais para facilitar compreensão",
+            area_juridica: "Direito Trabalhista",
+            tipo_documento: "Petição Inicial",
+            nivel_complexidade: 3,
+            template_conteudo: "**PETIÇÃO INICIAL**\n\nExmo. Sr. Dr. Juiz do Trabalho...",
+            campos_obrigatorios: ["nome_autor", "nome_reu", "salario", "periodo_trabalho"],
+            campos_opcionais: ["testemunhas", "documentos_anexos"],
+            visual_elements: ["timeline", "salary_calculator", "rights_checklist"],
+            created_at: "2024-01-15"
+        },
+        {
+            id: 2,
+            nome: "Contrato de Prestação de Serviços",
+            descricao: "Contrato empresarial com cláusulas visuais e explicativas",
+            area_juridica: "Direito Empresarial",
+            tipo_documento: "Contrato",
+            nivel_complexidade: 4,
+            template_conteudo: "**CONTRATO DE PRESTAÇÃO DE SERVIÇOS**\n\nContratante: {nome_contratante}...",
+            campos_obrigatorios: ["nome_contratante", "nome_contratada", "objeto_contrato", "valor"],
+            campos_opcionais: ["prazo_execucao", "garantias"],
+            visual_elements: ["contract_flowchart", "payment_schedule", "obligations_matrix"],
+            created_at: "2024-01-10"
+        },
+        {
+            id: 3,
+            nome: "Recurso de Apelação Civil",
+            descricao: "Template para recursos com argumentação estruturada visualmente",
+            area_juridica: "Direito Civil",
+            tipo_documento: "Recurso",
+            nivel_complexidade: 5,
+            template_conteudo: "**RECURSO DE APELAÇÃO**\n\nEgrégio Tribunal...",
+            campos_obrigatorios: ["numero_processo", "decisao_recorrida", "fundamentos"],
+            campos_opcionais: ["jurisprudencia", "doutrina"],
+            visual_elements: ["argument_tree", "legal_timeline", "precedent_comparison"],
+            created_at: "2024-01-08"
+        },
+        {
+            id: 4,
+            nome: "Acordo de Mediação",
+            descricao: "Template para acordos com visualização de compromissos",
+            area_juridica: "Negociação e Conflitos",
+            tipo_documento: "Acordo",
+            nivel_complexidade: 2,
+            template_conteudo: "**TERMO DE ACORDO**\n\nAs partes acordam...",
+            campos_obrigatorios: ["nome_partes", "objeto_acordo", "valor_acordo"],
+            campos_opcionais: ["prazo_cumprimento", "penalidades"],
+            visual_elements: ["agreement_matrix", "payment_timeline", "obligations_checklist"],
+            created_at: "2024-01-05"
+        },
+        {
+            id: 5,
+            nome: "Defesa do Consumidor",
+            descricao: "Petição para direitos do consumidor com explicações visuais",
+            area_juridica: "Direito do Consumidor",
+            tipo_documento: "Petição Inicial",
+            nivel_complexidade: 3,
+            template_conteudo: "**AÇÃO CONSUMERISTA**\n\nO consumidor lesado...",
+            campos_obrigatorios: ["nome_consumidor", "empresa_fornecedora", "produto_servico", "dano"],
+            campos_opcionais: ["provas", "testemunhas"],
+            visual_elements: ["consumer_rights_chart", "damage_calculator", "legal_path"],
+            created_at: "2024-01-03"
+        }
+    ];
+    
+    displayTemplates(allTemplates);
+}
+
+function displayTemplates(templates) {
+    const container = document.getElementById('templatesContainer');
+    
+    if (templates.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>Nenhum template encontrado</h5>
+                <p class="text-muted">Tente ajustar os filtros de pesquisa</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="row">';
+    
+    templates.forEach(template => {
+        html += `
+            <div class="col-lg-6 col-xl-4">
+                <div class="template-card">
+                    <div class="template-meta">
+                        <span class="template-badge bg-primary text-white">${template.area_juridica}</span>
+                        <span class="template-badge bg-secondary text-white">${template.tipo_documento}</span>
+                        <span class="template-badge complexity-${template.nivel_complexidade}">
+                            Nível ${template.nivel_complexidade}
+                        </span>
+                    </div>
+                    
+                    <h5 class="mb-2">${template.nome}</h5>
+                    <p class="text-muted mb-3">${template.descricao}</p>
+                    
+                    <div class="template-preview mb-3">
+                        ${template.template_conteudo.substring(0, 200)}...
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-puzzle-piece me-1"></i>
+                            ${template.visual_elements ? template.visual_elements.length : 0} elementos visuais
+                        </small>
+                        <small class="text-muted ms-3">
+                            <i class="fas fa-calendar me-1"></i>
+                            ${formatDate(template.created_at)}
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm flex-fill" 
+                                onclick="previewTemplate(${template.id})">
+                            <i class="fas fa-eye me-1"></i>Visualizar
+                        </button>
+                        <button class="btn btn-primary btn-sm flex-fill" 
+                                onclick="useTemplate(${template.id})">
+                            <i class="fas fa-edit me-1"></i>Usar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const areaFilter = document.getElementById('areaFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    const complexityFilter = document.getElementById('complexityFilter').value;
+    
+    let filteredTemplates = allTemplates.filter(template => {
+        const matchesSearch = !searchTerm || 
+            template.nome.toLowerCase().includes(searchTerm) ||
+            template.descricao.toLowerCase().includes(searchTerm);
+            
+        const matchesArea = !areaFilter || template.area_juridica === areaFilter;
+        const matchesType = !typeFilter || template.tipo_documento === typeFilter;
+        
+        let matchesComplexity = true;
+        if (complexityFilter) {
+            if (complexityFilter === '1') {
+                matchesComplexity = template.nivel_complexidade <= 2;
+            } else if (complexityFilter === '3') {
+                matchesComplexity = template.nivel_complexidade >= 3 && template.nivel_complexidade <= 4;
+            } else if (complexityFilter === '5') {
+                matchesComplexity = template.nivel_complexidade === 5;
+            }
+        }
+        
+        return matchesSearch && matchesArea && matchesType && matchesComplexity;
+    });
+    
+    displayTemplates(filteredTemplates);
+}
+
+function previewTemplate(templateId) {
+    const template = allTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    currentTemplateId = templateId;
+    
+    document.getElementById('templateModalTitle').textContent = template.nome;
+    
+    // Mostrar preview do conteúdo
+    document.getElementById('templatePreview').innerHTML = 
+        template.template_conteudo.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Mostrar informações
+    document.getElementById('templateInfo').innerHTML = `
+        <div class="mb-2">
+            <strong>Área:</strong> ${template.area_juridica}
+        </div>
+        <div class="mb-2">
+            <strong>Tipo:</strong> ${template.tipo_documento}
+        </div>
+        <div class="mb-2">
+            <strong>Complexidade:</strong> Nível ${template.nivel_complexidade}
+        </div>
+        <div class="mb-2">
+            <strong>Elementos Visuais:</strong> ${template.visual_elements ? template.visual_elements.length : 0}
+        </div>
+    `;
+    
+    // Mostrar campos
+    let fieldsHtml = '';
+    
+    if (template.campos_obrigatorios && template.campos_obrigatorios.length > 0) {
+        fieldsHtml += '<h6 class="text-danger">Obrigatórios:</h6><ul>';
+        template.campos_obrigatorios.forEach(campo => {
+            fieldsHtml += `<li>${campo.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</li>`;
+        });
+        fieldsHtml += '</ul>';
+    }
+    
+    if (template.campos_opcionais && template.campos_opcionais.length > 0) {
+        fieldsHtml += '<h6 class="text-muted">Opcionais:</h6><ul>';
+        template.campos_opcionais.forEach(campo => {
+            fieldsHtml += `<li>${campo.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</li>`;
+        });
+        fieldsHtml += '</ul>';
+    }
+    
+    document.getElementById('templateFields').innerHTML = fieldsHtml;
+    
+    const modal = new bootstrap.Modal(document.getElementById('templateModal'));
+    modal.show();
+}
+
+function useTemplate(templateId) {
+    window.location.href = `/legal-design-pro/editor?template_id=${templateId}`;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Data não disponível';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR');
+    } catch (error) {
+        return 'Data inválida';
+    }
+}
+
+// Funcionalidade de busca em tempo real
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(applyFilters, 300);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends "layout.html" %}
+
+{% block title %}Configuração Taskade - Sistema Multi-Agente{% endblock %}
+
+{% block head %}
+<style>
+body {
+    background-color: #21333d !important;
+}
+
+/* Cor dos card-body */
+.card-body {
+    background-color: #575b5c !important;
+    color: #ffffff !important;
+}
+
+/* Cores dos textos dos cards */
+.card-text {
+    color: #768082 !important;
+}
+
+.text-muted {
+    color: #ffffff !important;
+}
+
+.card-title {
+    color: #fcfffb !important;
+}
+
+/* Cores dos botões e elementos */
+.btn-sm {
+    background-color: #355d6c !important;
+    border-color: #355d6c !important;
+}
+
+.agent-icon {
+    color: #355d6c !important;
+}
+
+.form-group {
+    background-color: #575b5c !important;
+}
+
+.form-label {
+    color: #575b5c !important;
+}
+
+/* Cor dos elementos d-flex */
+.d-flex {
+    color: #355d6c !important;
+}
+
+/* Cor dos card-header */
+.card-header {
+    background-color: #355d6c !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos agent-icon */
+.agent-icon {
+    color: #40aba0 !important;
+}
+
+/* Cor dos form-text */
+.form-text {
+    color: #40aba0 !important;
+}
+
+/* Cor dos file-upload e btn-sm */
+.file-upload, .btn-sm {
+    background-color: #40aba0 !important;
+    border-color: #40aba0 !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos form-check-label */
+.form-check-label {
+    color: #40a9a3 !important;
+}
+
+/* Cor dos form-check-input checked */
+.form-check-input:checked {
+    background-color: #40a9a3 !important;
+    border-color: #40a9a3 !important;
+}
+
+/* Adiciona margem aos form-check-input */
+.form-check-input {
+    margin: 0.125rem !important;
+}
+
+/* Nav tabs personalizadas */
+.nav-tabs .nav-link.active {
+    border-bottom: 3px solid #336b69 !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+/* Cor dos ícones drag-and-drop */
+.drag-and-drop i, .file-drop-zone i, .upload-icon, 
+.fa-upload, .fa-file-upload, .fa-cloud-upload-alt {
+    color: #40a9a3 !important;
+}
+
+/* Cor dos border-bottom */
+.border-bottom, .card-header, .nav-tabs, .dropdown-divider,
+hr, .modal-header, .table-bordered th, .table-bordered td {
+    border-bottom-color: #fcfffb !important;
+}
+
+/* Hover do drag-and-drop */
+.drag-and-drop:hover, .file-drop-zone:hover, 
+.upload-area:hover, .file-upload-area:hover {
+    border-color: #355d6c !important;
+    background-color: rgba(52, 104, 102, 0.1) !important;
+}
+
+/* Alert-info customizado */
+.alert-info {
+    --bs-alert-color: #fcfffb;
+    --bs-alert-bg: #355d6c;
+    --bs-alert-border-color: #355d6c;
+    border-left: 4px solid #355d6c !important;
+    color: #fcfffb !important;
+}
+
+.alert-info h1, .alert-info h2, .alert-info h3, .alert-info h4, .alert-info h5, .alert-info h6,
+.alert-info .alert-heading {
+    color: #fcfffb !important;
+}
+
+.alert-info i, .alert-info .icon, .alert-info .fa, .alert-info [class*="fa-"] {
+    color: #fcfffb !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0">Integração com Taskade</h1>
+        <a href="{{ url_for('admin_apis') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar para Integrações
+        </a>
+    </div>
+
+    {% if status.success %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        Conexão com a API Taskade estabelecida com sucesso.
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Não foi possível conectar à API Taskade. 
+        <strong>Erro:</strong> {{ status.error }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-key me-2"></i>Configuração da API</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin_taskade_update') }}" method="POST">
+                        {{ form.csrf_token if form.csrf_token }}
+                        <div class="mb-3">
+                            <label for="api_token" class="form-label">Token da API</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="api_token" name="api_token" 
+                                       value="{{ token_masked }}" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggle-token">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                O token da API pode ser encontrado no dashboard da Taskade.
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Salvar Configurações
+                        </button>
+                        <a href="{{ url_for('admin_taskade_test') }}" class="btn btn-outline-info ms-2">
+                            <i class="fas fa-sync-alt me-1"></i> Testar Conexão
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Sobre a Integração</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        A integração com a Taskade permite sincronizar workspaces, projetos e tarefas com o seu sistema multi-agente.
+                    </p>
+                    <p>
+                        <strong>Funcionalidades disponíveis:</strong>
+                    </p>
+                    <ul>
+                        <li><span class="text-success"><i class="fas fa-check-circle me-1"></i> Listar workspaces</span></li>
+                        <li><span class="text-success"><i class="fas fa-check-circle me-1"></i> Listar pastas (folders) em um workspace</span></li>
+                        <li><span class="text-muted"><i class="fas fa-times-circle me-1"></i> Listar tarefas em um projeto</span> <small class="text-warning">(API com limitações)</small></li>
+                        <li><span class="text-muted"><i class="fas fa-times-circle me-1"></i> Criar novas tarefas</span> <small class="text-warning">(API com limitações)</small></li>
+                        <li><span class="text-muted"><i class="fas fa-times-circle me-1"></i> Gerenciar membros</span> <small class="text-warning">(API com limitações)</small></li>
+                    </ul>
+                    <div class="alert alert-warning p-2 small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Nota:</strong> A API do Taskade está em desenvolvimento e possui limitações. 
+                        Algumas funcionalidades podem não estar disponíveis ou apresentar erros.
+                    </div>
+                    <p class="mb-0">
+                        <a href="https://www.taskade.com" target="_blank" class="text-decoration-none">
+                            <i class="fas fa-external-link-alt me-1"></i> Site Oficial Taskade
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if status.success and workspaces %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-th-large me-2"></i>Workspaces Disponíveis</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for workspace in workspaces %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ workspace.name }}</h5>
+                            <p class="card-text text-muted small">ID: {{ workspace.id }}</p>
+                            
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="{{ url_for('admin_taskade_workspace', workspace_id=workspace.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i> Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para mostrar/esconder o token
+    const toggleBtn = document.getElementById('toggle-token');
+    const tokenInput = document.getElementById('api_token');
+    
+    if (toggleBtn && tokenInput) {
+        toggleBtn.addEventListener('click', function() {
+            if (tokenInput.type === 'password') {
+                tokenInput.type = 'text';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                tokenInput.type = 'password';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

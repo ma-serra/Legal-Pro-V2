@@ -1,0 +1,851 @@
+{% extends "layout.html" %}
+
+{% block title %}Resultado da Transcrição{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Transcrição</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+/* Estilos baseados no template result.html fornecido */
+.result-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    color: white;
+}
+
+/* Header */
+.result-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.result-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #FFFFFF;
+    letter-spacing: -0.025em;
+}
+
+.result-subtitle {
+    font-size: 1rem;
+    color: #A0AEC0;
+    font-weight: 400;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.stats-card {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(74, 85, 104, 0.6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-right: 12px;
+    color: #A0AEC0;
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+/* Statistics Items */
+.stats-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 16px 12px;
+    background: rgba(74, 85, 104, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(113, 128, 150, 0.2);
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #68D391;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #CBD5E0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+/* Quality Card */
+.quality-score {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ECC94B;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.quality-confidence {
+    font-size: 0.875rem;
+    color: #CBD5E0;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.quality-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(113, 128, 150, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.quality-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ECC94B, #68D391);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Export Buttons */
+.export-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    background: rgba(74, 85, 104, 0.8);
+    border: 1px solid rgba(113, 128, 150, 0.3);
+    color: #E2E8F0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-btn:hover {
+    background: rgba(74, 85, 104, 1);
+    border-color: rgba(113, 128, 150, 0.6);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.export-btn.btn-primary {
+    background: #3182CE;
+    border-color: #3182CE;
+}
+
+.export-btn.btn-primary:hover {
+    background: #2C5282;
+}
+
+/* Export Group Dropdown */
+.export-group {
+    position: relative;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.export-group .export-btn {
+    border: none;
+    cursor: pointer;
+}
+
+.export-group .dropdown-menu {
+    background: rgba(45, 55, 72, 0.95);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 6px;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.export-group .dropdown-item {
+    color: #e2e8f0;
+    padding: 8px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    font-size: 0.875rem;
+}
+
+.export-group .dropdown-item:hover {
+    background-color: rgba(74, 85, 104, 0.8);
+    color: white;
+}
+
+/* Transcription Section */
+.transcription-section {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.transcription-content {
+    background: rgba(74, 85, 104, 0.4);
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid rgba(113, 128, 150, 0.2);
+}
+
+.transcription-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transcription-content::-webkit-scrollbar-track {
+    background: rgba(113, 128, 150, 0.1);
+    border-radius: 3px;
+}
+
+.transcription-content::-webkit-scrollbar-thumb {
+    background: rgba(113, 128, 150, 0.3);
+    border-radius: 3px;
+}
+
+/* Speaker Analysis */
+.speaker-analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.speaker-analysis-card {
+    background: rgba(45, 55, 72, 0.6);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 3px solid #68D391;
+    transition: all 0.3s ease;
+}
+
+.speaker-analysis-card:hover {
+    background: rgba(45, 55, 72, 0.8);
+    transform: translateY(-2px);
+}
+
+.speaker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(113, 128, 150, 0.2);
+}
+
+/* Transcript Segments */
+.transcript-segment {
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    background: rgba(45, 55, 72, 0.6);
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.transcript-segment:hover {
+    background: rgba(45, 55, 72, 0.8);
+    border-left-color: #68D391;
+    transform: translateX(3px);
+}
+
+.segment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.speaker-label {
+    background: #68D391;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.timestamp {
+    color: #FBBF24;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: rgba(113, 128, 150, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+.confidence-badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: white;
+}
+
+.confidence-excellent { background: #68D391; }
+.confidence-good { background: #ECC94B; }
+.confidence-fair { background: #ED8936; }
+.confidence-poor { background: #F56565; }
+
+.segment-text {
+    color: #E2E8F0;
+    line-height: 1.5;
+    font-size: 0.875rem;
+}
+
+/* Entities Section */
+.entities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.entity-category {
+    background: rgba(74, 85, 104, 0.4);
+    border: 1px solid rgba(113, 128, 150, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.entity-category-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #68D391;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.entity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.entity-item {
+    background: rgba(45, 55, 72, 0.6);
+    border: 1px solid rgba(74, 85, 104, 0.4);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    color: #E2E8F0;
+    position: relative;
+}
+
+.entity-text {
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+.entity-timestamp {
+    font-size: 0.7rem;
+    color: #A0AEC0;
+    margin-left: 8px;
+}
+
+.entity-count {
+    font-size: 0.7rem;
+    color: #68D391;
+    margin-left: 8px;
+    font-weight: 500;
+    background: rgba(104, 211, 145, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    float: right;
+}
+
+.full-transcription-organized {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.transcription-paragraph {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #4A90E2;
+    border-radius: 5px;
+    line-height: 1.6;
+    text-align: justify;
+}
+
+.transcription-paragraph:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transition: background 0.2s ease;
+}
+
+.no-transcription {
+    text-align: center;
+    color: #A0AEC0;
+    font-style: italic;
+}
+
+.no-entities {
+    text-align: center;
+    color: #A0AEC0;
+    font-style: italic;
+    padding: 24px;
+    background: rgba(74, 85, 104, 0.2);
+    border-radius: 8px;
+    border: 1px dashed rgba(113, 128, 150, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .result-container {
+        padding: 20px 16px;
+    }
+    
+    .stats-items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .speaker-analysis-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .entities-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .segment-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-items {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+    <div class="result-container">
+        <!-- Header -->
+        <div class="result-header">
+            <h1 class="result-title">Resultado da Transcrição</h1>
+            <p class="result-subtitle">{{ transcricao.filename }}</p>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="export-buttons">
+            <a href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='txt') }}" 
+               class="export-btn btn-primary">
+                <i class="fas fa-download"></i>
+                Baixar TXT
+            </a>
+            <div class="export-group">
+                <button type="button" class="export-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download"></i>
+                    Baixar JSON
+                    <i class="fas fa-chevron-down ms-2"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='json', mode='transcription') }}">
+                        <i class="fas fa-file-text"></i>
+                        Apenas Transcrição
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='json', mode='complete') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Análise Completa
+                    </a></li>
+                </ul>
+            </div>
+            <a href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='docx') }}" 
+               class="export-btn">
+                <i class="fas fa-file-word"></i>
+                Baixar DOCX
+            </a>
+            <a href="{{ url_for('transcricao_video.index') }}" 
+               class="export-btn">
+                <i class="fas fa-plus"></i>
+                Nova Transcrição
+            </a>
+            <a href="{{ url_for('transcricao_video.history') }}" 
+               class="export-btn">
+                <i class="fas fa-history"></i>
+                Histórico
+            </a>
+
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <!-- General Stats -->
+            <div class="stats-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="card-title">Estatísticas Gerais</h3>
+                </div>
+                <div class="stats-items">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ format_timestamp(transcricao.audio_duration or transcricao.duration or 0) }}</span>
+                        <span class="stat-label">Duração</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ transcricao.word_count or 0 }}</span>
+                        <span class="stat-label">Palavras</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ transcricao.speaker_count or 0 }}</span>
+                        <span class="stat-label">Falantes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quality Score -->
+            <div class="stats-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3 class="card-title">Qualidade da Transcrição</h3>
+                </div>
+                <div class="quality-score">
+                    {{ "%.1f"|format((transcricao.confidence or 0) * 100) }}%
+                </div>
+                <div class="quality-confidence">Confiança geral</div>
+                <div class="quality-bar">
+                    <div class="quality-fill" style="width: {{ (transcricao.confidence or 0) * 100 }}%"></div>
+                </div>
+            </div>
+
+            <!-- File Info -->
+            <div class="stats-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <h3 class="card-title">Informações do Arquivo</h3>
+                </div>
+                <div class="stats-items">
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            {% if transcricao.file_size and transcricao.file_size > 0 %}
+                                {{ "%.2f"|format(transcricao.file_size / (1024*1024)) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">MB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            {% if transcricao.file_type %}
+                                {{ transcricao.file_type }}
+                            {% elif transcricao.filename %}
+                                {{ transcricao.filename.split('.')[-1] if '.' in transcricao.filename else 'Não disponível' }}
+                            {% else %}
+                                Não disponível
+                            {% endif %}
+                        </span>
+                        <span class="stat-label">Extensão</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">{{ segments|length }}</span>
+                        <span class="stat-label">Segmentos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Transcription -->
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-file-text"></i>
+                Transcrição Completa
+            </h3>
+            <div class="transcription-content">
+                <div class="full-transcription-organized">
+                    {% if transcricao.text %}
+                        {% set sentences = transcricao.text.split('.') %}
+                        {% for sentence in sentences %}
+                            {% if sentence.strip() and sentence.strip()|length > 10 %}
+                                <p class="transcription-paragraph">{{ sentence.strip() }}.</p>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="no-transcription">Texto da transcrição não disponível.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Speaker Analysis -->
+        {% if segments %}
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-users"></i>
+                Análise por Falantes
+            </h3>
+            
+            <!-- Speaker Summary -->
+            <div class="speaker-analysis-grid">
+                {% set speakers = segments | groupby('speaker') %}
+                {% for speaker, speaker_segments in speakers %}
+                <div class="speaker-analysis-card">
+                    <div class="speaker-header">
+                        <h4>{{ speaker }}</h4>
+                        <span class="segment-count">{{ speaker_segments|length }} segmentos</span>
+                    </div>
+                    <div class="acoustic-metrics">
+                        <div class="metric-row">
+                            <span class="metric-label">Tempo total:</span>
+                            <span class="metric-value">
+                                {{ format_timestamp((speaker_segments | sum(attribute='end_time') or 0) - (speaker_segments | sum(attribute='start_time') or 0)) }}
+                            </span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Confiança média:</span>
+                            <span class="metric-value confidence-{{ 'excellent' if (speaker_segments | sum(attribute='confidence') / speaker_segments|length) > 0.8 else 'good' if (speaker_segments | sum(attribute='confidence') / speaker_segments|length) > 0.6 else 'fair' }}">
+                                {{ "%.1f"|format((speaker_segments | sum(attribute='confidence') / speaker_segments|length) * 100) }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Individual Segments -->
+            <div class="transcription-content">
+                {% for segment in segments %}
+                <div class="transcript-segment">
+                    <div class="segment-header">
+                        <div class="speaker-info">
+                            <span class="speaker-label">{{ segment.speaker }}</span>
+                            <span class="timestamp">{{ format_timestamp(segment.start_time) }} - {{ format_timestamp(segment.end_time) }}</span>
+                        </div>
+                        <div class="segment-metrics">
+                            <span class="confidence-badge confidence-{{ 'excellent' if segment.confidence > 0.8 else 'good' if segment.confidence > 0.6 else 'fair' if segment.confidence > 0.4 else 'poor' }}">
+                                {{ "%.1f"|format(segment.confidence * 100) }}%
+                            </span>
+                            <span class="word-count">{{ segment.words_count or 0 }} palavras</span>
+                        </div>
+                    </div>
+                    <div class="segment-text">{{ segment.text }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Entities -->
+        {% if entities %}
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-tags"></i>
+                Entidades Detectadas
+            </h3>
+            
+            <div class="entities-grid">
+                {% set entity_groups = entities | groupby('entity_type') %}
+                {% for entity_type, entity_list in entity_groups %}
+                <div class="entity-category">
+                    <h4 class="entity-category-title">
+                        <i class="fas fa-tag entity-type-icon"></i>
+                        {{ translate_entity_type(entity_type) }}
+                    </h4>
+                    <ul class="entity-list">
+                        {% set unique_entities = entity_list | groupby('text') %}
+                        {% for entity_text, entity_instances in unique_entities %}
+                        <li class="entity-item">
+                            <span class="entity-text">{{ entity_text }}</span>
+                            <span class="entity-count">{{ entity_instances|length }} menções</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-tags"></i>
+                Entidades Detectadas
+            </h3>
+            <div class="no-entities">
+                <i class="fas fa-info-circle"></i>
+                Nenhuma entidade foi detectada nesta transcrição.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Chapters -->
+        {% if chapters %}
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-book"></i>
+                Capítulos Automáticos
+            </h3>
+            
+            <div class="transcription-content">
+                {% for chapter in chapters %}
+                <div class="transcript-segment">
+                    <div class="segment-header">
+                        <h4>{{ chapter.headline }}</h4>
+                        <span class="timestamp">{{ format_timestamp(chapter.start_time) }} - {{ format_timestamp(chapter.end_time) }}</span>
+                    </div>
+                    <div class="segment-text">
+                        <strong>Resumo:</strong> {{ chapter.gist }}<br>
+                        {{ chapter.summary }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Highlights -->
+        {% if highlights %}
+        <div class="transcription-section">
+            <h3 class="section-title">
+                <i class="fas fa-star"></i>
+                Destaques Automáticos
+            </h3>
+            
+            <div class="transcription-content">
+                {% for highlight in highlights %}
+                <div class="transcript-segment">
+                    <div class="segment-header">
+                        <strong>{{ highlight.text }}</strong>
+                        <span class="confidence-badge confidence-good">{{ highlight.count }} menções</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Copy functionality
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Texto copiado para a área de transferência!', 'success');
+            });
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                padding: 16px 20px;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                background: ${type === 'success' ? 'rgba(104, 211, 145, 0.9)' : 'rgba(245, 101, 101, 0.9)'};
+                color: white;
+                border: 1px solid ${type === 'success' ? '#68D391' : '#F56565'};
+            `;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        // Add copy buttons to segments
+        document.querySelectorAll('.segment-text').forEach(segment => {
+            segment.addEventListener('click', () => {
+                copyToClipboard(segment.textContent);
+            });
+            segment.style.cursor = 'pointer';
+            segment.title = 'Clique para copiar';
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

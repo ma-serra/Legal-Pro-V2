@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Resultados - {{ fluxo.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('fluxos_principal') }}" class="text-decoration-none">Fluxos Jurídicos</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('fluxos_visualizar', fluxo_id=fluxo.id) }}" class="text-decoration-none">{{ fluxo.nome }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Resultados</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1"><i class="fas fa-chart-line me-2"></i>Resultados da Execução</h4>
+                        <p class="mb-0 small opacity-75">{{ fluxo.nome }}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('fluxos_visualizar', fluxo_id=fluxo.id) }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar ao Fluxo
+                        </a>
+                        {% if resultado %}
+                        <button class="btn btn-outline-light btn-sm" onclick="exportarResultado()">
+                            <i class="fas fa-download me-1"></i> Exportar
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if resultado %}
+                        <div class="row">
+                            <!-- Resumo da Execução -->
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6><i class="fas fa-info-circle me-2"></i>Resumo da Execução</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Data/Hora</label>
+                                            <div class="fw-bold">{{ resultado.data_execucao.strftime('%d/%m/%Y %H:%M:%S') if resultado.data_execucao else 'N/A' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Status</label>
+                                            <div>
+                                                <span class="badge bg-success">Concluída</span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Tempo de Execução</label>
+                                            <div class="fw-bold">{{ resultado.tempo_execucao or 'N/A' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Componentes Processados</label>
+                                            <div class="fw-bold">{{ resultado.componentes_processados or 0 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Entrada Original -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6><i class="fas fa-edit me-2"></i>Entrada Original</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="bg-light p-3 rounded">
+                                            <small class="text-muted">{{ resultado.input_original or 'Entrada não disponível' }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Gerado -->
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-file-alt me-2"></i>Template Jurídico Gerado
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if resultado.template_gerado %}
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="text-primary mb-0">Documento Jurídico</h6>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary" onclick="copiarTexto()">
+                                                        <i class="fas fa-copy me-1"></i>Copiar
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-primary" onclick="imprimirDocumento()">
+                                                        <i class="fas fa-print me-1"></i>Imprimir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div id="template-content" class="border rounded p-4" style="background-color: #fdfdfd; font-family: 'Times New Roman', serif; line-height: 1.8; max-height: 600px; overflow-y: auto;">
+                                                <pre style="white-space: pre-wrap; font-family: inherit;">{{ resultado.template_gerado }}</pre>
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center text-muted py-5">
+                                            <i class="fas fa-file-alt fa-3x mb-3"></i>
+                                            <h6>Template não disponível</h6>
+                                            <p class="small">O template jurídico não foi gerado ou não está disponível.</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Análise Jurídica (se disponível) -->
+                        {% if resultado.analise_juridica %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6><i class="fas fa-balance-scale me-2"></i>Análise Jurídica</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="bg-light p-3 rounded">
+                                            {{ resultado.analise_juridica }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    {% else %}
+                        <!-- Sem resultados -->
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <h5>Nenhum resultado disponível</h5>
+                            <p>Este fluxo ainda não foi executado ou os resultados não estão disponíveis.</p>
+                            <a href="{{ url_for('fluxos_visualizar', fluxo_id=fluxo.id) }}" class="btn btn-primary">
+                                <i class="fas fa-play me-1"></i> Executar Fluxo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados do resultado
+const resultadoData = {{ resultado|tojson if resultado else '{}' }};
+
+function copiarTexto() {
+    const templateContent = document.getElementById('template-content');
+    const text = templateContent.innerText;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        // Mostrar feedback visual
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Copiado!';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(err => {
+        console.error('Erro ao copiar texto:', err);
+        alert('Erro ao copiar texto');
+    });
+}
+
+function imprimirDocumento() {
+    const templateContent = document.getElementById('template-content').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Documento Jurídico - {{ fluxo.nome }}</title>
+                <style>
+                    body { font-family: 'Times New Roman', serif; line-height: 1.8; margin: 2cm; }
+                    pre { white-space: pre-wrap; font-family: inherit; }
+                </style>
+            </head>
+            <body>
+                ${templateContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function exportarResultado() {
+    // Implementar exportação em diferentes formatos
+    const dados = {
+        fluxo_id: {{ fluxo.id }},
+        resultado: resultadoData
+    };
+    
+    // Por enquanto, baixar como JSON
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resultado_fluxo_{{ fluxo.id }}_${new Date().getTime()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+console.log('🔍 DEBUG: Página de resultado carregada');
+console.log('🔍 DEBUG: Fluxo ID =', {{ fluxo.id }});
+console.log('🔍 DEBUG: Resultado disponível =', resultadoData ? 'Sim' : 'Não');
+</script>
+{% endblock %}

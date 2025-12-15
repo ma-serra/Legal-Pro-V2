@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Configuração de Componente - {{ componente.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="{{ componente.icone }} me-2" style="color: {{ componente.cor }}"></i>
+                        {{ componente.nome }}
+                    </h1>
+                    <p class="text-muted mb-0">{{ componente.descricao }}</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success" onclick="salvarEVoltar()">
+                        <i class="fas fa-save me-1"></i> Salvar e Voltar
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="voltarEditor()">
+                        <i class="fas fa-arrow-left me-1"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Configurações Principais -->
+                <div class="col-lg-8">
+                    <!-- Informações Básicas -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Configurações Básicas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nome do Componente</label>
+                                        <input type="text" class="form-control" id="nome" value="{{ componente.nome }}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Categoria</label>
+                                        <input type="text" class="form-control" value="{{ componente.categoria }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Descrição</label>
+                                <textarea class="form-control" id="descricao" rows="2">{{ componente.descricao }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descrição Detalhada</label>
+                                <textarea class="form-control" id="descricao_detalhada" rows="3">{{ componente.descricao_detalhada or '' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Ícone</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="{{ componente.icone }}" id="preview-icone"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="icone" value="{{ componente.icone }}" onchange="atualizarPreviewIcone()">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Cor</label>
+                                        <input type="color" class="form-control form-control-color" id="cor" value="{{ componente.cor }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuração de IA -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-brain me-2"></i>
+                                Configuração de IA
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Provedor de IA</label>
+                                        <select class="form-select" id="provedor">
+                                            <option value="openai" selected>OpenAI GPT-4o</option>
+                                            <option value="anthropic">Anthropic Claude</option>
+                                            <option value="google">Google Gemini</option>
+                                            <option value="deepseek">DeepSeek</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Temperatura</label>
+                                        <input type="number" class="form-control" id="temperatura" value="{{ componente.temperatura }}" min="0" max="2" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Tokens</label>
+                                        <input type="number" class="form-control" id="max_tokens" value="{{ componente.max_tokens }}" min="100" max="8000">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Top K</label>
+                                        <input type="number" class="form-control" id="top_k" value="{{ componente.top_k }}" min="1" max="20">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Chunk Size</label>
+                                        <input type="number" class="form-control" id="chunk_size" value="{{ componente.chunk_size }}" min="100" max="2000">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Chunk Overlap</label>
+                                        <input type="number" class="form-control" id="chunk_overlap" value="{{ componente.chunk_overlap }}" min="0" max="500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompts -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                Prompts do Sistema
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Prompt do Sistema</label>
+                                <textarea class="form-control" id="prompt_sistema" rows="4" placeholder="Instrução principal para a IA...">{{ componente.prompt_sistema or '' }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Template de Prompt do Usuário</label>
+                                <textarea class="form-control" id="prompt_usuario" rows="3" placeholder="Template de prompt para o usuário...">{{ componente.prompt_usuario or '' }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Base de Conhecimento</label>
+                                <input type="text" class="form-control" id="base_conhecimento" value="{{ componente.base_conhecimento or '' }}" placeholder="ex: embeddings_direito_civil">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Capacidades e Parâmetros -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>
+                                Capacidades e Parâmetros
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Capacidades (uma por linha)</label>
+                                <textarea class="form-control" id="capacidades" rows="3" placeholder="Ex: processamento_pdf&#10;extração_texto&#10;análise_sentimento">{% if componente.capacidades %}{% for cap in componente.capacidades %}{{ cap }}&#10;{% endfor %}{% endif %}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Parâmetros Customizados (JSON)</label>
+                                <textarea class="form-control" id="parametros_json" rows="4" placeholder='{"parametro1": "valor1", "parametro2": "valor2"}'>{{ (componente.parametros | tojson) if componente.parametros else '{}' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel de Informações -->
+                <div class="col-lg-4">
+                    <!-- Preview do Componente -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye me-1"></i>
+                                Preview
+                            </h6>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="component-preview mb-3" style="border: 2px dashed #dee2e6; padding: 20px; border-radius: 8px;">
+                                <i class="{{ componente.icone }} fa-3x mb-2" style="color: {{ componente.cor }}" id="preview-icon-large"></i>
+                                <h6 class="mb-1" id="preview-nome">{{ componente.nome }}</h6>
+                                <small class="text-muted" id="preview-desc">{{ componente.descricao }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações do Sistema -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Informações
+                            </h6>
+                        </div>
+                        <div class="card-body small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>ID:</span>
+                                <strong>{{ componente.id }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tipo:</span>
+                                <strong>{{ componente.tipo }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Status:</span>
+                                <span class="badge bg-{{ 'success' if componente.ativo else 'secondary' }}">
+                                    {{ 'Ativo' if componente.ativo else 'Inativo' }}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Criado:</span>
+                                <strong>{{ componente.criado_em.strftime('%d/%m/%Y') if componente.criado_em else 'N/A' }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Atualizado:</span>
+                                <strong>{{ componente.atualizado_em.strftime('%d/%m/%Y') if componente.atualizado_em else 'N/A' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ações Rápidas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-tools me-1"></i>
+                                Ações Rápidas
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="testarComponente()">
+                                <i class="fas fa-play me-1"></i> Testar Componente
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm w-100 mb-2" onclick="duplicarComponente()">
+                                <i class="fas fa-copy me-1"></i> Duplicar
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100 mb-2" onclick="exportarConfiguracao()">
+                                <i class="fas fa-download me-1"></i> Exportar Config
+                            </button>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ativo" {{ 'checked' if componente.ativo else '' }}>
+                                <label class="form-check-label" for="ativo">
+                                    Componente Ativo
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const componenteId = {{ componente.id }};
+const contexto = '{{ contexto or "componente_editor" }}';
+
+function atualizarPreviewIcone() {
+    const icone = document.getElementById('icone').value;
+    document.getElementById('preview-icone').className = icone;
+    document.getElementById('preview-icon-large').className = icone + ' fa-3x mb-2';
+}
+
+function salvarEVoltar() {
+    // Coletar todos os dados do formulário
+    const dados = {
+        id: componenteId,
+        nome: document.getElementById('nome').value,
+        descricao: document.getElementById('descricao').value,
+        descricao_detalhada: document.getElementById('descricao_detalhada').value,
+        icone: document.getElementById('icone').value,
+        cor: document.getElementById('cor').value,
+        ativo: document.getElementById('ativo').checked,
+        config_ia: {
+            temperatura: parseFloat(document.getElementById('temperatura').value),
+            max_tokens: parseInt(document.getElementById('max_tokens').value),
+            top_k: parseInt(document.getElementById('top_k').value),
+            chunk_size: parseInt(document.getElementById('chunk_size').value),
+            chunk_overlap: parseInt(document.getElementById('chunk_overlap').value)
+        },
+        prompt_sistema: document.getElementById('prompt_sistema').value,
+        prompt_usuario: document.getElementById('prompt_usuario').value,
+        base_conhecimento: document.getElementById('base_conhecimento').value,
+        capacidades: document.getElementById('capacidades').value.split('\n').map(s => s.trim()).filter(s => s),
+        parametros: {}
+    };
+
+    // Parse JSON dos parâmetros
+    try {
+        const parametrosText = document.getElementById('parametros_json').value.trim();
+        if (parametrosText) {
+            dados.parametros = JSON.parse(parametrosText);
+        }
+    } catch (e) {
+        alert('Erro no JSON dos parâmetros: ' + e.message);
+        return;
+    }
+
+    // Salvar via API
+    fetch('/api/componentes/shared/salvar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Configurações salvas com sucesso!');
+            
+            // Comunicar com editor de fluxos se necessário
+            if (window.opener && contexto === 'fluxo_editor') {
+                window.opener.postMessage({
+                    type: 'componente_configurado',
+                    componente: dados
+                }, '*');
+                window.close();
+            } else {
+                voltarEditor();
+            }
+        } else {
+            alert('Erro ao salvar: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar configurações');
+    });
+}
+
+function voltarEditor() {
+    if (contexto === 'fluxo_editor') {
+        window.history.back();
+    } else {
+        window.location.href = '/componentes-editor';
+    }
+}
+
+function testarComponente() {
+    alert('Funcionalidade de teste em desenvolvimento');
+}
+
+function duplicarComponente() {
+    if (confirm('Deseja criar uma cópia deste componente?')) {
+        // Implementar duplicação
+        alert('Funcionalidade de duplicação em desenvolvimento');
+    }
+}
+
+function exportarConfiguracao() {
+    const config = {
+        nome: document.getElementById('nome').value,
+        configuracao: 'exportada_em_' + new Date().toISOString()
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `componente_${componenteId}_config.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+// Atualizar preview em tempo real
+document.getElementById('nome').addEventListener('input', function() {
+    document.getElementById('preview-nome').textContent = this.value;
+});
+
+document.getElementById('descricao').addEventListener('input', function() {
+    document.getElementById('preview-desc').textContent = this.value;
+});
+
+document.getElementById('cor').addEventListener('input', function() {
+    document.getElementById('preview-icon-large').style.color = this.value;
+});
+</script>
+{% endblock %}

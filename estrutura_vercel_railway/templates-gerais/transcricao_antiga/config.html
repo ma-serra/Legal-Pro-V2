@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block title %}Configuração de Transcrição{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Configuração de Transcrição</h1>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary bg-opacity-75 text-white">
+                    <h5 class="card-title mb-0">Status dos Provedores</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Provedor</th>
+                                    <th>Status</th>
+                                    <th>Última Verificação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for provedor in provedores %}
+                                    <tr>
+                                        <td>{{ provedor|upper }}</td>
+                                        <td>
+                                            {% if api_keys[provedor] %}
+                                                <span class="badge bg-success">Configurado</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Não Configurado</span>
+                                            {% endif %}
+                                        </td>
+                                        <td id="ultima-verificacao-{{ provedor }}">Nunca verificado</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary testar-api" 
+                                                   data-provedor="{{ provedor }}" 
+                                                   {% if not api_keys[provedor] %}disabled{% endif %}>
+                                                <i class="bi bi-check-circle"></i> Testar
+                                            </button>
+                                            <a href="{{ url_for('admin_apis') }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-gear"></i> Configurar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 mb-3">
+                <a href="{{ url_for('transcricao.transcricao') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar para Transcrição
+                </a>
+                <a href="{{ url_for('admin_apis') }}" class="btn btn-outline-primary ms-2">
+                    <i class="bi bi-gear"></i> Gerenciar Chaves de API
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Testar cada API
+    const testarBotoes = document.querySelectorAll('.testar-api');
+    
+    testarBotoes.forEach(botao => {
+        botao.addEventListener('click', function() {
+            const provedor = this.getAttribute('data-provedor');
+            const botao = this;
+            const statusCell = document.getElementById(`ultima-verificacao-${provedor}`);
+            
+            // Alterar o estado do botão enquanto testa
+            botao.disabled = true;
+            botao.innerHTML = '<i class="bi bi-hourglass"></i> Testando...';
+            statusCell.innerHTML = '<span class="text-warning">Verificando...</span>';
+            
+            // Fazer a requisição
+            fetch(`/transcricao/api/testar/${provedor}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        statusCell.innerHTML = `<span class="text-success">${new Date().toLocaleString()} - Sucesso</span>`;
+                    } else {
+                        statusCell.innerHTML = `<span class="text-danger">${new Date().toLocaleString()} - Falha: ${data.mensagem}</span>`;
+                    }
+                })
+                .catch(error => {
+                    statusCell.innerHTML = `<span class="text-danger">${new Date().toLocaleString()} - Erro: ${error.message}</span>`;
+                })
+                .finally(() => {
+                    // Restaurar o estado do botão
+                    botao.disabled = false;
+                    botao.innerHTML = '<i class="bi bi-check-circle"></i> Testar';
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1159 @@
+{% extends "layout.html" %}
+
+{% block title %}Editar Processo Jurídico{% endblock %}
+
+{% block content %}
+    
+    <style>
+        :root {
+            --primary-blue: #355d6c;
+            --accent-teal: #40aba0;
+            --accent-green: #40a9a3;
+            --neutral-gray: #575b5c;
+            --light-gray: #768082;
+            --bg-dark: #21333d;
+            --text-light: #fcfffb;
+            --text-muted: #ffffff;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #355d6c 0%, #40aba0 100%);
+            min-height: 100vh;
+            color: var(--text-light);
+        }
+        
+        .main-container {
+            background: rgba(87, 91, 92, 0.95);
+            border-radius: 20px;
+            margin: 20px auto;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(64, 171, 160, 0.2);
+            max-width: 1400px;
+            color: var(--text-light);
+        }
+        
+        .header-section {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 3px solid var(--accent-teal);
+            margin-bottom: 40px;
+        }
+        
+        .header-section h1 {
+            color: var(--accent-teal);
+            font-weight: 700;
+            font-size: 2.5rem;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 30px 0 20px 0;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--neutral-gray);
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--neutral-gray);
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 0.2rem rgba(64, 171, 160, 0.25);
+            color: var(--text-light);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(64, 171, 160, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--neutral-gray);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+        
+        .form-row {
+            margin-bottom: 25px;
+        }
+        
+        .checkbox-group {
+            /* Removido para usar estilo inline */
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .form-check-input {
+            /* Usando estilos padrão do Bootstrap */
+        }
+        
+        .form-check-input:checked {
+            /* Usando estilos padrão do Bootstrap */
+        }
+        
+        .form-check-label {
+            /* Usando estilos inline personalizados */
+        }
+        
+        .form-control::placeholder {
+            color: var(--light-gray);
+        }
+        
+        .form-select option {
+            background-color: var(--neutral-gray);
+            color: var(--text-light);
+        }
+        
+        .form-check {
+            /* Sem bordas - usando estilos inline */
+        }
+        
+        .form-check:hover {
+            /* Sem efeitos hover especiais */
+        }
+        
+        .alert-info {
+            /* Usando estilos padrão do Bootstrap */
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home_dashboard_init_app') }}">
+                <img loading="lazy" src="{{ url_for('static', filename='images/ars-logo.png') }}" alt="Legal Design Pro" class="me-2">
+                <span>Legal Design Pro</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('processos_juridicos') }}">
+                    <i class="fas fa-list me-1"></i>Lista de Processos
+                </a>
+                <a class="nav-link" href="{{ url_for('home_dashboard_init_app') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-section">
+                <h1><i class="fas fa-edit me-3"></i>Editar Processo Jurídico</h1>
+                <p class="mb-0 text-muted">Atualize as informações do processo: {{ processo.numero_processo_cnj }}</p>
+            </div>
+            
+            <!-- Formulário de Edição -->
+            <form method="POST" action="{{ url_for('processo_editar', processo_id=processo.id) }}">
+                
+                <!-- Seção 1: Identificação do Processo -->
+                <div class="section-header">
+                    <i class="fas fa-id-card me-2"></i>1. Identificação do Processo
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="numero_processo_cnj" class="form-label">Número do Processo (CNJ) *</label>
+                        <input type="text" class="form-control" id="numero_processo_cnj" name="numero_processo_cnj" 
+                               value="{{ processo.numero_processo_cnj }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="area_juridica" class="form-label">Área Jurídica *</label>
+                        <select class="form-select" id="area_juridica" name="area_juridica" required>
+                            <option value="">Selecione a área jurídica</option>
+                            <option value="Direito Civil" {{ 'selected' if processo.area_juridica == 'Direito Civil' }}>Direito Civil</option>
+                            <option value="Direito Trabalhista" {{ 'selected' if processo.area_juridica == 'Direito Trabalhista' }}>Direito Trabalhista</option>
+                            <option value="Direito Penal" {{ 'selected' if processo.area_juridica == 'Direito Penal' }}>Direito Penal</option>
+                            <option value="Direito Administrativo" {{ 'selected' if processo.area_juridica == 'Direito Administrativo' }}>Direito Administrativo</option>
+                            <option value="Direito Tributário" {{ 'selected' if processo.area_juridica == 'Direito Tributário' }}>Direito Tributário</option>
+                            <option value="Direito Empresarial" {{ 'selected' if processo.area_juridica == 'Direito Empresarial' }}>Direito Empresarial</option>
+                            <option value="Direito do Consumidor" {{ 'selected' if processo.area_juridica == 'Direito do Consumidor' }}>Direito do Consumidor</option>
+                            <option value="Direito Previdenciário" {{ 'selected' if processo.area_juridica == 'Direito Previdenciário' }}>Direito Previdenciário</option>
+                            <option value="Direito Imobiliário" {{ 'selected' if processo.area_juridica == 'Direito Imobiliário' }}>Direito Imobiliário</option>
+                            <option value="Direito Ambiental" {{ 'selected' if processo.area_juridica == 'Direito Ambiental' }}>Direito Ambiental</option>
+                            <option value="Direito Digital" {{ 'selected' if processo.area_juridica == 'Direito Digital' }}>Direito Digital</option>
+                            <option value="Direito Bancário" {{ 'selected' if processo.area_juridica == 'Direito Bancário' }}>Direito Bancário</option>
+                            <option value="Direito Securitário" {{ 'selected' if processo.area_juridica == 'Direito Securitário' }}>Direito Securitário</option>
+                            <option value="Negociação e Conflitos" {{ 'selected' if processo.area_juridica == 'Negociação e Conflitos' }}>Negociação e Conflitos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 2: Dados das Partes -->
+                <div class="section-header">
+                    <i class="fas fa-users me-2"></i>2. Dados das Partes
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="cliente" class="form-label">Cliente *</label>
+                        <input type="text" class="form-control" id="cliente" name="cliente" 
+                               value="{{ processo.cliente }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="autor" class="form-label">Autor *</label>
+                        <input type="text" class="form-control" id="autor" name="autor" 
+                               value="{{ processo.autor }}" required>
+                    </div>
+                    <div class="col-md-4" id="cpf_autor_field">
+                        <label for="cpf_autor" class="form-label">CPF do Autor (Pessoa Física) *</label>
+                        <input type="text" class="form-control" id="cpf_autor" name="cpf_autor" 
+                               value="{{ processo.cpf_autor }}" placeholder="000.000.000-00" required>
+                    </div>
+                    <div class="col-md-4" id="cnpj_autor_field">
+                        <label for="cnpj_autor" class="form-label">CNPJ do Autor (Pessoa Jurídica) <span class="cnpj-autor-required" style="display:none;">*</span></label>
+                        <input type="text" class="form-control" id="cnpj_autor" name="cnpj_autor" 
+                               value="{{ processo.cnpj_autor }}" placeholder="00.000.000/0000-00">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6" id="cnpj_field">
+                        <label for="cnpj" class="form-label">CNPJ do Cliente <span class="cnpj-required" style="display:none;">*</span></label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj" 
+                               value="{{ processo.cnpj or '' }}" placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="advogado_do_caso" class="form-label">Advogado do Caso *</label>
+                        <input type="text" class="form-control" id="advogado_do_caso" name="advogado_do_caso" 
+                               value="{{ processo.advogado_do_caso }}" required>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="advogado_adverso" class="form-label">Advogado Adverso</label>
+                        <input type="text" class="form-control" id="advogado_adverso" name="advogado_adverso" 
+                               value="{{ processo.advogado_adverso or '' }}">
+                    </div>
+                </div>
+
+                <!-- Seção 3: Dados Processuais -->
+                <div class="section-header">
+                    <i class="fas fa-gavel me-2"></i>3. Dados Processuais
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">Estado *</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="">Selecione o estado</option>
+                            <option value="AC" {{ 'selected' if processo.estado == 'AC' }}>Acre</option>
+                            <option value="AL" {{ 'selected' if processo.estado == 'AL' }}>Alagoas</option>
+                            <option value="AP" {{ 'selected' if processo.estado == 'AP' }}>Amapá</option>
+                            <option value="AM" {{ 'selected' if processo.estado == 'AM' }}>Amazonas</option>
+                            <option value="BA" {{ 'selected' if processo.estado == 'BA' }}>Bahia</option>
+                            <option value="CE" {{ 'selected' if processo.estado == 'CE' }}>Ceará</option>
+                            <option value="DF" {{ 'selected' if processo.estado == 'DF' }}>Distrito Federal</option>
+                            <option value="ES" {{ 'selected' if processo.estado == 'ES' }}>Espírito Santo</option>
+                            <option value="GO" {{ 'selected' if processo.estado == 'GO' }}>Goiás</option>
+                            <option value="MA" {{ 'selected' if processo.estado == 'MA' }}>Maranhão</option>
+                            <option value="MT" {{ 'selected' if processo.estado == 'MT' }}>Mato Grosso</option>
+                            <option value="MS" {{ 'selected' if processo.estado == 'MS' }}>Mato Grosso do Sul</option>
+                            <option value="MG" {{ 'selected' if processo.estado == 'MG' }}>Minas Gerais</option>
+                            <option value="PA" {{ 'selected' if processo.estado == 'PA' }}>Pará</option>
+                            <option value="PB" {{ 'selected' if processo.estado == 'PB' }}>Paraíba</option>
+                            <option value="PR" {{ 'selected' if processo.estado == 'PR' }}>Paraná</option>
+                            <option value="PE" {{ 'selected' if processo.estado == 'PE' }}>Pernambuco</option>
+                            <option value="PI" {{ 'selected' if processo.estado == 'PI' }}>Piauí</option>
+                            <option value="RJ" {{ 'selected' if processo.estado == 'RJ' }}>Rio de Janeiro</option>
+                            <option value="RN" {{ 'selected' if processo.estado == 'RN' }}>Rio Grande do Norte</option>
+                            <option value="RS" {{ 'selected' if processo.estado == 'RS' }}>Rio Grande do Sul</option>
+                            <option value="RO" {{ 'selected' if processo.estado == 'RO' }}>Rondônia</option>
+                            <option value="RR" {{ 'selected' if processo.estado == 'RR' }}>Roraima</option>
+                            <option value="SC" {{ 'selected' if processo.estado == 'SC' }}>Santa Catarina</option>
+                            <option value="SP" {{ 'selected' if processo.estado == 'SP' }}>São Paulo</option>
+                            <option value="SE" {{ 'selected' if processo.estado == 'SE' }}>Sergipe</option>
+                            <option value="TO" {{ 'selected' if processo.estado == 'TO' }}>Tocantins</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="comarca" class="form-label">Comarca *</label>
+                        <input type="text" class="form-control" id="comarca" name="comarca" 
+                               value="{{ processo.comarca }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="juizo" class="form-label">Juízo *</label>
+                        <input type="text" class="form-control" id="juizo" name="juizo" 
+                               value="{{ processo.juizo }}" required>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="data_distribuicao" class="form-label">Data de Distribuição *</label>
+                        <input type="date" class="form-control" id="data_distribuicao" name="data_distribuicao" 
+                               value="{{ processo.data_distribuicao.strftime('%Y-%m-%d') if processo.data_distribuicao else '' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="fase_processual" class="form-label">Fase Processual</label>
+                        <select class="form-select" id="fase_processual" name="fase_processual">
+                            <option value="">Selecione a Fase Processual</option>
+                            <option value="Inicial" {{ 'selected' if processo.fase_processual == 'Inicial' }}>Inicial</option>
+                            <option value="Citação" {{ 'selected' if processo.fase_processual == 'Citação' }}>Citação</option>
+                            <option value="Contestação" {{ 'selected' if processo.fase_processual == 'Contestação' }}>Contestação</option>
+                            <option value="Tréplica" {{ 'selected' if processo.fase_processual == 'Tréplica' }}>Tréplica</option>
+                            <option value="Audiência" {{ 'selected' if processo.fase_processual == 'Audiência' }}>Audiência</option>
+                            <option value="Audiência Una" {{ 'selected' if processo.fase_processual == 'Audiência Una' }}>Audiência Una</option>
+                            <option value="Audiência de Instrução" {{ 'selected' if processo.fase_processual == 'Audiência de Instrução' }}>Audiência de Instrução</option>
+                            <option value="Instrução" {{ 'selected' if processo.fase_processual == 'Instrução' }}>Instrução</option>
+                            <option value="Perícia" {{ 'selected' if processo.fase_processual == 'Perícia' }}>Perícia</option>
+                            <option value="Julgamento" {{ 'selected' if processo.fase_processual == 'Julgamento' }}>Julgamento</option>
+                            <option value="Sentença" {{ 'selected' if processo.fase_processual == 'Sentença' }}>Sentença</option>
+                            <option value="Recurso" {{ 'selected' if processo.fase_processual == 'Recurso' }}>Recurso</option>
+                            <option value="Apelação" {{ 'selected' if processo.fase_processual == 'Apelação' }}>Apelação</option>
+                            <option value="Embargos" {{ 'selected' if processo.fase_processual == 'Embargos' }}>Embargos</option>
+                            <option value="Agravo" {{ 'selected' if processo.fase_processual == 'Agravo' }}>Agravo</option>
+                            <option value="Execução" {{ 'selected' if processo.fase_processual == 'Execução' }}>Execução</option>
+                            <option value="Liquidação" {{ 'selected' if processo.fase_processual == 'Liquidação' }}>Liquidação</option>
+                            <option value="Cumprimento" {{ 'selected' if processo.fase_processual == 'Cumprimento' }}>Cumprimento</option>
+                            <option value="Acordo" {{ 'selected' if processo.fase_processual == 'Acordo' }}>Acordo</option>
+                            <option value="Arquivo" {{ 'selected' if processo.fase_processual == 'Arquivo' }}>Arquivo</option>
+                            <option value="Suspenso" {{ 'selected' if processo.fase_processual == 'Suspenso' }}>Suspenso</option>
+                            <option value="Trânsito em Julgado" {{ 'selected' if processo.fase_processual == 'Trânsito em Julgado' }}>Trânsito em Julgado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 4: Informações Financeiras -->
+                <div class="section-header">
+                    <i class="fas fa-money-bill-wave me-2"></i>4. Informações Financeiras
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="valor_da_causa" class="form-label">Valor da Causa (R$) *</label>
+                        <input type="number" step="0.01" class="form-control" id="valor_da_causa" name="valor_da_causa" 
+                               value="{{ processo.valor_da_causa }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="calculo_contadores" class="form-label">Cálculo dos Contadores (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="calculo_contadores" name="calculo_contadores" 
+                               value="{{ processo.calculo_contadores or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="provisao" class="form-label">Provisão (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="provisao" name="provisao" 
+                               value="{{ processo.provisao or '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-3">
+                        <label for="execucao" class="form-label">Execução (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="execucao" name="execucao" 
+                               value="{{ processo.execucao or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="bloqueio" class="form-label">Bloqueio (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="bloqueio" name="bloqueio" 
+                               value="{{ processo.bloqueio or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="acordo" class="form-label">Acordo (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="acordo" name="acordo" 
+                               value="{{ processo.acordo or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="pagamento" class="form-label">Pagamento (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="pagamento" name="pagamento" 
+                               value="{{ processo.pagamento or '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-3">
+                        <label for="deposito_recursal" class="form-label">Depósito Recursal (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="deposito_recursal" name="deposito_recursal" 
+                               value="{{ processo.deposito_recursal or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="pagamentos" class="form-label">Pagamentos (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="pagamentos" name="pagamentos" 
+                               value="{{ processo.pagamentos or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="penhora" class="form-label">Penhora (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="penhora" name="penhora" 
+                               value="{{ processo.penhora or '' }}">
+                    </div>
+                </div>
+
+                <!-- Seção 5: Resumo e Classificação -->
+                <div class="section-header">
+                    <i class="fas fa-clipboard-list me-2"></i>5. Resumo e Classificação
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="resumo_dos_fatos" class="form-label">Resumo dos Fatos *</label>
+                        <textarea class="form-control" id="resumo_dos_fatos" name="resumo_dos_fatos" rows="4" required>{{ processo.resumo_dos_fatos }}</textarea>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="risco" class="form-label">Risco *</label>
+                        <select class="form-select" id="risco" name="risco" required>
+                            <option value="">Selecione o risco</option>
+                            <option value="Remoto" {{ 'selected' if processo.risco == 'Remoto' }}>Remoto</option>
+                            <option value="Possível" {{ 'selected' if processo.risco == 'Possível' }}>Possível</option>
+                            <option value="Provável" {{ 'selected' if processo.risco == 'Provável' }}>Provável</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Selecione o status</option>
+                            <option value="Ativo" {{ 'selected' if processo.status == 'Ativo' }}>Ativo</option>
+                            <option value="Suspenso" {{ 'selected' if processo.status == 'Suspenso' }}>Suspenso</option>
+                            <option value="Finalizado" {{ 'selected' if processo.status == 'Finalizado' }}>Finalizado</option>
+                            <option value="Arquivado" {{ 'selected' if processo.status == 'Arquivado' }}>Arquivado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="polo" class="form-label">Polo</label>
+                        <select class="form-select" id="polo" name="polo">
+                            <option value="">Selecione o polo</option>
+                            <option value="Ativo" {{ 'selected' if processo.polo == 'Ativo' }}>Ativo</option>
+                            <option value="Passivo" {{ 'selected' if processo.polo == 'Passivo' }}>Passivo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 6: Campos Adicionais -->
+                <div class="section-header">
+                    <i class="fas fa-plus-circle me-2"></i>6. Informações Complementares
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" 
+                               value="{{ processo.titulo or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="ano_distribuicao" class="form-label">Ano de Distribuição</label>
+                        <input type="number" class="form-control" id="ano_distribuicao" name="ano_distribuicao" 
+                               value="{{ processo.ano_distribuicao or '' }}" min="1900" max="2030">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="empresa" class="form-label">Empresa</label>
+                        <input type="text" class="form-control" id="empresa" name="empresa" 
+                               value="{{ processo.empresa or '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="esfera" class="form-label">Esfera</label>
+                        <select class="form-select" id="esfera" name="esfera">
+                            <option value="">Selecione a esfera</option>
+                            <option value="Estadual" {{ 'selected' if processo.esfera == 'Estadual' }}>Estadual</option>
+                            <option value="Federal" {{ 'selected' if processo.esfera == 'Federal' }}>Federal</option>
+                            <option value="Trabalhista" {{ 'selected' if processo.esfera == 'Trabalhista' }}>Trabalhista</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="instancia" class="form-label">Instância</label>
+                        <select class="form-select" id="instancia" name="instancia">
+                            <option value="">Selecione a instância</option>
+                            <option value="1ª Instância" {{ 'selected' if processo.instancia == '1ª Instância' }}>1ª Instância</option>
+                            <option value="2ª Instância" {{ 'selected' if processo.instancia == '2ª Instância' }}>2ª Instância</option>
+                            <option value="Tribunal Superior" {{ 'selected' if processo.instancia == 'Tribunal Superior' }}>Tribunal Superior</option>
+                            <option value="STF" {{ 'selected' if processo.instancia == 'STF' }}>STF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="acao" class="form-label">Ação</label>
+                        <input type="text" class="form-control" id="acao" name="acao" 
+                               value="{{ processo.acao or '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="tema" class="form-label">Tema</label>
+                        <input type="text" class="form-control" id="tema" name="tema" 
+                               value="{{ processo.tema or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="objeto" class="form-label">Objeto</label>
+                        <input type="text" class="form-control" id="objeto" name="objeto" 
+                               value="{{ processo.objeto or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="processo" class="form-label">Tipo de Processo</label>
+                        <input type="text" class="form-control" id="processo" name="processo" 
+                               value="{{ processo.processo or '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="resultado" class="form-label">Resultado</label>
+                        <input type="text" class="form-control" id="resultado" name="resultado" 
+                               value="{{ processo.resultado or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="posicao_simplificada" class="form-label">Posição Simplificada</label>
+                        <input type="text" class="form-control" id="posicao_simplificada" name="posicao_simplificada" 
+                               value="{{ processo.posicao_simplificada or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check" style="margin-top: 25px;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="liminar" name="liminar" value="1"
+                                   {{ 'checked' if processo.liminar }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="liminar">Liminar</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="funcao" class="form-label">Função</label>
+                        <input type="text" class="form-control" id="funcao" name="funcao" 
+                               value="{{ processo.funcao or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="previsao_de_pagamento" class="form-label">Previsão de Pagamento</label>
+                        <input type="date" class="form-control" id="previsao_de_pagamento" name="previsao_de_pagamento" 
+                               value="{{ processo.previsao_de_pagamento.strftime('%Y-%m-%d') if processo.previsao_de_pagamento else '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="data_acordo" class="form-label">Data do Acordo</label>
+                        <input type="date" class="form-control" id="data_acordo" name="data_acordo" 
+                               value="{{ processo.data_acordo.strftime('%Y-%m-%d') if processo.data_acordo else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="data_registro" class="form-label">Data de Registro</label>
+                        <input type="date" class="form-control" id="data_registro" name="data_registro" 
+                               value="{{ processo.data_registro.strftime('%Y-%m-%d') if processo.data_registro else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="estimativa_desembolso" class="form-label">Estimativa de Desembolso</label>
+                        <input type="date" class="form-control" id="estimativa_desembolso" name="estimativa_desembolso" 
+                               value="{{ processo.estimativa_desembolso.strftime('%Y-%m-%d') if processo.estimativa_desembolso else '' }}">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="observacoes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ processo.observacoes or '' }}</textarea>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="andamento_relatorio" class="form-label">Relatório de Andamento</label>
+                        <textarea class="form-control" id="andamento_relatorio" name="andamento_relatorio" rows="4">{{ processo.andamento_relatorio or '' }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Seção 7: Verbas Trabalhistas (se aplicável) -->
+                {% if processo.area_juridica == 'Direito Trabalhista' %}
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-briefcase me-2"></i>Pedidos de Verba
+                    </h3>
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Selecione os pedidos de verba aplicáveis a este processo
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="pedidos-verba-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 2px solid #007bff;">
+                                <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                                    <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="acidente_de_trabalho" name="acidente_de_trabalho" 
+                                           {{ 'checked' if processo.acidente_de_trabalho }} style="margin-right: 8px;">
+                                    <label class="form-check-label" style="font-weight: 500; color: #333;" for="acidente_de_trabalho" style="font-weight: 500; color: #333;">Acidente de Trabalho</label>
+                                </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="acumulo_de_funcao" name="acumulo_de_funcao" 
+                                   {{ 'checked' if processo.acumulo_de_funcao }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="acumulo_de_funcao">Acúmulo de Função</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="adicional_de_periculosidade" name="adicional_de_periculosidade" 
+                                   {{ 'checked' if processo.adicional_de_periculosidade }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="adicional_de_periculosidade">Adicional de Periculosidade</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="adicional_de_sobreaviso" name="adicional_de_sobreaviso" 
+                                   {{ 'checked' if processo.adicional_de_sobreaviso }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="adicional_de_sobreaviso">Adicional de Sobreaviso</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="adicional_noturno_e_reflexos" name="adicional_noturno_e_reflexos" 
+                                   {{ 'checked' if processo.adicional_noturno_e_reflexos }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="adicional_noturno_e_reflexos">Adicional Noturno e Reflexos</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="ajuda_de_custo" name="ajuda_de_custo" 
+                                   {{ 'checked' if processo.ajuda_de_custo }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="ajuda_de_custo">Ajuda de Custo</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="aplicacao_do_artigo_467_da_clt" name="aplicacao_do_artigo_467_da_clt" 
+                                   {{ 'checked' if processo.aplicacao_do_artigo_467_da_clt }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="aplicacao_do_artigo_467_da_clt">Aplicação do Artigo 467 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="apresentacao_de_documentos" name="apresentacao_de_documentos" 
+                                   {{ 'checked' if processo.apresentacao_de_documentos }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="apresentacao_de_documentos">Apresentação de Documentos</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="artigo_384_da_clt" name="artigo_384_da_clt" 
+                                   {{ 'checked' if processo.artigo_384_da_clt }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="artigo_384_da_clt">Artigo 384 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="beneficios_previstos_na_cct_da_2a_reclamada" name="beneficios_previstos_na_cct_da_2a_reclamada" 
+                                   {{ 'checked' if processo.beneficios_previstos_na_cct_da_2a_reclamada }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="beneficios_previstos_na_cct_da_2a_reclamada">Benefícios Previstos na CCT da 2ª Reclamada</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="descaracterizacao_do_cargo_de_confianca" name="descaracterizacao_do_cargo_de_confianca" 
+                                   {{ 'checked' if processo.descaracterizacao_do_cargo_de_confianca }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="descaracterizacao_do_cargo_de_confianca">Descaracterização do Cargo de Confiança</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="devolucao_de_descontos" name="devolucao_de_descontos" 
+                                   {{ 'checked' if processo.devolucao_de_descontos }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="devolucao_de_descontos">Devolução de Descontos</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="devolucao_de_descontos_lancados_no_trct" name="devolucao_de_descontos_lancados_no_trct" 
+                                   {{ 'checked' if processo.devolucao_de_descontos_lancados_no_trct }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="devolucao_de_descontos_lancados_no_trct">Devolução de Descontos Lançados no TRCT</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="diferencas_de_comissoes" name="diferencas_de_comissoes" 
+                                   {{ 'checked' if processo.diferencas_de_comissoes }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="diferencas_de_comissoes">Diferenças de Comissões</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="diferencas_salariais" name="diferencas_salariais" 
+                                   {{ 'checked' if processo.diferencas_salariais }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="diferencas_salariais">Diferenças Salariais</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="dsrs" name="dsrs" 
+                                   {{ 'checked' if processo.dsrs }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="dsrs">DSRs</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="equiparacao_salarial" name="equiparacao_salarial" 
+                                   {{ 'checked' if processo.equiparacao_salarial }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="equiparacao_salarial">Equiparação Salarial</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="estabilidade" name="estabilidade" 
+                                   {{ 'checked' if processo.estabilidade }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="estabilidade">Estabilidade</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="ferias_em_dobro" name="ferias_em_dobro" 
+                                   {{ 'checked' if processo.ferias_em_dobro }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="ferias_em_dobro">Férias em Dobro</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="fgts_e_a_multa_de_40_porcento" name="fgts_e_a_multa_de_40_porcento" 
+                                   {{ 'checked' if processo.fgts_e_a_multa_de_40_porcento }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="fgts_e_a_multa_de_40_porcento">FGTS e a Multa de 40%</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="horas_extras_e_reflexos" name="horas_extras_e_reflexos" 
+                                   {{ 'checked' if processo.horas_extras_e_reflexos }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="horas_extras_e_reflexos">Horas Extras e Reflexos</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="indenizacao_aviso_previo" name="indenizacao_aviso_previo" 
+                                   {{ 'checked' if processo.indenizacao_aviso_previo }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="indenizacao_aviso_previo">Indenização Aviso Prévio</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="indenizacao_por_danos_materiais" name="indenizacao_por_danos_materiais" 
+                                   {{ 'checked' if processo.indenizacao_por_danos_materiais }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="indenizacao_por_danos_materiais">Indenização por Danos Materiais</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="indenizacao_por_danos_morais" name="indenizacao_por_danos_morais" 
+                                   {{ 'checked' if processo.indenizacao_por_danos_morais }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="indenizacao_por_danos_morais">Indenização por Danos Morais</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="integracao_das_comissoes" name="integracao_das_comissoes" 
+                                   {{ 'checked' if processo.integracao_das_comissoes }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="integracao_das_comissoes">Integração das Comissões</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="integracao_das_comissoes_por_fora" name="integracao_das_comissoes_por_fora" 
+                                   {{ 'checked' if processo.integracao_das_comissoes_por_fora }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="integracao_das_comissoes_por_fora">Integração das Comissões por Fora</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="integracao_dos_premios" name="integracao_dos_premios" 
+                                   {{ 'checked' if processo.integracao_dos_premios }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="integracao_dos_premios">Integração dos Prêmios</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="intervalo_interjornada" name="intervalo_interjornada" 
+                                   {{ 'checked' if processo.intervalo_interjornada }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="intervalo_interjornada">Intervalo Interjornada</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="intervalo_intrajornada" name="intervalo_intrajornada" 
+                                   {{ 'checked' if processo.intervalo_intrajornada }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="intervalo_intrajornada">Intervalo Intrajornada</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao" name="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao" 
+                                   {{ 'checked' if processo.liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao">Liberação das Guias TRCT e CD sob Pena de Indenização</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="multa_convencional_ou_normativa" name="multa_convencional_ou_normativa" 
+                                   {{ 'checked' if processo.multa_convencional_ou_normativa }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="multa_convencional_ou_normativa">Multa Convencional ou Normativa</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="multa_do_artigo_477_da_clt" name="multa_do_artigo_477_da_clt" 
+                                   {{ 'checked' if processo.multa_do_artigo_477_da_clt }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="multa_do_artigo_477_da_clt">Multa do Artigo 477 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="outros" name="outros" 
+                                   {{ 'checked' if processo.outros }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="outros">Outros</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="plr" name="plr" 
+                                   {{ 'checked' if processo.plr }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="plr">PLR</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="quebra_de_caixa" name="quebra_de_caixa" 
+                                   {{ 'checked' if processo.quebra_de_caixa }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="quebra_de_caixa">Quebra de Caixa</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="plano_de_saude" name="plano_de_saude" 
+                                   {{ 'checked' if processo.plano_de_saude }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="plano_de_saude">Plano de Saúde</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reconhecimento_da_remuneracao_recebida" name="reconhecimento_da_remuneracao_recebida" 
+                                   {{ 'checked' if processo.reconhecimento_da_remuneracao_recebida }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reconhecimento_da_remuneracao_recebida">Reconhecimento da Remuneração Recebida</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reembolso_km" name="reembolso_km" 
+                                   {{ 'checked' if processo.reembolso_km }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reembolso_km">Reembolso KM</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reenquadramento_sindical" name="reenquadramento_sindical" 
+                                   {{ 'checked' if processo.reenquadramento_sindical }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reenquadramento_sindical">Reenquadramento Sindical</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reintegracao" name="reintegracao" 
+                                   {{ 'checked' if processo.reintegracao }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reintegracao">Reintegração</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="rescisao_indireta" name="rescisao_indireta" 
+                                   {{ 'checked' if processo.rescisao_indireta }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="rescisao_indireta">Rescisão Indireta</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="responsabilizacao_subsidiaria_da_2a_reclamada_vivo" name="responsabilizacao_subsidiaria_da_2a_reclamada_vivo" 
+                                   {{ 'checked' if processo.responsabilizacao_subsidiaria_da_2a_reclamada_vivo }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="responsabilizacao_subsidiaria_da_2a_reclamada_vivo">Responsabilização Subsidiária da 2ª Reclamada</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa" name="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa" 
+                                   {{ 'checked' if processo.reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa">Reversão do Pedido de Demissão em Demissão sem Justa Causa</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="reversao_justa_causa" name="reversao_justa_causa" 
+                                   {{ 'checked' if processo.reversao_justa_causa }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="reversao_justa_causa">Reversão Justa Causa</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="salario_substituicao" name="salario_substituicao" 
+                                   {{ 'checked' if processo.salario_substituicao }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="salario_substituicao">Salário Substituição</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="seguro_desemprego" name="seguro_desemprego" 
+                                   {{ 'checked' if processo.seguro_desemprego }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="seguro_desemprego">Seguro Desemprego</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="sucumbencia" name="sucumbencia" 
+                                   {{ 'checked' if processo.sucumbencia }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="sucumbencia">Sucumbência</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="vale_refeicao" name="vale_refeicao" 
+                                   {{ 'checked' if processo.vale_refeicao }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="vale_refeicao">Vale Refeição</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="vale_transporte" name="vale_transporte" 
+                                   {{ 'checked' if processo.vale_transporte }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="vale_transporte">Vale Transporte</label>
+                        </div>
+                        
+                        <div class="form-check" style="padding: 8px; margin: 5px 0; display: flex; align-items: center;">
+                            <input class="form-check-input" type="checkbox" style="margin-right: 8px;" id="verbas_rescisoria" name="verbas_rescisoria" 
+                                   {{ 'checked' if processo.verbas_rescisoria }}>
+                            <label class="form-check-label" style="font-weight: 500; color: #333;" for="verbas_rescisoria">Verbas Rescisórias</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botões de Ação -->
+                <div class="text-center mt-5">
+                    <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" class="btn btn-secondary me-3">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/client-validation.js') }}"></script>
+    
+    <script>
+        // Validação do formulário e formatação de campos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aplicar máscaras nos campos
+            const cpfField = document.getElementById('cpf_autor');
+            const cnpjField = document.getElementById('cnpj');
+            const cnpjAutorField = document.getElementById('cnpj_autor');
+            const areaJuridicaField = document.getElementById('area_juridica');
+            
+            if (cpfField) {
+                cpfField.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    e.target.value = value;
+                });
+            }
+            
+            if (cnpjField) {
+                cnpjField.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    e.target.value = value;
+                });
+            }
+            
+            if (cnpjAutorField) {
+                cnpjAutorField.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    e.target.value = value;
+                });
+            }
+            
+            // Função para verificar se o nome sugere pessoa jurídica
+            function isEmpresa(nome) {
+                if (!nome) return false;
+                const nomeUpper = nome.toUpperCase();
+                const sufixosEmpresa = ['LTDA', 'S.A.', 'EIRELI', 'ME', 'EPP', 'S/A', 'CIA', 'COMPANHIA', 'CORPORAÇÃO', 'SOCIEDADE', 'EMPRESA', 'INDÚSTRIA', 'COMÉRCIO'];
+                return sufixosEmpresa.some(sufixo => nomeUpper.includes(sufixo));
+            }
+            
+            // Função para ajustar CNPJ do Autor baseado no nome do autor
+            function ajustarCNPJAutor() {
+                const autorField = document.getElementById('autor');
+                const cnpjAutorField = document.getElementById('cnpj_autor');
+                const cpfAutorField = document.getElementById('cpf_autor');
+                const cnpjAutorFieldDiv = document.getElementById('cnpj_autor_field');
+                const cpfAutorFieldDiv = document.getElementById('cpf_autor_field');
+                const cnpjAutorRequiredSpan = document.querySelector('.cnpj-autor-required');
+                
+                if (isEmpresa(autorField.value)) {
+                    // Autor é empresa: CNPJ obrigatório, CPF opcional
+                    cnpjAutorField.required = true;
+                    cpfAutorField.required = false;
+                    cnpjAutorRequiredSpan.style.display = 'inline';
+                    
+                    // Alterar labels para indicar a obrigatoriedade
+                    const cnpjAutorLabel = cnpjAutorFieldDiv.querySelector('label');
+                    if (!cnpjAutorLabel.innerHTML.includes('(Obrigatório)')) {
+                        cnpjAutorLabel.innerHTML = cnpjAutorLabel.innerHTML.replace('(Pessoa Jurídica)', '(Obrigatório - Pessoa Jurídica)');
+                    }
+                    
+                    const cpfAutorLabel = cpfAutorFieldDiv.querySelector('label');
+                    cpfAutorLabel.innerHTML = cpfAutorLabel.innerHTML.replace(' *', '').replace('(Pessoa Física)', '(Opcional - Pessoa Física)');
+                } else {
+                    // Autor é pessoa física: CPF obrigatório, CNPJ opcional
+                    cnpjAutorField.required = false;
+                    cpfAutorField.required = true;
+                    cnpjAutorRequiredSpan.style.display = 'none';
+                    
+                    // Restaurar labels
+                    const cnpjAutorLabel = cnpjAutorFieldDiv.querySelector('label');
+                    cnpjAutorLabel.innerHTML = cnpjAutorLabel.innerHTML.replace('(Obrigatório - Pessoa Jurídica)', '(Pessoa Jurídica)');
+                    
+                    const cpfAutorLabel = cpfAutorFieldDiv.querySelector('label');
+                    if (!cpfAutorLabel.innerHTML.includes(' *')) {
+                        cpfAutorLabel.innerHTML = cpfAutorLabel.innerHTML.replace('(Opcional - Pessoa Física)', '(Pessoa Física) *');
+                    }
+                }
+            }
+
+            // Função para ajustar campos baseado na área jurídica
+            function ajustarCamposPorArea() {
+                const areaValue = areaJuridicaField.value;
+                const cpfAutorField = document.getElementById('cpf_autor_field');
+                const cnpjFieldDiv = document.getElementById('cnpj_field');
+                const cnpjRequiredSpan = document.querySelector('.cnpj-required');
+                
+                if (areaValue === 'Direito Empresarial') {
+                    // Para Direito Empresarial: Cliente deve ser empresa
+                    cnpjField.required = true;
+                    cnpjRequiredSpan.style.display = 'inline';
+                    cnpjFieldDiv.className = 'col-md-6';
+                    
+                    // Adicionar dica visual
+                    if (!document.getElementById('empresa-hint')) {
+                        const hint = document.createElement('small');
+                        hint.id = 'empresa-hint';
+                        hint.className = 'text-info';
+                        hint.innerHTML = '<i class="fas fa-info-circle me-1"></i>Para processos empresariais, o CNPJ é obrigatório';
+                        cnpjFieldDiv.appendChild(hint);
+                    }
+                } else {
+                    // Para outras áreas: CNPJ opcional
+                    cnpjField.required = false;
+                    cnpjRequiredSpan.style.display = 'none';
+                    
+                    // Remover dica visual
+                    const hint = document.getElementById('empresa-hint');
+                    if (hint) {
+                        hint.remove();
+                    }
+                }
+                
+                // Sempre verificar CNPJ do Autor independente da área
+                ajustarCNPJAutor();
+            }
+            
+            // Executar ao carregar a página
+            if (areaJuridicaField) {
+                ajustarCamposPorArea();
+                areaJuridicaField.addEventListener('change', ajustarCamposPorArea);
+            }
+            
+            // Adicionar listener para mudanças no campo Autor
+            const autorField = document.getElementById('autor');
+            if (autorField) {
+                autorField.addEventListener('input', ajustarCNPJAutor);
+                autorField.addEventListener('blur', ajustarCNPJAutor);
+            }
+            
+            // Validação antes do envio
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let valid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        valid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (!valid) {
+                    e.preventDefault();
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                }
+            });
+            
+            // ========================================
+            // FORMATAÇÃO MONETÁRIA
+            // ========================================
+            
+            // Função para formatar número em moeda brasileira
+            function formatarMoeda(value) {
+                if (!value) return '';
+                const numero = parseFloat(value.toString().replace(/[^\d,.-]/g, '').replace(',', '.'));
+                if (isNaN(numero)) return '';
+                return numero.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            
+            // Função para remover formatação de moeda
+            function removerFormatacaoMoeda(value) {
+                if (!value) return '';
+                return value.toString().replace(/[^\d,.-]/g, '').replace(',', '.');
+            }
+            
+            // Aplicar formatação monetária aos campos de valor
+            const camposMonetarios = [
+                'valor_da_causa',
+                'calculo_contadores', 
+                'provisao',
+                'execucao',
+                'bloqueio',
+                'acordo',
+                'pagamento'
+            ];
+            
+            camposMonetarios.forEach(function(fieldId) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    // Formatar valor inicial se existir
+                    if (field.value) {
+                        const valorInicial = parseFloat(field.value);
+                        if (!isNaN(valorInicial)) {
+                            field.setAttribute('data-raw-value', valorInicial);
+                            field.value = formatarMoeda(valorInicial);
+                        }
+                    }
+                    
+                    // Remover formatação ao focar
+                    field.addEventListener('focus', function() {
+                        const rawValue = this.getAttribute('data-raw-value') || '';
+                        this.value = rawValue;
+                    });
+                    
+                    // Aplicar formatação ao perder foco
+                    field.addEventListener('blur', function() {
+                        const valor = removerFormatacaoMoeda(this.value);
+                        if (valor && !isNaN(parseFloat(valor))) {
+                            this.setAttribute('data-raw-value', valor);
+                            this.value = formatarMoeda(valor);
+                        }
+                    });
+                    
+                    // Antes de enviar o formulário, converter para número
+                    const form = field.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', function() {
+                            const rawValue = field.getAttribute('data-raw-value') || '';
+                            if (rawValue) {
+                                field.value = rawValue;
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}

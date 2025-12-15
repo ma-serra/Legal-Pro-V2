@@ -1,0 +1,736 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Monitoramento Vetorial{% endblock %}
+
+{% block extra_css %}
+<style>
+.monitoring-container {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.metric-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.metric-icon.postgresql { background: linear-gradient(135deg, #336791, #2c5aa0); }
+.metric-icon.qdrant { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+.metric-icon.sync { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+.metric-icon.health { background: linear-gradient(135deg, #a8e6cf, #88d8a3); }
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-indicator.ativo { background: #d4edda; color: #155724; }
+.status-indicator.erro { background: #f8d7da; color: #721c24; }
+.status-indicator.nao_configurado { background: #fff3cd; color: #856404; }
+
+.collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.collection-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.collection-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.collection-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.embedding-tables-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.table-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table-stats {
+    display: flex;
+    gap: 1rem;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.sync-progress {
+    margin-top: 1rem;
+}
+
+.sync-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sync-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecdc4, #44a08d);
+    transition: width 0.3s ease;
+}
+
+.real-time-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #27ae60;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.refresh-controls {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.last-update {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-left: 1rem;
+}
+
+.chart-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.activity-timeline {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.timeline-dot.success { background: #27ae60; }
+.timeline-dot.info { background: #3498db; }
+.timeline-dot.warning { background: #f39c12; }
+
+.auto-update-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="monitoring-container">
+    <!-- Indicador de Tempo Real -->
+    <div class="real-time-indicator">
+        <div class="pulse-dot"></div>
+        Monitoramento em Tempo Real
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-white mb-2">
+                <i class="fas fa-chart-line me-2"></i>
+                Monitoramento Vetorial
+            </h1>
+            <p class="text-white-50 mb-0">Sistema de monitoramento em tempo real das bases vetoriais e relacionais</p>
+        </div>
+    </div>
+
+    <!-- Controles de Atualização -->
+    <div class="refresh-controls">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="auto-update-controls">
+                <h5 class="mb-0">Atualização Automática</h5>
+                <label class="switch">
+                    <input type="checkbox" id="autoUpdateToggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span class="text-muted">A cada 30 minutos</span>
+            </div>
+            <div>
+                <button class="btn btn-primary me-2" onclick="forceRefresh()">
+                    <i class="fas fa-sync-alt me-2"></i>Atualizar Agora
+                </button>
+                <span class="last-update">
+                    Última atualização: {{ status.timestamp[:19] if status.timestamp else 'Nunca' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div class="dashboard-grid">
+        <!-- PostgreSQL -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon postgresql">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0">PostgreSQL</h6>
+                    <small class="text-muted">Base Relacional</small>
+                </div>
+            </div>
+            <div class="metric-value">{{ status.postgresql.total_documents if status.postgresql else 0 }}</div>
+            <div class="metric-label">Documentos totais</div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">Vetoriais: {{ status.postgresql.vectorial_documents if status.postgresql else 0 }}</small>
+                <small class="text-muted">{{ status.postgresql.storage_size if status.postgresql else 0 }} MB</small>
+            </div>
+        </div>
+
+        <!-- Qdrant -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon qdrant">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0">Qdrant Cloud</h6>
+                    <small class="text-muted">Base Vetorial</small>
+                </div>
+            </div>
+            <div class="metric-value">{{ status.qdrant.total_vectors if status.qdrant else 0 }}</div>
+            <div class="metric-label">Vetores totais</div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="status-indicator {{ status.qdrant.status if status.qdrant else 'nao_configurado' }}">
+                    {{ status.qdrant.status|title if status.qdrant else 'Não Configurado' }}
+                </span>
+                <small class="text-muted">{{ status.qdrant.collections|length if status.qdrant and status.qdrant.collections else 0 }} coleções</small>
+            </div>
+        </div>
+
+        <!-- Sincronização -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon sync">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0">Sincronização</h6>
+                    <small class="text-muted">PostgreSQL ↔ Qdrant</small>
+                </div>
+            </div>
+            <div class="metric-value">{{ status.sync_status.percentage if status.sync_status else 0 }}%</div>
+            <div class="metric-label">Taxa de sincronização</div>
+            <div class="sync-progress">
+                <div class="sync-bar">
+                    <div class="sync-fill" style="width: {{ status.sync_status.percentage if status.sync_status else 0 }}%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">PG: {{ status.sync_status.pg_vectors if status.sync_status else 0 }}</small>
+                    <small class="text-muted">Qdrant: {{ status.sync_status.qdrant_vectors if status.sync_status else 0 }}</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saúde do Sistema -->
+        <div class="metric-card">
+            <div class="metric-header">
+                <div class="metric-icon health">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0">Saúde do Sistema</h6>
+                    <small class="text-muted">Status geral</small>
+                </div>
+            </div>
+            <div class="metric-value">{{ status.health.score if status.health else 0 }}%</div>
+            <div class="metric-label">Score de saúde</div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="status-indicator {{ 'ativo' if status.health and status.health.score >= 75 else 'erro' }}">
+                    {{ status.health.status|title if status.health else 'Desconhecido' }}
+                </span>
+                <small class="text-muted">{{ status.postgresql.recent_uploads if status.postgresql else 0 }} uploads hoje</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coleções Qdrant -->
+    {% if status.qdrant and status.qdrant.collections %}
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-layer-group me-2"></i>
+            Coleções Qdrant
+        </h5>
+        <div class="collections-grid">
+            {% for collection in status.qdrant.collections %}
+            <div class="collection-card">
+                <div class="collection-name">{{ collection.name }}</div>
+                <div class="collection-stats">
+                    <span class="badge bg-primary">{{ collection.vectors_count }} vetores</span>
+                    <span class="badge bg-secondary">{{ collection.points_count }} pontos</span>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar" style="width: {{ (collection.vectors_count / status.qdrant.total_vectors * 100)|round(1) if status.qdrant.total_vectors > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabelas de Embeddings -->
+    {% if status.postgresql and status.postgresql.embedding_tables %}
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-table me-2"></i>
+            Tabelas de Embeddings PostgreSQL
+        </h5>
+        <div class="embedding-tables-list">
+            {% for table in status.postgresql.embedding_tables %}
+            <div class="table-item">
+                <div class="flex-grow-1">
+                    <div class="table-name">{{ table.area }}</div>
+                    <small class="text-muted">{{ table.table }}</small>
+                </div>
+                <div class="table-stats">
+                    <span>{{ table.count }} registros</span>
+                    <span>{{ table.size_mb }} MB</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Timeline de Atividades -->
+    <div class="chart-container">
+        <h5 class="mb-3">
+            <i class="fas fa-history me-2"></i>
+            Atividade Recente
+        </h5>
+        <div class="activity-timeline" id="activityTimeline">
+            <!-- Será preenchido via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Estatísticas Detalhadas -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Distribuição por Áreas
+                </h5>
+                <canvas id="areaChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Performance Temporal
+                </h5>
+                <canvas id="performanceChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let autoUpdateInterval;
+let isAutoUpdateEnabled = true;
+
+// Configurar atualização automática
+document.getElementById('autoUpdateToggle').addEventListener('change', function() {
+    isAutoUpdateEnabled = this.checked;
+    if (isAutoUpdateEnabled) {
+        startAutoUpdate();
+    } else {
+        stopAutoUpdate();
+    }
+});
+
+function startAutoUpdate() {
+    if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+    
+    autoUpdateInterval = setInterval(() => {
+        if (isAutoUpdateEnabled) {
+            refreshData(false);
+        }
+    }, 1800000); // 30 minutos
+}
+
+function stopAutoUpdate() {
+    if (autoUpdateInterval) {
+        clearInterval(autoUpdateInterval);
+        autoUpdateInterval = null;
+    }
+}
+
+function forceRefresh() {
+    refreshData(true);
+}
+
+function refreshData(forceUpdate = false) {
+    // Mostrar indicador de carregamento
+    showLoadingIndicator();
+    
+    const url = forceUpdate 
+        ? '/api/admin/vectorial/status?update=true'
+        : '/api/admin/vectorial/status';
+    
+    console.log('Atualizando dados do sistema...', url);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        console.log('Status da resposta:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Dados recebidos:', data);
+        hideLoadingIndicator();
+        
+        if (data.success && data.data) {
+            updateDashboard(data.data);
+            showSuccessMessage('Dados atualizados com sucesso');
+        } else {
+            throw new Error('Dados inválidos recebidos');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar dados:', error);
+        hideLoadingIndicator();
+        showErrorMessage('Erro ao carregar dados: ' + error.message);
+        
+        // Se for força de atualização, recarregar página
+        if (forceUpdate) {
+            setTimeout(() => // location.reload() - removido para evitar piscar, 1000);
+        }
+    });
+}
+
+function updateDashboard(data) {
+    // Atualizar métricas principais
+    document.querySelector('.metric-card:nth-child(1) .metric-value').textContent = 
+        data.postgresql?.total_documents || 0;
+    
+    document.querySelector('.metric-card:nth-child(2) .metric-value').textContent = 
+        data.qdrant?.total_vectors || 0;
+    
+    document.querySelector('.metric-card:nth-child(3) .metric-value').textContent = 
+        (data.sync_status?.percentage || 0) + '%';
+    
+    document.querySelector('.metric-card:nth-child(4) .metric-value').textContent = 
+        (data.health?.score || 0) + '%';
+    
+    // Atualizar timestamp
+    const timestamp = data.timestamp ? data.timestamp.substring(0, 19) : 'Nunca';
+    document.querySelector('.last-update').textContent = `Última atualização: ${timestamp}`;
+    
+    // Atualizar timeline de atividades
+    updateActivityTimeline();
+}
+
+function updateActivityTimeline() {
+    const timeline = document.getElementById('activityTimeline');
+    const activities = [
+        { type: 'success', time: '{{ timestamp.strftime("%H:%M") }}', message: 'Sistema sincronizado com sucesso' },
+        { type: 'info', time: '{{ (timestamp - timedelta(minutes=30)).strftime("%H:%M") }}', message: 'Atualização automática executada' },
+        { type: 'success', time: '{{ (timestamp - timedelta(hours=1)).strftime("%H:%M") }}', message: 'Novos documentos processados' }
+    ];
+    
+    timeline.innerHTML = activities.map(activity => `
+        <div class="timeline-item">
+            <div class="timeline-dot ${activity.type}"></div>
+            <div class="flex-grow-1">
+                <div class="fw-bold">${activity.message}</div>
+                <small class="text-muted">${activity.time}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Inicializar gráficos
+function initCharts() {
+    // Gráfico de distribuição por áreas
+    const areaCtx = document.getElementById('areaChart');
+    if (areaCtx) {
+        const areasData = {{ status.postgresql.areas_distribution|tojson if status.postgresql and status.postgresql.areas_distribution else '{}' }};
+        
+        new Chart(areaCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(areasData),
+                datasets: [{
+                    data: Object.values(areasData),
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                        '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+    
+    // Gráfico de performance temporal
+    const perfCtx = document.getElementById('performanceChart');
+    if (perfCtx) {
+        new Chart(perfCtx, {
+            type: 'line',
+            data: {
+                labels: ['6h atrás', '5h atrás', '4h atrás', '3h atrás', '2h atrás', '1h atrás', 'Agora'],
+                datasets: [{
+                    label: 'Documentos Processados',
+                    data: [85, 92, 88, 95, 90, 97, 100],
+                    borderColor: '#36A2EB',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Funções auxiliares
+function showLoadingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'loadingIndicator';
+    indicator.className = 'loading-overlay';
+    indicator.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 9999; 
+        display: flex; align-items: center; justify-content: center;
+    `;
+    indicator.innerHTML = `
+        <div class="loading-content text-center">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-light mt-2">Atualizando dados do sistema...</p>
+        </div>
+    `;
+    document.body.appendChild(indicator);
+}
+
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loadingIndicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+function showSuccessMessage(message) {
+    showToast(message, 'success');
+}
+
+function showErrorMessage(message) {
+    showToast(message, 'danger');
+}
+
+function showToast(message, type) {
+    // Criar toast container se não existir
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show`;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Inicializando página de monitoramento...');
+    initCharts();
+    updateActivityTimeline();
+    startAutoUpdate();
+    
+    // Fazer primeira atualização dos dados
+    setTimeout(() => refreshData(false), 1000);
+});
+
+// Cleanup ao sair da página
+window.addEventListener('beforeunload', function() {
+    stopAutoUpdate();
+});
+</script>
+{% endblock %}

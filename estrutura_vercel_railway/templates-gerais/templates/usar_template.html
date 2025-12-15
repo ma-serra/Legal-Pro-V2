@@ -1,0 +1,418 @@
+{% extends "layout.html" %}
+
+{% block title %}Utilizar Template - {{ template.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Utilizar Template</h1>
+                <div>
+                    <a href="{{ url_for('detalhe_template', modulo=modulo, template_id=template.id) }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-info-circle"></i> Detalhes
+                    </a>
+                    {% if request.args.get('return') == 'templates' %}
+                    <a href="{{ url_for('juridico_especialistas_init_app') }}#templates-tab" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar aos Templates
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('juridico_especialistas_init_app') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <div class="template-icon me-3" style="background: #007bff; width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="{{ template.icone }}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="card-title mb-0">{{ template.nome }}</h4>
+                                    <small class="text-muted">{{ template.categoria }} | {{ template.nivel }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" class="needs-validation" novalidate>
+                                {{ csrf_token() }}
+                                
+                                <div class="step-indicator mb-4">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="step active">
+                                            <div class="step-circle">1</div>
+                                            <div class="step-label">Dados Básicos</div>
+                                        </div>
+                                        <div class="step">
+                                            <div class="step-circle">2</div>
+                                            <div class="step-label">Conteúdo</div>
+                                        </div>
+                                        <div class="step">
+                                            <div class="step-circle">3</div>
+                                            <div class="step-label">Revisão</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Etapa 1: Dados Básicos -->
+                                <div class="step-content" id="step1">
+                                    <h5 class="mb-3">Dados Básicos</h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="cliente_nome" class="form-label">Nome do Cliente *</label>
+                                                <input type="text" class="form-control" id="cliente_nome" name="cliente_nome" required>
+                                                <div class="invalid-feedback">Campo obrigatório.</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="cliente_documento" class="form-label">CPF/CNPJ *</label>
+                                                <input type="text" class="form-control" id="cliente_documento" name="cliente_documento" required>
+                                                <div class="invalid-feedback">Campo obrigatório.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="advogado_nome" class="form-label">Nome do Advogado *</label>
+                                                <input type="text" class="form-control" id="advogado_nome" name="advogado_nome" value="{{ current_user.first_name }} {{ current_user.last_name }}" required>
+                                                <div class="invalid-feedback">Campo obrigatório.</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="advogado_oab" class="form-label">OAB *</label>
+                                                <input type="text" class="form-control" id="advogado_oab" name="advogado_oab" required>
+                                                <div class="invalid-feedback">Campo obrigatório.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% if modulo == 'criminal' %}
+                                    <div class="mb-3">
+                                        <label for="tipo_penal" class="form-label">Tipo Penal *</label>
+                                        <select class="form-select" id="tipo_penal" name="tipo_penal" required>
+                                            <option value="">Selecione o tipo penal</option>
+                                            <option value="furto">Furto (Art. 155 CP)</option>
+                                            <option value="roubo">Roubo (Art. 157 CP)</option>
+                                            <option value="homicidio">Homicídio (Art. 121 CP)</option>
+                                            <option value="lesao_corporal">Lesão Corporal (Art. 129 CP)</option>
+                                            <option value="trafico">Tráfico de Drogas (Art. 33 Lei 11.343/06)</option>
+                                            <option value="outros">Outros</option>
+                                        </select>
+                                        <div class="invalid-feedback">Campo obrigatório.</div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        <label for="tribunal" class="form-label">Tribunal/Vara</label>
+                                        <input type="text" class="form-control" id="tribunal" name="tribunal" placeholder="Ex: 1ª Vara Criminal de São Paulo">
+                                    </div>
+
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                            Próximo <i class="fas fa-arrow-right ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Etapa 2: Conteúdo -->
+                                <div class="step-content d-none" id="step2">
+                                    <h5 class="mb-3">Conteúdo do Documento</h5>
+                                    
+                                    {% if modulo == 'criminal' %}
+                                    <div class="mb-3">
+                                        <label for="narrativa_fatos" class="form-label">Narrativa dos Fatos *</label>
+                                        <textarea class="form-control" id="narrativa_fatos" name="narrativa_fatos" rows="6" required placeholder="Descreva detalhadamente os fatos que deram origem ao processo..."></textarea>
+                                        <div class="invalid-feedback">Campo obrigatório.</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="fundamentos_juridicos" class="form-label">Fundamentos Jurídicos</label>
+                                        <textarea class="form-control" id="fundamentos_juridicos" name="fundamentos_juridicos" rows="4" placeholder="Cite os artigos de lei, jurisprudências e doutrinas aplicáveis..."></textarea>
+                                    </div>
+                                    {% else %}
+                                    <div class="mb-3">
+                                        <label for="objeto_contrato" class="form-label">Objeto do Documento *</label>
+                                        <textarea class="form-control" id="objeto_contrato" name="objeto_contrato" rows="4" required placeholder="Descreva o objeto principal do documento..."></textarea>
+                                        <div class="invalid-feedback">Campo obrigatório.</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="fundamentacao_legal" class="form-label">Fundamentação Legal</label>
+                                        <textarea class="form-control" id="fundamentacao_legal" name="fundamentacao_legal" rows="4" placeholder="Base legal aplicável ao caso..."></textarea>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        <label for="pedidos" class="form-label">Pedidos *</label>
+                                        <textarea class="form-control" id="pedidos" name="pedidos" rows="4" required placeholder="Liste os pedidos específicos..."></textarea>
+                                        <div class="invalid-feedback">Campo obrigatório.</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="observacoes" class="form-label">Observações Adicionais</label>
+                                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Informações complementares relevantes..."></textarea>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                            <i class="fas fa-arrow-left me-1"></i> Anterior
+                                        </button>
+                                        <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                            Próximo <i class="fas fa-arrow-right ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Etapa 3: Revisão -->
+                                <div class="step-content d-none" id="step3">
+                                    <h5 class="mb-3">Revisão e Geração</h5>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Revise as informações abaixo antes de gerar o documento final.
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Formato de Saída</h6>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="formato" id="formato_docx" value="docx" checked>
+                                                <label class="form-check-label" for="formato_docx">
+                                                    <i class="fas fa-file-word text-primary me-1"></i> DOCX (Word)
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="formato" id="formato_pdf" value="pdf">
+                                                <label class="form-check-label" for="formato_pdf">
+                                                    <i class="fas fa-file-pdf text-danger me-1"></i> PDF
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Opções Avançadas</h6>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="incluir_anexos" name="incluir_anexos">
+                                                <label class="form-check-label" for="incluir_anexos">
+                                                    Incluir espaço para anexos
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="numeracao_paginas" name="numeracao_paginas" checked>
+                                                <label class="form-check-label" for="numeracao_paginas">
+                                                    Numeração de páginas
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                            <i class="fas fa-arrow-left me-1"></i> Anterior
+                                        </button>
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-file-download me-2"></i>
+                                            Gerar Documento
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Assistência IA</h6>
+                            <p class="text-muted small">
+                                Precisa de ajuda para preencher os campos? Use nosso assistente inteligente.
+                            </p>
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-3" onclick="ativarAssistente()">
+                                <i class="fas fa-robot me-1"></i>
+                                Ativar Assistente IA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 bg-light mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title">Dicas Importantes</h6>
+                            <ul class="list-unstyled small text-muted">
+                                {% if modulo == 'criminal' %}
+                                <li><i class="fas fa-check text-success me-1"></i> Verifique a tipificação criminal</li>
+                                <li><i class="fas fa-check text-success me-1"></i> Inclua todos os fatos relevantes</li>
+                                <li><i class="fas fa-check text-success me-1"></i> Cite jurisprudências recentes</li>
+                                {% else %}
+                                <li><i class="fas fa-check text-success me-1"></i> Defina claramente o objeto</li>
+                                <li><i class="fas fa-check text-success me-1"></i> Verifique as bases legais</li>
+                                <li><i class="fas fa-check text-success me-1"></i> Seja específico nos pedidos</li>
+                                {% endif %}
+                                <li><i class="fas fa-check text-success me-1"></i> Revise antes de gerar</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 3;
+
+function nextStep() {
+    if (validateCurrentStep()) {
+        if (currentStep < totalSteps) {
+            document.getElementById(`step${currentStep}`).classList.add('d-none');
+            document.querySelector(`.step:nth-child(${currentStep})`).classList.remove('active');
+            
+            currentStep++;
+            
+            document.getElementById(`step${currentStep}`).classList.remove('d-none');
+            document.querySelector(`.step:nth-child(${currentStep})`).classList.add('active');
+        }
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        document.getElementById(`step${currentStep}`).classList.add('d-none');
+        document.querySelector(`.step:nth-child(${currentStep})`).classList.remove('active');
+        
+        currentStep--;
+        
+        document.getElementById(`step${currentStep}`).classList.remove('d-none');
+        document.querySelector(`.step:nth-child(${currentStep})`).classList.add('active');
+    }
+}
+
+function validateCurrentStep() {
+    const currentStepElement = document.getElementById(`step${currentStep}`);
+    const requiredFields = currentStepElement.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    return isValid;
+}
+
+function ativarAssistente() {
+    alert('Assistente IA será implementado em breve. Esta funcionalidade permitirá preencher automaticamente os campos baseado em descrições simples.');
+}
+
+// Validação do formulário
+(function() {
+    'use strict';
+    
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // Validar todos os steps
+            let allValid = true;
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                const requiredFields = stepElement.querySelectorAll('[required]');
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        allValid = false;
+                    }
+                });
+            }
+            
+            if (allValid) {
+                // Simular geração do documento
+                const loadingBtn = event.target.querySelector('button[type="submit"]');
+                const originalText = loadingBtn.innerHTML;
+                loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando...';
+                loadingBtn.disabled = true;
+                
+                setTimeout(() => {
+                    alert('Documento gerado com sucesso! (Funcionalidade será implementada)');
+                    loadingBtn.innerHTML = originalText;
+                    loadingBtn.disabled = false;
+                }, 2000);
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+            }
+        }, false);
+    });
+})();
+</script>
+
+<style>
+.step-indicator {
+    position: relative;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.step.active .step-circle {
+    background: #007bff;
+    color: white;
+}
+
+.step-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.step.active .step-label {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.step-content {
+    min-height: 400px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}

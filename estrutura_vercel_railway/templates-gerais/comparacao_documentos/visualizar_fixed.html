@@ -1,0 +1,620 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block styles %}
+<!-- Folha de estilo específica para comparação de documentos -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/comparacao.css') }}">
+<!-- Estilos inline para garantir que as marcações de diferenças sejam exibidas corretamente -->
+<style>
+    /* Estilos para melhorar a experiência de edição */
+    .diff-panel {
+        min-width: 800px !important;
+        width: 200% !important;
+        overflow-x: auto !important;
+    }
+    
+    .diff-content {
+        min-width: 800px !important;
+        width: 200% !important;
+    }
+    
+    .row-diff-panels {
+        overflow-x: auto !important;
+        width: 100% !important;
+    }
+    
+    /* Estilos para áreas editáveis */
+    .editable-content {
+        min-height: 400px;
+        padding: 15px;
+        border: 1px dashed #ccc;
+        background-color: #fcfcfc;
+        transition: all 0.3s ease;
+        font-family: 'Courier New', monospace;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+    
+    .editable-content:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .editable-content:focus {
+        outline: 2px solid #007bff;
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+        background-color: #ffffff;
+    }
+    
+    /* Dica visual para edição */
+    .diff-header::after {
+        content: "✎ Clique no texto abaixo para editar";
+        display: inline-block;
+        margin-left: 10px;
+        font-style: italic;
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    
+    /* Estilo direto para texto removido */
+    .diff-deletado, span[class*="diff-deletado"] {
+        background-color: #ffdddd !important;
+        text-decoration: line-through !important;
+        color: #990000 !important;
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        display: inline-block !important;
+        position: relative !important;
+        margin: 0 1px !important;
+        border-left: 2px solid #ff0000 !important;
+        box-shadow: 0 0 3px rgba(255,0,0,0.2) !important;
+    }
+    
+    /* Estilo direto para texto adicionado - COR AMARELA */
+    .diff-adicionado, span[class*="diff-adicionado"] {
+        background-color: #fff3cd !important;
+        color: #856404 !important;
+        font-weight: bold !important;
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        display: inline-block !important;
+        position: relative !important;
+        margin: 0 1px !important;
+        border-left: 2px solid #ffc107 !important;
+        box-shadow: 0 0 3px rgba(255,193,7,0.2) !important;
+    }
+    
+    /* Adicionar marcadores visuais */
+    .diff-deletado:before, span[class*="diff-deletado"]:before {
+        content: "−" !important;
+        color: #cc0000 !important;
+        font-weight: bold !important;
+        margin-right: 3px !important;
+        font-size: 110% !important;
+    }
+    
+    .diff-adicionado:before, span[class*="diff-adicionado"]:before {
+        content: "+" !important;
+        color: #ffc107 !important;
+        font-weight: bold !important;
+        margin-right: 3px !important;
+        font-size: 110% !important;
+    }
+    
+    /* Estilos para visualização lado a lado */
+    .document-panel {
+        transition: all 0.3s ease;
+        background-color: #fff;
+        border-radius: 4px;
+    }
+    
+    .document-header {
+        border-bottom: 1px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f9fa;
+    }
+    
+    .document-content {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.2) transparent;
+    }
+    
+    .document-content::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .document-content::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.2);
+        border-radius: 4px;
+    }
+    
+    .document-content::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+    
+    /* Animação para indicador de edição */
+    .editing-indicator {
+        animation: pulse 1.5s infinite;
+        border-radius: 20px;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 0.7; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+    }
+    
+    /* Estilo para o contêiner de progresso da análise IA */
+    .progress-container {
+        display: none;
+        margin-top: 10px;
+    }
+    
+    .progress {
+        height: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    /* Estilo para análise IA */
+    .analise-ia-section {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .analise-ia-section h4 {
+        color: #17a2b8;
+        margin-bottom: 15px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .diff-panel {
+            min-width: 100% !important;
+            width: 100% !important;
+        }
+        
+        .diff-content {
+            min-width: 100% !important;
+            width: 100% !important;
+        }
+    }
+    
+    /* Estilos para painéis de diff */
+    .diff-panel {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        padding: 15px;
+        margin-bottom: 20px;
+        height: 600px;
+        overflow-y: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    
+    .diff-header {
+        background-color: #f5f5f5;
+        padding: 10px;
+        margin: -15px -15px 15px -15px;
+        border-bottom: 1px solid #ddd;
+        border-radius: 5px 5px 0 0;
+        font-weight: bold;
+        position: sticky;
+        top: -15px;
+        z-index: 10;
+    }
+    
+    /* Estilos para legenda de diferenças */
+    .diff-legend {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        display: flex;
+        gap: 20px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 3px;
+    }
+    .legend-deleted {
+        background-color: #ffdddd;
+        border: 1px solid #990000;
+    }
+    .legend-added {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" data-comparacao-id="{{ comparacao.id }}">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('comparacao_documentos.index') }}" class="btn btn-outline-secondary btn-sm me-3">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar
+                        </a>
+                        <h2 class="mb-0">Comparação de Documentos</h2>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Botão para análise IA -->
+                        <button id="analisar-ia-btn" type="button" class="btn btn-primary btn-sm" onclick="iniciarAnaliseIA()">
+                            <i class="fas fa-brain me-1"></i> Analisar com IA
+                        </button>
+                        
+                        <!-- Container para progress bar -->
+                        <div id="progress-container" class="progress-container" style="display: none; width: 200px;">
+                            <div class="progress">
+                                <div id="progress-bar" class="progress-bar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    <span id="progress-text">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group me-2">
+                            <button class="btn btn-sm btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-download me-1"></i> Exportar Original
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar', id=comparacao.id, lado='a') }}">
+                                    <i class="fas fa-file-alt me-2"></i> DOCX - Texto Limpo
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar_com_marcacoes', id=comparacao.id, lado='a') }}">
+                                    <i class="fas fa-highlighter me-2"></i> DOCX - Com Diferenças Marcadas
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar_pdf', id=comparacao.id, lado='a') }}">
+                                    <i class="fas fa-file-pdf me-2 text-danger"></i> PDF - Com Marcações Coloridas
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="btn-group me-2">
+                            <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-download me-1"></i> Exportar Modificado
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar', id=comparacao.id, lado='b') }}">
+                                    <i class="fas fa-file-alt me-2"></i> DOCX - Texto Limpo
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar_com_marcacoes', id=comparacao.id, lado='b') }}">
+                                    <i class="fas fa-highlighter me-2"></i> DOCX - Com Diferenças Marcadas
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('comparacao_documentos.exportar_pdf', id=comparacao.id, lado='b') }}">
+                                    <i class="fas fa-file-pdf me-2 text-danger"></i> PDF - Com Marcações Coloridas
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="document-title">
+                        <h3>{{ comparacao.titulo }}</h3>
+                    </div>
+                    
+                    <div class="metadata">
+                        <ul>
+                            <li><strong>Área:</strong> {{ comparacao.area_processo }} - {{ comparacao.descricao_area }}</li>
+                            <li><strong>Cliente:</strong> {{ comparacao.documento_cliente }}</li>
+                            <li><strong>Data Comparação:</strong> {{ comparacao.data_comparacao.strftime('%d/%m/%Y %H:%M') }}</li>
+                            <li><strong>ID da Comparação:</strong> <span class="text-muted">{{ comparacao.id }}</span></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Legenda para as diferenças -->
+                    <div class="diff-legend">
+                        <div class="legend-item">
+                            <div class="legend-color legend-deleted"></div>
+                            <span>Texto removido</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-added"></div>
+                            <span>Texto adicionado</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Painéis de comparação lado a lado -->
+                    <div class="row row-diff-panels">
+                        <div class="col-md-6">
+                            <div class="diff-panel">
+                                <div class="diff-header">
+                                    Versão Original
+                                </div>
+                                <div id="version-a" class="diff-content editable-content" contenteditable="true">
+                                    {{ comparacao.texto_original_marcado|safe }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="diff-panel">
+                                <div class="diff-header">
+                                    Versão Modificada
+                                </div>
+                                <div id="version-b" class="diff-content editable-content" contenteditable="true">
+                                    {{ comparacao.texto_modificado_marcado|safe }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Exibição da análise IA, se disponível -->
+                    {% if comparacao.doc_metadata and comparacao.doc_metadata.get('analise_ia') %}
+                    <div class="analise-ia-section">
+                        <h4><i class="fas fa-brain me-2"></i>Análise de IA</h4>
+                        <div class="analise-content">
+                            {{ comparacao.doc_metadata.analise_ia|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Botão para salvar alterações -->
+                    <div class="mt-3 text-center">
+                        <button id="salvar-alteracoes" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função global para análise IA - REFATORADA
+window.iniciarAnaliseIA = function() {
+    console.log('DEBUG: Iniciando análise IA...');
+    
+    const btn = document.getElementById('analisar-ia-btn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    if (!btn) {
+        console.error('DEBUG: Botão não encontrado');
+        alert('Erro: Botão de análise não encontrado');
+        return;
+    }
+    
+    // Verificar se o container com data-comparacao-id existe
+    const container = document.querySelector('[data-comparacao-id]');
+    if (!container) {
+        console.error('DEBUG: Container com data-comparacao-id não encontrado');
+        alert('Erro: ID da comparação não encontrado');
+        return;
+    }
+    
+    const comparacaoId = container.getAttribute('data-comparacao-id');
+    if (!comparacaoId) {
+        console.error('DEBUG: ID da comparação está vazio');
+        alert('Erro: ID da comparação inválido');
+        return;
+    }
+    
+    console.log('DEBUG: ID da comparação encontrado:', comparacaoId);
+    
+    // Desabilitar botão e mostrar progresso
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Analisando...';
+    
+    if (progressContainer) {
+        progressContainer.style.display = 'block';
+    }
+    
+    // Animação de progresso
+    let progress = 0;
+    const progressInterval = setInterval(function() {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+        if (progressText) {
+            progressText.textContent = Math.round(progress) + '%';
+        }
+    }, 200);
+    
+    // Fazer requisição para análise IA
+    const url = '/documentos/comparacao/api/analisar-ia/' + comparacaoId;
+    console.log('DEBUG: Fazendo requisição para:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(function(response) {
+        console.log('DEBUG: Resposta recebida, status:', response.status);
+        if (!response.ok) {
+            throw new Error('Erro HTTP: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('DEBUG: Dados recebidos:', data);
+        clearInterval(progressInterval);
+        
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressText) progressText.textContent = '100%';
+        
+        setTimeout(function() {
+            if (data.success) {
+                console.log('DEBUG: Análise concluída com sucesso');
+                window.location.reload();
+            } else {
+                console.error('DEBUG: Erro na análise:', data.error);
+                alert('Erro na análise: ' + (data.error || 'Erro desconhecido'));
+                resetButton();
+            }
+        }, 500);
+    })
+    .catch(function(error) {
+        console.error('DEBUG: Erro na requisição:', error);
+        clearInterval(progressInterval);
+        alert('Erro ao conectar com o servidor: ' + error.message);
+        resetButton();
+    });
+    
+    function resetButton() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-brain me-1"></i> Analisar com IA';
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+    }
+};
+
+// Inicialização quando a página carrega
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DEBUG: Página carregada, inicializando funcionalidades...');
+    
+    // Verificar se elementos necessários existem
+    const container = document.querySelector('[data-comparacao-id]');
+    const btn = document.getElementById('analisar-ia-btn');
+    
+    if (container) {
+        console.log('DEBUG: Container encontrado com ID:', container.getAttribute('data-comparacao-id'));
+    } else {
+        console.error('DEBUG: Container com data-comparacao-id não encontrado');
+    }
+    
+    if (btn) {
+        console.log('DEBUG: Botão de análise IA encontrado');
+    } else {
+        console.error('DEBUG: Botão de análise IA não encontrado');
+    }
+    
+    // Funcionalidade de salvar alterações
+    const saveButton = document.getElementById('salvar-alteracoes');
+    const editableContentA = document.getElementById('version-a');
+    const editableContentB = document.getElementById('version-b');
+    
+    if (saveButton && editableContentA && editableContentB) {
+        saveButton.addEventListener('click', function() {
+            const container = document.querySelector('[data-comparacao-id]');
+            if (!container) {
+                alert('Erro: ID da comparação não encontrado');
+                return;
+            }
+            
+            const comparacaoId = container.getAttribute('data-comparacao-id');
+            const textoA = editableContentA.innerHTML;
+            const textoB = editableContentB.innerHTML;
+            
+            // Mostrar indicador de salvamento
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            saveButton.disabled = true;
+            
+            fetch('/documentos/comparacao/api/salvar-alteracoes/' + comparacaoId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    texto_original: textoA,
+                    texto_modificado: textoB
+                })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // Mensagem de sucesso
+                    const msgSuccess = document.createElement('div');
+                    msgSuccess.className = 'alert alert-success position-fixed';
+                    msgSuccess.style.bottom = '20px';
+                    msgSuccess.style.right = '20px';
+                    msgSuccess.style.zIndex = '9999';
+                    msgSuccess.innerHTML = 'Alterações salvas com sucesso!';
+                    document.body.appendChild(msgSuccess);
+                    
+                    setTimeout(function() {
+                        msgSuccess.remove();
+                    }, 3000);
+                } else {
+                    alert('Erro ao salvar: ' + (data.error || 'Erro desconhecido'));
+                }
+                
+                // Restaurar estado do botão
+                saveButton.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+                saveButton.disabled = false;
+            })
+            .catch(function(error) {
+                console.error('Erro ao salvar:', error);
+                alert('Erro ao salvar alterações');
+                
+                // Restaurar estado do botão
+                saveButton.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+                saveButton.disabled = false;
+            });
+        });
+    }
+    
+    // Estilizar as áreas editáveis ao focar
+    if (editableContentA) {
+        editableContentA.addEventListener('focus', function() {
+            this.style.outline = '2px solid #007bff';
+            this.style.boxShadow = '0 0 10px rgba(0, 123, 255, 0.3)';
+        });
+        
+        editableContentA.addEventListener('blur', function() {
+            this.style.outline = 'none';
+            this.style.boxShadow = 'none';
+        });
+    }
+    
+    if (editableContentB) {
+        editableContentB.addEventListener('focus', function() {
+            this.style.outline = '2px solid #007bff';
+            this.style.boxShadow = '0 0 10px rgba(0, 123, 255, 0.3)';
+        });
+        
+        editableContentB.addEventListener('blur', function() {
+            this.style.outline = 'none';
+            this.style.boxShadow = 'none';
+        });
+    }
+    
+    console.log('DEBUG: Inicialização concluída');
+});
+</script>
+{% endblock %}

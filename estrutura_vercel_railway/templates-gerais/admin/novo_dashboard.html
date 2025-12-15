@@ -1,0 +1,281 @@
+{% extends "layout.html" %}
+
+{% block title %}Painel Administrativo - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Painel Administrativo</h1>
+            <div class="text-muted">Monitoramento e controle do sistema</div>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('admin_system') }}" class="btn btn-outline-primary">Informações do Sistema</a>
+            <span class="btn btn-outline-primary disabled">Logs (Removido)</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Status do Sistema</h5>
+                    <div>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>CPU:</span>
+                                <strong>{{ system_data.recursos.cpu_percent }}%</strong>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ system_data.recursos.cpu_percent }}%"
+                                    aria-valuenow="{{ system_data.recursos.cpu_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Memória:</span>
+                                <strong>{{ system_data.recursos.memoria_usada_percent }}%</strong>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ system_data.recursos.memoria_usada_percent }}%"
+                                    aria-valuenow="{{ system_data.recursos.memoria_usada_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Disco:</span>
+                                <strong>{{ system_data.recursos.disco_usado_percent }}%</strong>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ system_data.recursos.disco_usado_percent }}%"
+                                    aria-valuenow="{{ system_data.recursos.disco_usado_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Núcleos:</span>
+                                <strong>{{ system_data.recursos.cpu_count }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted small">
+                    <div class="row">
+                        <div class="col">Sistema: {{ system_data.sistema.sistema_operacional }}</div>
+                        <div class="col-auto">Python: {{ system_data.sistema.python_versao }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Logs Recentes</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if log_entries %}
+                            {% for entry in log_entries %}
+                                <div class="list-group-item py-2 px-3 small">{{ entry }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="list-group-item py-4 text-center text-muted">
+                                Nenhum log disponível
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="btn btn-sm btn-outline-secondary disabled">Logs removidos</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger float-end" 
+                            onclick="if(confirm('Tem certeza que deseja remover todos os logs? Esta ação não pode ser desfeita.')) { clearLogs(false); }">
+                        Limpar Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Configuração do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Modo de Debug</span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggle-debug" {{ "checked" if debug_enabled else "" }}
+                                       onchange="toggleDebug(this.checked)">
+                            </div>
+                        </label>
+                        <div class="text-muted small">Ativa logs detalhados para depuração</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nível de Log</label>
+                        <select class="form-select" id="log-level" onchange="updateLogConfig()">
+                            <option value="DEBUG" {{ "selected" if log_config.get('level') == 'DEBUG' else "" }}>Debug</option>
+                            <option value="INFO" {{ "selected" if log_config.get('level') == 'INFO' else "" }}>Info</option>
+                            <option value="WARNING" {{ "selected" if log_config.get('level') == 'WARNING' else "" }}>Warning</option>
+                            <option value="ERROR" {{ "selected" if log_config.get('level') == 'ERROR' else "" }}>Error</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="log-to-file" {{ "checked" if log_config.get('save_to_file') else "" }}
+                                   onchange="updateLogConfig()">
+                            <label class="form-check-label" for="log-to-file">
+                                Salvar logs em arquivo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Status dos Agentes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Agente</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ExtratorAgent</td>
+                                    <td class="text-center"><span class="badge bg-success">Ativo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>ClassificadorAgent</td>
+                                    <td class="text-center"><span class="badge bg-success">Ativo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>AnalisadorAgent</td>
+                                    <td class="text-center"><span class="badge bg-success">Ativo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>SintetizadorAgent</td>
+                                    <td class="text-center"><span class="badge bg-success">Ativo</span></td>
+                                </tr>
+                                <tr>
+                                    <td>FormatadorAgent</td>
+                                    <td class="text-center"><span class="badge bg-success">Ativo</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDebug(enabled) {
+        fetch('/admin/debug', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'enabled=' + (enabled ? 'true' : 'false')
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Modo de debug ' + (enabled ? 'ativado' : 'desativado') + ' com sucesso', 'success');
+                // Atualiza o seletor de nível de log
+                document.getElementById('log-level').value = data.log_level;
+            } else {
+                showAlert('Erro ao alterar modo de debug: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('Erro ao processar requisição: ' + error, 'danger');
+        });
+    }
+
+    function updateLogConfig() {
+        const level = document.getElementById('log-level').value;
+        const toFile = document.getElementById('log-to-file').checked;
+        
+        fetch('/admin/logs/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'log_level=' + level + '&log_to_file=' + (toFile ? 'true' : 'false')
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Configuração de logs atualizada com sucesso', 'success');
+                // Atualiza o switch de debug se necessário
+                document.getElementById('toggle-debug').checked = (level === 'DEBUG');
+            } else {
+                showAlert('Erro ao atualizar configuração de logs: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('Erro ao processar requisição: ' + error, 'danger');
+        });
+    }
+
+    function clearLogs(keepCurrent = true) {
+        fetch('/admin/logs/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'keep_current=' + (keepCurrent ? 'true' : 'false')
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Logs removidos com sucesso: ' + data.logs_removed + ' arquivo(s)', 'success');
+                // Recarrega a página para atualizar a lista de logs
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('Erro ao limpar logs: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showAlert('Erro ao processar requisição: ' + error, 'danger');
+        });
+    }
+
+    function showAlert(message, type) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed bottom-0 end-0 m-3`;
+        alert.setAttribute('role', 'alert');
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(alert);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (alert) {
+                alert.remove();
+            }
+        }, 3000);
+    }
+</script>
+{% endblock %}

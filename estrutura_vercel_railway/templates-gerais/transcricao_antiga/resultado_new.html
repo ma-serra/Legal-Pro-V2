@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Transcrição</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        :root {
+            --primary-dark: #21333d;
+            --secondary-dark: #355d69;
+            --accent-blue: #5a9ab8;
+            --accent-gold: #c29e74;
+            --text-light: #ffffff;
+            --text-dark: #21333d;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --border-light: #dee2e6;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        
+        body {
+            background: var(--primary-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        
+        .header-section {
+            background: var(--secondary-dark);
+            color: var(--text-light);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .header-section h1 {
+            color: var(--text-light);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-section p {
+            color: var(--text-light);
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            background: var(--bg-white);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin: 0 auto 2rem auto;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+        
+        .content-section {
+            padding: 2rem;
+        }
+        
+        .section-header {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-light);
+            margin: 0 -2rem 2rem -2rem;
+        }
+        
+        .section-header h3 {
+            color: var(--text-dark);
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: block;
+        }
+        
+        .stat-label {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .transcription-text {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+        
+        .segments-container {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .segment-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .segment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .segment-time {
+            background: var(--accent-blue);
+            color: var(--text-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .segment-speaker {
+            background: var(--accent-gold);
+            color: var(--text-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .segment-text {
+            color: var(--text-dark);
+            flex: 1;
+            line-height: 1.5;
+        }
+        
+        .sentiment-section {
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .sentiment-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .sentiment-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .sentiment-card h5 {
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+        
+        .sentiment-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        .sentiment-positive {
+            background: var(--success);
+            color: var(--text-light);
+        }
+        
+        .sentiment-negative {
+            background: var(--danger);
+            color: var(--text-light);
+        }
+        
+        .sentiment-neutral {
+            background: var(--info);
+            color: var(--text-light);
+        }
+        
+        .chart-container {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-title {
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            margin: 0 -2rem -2rem -2rem;
+            border-radius: 0 0 15px 15px;
+        }
+        
+        .btn-action {
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent-blue);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary-dark);
+            color: var(--text-light);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--accent-gold);
+            color: var(--text-light);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-dark);
+            color: var(--text-light);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent-blue);
+            color: var(--text-light);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+            
+            .sentiment-summary {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-section">
+        <div class="container">
+            <div class="text-center">
+                <h1><i class="fas fa-file-alt me-3"></i>Resultado da Transcrição</h1>
+                <p>Análise completa com reconhecimento de falantes e sentimentos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-content">
+            <div class="content-section">
+                <!-- Statistics -->
+                <div class="section-header">
+                    <h3><i class="fas fa-chart-bar me-2"></i>Estatísticas</h3>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value">{{ result.duration|round(1) if result.duration else 0 }}s</span>
+                        <div class="stat-label">Duração</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">{{ result.text.split()|length if result.text else 0 }}</span>
+                        <div class="stat-label">Palavras</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">{{ result.speakers|length if result.speakers else 1 }}</span>
+                        <div class="stat-label">Falantes</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value">{{ result.segments|length if result.segments else 0 }}</span>
+                        <div class="stat-label">Segmentos</div>
+                    </div>
+                </div>
+
+                <!-- Transcription Text -->
+                <div class="section-header">
+                    <h3><i class="fas fa-align-left me-2"></i>Texto Completo</h3>
+                </div>
+                
+                <div class="transcription-text">
+                    {{ result.text or 'Texto não disponível' }}
+                </div>
+
+                <!-- Segments -->
+                {% if result.segments %}
+                <div class="section-header">
+                    <h3><i class="fas fa-list me-2"></i>Segmentos por Falante</h3>
+                </div>
+                
+                <div class="segments-container">
+                    {% for segment in result.segments %}
+                    <div class="segment-item">
+                        <div class="segment-time">{{ "%.1f"|format(segment.start) }}s</div>
+                        <div class="segment-speaker">{{ segment.speaker }}</div>
+                        <div class="segment-text">{{ segment.text }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Sentiment Analysis -->
+                {% if result.sentiment %}
+                <div class="section-header">
+                    <h3><i class="fas fa-chart-line me-2"></i>Análise de Confiança</h3>
+                </div>
+                
+                <div class="sentiment-section">
+                    <div class="sentiment-summary">
+                        <div class="sentiment-card">
+                            <h5>Sentimento Principal</h5>
+                            <span class="sentiment-badge sentiment-{{ 'positive' if 'Positivo' in (result.sentiment.sentiment or '') else 'negative' if 'Negativo' in (result.sentiment.sentiment or '') else 'neutral' }}">
+                                {{ result.sentiment.sentiment or 'Neutro' }}
+                            </span>
+                            <p class="mt-3 mb-0 text-muted">{{ result.sentiment.details or 'Análise não disponível' }}</p>
+                        </div>
+                        
+                        {% if result.sentiment.dominant_emotion %}
+                        <div class="sentiment-card">
+                            <h5>Emoção Dominante</h5>
+                            <span class="sentiment-badge sentiment-{{ 'positive' if result.sentiment.dominant_emotion in ['Alegria', 'Amor', 'Confiança'] else 'negative' if result.sentiment.dominant_emotion in ['Tristeza', 'Medo', 'Raiva', 'Nojo'] else 'neutral' }}">
+                                {{ result.sentiment.dominant_emotion }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Charts -->
+                    {% if result.sentiment.emotion_scores %}
+                    <div class="chart-container">
+                        <h4 class="chart-title">Distribuição de Emoções</h4>
+                        <div id="emotionChart" style="height: 400px;"></div>
+                    </div>
+                    {% endif %}
+
+                    {% if result.sentiment.sentiment_chart_data %}
+                    <div class="chart-container">
+                        <h4 class="chart-title">Análise de Polaridade</h4>
+                        <div id="sentimentChart" style="height: 400px;"></div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('transcricao.download', session_id=result.session_id) }}" class="btn btn-primary btn-action">
+                    <i class="fas fa-download"></i>Baixar Transcrição
+                </a>
+                
+                <a href="{{ url_for('transcription_index') }}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-plus"></i>Nova Transcrição
+                </a>
+                
+                <a href="{{ url_for('historico') }}" class="btn btn-outline btn-action">
+                    <i class="fas fa-history"></i>Ver Histórico
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Color scheme for charts
+        const chartColors = {
+            primary: '#21333d',
+            secondary: '#355d69', 
+            accent: '#5a9ab8',
+            gold: '#c29e74',
+            success: '#28a745',
+            warning: '#ffc107',
+            danger: '#dc3545',
+            info: '#17a2b8'
+        };
+
+        {% if result.sentiment and result.sentiment.emotion_scores %}
+        // Emotion Distribution Chart
+        const emotionLabels = {{ result.sentiment.emotion_scores.keys()|list|tojson }};
+        const emotionValues = {{ result.sentiment.emotion_scores.values()|list|tojson }};
+        
+        if (emotionLabels && emotionLabels.length > 0) {
+            const emotionData = [{
+                x: emotionLabels,
+                y: emotionValues,
+                type: 'bar',
+                marker: {
+                    color: [chartColors.accent, chartColors.gold, chartColors.secondary, chartColors.info, 
+                           chartColors.success, chartColors.warning, chartColors.danger, chartColors.primary]
+                },
+                text: emotionValues.map(v => v.toFixed(1) + '%'),
+                textposition: 'auto',
+                textfont: {color: '#ffffff', size: 12}
+            }];
+
+            const emotionLayout = {
+                title: {
+                    text: 'Intensidade das Emoções',
+                    font: {color: chartColors.primary, size: 18},
+                    x: 0.5
+                },
+                margin: {t: 60, r: 20, b: 60, l: 60},
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#f8f9fa',
+                font: {color: chartColors.primary, family: 'Segoe UI'},
+                xaxis: {
+                    color: chartColors.primary, 
+                    gridcolor: '#e9ecef',
+                    title: 'Emoções'
+                },
+                yaxis: {
+                    color: chartColors.primary, 
+                    gridcolor: '#e9ecef',
+                    title: 'Intensidade (%)'
+                }
+            };
+
+            Plotly.newPlot('emotionChart', emotionData, emotionLayout, {responsive: true});
+        }
+        {% endif %}
+
+        {% if result.sentiment and result.sentiment.sentiment_chart_data %}
+        // Sentiment Polarity Chart
+        const positiveVal = {{ result.sentiment.sentiment_chart_data.positive or 0 }};
+        const negativeVal = {{ result.sentiment.sentiment_chart_data.negative or 0 }};
+        const neutralVal = {{ result.sentiment.sentiment_chart_data.neutral or 0 }};
+        
+        if (positiveVal + negativeVal + neutralVal > 0) {
+            const sentimentData = [{
+                values: [positiveVal, negativeVal, neutralVal],
+                labels: ['Positivo', 'Negativo', 'Neutro'],
+                type: 'pie',
+                marker: {
+                    colors: [chartColors.success, chartColors.danger, chartColors.info]
+                },
+                textinfo: 'label+percent',
+                textfont: {color: '#ffffff', size: 14},
+                hovertemplate: '<b>%{label}</b><br>Palavras: %{value}<br>Percentual: %{percent}<extra></extra>'
+            }];
+
+            const sentimentLayout = {
+                title: {
+                    text: 'Distribuição de Sentimentos',
+                    font: {color: chartColors.primary, size: 18},
+                    x: 0.5
+                },
+                margin: {t: 60, r: 20, b: 60, l: 20},
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                font: {color: chartColors.primary, family: 'Segoe UI'},
+                showlegend: true,
+                legend: {
+                    orientation: "h",
+                    yanchor: "bottom",
+                    y: -0.2,
+                    xanchor: "center",
+                    x: 0.5,
+                    font: {color: chartColors.primary}
+                }
+            };
+
+            Plotly.newPlot('sentimentChart', sentimentData, sentimentLayout, {responsive: true});
+        }
+        {% endif %}
+    </script>
+</body>
+</html>

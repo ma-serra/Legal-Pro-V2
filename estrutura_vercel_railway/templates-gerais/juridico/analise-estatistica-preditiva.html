@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelos Estatísticos Preditivos - Legal Pro</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #3b576f !important;
+            min-height: 100vh !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+            color: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .main-header {
+            background: rgba(0, 0, 0, 0.2) !important;
+            padding: 20px 0 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            text-align: center !important;
+        }
+
+        .header-title {
+            color: white !important;
+            font-size: 2.2rem !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 1rem !important;
+            margin-top: 10px !important;
+        }
+
+        .voltar-btn {
+            position: absolute !important;
+            top: 25px !important;
+            left: 30px !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            padding: 10px 18px !important;
+            border-radius: 8px !important;
+            text-decoration: none !important;
+            font-size: 0.9rem !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .voltar-btn:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            text-decoration: none !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .models-container {
+            padding: 40px 20px !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+        }
+
+        .models-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+            gap: 25px !important;
+            margin-top: 20px !important;
+        }
+
+        .model-card {
+            background: rgba(255, 255, 255, 0.12) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 15px !important;
+            padding: 30px !important;
+            color: white !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            backdrop-filter: blur(10px) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .model-card::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 4px !important;
+            background: #2d4559 !important;
+            opacity: 0 !important;
+            transition: opacity 0.3s ease !important;
+        }
+
+        .model-card:hover {
+            background: rgba(255, 255, 255, 0.18) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            transform: translateY(-8px) !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .model-card:hover::before {
+            opacity: 1 !important;
+        }
+
+        .model-icon {
+            font-size: 2.8rem !important;
+            margin-bottom: 20px !important;
+            color: #47b6b5 !important;
+            display: block !important;
+        }
+
+        .model-title {
+            font-size: 1.4rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 12px !important;
+            color: white !important;
+            line-height: 1.3 !important;
+        }
+
+        .model-description {
+            font-size: 0.95rem !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            margin-bottom: 20px !important;
+            line-height: 1.5 !important;
+        }
+
+        .model-features {
+            margin-bottom: 25px !important;
+        }
+
+        .feature-item {
+            font-size: 0.85rem !important;
+            color: rgba(255, 255, 255, 0.7) !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        .feature-item i {
+            color: #47b6b5 !important;
+            width: 14px !important;
+        }
+
+        .model-metrics {
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-bottom: 25px !important;
+            padding: 15px !important;
+            background: rgba(0, 0, 0, 0.15) !important;
+            border-radius: 10px !important;
+        }
+
+        .metric {
+            text-align: center !important;
+        }
+
+        .metric-value {
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            color: #47b6b5 !important;
+            display: block !important;
+        }
+
+        .metric-label {
+            font-size: 0.75rem !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+            margin-top: 2px !important;
+        }
+
+        .access-btn {
+            width: 100% !important;
+            padding: 12px 24px !important;
+            background: #3b576f !important;
+            border: none !important;
+            border-radius: 10px !important;
+            color: white !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .access-btn:hover {
+            background: #2d4559 !important;
+            color: white !important;
+            text-decoration: none !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(59, 87, 111, 0.3) !important;
+        }
+
+        .model-badge {
+            position: absolute !important;
+            top: 15px !important;
+            right: 15px !important;
+            background: rgba(71, 182, 181, 0.8) !important;
+            color: white !important;
+            padding: 4px 12px !important;
+            border-radius: 20px !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+        }
+
+        .restricted-badge {
+            background: rgba(255, 193, 7, 0.8) !important;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .models-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+            
+            .header-title {
+                font-size: 1.8rem !important;
+            }
+            
+            .voltar-btn {
+                position: static !important;
+                margin-bottom: 20px !important;
+                display: inline-block !important;
+            }
+            
+            .main-header {
+                position: relative !important;
+                padding: 30px 20px !important;
+            }
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-radius: 15px !important;
+            padding: 25px !important;
+            margin-bottom: 30px !important;
+            text-align: center !important;
+        }
+
+        .info-title {
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            color: white !important;
+            margin-bottom: 15px !important;
+        }
+
+        .info-description {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
+        }
+
+        /* Estilos para Modelos Salvos */
+        .saved-model-card {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            margin-bottom: 15px !important;
+            transition: all 0.3s ease !important;
+            cursor: pointer !important;
+        }
+
+        .saved-model-card:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: rgba(255, 255, 255, 0.4) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .saved-model-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            margin-bottom: 10px !important;
+        }
+
+        .saved-model-name {
+            font-weight: 600 !important;
+            color: white !important;
+            font-size: 1.1rem !important;
+        }
+
+        .saved-model-type {
+            background: rgba(71, 182, 181, 0.8) !important;
+            color: white !important;
+            padding: 4px 12px !important;
+            border-radius: 15px !important;
+            font-size: 0.8rem !important;
+            font-weight: 500 !important;
+            text-transform: capitalize !important;
+        }
+
+        .saved-model-description {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 15px !important;
+            line-height: 1.4 !important;
+        }
+
+        .saved-model-meta {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            font-size: 0.8rem !important;
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .saved-model-actions {
+            display: flex !important;
+            gap: 10px !important;
+        }
+
+        .btn-saved-model {
+            padding: 6px 12px !important;
+            font-size: 0.8rem !important;
+            border-radius: 6px !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-load-model {
+            background: #28a745 !important;
+            color: white !important;
+        }
+
+        .btn-load-model:hover {
+            background: #218838 !important;
+        }
+
+        .btn-delete-model {
+            background: #dc3545 !important;
+            color: white !important;
+        }
+
+        .btn-delete-model:hover {
+            background: #c82333 !important;
+        }
+
+        .btn-edit-model {
+            background: #ffc107 !important;
+            color: #212529 !important;
+        }
+
+        .btn-edit-model:hover {
+            background: #e0a800 !important;
+            color: #212529 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <!-- Header Superior -->
+        <div class="main-header">
+            <a href="{{ url_for('home_dashboard_init_app') }}" class="voltar-btn">
+                <i class="fas fa-home"></i> Home
+            </a>
+            
+            <div class="header-title">
+                <i class="fas fa-brain"></i>
+                Modelos Estatísticos Preditivos
+            </div>
+            <div class="header-subtitle">
+                Análise Avançada com Machine Learning para Predições Jurídicas Precisas
+            </div>
+        </div>
+
+        <!-- Container Principal -->
+        <div class="models-container">
+            <!-- Seção Informativa -->
+            <div class="info-section">
+                <div class="info-title">
+                    <i class="fas fa-chart-line"></i> Sistema de Análise Preditiva Jurídica
+                </div>
+                <div class="info-description">
+                    Utilize os mais avançados modelos de Machine Learning para análise estatística e predições precisas 
+                    em processos jurídicos. Cada modelo oferece diferentes abordagens e níveis de precisão para atender 
+                    suas necessidades específicas.
+                </div>
+            </div>
+
+            <!-- Seção de Modelos Salvos -->
+            <div id="modelos-salvos-section" class="info-section" style="display: none;">
+                <div class="info-title">
+                    <i class="fas fa-bookmark"></i> Seus Modelos Salvos
+                </div>
+                <div class="info-description mb-3">
+                    Acesse rapidamente seus modelos pré-configurados salvos anteriormente.
+                </div>
+                <div id="modelos-salvos-container" class="row">
+                    <!-- Modelos salvos serão carregados aqui via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Seção de Login para Modelos Salvos -->
+            <div id="login-modelos-section" class="info-section" style="display: none;">
+                <div class="info-title">
+                    <i class="fas fa-bookmark"></i> Modelos Salvos
+                </div>
+                <div class="info-description mb-3">
+                    Para ver e gerenciar seus modelos salvos, faça login na plataforma.
+                </div>
+                <div class="text-center">
+                    <a href="/auth/login" class="btn" style="background: #3b576f; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Fazer Login
+                    </a>
+                </div>
+            </div>
+
+            <!-- Grid de Modelos -->
+            <div class="models-grid">
+                <!-- Card 1: Regressão Linear -->
+                <div class="model-card">
+                    <div class="model-badge">Baseline</div>
+                    <i class="fas fa-chart-line model-icon"></i>
+                    <div class="model-title">Regressão Linear</div>
+                    <div class="model-description">
+                        Modelo estatístico fundamental que estabelece relações lineares entre variáveis para predições básicas e interpretação clara dos dados.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Interpretabilidade máxima</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Processamento rápido</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Todas as áreas jurídicas</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Análise de correlações</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">82-94%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Volume Base</span>
+                            <div class="metric-label">Capacidade</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Baixa</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('regressao')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 2: Árvore de Decisão -->
+                <div class="model-card">
+                    <div class="model-badge">Otimizado</div>
+                    <i class="fas fa-sitemap model-icon"></i>
+                    <div class="model-title">Árvore de Decisão</div>
+                    <div class="model-description">
+                        Modelo baseado em regras que cria estruturas de decisão hierárquicas, oferecendo alta interpretabilidade e precisão superior.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Regras de decisão claras</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Visualização hierárquica</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>90% do volume base</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>+1.5% precisão vs baseline</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">85-95%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">90%</span>
+                            <div class="metric-label">Volume Base</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Média</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('arvore')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 3: Redes Neurais -->
+                <div class="model-card">
+                    <div class="model-badge">Avançado</div>
+                    <i class="fas fa-brain model-icon"></i>
+                    <div class="model-title">Redes Neurais</div>
+                    <div class="model-description">
+                        Modelo de aprendizado profundo com múltiplas camadas que processa grandes volumes de dados para predições altamente precisas.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Aprendizado profundo</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Padrões complexos</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>3x volume de dados</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>+3% precisão vs baseline</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">88-97%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">3x</span>
+                            <div class="metric-label">Volume Base</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Alta</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('neurais')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 4: Séries Temporais -->
+                <div class="model-card">
+                    <div class="model-badge restricted-badge">Restrito</div>
+                    <i class="fas fa-clock model-icon"></i>
+                    <div class="model-title">Séries Temporais</div>
+                    <div class="model-description">
+                        Modelo especializado em análise temporal que identifica tendências e sazonalidades em dados históricos para predições futuras.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Análise temporal avançada</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Detecção de tendências</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Apenas Trabalhista/Família</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Mínimo 24 meses de dados</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">84-94%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">24m</span>
+                            <div class="metric-label">Janela Mín.</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Alta</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('temporais')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 5: Análise de Sobrevivência -->
+                <div class="model-card">
+                    <div class="model-badge restricted-badge">Restrito</div>
+                    <i class="fas fa-heartbeat model-icon"></i>
+                    <div class="model-title">Análise de Sobrevivência</div>
+                    <div class="model-description">
+                        Modelo estatístico avançado que analisa a probabilidade de eventos ao longo do tempo, ideal para duração processual.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Análise de eventos críticos</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Curvas de sobrevivência</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Apenas Trabalhista/Família</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Fatores de risco identificados</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">83-93%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Eventos</span>
+                            <div class="metric-label">Foco</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Muito Alta</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('sobrevivencia')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 6: Algoritmo Adaptativo -->
+                <div class="model-card">
+                    <div class="model-badge">Inteligente</div>
+                    <i class="fas fa-robot model-icon"></i>
+                    <div class="model-title">Algoritmo Adaptativo</div>
+                    <div class="model-description">
+                        Sistema inteligente de auto-ajuste baseado em contexto que otimiza automaticamente parâmetros conforme características dos dados jurídicos.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Auto-ajuste baseado em contexto</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Otimização automática</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Todas as áreas jurídicas</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Personalização inteligente</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">86-96%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Dinâmico</span>
+                            <div class="metric-label">Volume</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Inteligente</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('adaptativo')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 7: Algoritmo de Reforço -->
+                <div class="model-card">
+                    <div class="model-badge">IA Avançada</div>
+                    <i class="fas fa-chart-line model-icon"></i>
+                    <div class="model-title">Algoritmo de Reforço</div>
+                    <div class="model-description">
+                        Sistema de aprendizado por recompensa que melhora continuamente através de feedback, otimizando estratégias jurídicas conforme resultados.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Aprendizado por recompensa</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Melhoria contínua</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Feedback automático</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Estratégias otimizadas</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">88-97%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Adaptativo</span>
+                            <div class="metric-label">Volume</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Muito Alta</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('reforco')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 8: Algoritmo Ensemble -->
+                <div class="model-card">
+                    <div class="model-badge">Multi-Modelo</div>
+                    <i class="fas fa-layer-group model-icon"></i>
+                    <div class="model-title">Algoritmo Ensemble</div>
+                    <div class="model-description">
+                        Combinação inteligente de múltiplos modelos que trabalham em conjunto para maximizar precisão através de consenso e diversidade preditiva.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Múltiplos modelos combinados</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Consenso inteligente</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Redução de erros</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Máxima robustez</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">90-98%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">2x</span>
+                            <div class="metric-label">Volume Base</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Alta</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('ensemble')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 9: Meta-Learning -->
+                <div class="model-card">
+                    <div class="model-badge">Experimental</div>
+                    <i class="fas fa-graduation-cap model-icon"></i>
+                    <div class="model-title">Meta-Learning</div>
+                    <div class="model-description">
+                        Algoritmo que aprende como aprender, desenvolvendo estratégias otimizadas de aprendizado específicas para cada contexto jurídico.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Aprender como aprender</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Estratégias personalizadas</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Transferência de conhecimento</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Evolução contínua</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">89-99%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Variável</span>
+                            <div class="metric-label">Volume</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Experimental</span>
+                            <div class="metric-label">Complexidade</div>
+                        </div>
+                    </div>
+
+                    <button class="access-btn" onclick="acessarModelo('meta-learning')">
+                        <i class="fas fa-play"></i>
+                        Acessar Modelo
+                    </button>
+                </div>
+
+                <!-- Card 10: Modelos Jurídicos Bayesianos -->
+                <div class="model-card">
+                    <div class="model-badge">Especializado</div>
+                    <i class="fas fa-balance-scale model-icon"></i>
+                    <div class="model-title">Modelos Jurídicos</div>
+                    <div class="model-description">
+                        Sistema especializado em análise jurídica bayesiana com recomendações de defesa baseadas em dados históricos e especificidade por área jurídica.
+                    </div>
+                    
+                    <div class="model-features">
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Análise Bayesiana Jurídica</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Recomendação de Defesa</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Especificidade por Foro</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-check"></i>
+                            <span>Dashboard Interativo</span>
+                        </div>
+                    </div>
+
+                    <div class="model-metrics">
+                        <div class="metric">
+                            <span class="metric-value">85-98%</span>
+                            <div class="metric-label">Precisão</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">4 Modelos</span>
+                            <div class="metric-label">Análises</div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Jurídica</span>
+                            <div class="metric-label">Especialização</div>
+                        </div>
+                    </div>
+
+                    <a href="/modelos-juridicos/" class="access-btn" style="text-decoration: none;">
+                        <i class="fas fa-gavel"></i>
+                        Acessar Modelos Jurídicos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Carregar modelos salvos ao inicializar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarModelosSalvos();
+        });
+
+        async function carregarModelosSalvos() {
+            try {
+                const response = await fetch('/api/estatistica/listar-modelos', {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // Se retornou redirecionamento para login
+                if (response.status === 302 || response.redirected) {
+                    console.log('Usuário não autenticado - seção de modelos não será exibida');
+                    return;
+                }
+                
+                // Verificar se a resposta está retornando HTML (redirecionamento para login)
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    console.log('Usuário não autenticado - necessário fazer login');
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (resultado.sucesso && resultado.modelos && resultado.modelos.length > 0) {
+                    exibirModelosSalvos(resultado.modelos);
+                    document.getElementById('modelos-salvos-section').style.display = 'block';
+                } else if (resultado.sucesso && resultado.modelos && resultado.modelos.length === 0) {
+                    // Usuário logado mas sem modelos salvos - não mostrar seção
+                    console.log('Usuário logado mas sem modelos salvos');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar modelos salvos:', error);
+                // Não mostrar erro para o usuário se for problema de autenticação
+            }
+        }
+
+        function exibirModelosSalvos(modelos) {
+            const container = document.getElementById('modelos-salvos-container');
+            container.innerHTML = '';
+
+            modelos.forEach(modelo => {
+                const card = criarCardModeloSalvo(modelo);
+                container.appendChild(card);
+            });
+        }
+
+        function criarCardModeloSalvo(modelo) {
+            const div = document.createElement('div');
+            div.className = 'col-md-6 col-lg-4';
+            
+            const tipoFormatado = formatarTipoModelo(modelo.tipo);
+            const dataFormatada = new Date(modelo.criado_em).toLocaleString('pt-BR');
+            
+            div.innerHTML = `
+                <div class="saved-model-card" onclick="carregarModelo(${modelo.id}, '${modelo.tipo}')">
+                    <div class="saved-model-header">
+                        <div class="saved-model-name">${modelo.nome}</div>
+                        <div class="saved-model-type">${tipoFormatado}</div>
+                    </div>
+                    <div class="saved-model-description">
+                        ${modelo.descricao || 'Sem descrição'}
+                    </div>
+                    <div class="saved-model-meta">
+                        <span><i class="fas fa-calendar"></i> ${dataFormatada}</span>
+                        <div class="saved-model-actions">
+                            <button class="btn-saved-model btn-load-model" onclick="event.stopPropagation(); carregarModelo(${modelo.id}, '${modelo.tipo}')">
+                                <i class="fas fa-play"></i> Usar
+                            </button>
+                            <button class="btn-saved-model btn-edit-model" onclick="event.stopPropagation(); editarModelo(${modelo.id}, '${modelo.tipo}', '${modelo.nome}', '${modelo.descricao || ''}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-saved-model btn-delete-model" onclick="event.stopPropagation(); excluirModelo(${modelo.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        function formatarTipoModelo(tipo) {
+            const tipos = {
+                'regressao': 'Regressão',
+                'arvore': 'Árvore de Decisão',
+                'neurais': 'Redes Neurais',
+                'temporais': 'Séries Temporais',
+                'sobrevivencia': 'Sobrevivência',
+                'adaptativo': 'Adaptativo',
+                'reforco': 'Reforço',
+                'ensemble': 'Ensemble',
+                'meta-learning': 'Meta-Learning'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        async function carregarModelo(modeloId, tipo) {
+            try {
+                const response = await fetch(`/api/estatistica/carregar-modelo/${modeloId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    const templateUrl = `/juridico/modelos-estatisticos/template-${tipo}?modelo_id=${modeloId}`;
+                    window.location.href = templateUrl;
+                } else {
+                    mostrarErroModelo(resultado.erro || 'Erro ao carregar modelo');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar modelo:', error);
+                mostrarErroModelo('Erro ao carregar modelo');
+            }
+        }
+
+        async function excluirModelo(modeloId) {
+            if (!confirm('Tem certeza que deseja excluir este modelo? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/estatistica/excluir-modelo/${modeloId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    mostrarSucessoModelo('Modelo excluído com sucesso!');
+                    carregarModelosSalvos();
+                } else {
+                    mostrarErroModelo(resultado.erro || 'Erro ao excluir modelo');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir modelo:', error);
+                mostrarErroModelo('Erro ao excluir modelo');
+            }
+        }
+
+        function mostrarSucessoModelo(mensagem) {
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-bg-success border-0';
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fas fa-check-circle me-2"></i>${mensagem}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast, { delay: 4000 });
+            bsToast.show();
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+
+        function mostrarErroModelo(mensagem) {
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-bg-danger border-0';
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fas fa-exclamation-circle me-2"></i>${mensagem}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+            bsToast.show();
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+
+        async function editarModelo(modeloId, tipoModelo, nomeAtual, descricaoAtual) {
+            try {
+                // TODOS os tipos de modelo agora abrem template completo
+                console.log(`🔧 Editando modelo ${tipoModelo} (ID: ${modeloId})`);
+                
+                // Carregar dados do modelo
+                const response = await fetch(`/api/estatistica/carregar-modelo/${modeloId}`);
+                if (response.ok) {
+                    const resultado = await response.json();
+                    if (resultado.sucesso) {
+                        // Armazenar dados do modelo no localStorage para carregar no template
+                        localStorage.setItem('modeloParaEditar', JSON.stringify(resultado.modelo));
+                        
+                        // Determinar URL do template baseado no tipo
+                        let templateUrl = '';
+                        switch(tipoModelo) {
+                            case 'regressao':
+                                templateUrl = '/juridico/modelos-estatisticos/template-regressao?edit=' + modeloId;
+                                break;
+                            case 'arvore':
+                                templateUrl = '/juridico/modelos-estatisticos/template-arvore?edit=' + modeloId;
+                                break;
+                            case 'neurais':
+                                templateUrl = '/juridico/modelos-estatisticos/template-neurais?edit=' + modeloId;
+                                break;
+                            case 'temporais':
+                                templateUrl = '/juridico/modelos-estatisticos/template-temporais?edit=' + modeloId;
+                                break;
+                            case 'sobrevivencia':
+                                templateUrl = '/juridico/modelos-estatisticos/template-sobrevivencia?edit=' + modeloId;
+                                break;
+                            case 'adaptativo':
+                                templateUrl = '/juridico/modelos-estatisticos/template-adaptativo?edit=' + modeloId;
+                                break;
+                            case 'reforco':
+                                templateUrl = '/juridico/modelos-estatisticos/template-reforco?edit=' + modeloId;
+                                break;
+                            case 'ensemble':
+                                templateUrl = '/juridico/modelos-estatisticos/template-ensemble?edit=' + modeloId;
+                                break;
+                            case 'meta-learning':
+                                templateUrl = '/juridico/modelos-estatisticos/template-meta-learning?edit=' + modeloId;
+                                break;
+                            default:
+                                throw new Error(`Tipo de modelo não suportado: ${tipoModelo}`);
+                        }
+                        
+                        // Redirecionar para o template específico
+                        window.location.href = templateUrl;
+                        return;
+                        
+                    } else {
+                        mostrarErroModelo('Erro ao carregar dados do modelo');
+                        return;
+                    }
+                } else {
+                    mostrarErroModelo('Erro ao conectar com servidor');
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao editar modelo:', error);
+                mostrarErroModelo('Erro ao processar edição do modelo');
+                return;
+            }
+        }
+
+        async function salvarEdicaoModelo(modeloId, tipoModelo) {
+            try {
+                const nome = document.getElementById('editNomeModelo').value.trim();
+                const descricao = document.getElementById('editDescricaoModelo').value.trim();
+                
+                if (!nome) {
+                    mostrarErroModelo('Por favor, informe um nome para o modelo');
+                    return;
+                }
+                
+                // Coletar dados específicos do tipo de modelo
+                let configuracao = {};
+                
+                if (tipoModelo === 'regressao') {
+                    const variaveisIndep = document.getElementById('edit_variaveis_independentes').value;
+                    configuracao = {
+                        variavel_dependente: document.getElementById('edit_variavel_dependente').value.trim(),
+                        variaveis_independentes: variaveisIndep.split('\n').filter(v => v.trim()),
+                        tipo_regressao: document.getElementById('edit_tipo_regressao').value,
+                        metodo_validacao: document.getElementById('edit_metodo_validacao').value
+                    };
+                } else if (tipoModelo === 'arvore') {
+                    const atributosPred = document.getElementById('edit_atributos_preditivos').value;
+                    configuracao = {
+                        variavel_alvo: document.getElementById('edit_variavel_alvo').value.trim(),
+                        atributos_preditivos: atributosPred.split('\n').filter(a => a.trim()),
+                        criterio_divisao: document.getElementById('edit_criterio_divisao').value,
+                        profundidade_maxima: parseInt(document.getElementById('edit_profundidade_maxima').value) || null
+                    };
+                }
+                
+                const dadosEdicao = {
+                    nome: nome,
+                    descricao: descricao || '',
+                    configuracao: configuracao
+                };
+                
+                const response = await fetch(`/api/estatistica/editar-modelo/${modeloId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosEdicao)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    mostrarSucessoModelo(`Modelo "${nome}" editado com sucesso!`);
+                    
+                    // Fechar modal de edição
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarModelo'));
+                    modal.hide();
+                    
+                    // Recarregar lista de modelos
+                    carregarModelosSalvos();
+                } else {
+                    mostrarErroModelo(resultado.erro || 'Erro ao editar modelo');
+                }
+            } catch (error) {
+                console.error('Erro ao editar modelo:', error);
+                mostrarErroModelo('Erro ao editar modelo');
+            }
+        }
+
+        function acessarModelo(tipoModelo) {
+            // Criar modal dinâmico para seleção do modelo
+            const modalHTML = `
+                <div class="modal fade" id="modeloModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content" style="background: #2c3e50; color: white;">
+                            <div class="modal-header" style="border-bottom: 1px solid #34495e;">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-chart-bar"></i> 
+                                    Acessar Modelo: ${tipoModelo.charAt(0).toUpperCase() + tipoModelo.slice(1)}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Selecione como deseja acessar o modelo estatístico:</p>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark text-white h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-list-alt fa-2x mb-3 text-primary"></i>
+                                                <h6>Template Individual</h6>
+                                                <p class="small">Acesse o formulário específico do modelo</p>
+                                                <button class="btn btn-primary btn-sm w-100" onclick="abrirTemplate('${tipoModelo}')">
+                                                    Abrir Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark text-white h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-list fa-2x mb-3 text-success"></i>
+                                                <h6>Lista de Processos</h6>
+                                                <p class="small">Veja processos existentes e aplique o modelo</p>
+                                                <button class="btn btn-success btn-sm w-100" onclick="abrirListaProcessos()">
+                                                    Ver Processos
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remover modal anterior se existir
+            const existingModal = document.getElementById('modeloModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Adicionar novo modal
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modeloModal'));
+            modal.show();
+        }
+        
+        function abrirTemplate(tipo) {
+            let url;
+            switch(tipo) {
+                case 'regressao':
+                    url = '/juridico/modelos-estatisticos/template-regressao';
+                    break;
+                case 'arvore':
+                    url = '/juridico/modelos-estatisticos/template-arvore-decisao';
+                    break;
+                case 'neurais':
+                    url = '/juridico/modelos-estatisticos/template-redes-neurais';
+                    break;
+                case 'temporais':
+                    url = '/juridico/modelos-estatisticos/template-series-temporais';
+                    break;
+                case 'sobrevivencia':
+                    url = '/juridico/modelos-estatisticos/template-sobrevivencia';
+                    break;
+                case 'adaptativo':
+                    url = '/juridico/modelos-estatisticos/template-adaptativo';
+                    break;
+                case 'reforco':
+                    url = '/juridico/modelos-estatisticos/template-reforco';
+                    break;
+                case 'ensemble':
+                    url = '/juridico/modelos-estatisticos/template-ensemble';
+                    break;
+                case 'meta-learning':
+                    url = '/juridico/modelos-estatisticos/template-meta-learning';
+                    break;
+                default:
+                    url = '/juridico/analise-estatistica-preditiva';
+            }
+            window.open(url, '_blank');
+            
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modeloModal'));
+            modal.hide();
+        }
+        
+        function abrirListaProcessos() {
+            window.location.href = '/processos/lista';
+        }
+        
+        // Efeito de parallax suave no mouse
+        document.addEventListener('mousemove', function(e) {
+            const cards = document.querySelectorAll('.model-card');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const deltaX = (e.clientX - centerX) * 0.01;
+                const deltaY = (e.clientY - centerY) * 0.01;
+                
+                card.style.transform = `translateY(-8px) rotateX(${deltaY}deg) rotateY(${deltaX}deg)`;
+            });
+        });
+        
+        // Reset das transformações quando o mouse sai
+        document.addEventListener('mouseleave', function() {
+            const cards = document.querySelectorAll('.model-card');
+            cards.forEach(card => {
+                card.style.transform = '';
+            });
+        });
+    </script>
+</body>
+</html>

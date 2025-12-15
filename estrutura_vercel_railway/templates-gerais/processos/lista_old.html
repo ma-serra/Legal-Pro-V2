@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Processos Jurídicos - Legal Design Pro V2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #2c4a56;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-number {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            line-height: 1.2;
+            margin-bottom: 10px;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 5px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .processo-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .processo-card:hover {
+            transform: translateX(5px);
+        }
+        
+        .risco-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        
+        .risco-remoto { background-color: #d4edda; color: #155724; }
+        .risco-possivel { background-color: #fff3cd; color: #856404; }
+        .risco-provavel { background-color: #f8d7da; color: #721c24; }
+        
+        .valor-monetario {
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 87, 111, 0.3);
+        }
+        
+        .filter-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .area-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1><i class="fas fa-gavel me-3"></i>Gestão de Processos Jurídicos</h1>
+                        <p class="mb-0">Sistema completo de gestão processual com 65+ campos especializados</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{{ url_for('home_dashboard_init_app') }}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-home me-2"></i>Home
+                            </a>
+                            <a href="{{ url_for('processo_cadastro') }}" class="btn btn-light btn-lg">
+                                <i class="fas fa-plus me-2"></i>Novo Processo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="container-fluid mt-4">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stats-card text-center">
+                            <div class="stats-number">{{ estatisticas.total }}</div>
+                            <div class="stats-label">Total de Processos</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stats-card text-center">
+                            <div class="stats-number">{{ estatisticas.areas_count }}</div>
+                            <div class="stats-label">Áreas Jurídicas</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stats-card text-center">
+                            <div class="stats-number">{{ estatisticas.valor_total | moeda_brl }}</div>
+                            <div class="stats-label">Valor Total das Causas</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stats-card text-center">
+                            <div class="d-flex justify-content-around align-items-center mb-2">
+                                <span class="badge risco-remoto fs-6">{{ estatisticas.por_risco.Remoto or 0 }}</span>
+                                <span class="badge risco-possivel fs-6">{{ estatisticas.por_risco.Possível or 0 }}</span>
+                                <span class="badge risco-provavel fs-6">{{ estatisticas.por_risco.Provável or 0 }}</span>
+                            </div>
+                            <div class="stats-label">Distribuição de Riscos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="container-fluid">
+                <div class="filter-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Filtrar por Área Jurídica:</label>
+                            <select class="form-select" id="filtroArea">
+                                <option value="">Todas as Áreas</option>
+                                {% for area in areas_juridicas %}
+                                <option value="{{ area }}">{{ area }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Filtrar por Risco:</label>
+                            <select class="form-select" id="filtroRisco">
+                                <option value="">Todos os Riscos</option>
+                                <option value="REMOTO">Remoto</option>
+                                <option value="POSSÍVEL">Possível</option>
+                                <option value="PROVÁVEL">Provável</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de Processos -->
+            <div class="container-fluid p-4">
+                <div id="processosContainer">
+                    {% for processo in processos %}
+                    <div class="processo-card" data-area="{{ processo.area_juridica }}" data-risco="{{ processo.risco }}">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <strong>CNJ:</strong><br>
+                                <small>{{ processo.numero_processo_cnj }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="area-tag">{{ processo.area_juridica }}</span><br>
+                                <strong>{{ processo.cliente }}</strong><br>
+                                <small>{{ processo.comarca }} - {{ processo.estado }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="valor-monetario">
+                                    {{ processo.valor_da_causa | moeda_brl }}
+                                </div>
+                                <small>Valor da Causa</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="valor-monetario" style="color: #f6ad55;">
+                                    {{ processo.provisao | moeda_brl if processo.provisao else 'R$ 0,00' }}
+                                </div>
+                                <small>Provisão</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-2">
+                                    <strong class="d-block" style="font-size: 0.75rem; color: #6c757d;">Situação:</strong>
+                                    {% if processo.situacao %}
+                                        <span class="badge {{ 'bg-success' if processo.situacao.nome == 'Ativo' else 'bg-secondary' }}">
+                                            {{ processo.situacao.nome }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Em Andamento</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong class="d-block" style="font-size: 0.75rem; color: #6c757d;">Risco:</strong>
+                                    {% if processo.risco %}
+                                        <span class="badge {{ 'risco-' + processo.risco.lower().replace('í','i').replace('á','a').replace('ã','a') }}">
+                                            {{ processo.risco }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge risco-possivel">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <div>
+                                    <strong class="d-block" style="font-size: 0.75rem; color: #6c757d;">Fase:</strong>
+                                    <small>{{ processo.fase_processual or 'Não informado' }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" 
+                                       class="btn btn-outline-primary btn-sm" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('processo_editar', processo_id=processo.id) }}" 
+                                       class="btn btn-outline-secondary btn-sm" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <div class="btn-group">
+                                        <button class="btn btn-outline-success btn-sm dropdown-toggle" 
+                                                type="button" data-bs-toggle="dropdown" title="Análise IA">
+                                            <i class="fas fa-robot"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'estrategica')">
+                                                <i class="fas fa-chess me-2"></i>Análise Estratégica
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'tecnica')">
+                                                <i class="fas fa-cogs me-2"></i>Análise Técnica
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'estatistica')">
+                                                <i class="fas fa-chart-line me-2"></i>Análise Estatística
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'preditiva')">
+                                                <i class="fas fa-crystal-ball me-2"></i>Análise Preditiva
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" onclick="verHistoricoAnalises({{ processo.id }})">
+                                                <i class="fas fa-history me-2"></i>Histórico de Análises
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not processos %}
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">Nenhum processo encontrado</h3>
+                    <p class="text-muted">Comece cadastrando seu primeiro processo jurídico</p>
+                    <a href="{{ url_for('processo_cadastro') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Cadastrar Primeiro Processo
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filtros dinâmicos - verificar se elementos existem
+        const filtroArea = document.getElementById('filtroArea');
+        const filtroRisco = document.getElementById('filtroRisco');
+        
+        if (filtroArea) {
+            filtroArea.addEventListener('change', aplicarFiltros);
+        }
+        if (filtroRisco) {
+            filtroRisco.addEventListener('change', aplicarFiltros);
+        }
+        
+        function aplicarFiltros() {
+            const filtroAreaEl = document.getElementById('filtroArea');
+            const filtroRiscoEl = document.getElementById('filtroRisco');
+            
+            if (!filtroAreaEl || !filtroRiscoEl) return;
+            
+            const areaFiltro = filtroAreaEl.value;
+            const riscoFiltro = filtroRiscoEl.value;
+            const cards = document.querySelectorAll('.processo-card');
+            
+            cards.forEach(card => {
+                const area = card.dataset.area;
+                const risco = card.dataset.risco;
+                
+                const mostrarArea = !areaFiltro || area === areaFiltro;
+                const mostrarRisco = !riscoFiltro || risco === riscoFiltro;
+                
+                if (mostrarArea && mostrarRisco) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // Animações ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.processo-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+
+        // === FUNCIONALIDADES DE ANÁLISE IA ===
+        
+        let processoAtualAnalise = null;
+
+        // Função para iniciar análise IA
+        function analisarProcesso(processoId, tipoAnalise = null) {
+            processoAtualAnalise = processoId;
+            
+            const tipoAnaliseEl = document.getElementById('tipoAnalise');
+            const configuracaoAnalise = document.getElementById('configuracaoAnalise');
+            const areaResultados = document.getElementById('areaResultados');
+            const loadingAnalise = document.getElementById('loadingAnalise');
+            const btnIniciarAnalise = document.getElementById('btnIniciarAnalise');
+            const modalAnaliseIA = document.getElementById('modalAnaliseIA');
+            
+            if (tipoAnalise && tipoAnaliseEl) {
+                tipoAnaliseEl.value = tipoAnalise;
+            }
+            
+            // Resetar interface - verificar se elementos existem
+            if (configuracaoAnalise) configuracaoAnalise.classList.remove('d-none');
+            if (areaResultados) areaResultados.classList.add('d-none');
+            if (loadingAnalise) loadingAnalise.classList.add('d-none');
+            if (btnIniciarAnalise) btnIniciarAnalise.classList.remove('d-none');
+            
+            if (modalAnaliseIA) {
+                new bootstrap.Modal(modalAnaliseIA).show();
+            }
+        }
+
+        // Botão iniciar análise - verificar se elemento existe
+        const btnIniciarAnalise = document.getElementById('btnIniciarAnalise');
+        if (btnIniciarAnalise) {
+            btnIniciarAnalise.addEventListener('click', function() {
+            if (!processoAtualAnalise) return;
+            
+            const tipoAnaliseEl = document.getElementById('tipoAnalise');
+            const modeloIAEl = document.getElementById('modeloIA');
+            const apiProviderEl = document.getElementById('apiProvider');
+            const configuracaoAnalise = document.getElementById('configuracaoAnalise');
+            const loadingAnalise = document.getElementById('loadingAnalise');
+            
+            if (!tipoAnaliseEl || !modeloIAEl || !apiProviderEl) return;
+            
+            const tipoAnalise = tipoAnaliseEl.value;
+            const modeloIA = modeloIAEl.value;
+            const apiProvider = apiProviderEl.value;
+            
+            if (configuracaoAnalise) configuracaoAnalise.classList.add('d-none');
+            if (loadingAnalise) loadingAnalise.classList.remove('d-none');
+            this.classList.add('d-none');
+            
+            fetch(`/processos-juridicos/analise/${processoAtualAnalise}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo_analise: tipoAnalise, modelo_ia: modeloIA, api_provider: apiProvider })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const loadingAnalise = document.getElementById('loadingAnalise');
+                const areaResultados = document.getElementById('areaResultados');
+                const resultadoAnalise = document.getElementById('resultadoAnalise');
+                
+                if (loadingAnalise) loadingAnalise.classList.add('d-none');
+                if (areaResultados) areaResultados.classList.remove('d-none');
+                
+                if (data.success && resultadoAnalise) {
+                    const resultado = data.resultado;
+                    resultadoAnalise.innerHTML = `
+                        <div class="row mb-3">
+                            <div class="col-md-6"><strong>Tipo:</strong> ${resultado.tipo}</div>
+                            <div class="col-md-6"><strong>Modelo:</strong> ${resultado.modelo_usado}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6"><strong>Confiança:</strong> ${(resultado.confianca * 100).toFixed(1)}%</div>
+                            <div class="col-md-6"><strong>Data:</strong> ${new Date().toLocaleString()}</div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Análise:</strong>
+                            <div class="mt-2 p-3 border rounded" style="background-color: #f8f9fa;">
+                                ${resultado.analise.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                } else if (resultadoAnalise) {
+                    resultadoAnalise.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erro na análise: ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                const loadingAnalise = document.getElementById('loadingAnalise');
+                const areaResultados = document.getElementById('areaResultados');
+                const resultadoAnalise = document.getElementById('resultadoAnalise');
+                
+                if (loadingAnalise) loadingAnalise.classList.add('d-none');
+                if (areaResultados) areaResultados.classList.remove('d-none');
+                if (resultadoAnalise) {
+                    resultadoAnalise.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erro de conexão: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+        });
+        }
+
+        // Função para ver histórico
+        function verHistoricoAnalises(processoId) {
+            const modalHistoricoIA = document.getElementById('modalHistoricoIA');
+            if (!modalHistoricoIA) return;
+            
+            new bootstrap.Modal(modalHistoricoIA).show();
+            
+            fetch(`/processos-juridicos/historico-analises/${processoId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.analises.length > 0) {
+                    let html = '';
+                    data.analises.forEach(analise => {
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${analise.tipo_analise}</strong>
+                                        <small>${new Date(analise.criado_em).toLocaleString()}</small>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>Modelo:</strong> ${analise.modelo_ia}</div>
+                                        <div class="col-md-6"><strong>Confiança:</strong> ${(analise.confianca * 100).toFixed(1)}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('historicoConteudo').innerHTML = html;
+                } else {
+                    document.getElementById('historicoConteudo').innerHTML = 
+                        '<div class="text-center text-muted">Nenhuma análise encontrada para este processo</div>';
+                }
+            });
+        }
+    </script>
+
+    <!-- Modal de Análise IA -->
+    <div class="modal fade" id="modalAnaliseIA" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-color); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-robot me-2"></i>Análise com Inteligência Artificial</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4" id="configuracaoAnalise">
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Análise:</label>
+                            <select class="form-select" id="tipoAnalise">
+                                <option value="estrategica">Análise Estratégica</option>
+                                <option value="tecnica">Análise Técnica</option>
+                                <option value="estatistica">Análise Estatística</option>
+                                <option value="preditiva">Análise Preditiva</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Modelo de IA:</label>
+                            <select class="form-select" id="modeloIA">
+                                <option value="gpt-4o">OpenAI GPT-4o</option>
+                                <option value="claude-3-5-sonnet-20241022">Anthropic Claude</option>
+                                <option value="gemini-1.5-pro">Google Gemini</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">API Provider:</label>
+                            <select class="form-select" id="apiProvider">
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="gemini">Google Gemini</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-none" id="areaResultados">
+                        <div class="card">
+                            <div class="card-header" style="background-color: #f8f9fa;">
+                                <h6 class="mb-0"><i class="fas fa-brain me-2"></i>Resultado da Análise</h6>
+                            </div>
+                            <div class="card-body"><div id="resultadoAnalise"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="d-none text-center" id="loadingAnalise">
+                        <div class="spinner-border text-primary me-2" role="status"></div>
+                        <span>Analisando processo com IA...</span>
+                        <div class="mt-2"><small class="text-muted">Isso pode levar alguns minutos</small></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="btnIniciarAnalise">
+                        <i class="fas fa-play me-1"></i>Iniciar Análise
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico -->
+    <div class="modal fade" id="modalHistoricoIA" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--secondary-color); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Histórico de Análises IA</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="historicoConteudo">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <div class="mt-2">Carregando histórico...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

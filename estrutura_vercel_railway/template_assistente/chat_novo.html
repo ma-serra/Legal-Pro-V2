@@ -1,0 +1,609 @@
+{% extends "layout.html" %}
+
+{% block title %}Assistente Jurídico | Sistema Multi-Agente{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('assistente.static', filename='css/assistente_novo.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid assistente-container">
+    <div class="row">
+        <!-- Sidebar com histórico de conversas -->
+        <div class="col-md-3 assistente-sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Conversas</h4>
+                <a href="{{ url_for('assistente.nova_conversa') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nova conversa
+                </a>
+            </div>
+            
+            <div class="list-group conversas-list">
+                {% for conversa in conversas %}
+                {% if conversa.ativo %}
+                <a href="{{ url_for('assistente.chat', conversa_id=conversa.id) }}" 
+                   class="list-group-item list-group-item-action {% if conversa_atual and conversa.id == conversa_atual.id %}active{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ conversa.titulo }}</h6>
+                        <small>{{ conversa.atualizado_em.strftime('%d/%m %H:%M') }}</small>
+                    </div>
+                    <small>{{ conversa.modelo_llm.split('/')[1] }} | {{ conversa.personalidade.capitalize() }}</small>
+                </a>
+                {% endif %}
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <p>Nenhuma conversa iniciada</p>
+                    <p>Inicie uma nova conversa para começar</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Área principal do chat -->
+        <div class="col-md-9 assistente-main">
+            <!-- Card de configurações sempre visível -->
+            <div class="config-card mb-3">
+                <h5 class="mb-3">Configurações do Assistente</h5>
+                <form id="configForm" action="{{ url_for('assistente.atualizar_config') }}" method="post" class="row g-2">
+                    <input type="hidden" name="conversa_id" value="{{ conversa_atual.id if conversa_atual else '' }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="modelo_llm"><i class="fas fa-brain"></i> Modelo de Linguagem</label>
+                            <select class="form-select" id="modelo_llm" name="modelo_llm">
+                                <optgroup label="OpenAI">
+                                    {% for modelo in modelos_llm.openai %}
+                                    <option value="openai/{{ modelo.id }}" {% if conversa_atual and conversa_atual.modelo_llm == 'openai/' + modelo.id %}selected{% endif %}>
+                                        {{ modelo.nome }}{% if modelo.badge %} {{ modelo.badge }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Anthropic">
+                                    {% for modelo in modelos_llm.anthropic %}
+                                    <option value="anthropic/{{ modelo.id }}" {% if conversa_atual and conversa_atual.modelo_llm == 'anthropic/' + modelo.id %}selected{% endif %}>
+                                        {{ modelo.nome }}{% if modelo.badge %} {{ modelo.badge }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Google">
+                                    {% for modelo in modelos_llm.google %}
+                                    <option value="google/{{ modelo.id }}" {% if conversa_atual and conversa_atual.modelo_llm == 'google/' + modelo.id %}selected{% endif %}>
+                                        {{ modelo.nome }}{% if modelo.badge %} {{ modelo.badge }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="DeepSeek">
+                                    {% for modelo in modelos_llm.deepseek %}
+                                    <option value="deepseek/{{ modelo.id }}" {% if conversa_atual and conversa_atual.modelo_llm == 'deepseek/' + modelo.id %}selected{% endif %}>
+                                        {{ modelo.nome }}{% if modelo.badge %} {{ modelo.badge }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="personalidade"><i class="fas fa-user-tie"></i> Personalidade Jurídica</label>
+                            <select class="form-select" id="personalidade" name="personalidade">
+                                {% for personalidade in personalidades %}
+                                <option value="{{ personalidade.id }}" {% if conversa_atual and conversa_atual.personalidade == personalidade.id %}selected{% endif %}>
+                                    {{ personalidade.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="config-item">
+                            <label for="tom_voz"><i class="fas fa-volume-up"></i> Tom de Voz</label>
+                            <select class="form-select" id="tom_voz" name="tom_voz">
+                                {% for tom in tons_voz %}
+                                <option value="{{ tom.id }}" {% if conversa_atual and conversa_atual.tom_voz == tom.id %}selected{% endif %}>
+                                    {{ tom.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
+                        <div class="knowledge-toggles">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="use_db" name="use_db" checked>
+                                <label class="form-check-label" for="use_db">
+                                    <span class="badge bg-info"><i class="fas fa-database"></i> Base Jurídica</span>
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="use_web" name="use_web">
+                                <label class="form-check-label" for="use_web">
+                                    <span class="badge bg-secondary"><i class="fas fa-globe"></i> Busca Web</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="buttons">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-save"></i> Salvar Configurações
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btnLimpar" data-conversa-id="{{ conversa_atual.id if conversa_atual else '' }}">
+                                <i class="fas fa-trash-alt"></i> Limpar Conversa
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Card do chat -->
+            <div class="card chat-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">{{ conversa_atual.titulo if conversa_atual else 'Nova Conversa' }}</h5>
+                        <small class="text-muted">
+                            {% if conversa_atual %}
+                            {{ conversa_atual.modelo_llm.split('/')[1] }} | {{ conversa_atual.personalidade.capitalize() }} | {{ conversa_atual.tom_voz.capitalize() }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="card-body chat-body" id="chatMensagens">
+                    {% if mensagens %}
+                        {% for mensagem in mensagens %}
+                        <div class="mensagem {{ mensagem.remetente }}">
+                            <div class="mensagem-header">
+                                {% if mensagem.remetente == 'user' %}
+                                <i class="fas fa-user"></i> <span class="remetente">Você</span>
+                                {% elif mensagem.remetente == 'assistant' %}
+                                <i class="fas fa-robot"></i> <span class="remetente">Assistente</span>
+                                {% else %}
+                                <i class="fas fa-exclamation-circle"></i> <span class="remetente">Sistema</span>
+                                {% endif %}
+                                <span class="timestamp text-muted">{{ mensagem.criado_em.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="mensagem-conteudo">
+                                {% if mensagem.tipo == 'arquivo' %}
+                                <div class="arquivo">
+                                    <i class="fas fa-file me-2"></i> {{ mensagem.conteudo }}
+                                </div>
+                                {% else %}
+                                {{ mensagem.conteudo_formatado|safe }}
+                                {% endif %}
+                                
+                                {% if mensagem.fontes %}
+                                <div class="fontes mt-2">
+                                    <h6>Fontes:</h6>
+                                    <ul>
+                                        {% for fonte in mensagem.fontes %}
+                                        <li><a href="{{ fonte.url }}" target="_blank">{{ fonte.titulo or fonte.url }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="chat-welcome text-center">
+                            <h5 class="mb-3">Bem-vindo ao Assistente Jurídico</h5>
+                            <p>Este é um assistente especializado em questões jurídicas que pode auxiliar em suas dúvidas legais.</p>
+                            <div class="row mt-4 mb-4 feature-cards">
+                                <div class="col-md-4">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Sugestões</h6>
+                                            <ul class="sugestoes-lista">
+                                                <li><a href="#" class="sugestao-link">Explique o processo de habeas corpus</a></li>
+                                                <li><a href="#" class="sugestao-link">Quais são os meus direitos em caso de demissão?</a></li>
+                                                <li><a href="#" class="sugestao-link">Como funciona o processo de inventário?</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-cogs text-primary"></i> Funcionalidades</h6>
+                                            <ul class="mb-0">
+                                                <li>Responde a dúvidas jurídicas</li>
+                                                <li>Analisa documentos legais</li>
+                                                <li>Ajuda a interpretar leis</li>
+                                                <li>Oferece orientação jurídica inicial</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Limitações</h6>
+                                            <ul class="mb-0">
+                                                <li>Não substitui aconselhamento jurídico profissional</li>
+                                                <li>Informações gerais, não específicas ao seu caso</li>
+                                                <li>Não considera todas as jurisdições</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Digite sua pergunta abaixo para começar.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <!-- Area de upload de arquivo -->
+                    <div class="upload-area mb-2" style="display: none;" id="uploadStatus">
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Enviando arquivo...
+                    </div>
+                    
+                    <!-- Formulário de mensagem -->
+                    <form id="chatForm" action="{{ url_for('assistente.enviar_mensagem') }}" method="post">
+                        <input type="hidden" name="conversa_id" value="{{ conversa_atual.id if conversa_atual else '' }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <button class="dropdown-item" type="button" id="btnEnviarArquivo">
+                                        <i class="fas fa-file-upload"></i> Enviar arquivo
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#tipoMensagemModal">
+                                        <i class="fas fa-tag"></i> Tipo de mensagem
+                                    </button>
+                                </li>
+                            </ul>
+                            <input type="file" id="arquivo" name="arquivo" style="display: none">
+                            <input type="hidden" id="tipo_mensagem" name="tipo_mensagem" value="padrao">
+                            <textarea class="form-control" id="mensagem" name="mensagem" rows="1" placeholder="Digite sua mensagem..."></textarea>
+                            <button class="btn btn-primary" type="submit">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para tipo de mensagem -->
+<div class="modal fade" id="tipoMensagemModal" tabindex="-1" aria-labelledby="tipoMensagemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tipoMensagemModalLabel">Tipo de Mensagem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action active" data-tipo="padrao">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Padrão</h6>
+                            <small><i class="fas fa-check"></i></small>
+                        </div>
+                        <p class="mb-1">Consulta normal ao assistente.</p>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" data-tipo="query">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Consulta Jurídica</h6>
+                        </div>
+                        <p class="mb-1">Consulta específica de informações jurídicas na base de dados.</p>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" data-tipo="summarize">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Sumarizar Conteúdo</h6>
+                        </div>
+                        <p class="mb-1">Solicita um resumo objetivo do conteúdo informado.</p>
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" data-tipo="analyze">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Análise Jurídica</h6>
+                        </div>
+                        <p class="mb-1">Solicita uma análise jurídica detalhada do conteúdo.</p>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSelecionarTipoMensagem">Selecionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos principais
+    const chatForm = document.getElementById('chatForm');
+    const mensagemInput = document.getElementById('mensagem');
+    const chatMensagens = document.getElementById('chatMensagens');
+    const btnLimpar = document.getElementById('btnLimpar');
+    const btnEnviarArquivo = document.getElementById('btnEnviarArquivo');
+    const arquivoInput = document.getElementById('arquivo');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const tipoMensagem = document.getElementById('tipo_mensagem');
+    
+    // Comportamento do formulário de chat
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const mensagem = mensagemInput.value.trim();
+            if (!mensagem) return;
+            
+            // Adiciona mensagem do usuário ao chat
+            adicionarMensagem('user', mensagem);
+            mensagemInput.value = '';
+            
+            // Exibe indicador de digitação
+            exibirIndicadorDigitacao();
+            
+            // Preparação dos dados para envio
+            const formData = new FormData(chatForm);
+            formData.append('use_db', document.getElementById('use_db').checked);
+            formData.append('use_web', document.getElementById('use_web').checked);
+            
+            // Envia mensagem para o servidor via Fetch API
+            fetch(chatForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove indicador de digitação
+                removerIndicadorDigitacao();
+                
+                if (data.erro) {
+                    adicionarMensagem('system', `Erro: ${data.erro}`, 'erro');
+                } else if (data.resposta) {
+                    adicionarMensagem('assistant', data.resposta);
+                    
+                    // Atualiza título da conversa se necessário
+                    if (data.titulo && data.titulo !== 'Nova Conversa') {
+                        document.querySelector('.card-header h5').textContent = data.titulo;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                removerIndicadorDigitacao();
+                adicionarMensagem('system', 'Erro na comunicação com o servidor.', 'erro');
+            });
+        });
+    }
+    
+    // Botão de limpar conversa
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', function() {
+            const conversaId = btnLimpar.getAttribute('data-conversa-id');
+            if (!conversaId) return;
+            
+            if (confirm('Tem certeza que deseja limpar esta conversa? Todas as mensagens serão apagadas.')) {
+                fetch('/assistente/limpar_conversa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: JSON.stringify({
+                        conversa_id: conversaId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Limpa a área de mensagens
+                    chatMensagens.innerHTML = '';
+                    
+                    // Adiciona mensagem de boas-vindas
+                    adicionarMensagem('assistant', 'Conversa limpa. Como posso ajudar?');
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao limpar conversa.');
+                });
+            }
+        });
+    }
+    
+    // Upload de arquivo
+    if (btnEnviarArquivo && arquivoInput) {
+        btnEnviarArquivo.addEventListener('click', function() {
+            arquivoInput.click();
+        });
+        
+        arquivoInput.addEventListener('change', function() {
+            if (arquivoInput.files.length > 0) {
+                const arquivo = arquivoInput.files[0];
+                
+                if (arquivo.size > 10 * 1024 * 1024) {
+                    alert('O arquivo é muito grande. Tamanho máximo: 10MB.');
+                    arquivoInput.value = '';
+                    return;
+                }
+                
+                uploadStatus.style.display = 'block';
+                
+                const formData = new FormData();
+                formData.append('arquivo', arquivo);
+                formData.append('conversa_id', document.querySelector('input[name="conversa_id"]').value);
+                formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+                
+                fetch('/assistente/upload_arquivo', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    uploadStatus.style.display = 'none';
+                    
+                    if (data.erro) {
+                        adicionarMensagem('system', `Erro: ${data.erro}`, 'erro');
+                    } else {
+                        adicionarMensagem('user', `Arquivo enviado: ${arquivo.name}`, 'arquivo');
+                        adicionarMensagem('assistant', data.resposta);
+                    }
+                    
+                    arquivoInput.value = '';
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    uploadStatus.style.display = 'none';
+                    adicionarMensagem('system', 'Erro ao enviar arquivo.', 'erro');
+                    arquivoInput.value = '';
+                });
+            }
+        });
+    }
+    
+    // Tipo de mensagem
+    const tipoMensagemBtns = document.querySelectorAll('.list-group-item[data-tipo]');
+    const btnSelecionarTipoMensagem = document.getElementById('btnSelecionarTipoMensagem');
+    
+    tipoMensagemBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tipoMensagemBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    if (btnSelecionarTipoMensagem) {
+        btnSelecionarTipoMensagem.addEventListener('click', function() {
+            const tipoSelecionado = document.querySelector('.list-group-item.active').getAttribute('data-tipo');
+            tipoMensagem.value = tipoSelecionado;
+            
+            // Fechar o modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('tipoMensagemModal'));
+            modal.hide();
+        });
+    }
+    
+    // Autoajuste da altura do campo de texto
+    if (mensagemInput) {
+        mensagemInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+    
+    // Sugestões de perguntas
+    document.querySelectorAll('.sugestao-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (mensagemInput) {
+                mensagemInput.value = this.textContent;
+                mensagemInput.focus();
+            }
+        });
+    });
+    
+    // Exibe as mensagens iniciais se existirem
+    if (chatMensagens) {
+        chatMensagens.scrollTop = chatMensagens.scrollHeight;
+    }
+});
+
+// Funções auxiliares
+
+// Adiciona uma mensagem no chat
+function adicionarMensagem(remetente, texto, tipo) {
+    const chatMensagens = document.getElementById('chatMensagens');
+    if (!chatMensagens) return;
+    
+    const mensagemDiv = document.createElement('div');
+    mensagemDiv.className = 'mensagem ' + remetente;
+    
+    // Adiciona ícone apropriado
+    let icone = '';
+    if (remetente === 'user') {
+        icone = '<i class="fas fa-user"></i>';
+    } else if (remetente === 'assistant') {
+        icone = '<i class="fas fa-robot"></i>';
+    } else if (remetente === 'system') {
+        icone = '<i class="fas fa-exclamation-circle"></i>';
+    }
+    
+    // Formatação do conteúdo
+    let conteudo = '';
+    
+    if (tipo === 'erro') {
+        conteudo = '<div class="alert alert-danger">' + texto + '</div>';
+    } else if (tipo === 'arquivo') {
+        conteudo = '<div class="arquivo"><i class="fas fa-file me-2"></i>' + texto + '</div>';
+    } else {
+        // Formata o texto com Markdown se for do assistente
+        if (remetente === 'assistant' && window.marked) {
+            conteudo = marked.parse(texto);
+        } else {
+            conteudo = '<p>' + texto + '</p>';
+        }
+    }
+    
+    const agora = new Date();
+    const horaFormatada = agora.getHours().toString().padStart(2, '0') + ':' + 
+                          agora.getMinutes().toString().padStart(2, '0');
+    
+    mensagemDiv.innerHTML = `
+        <div class="mensagem-header">
+            ${icone} <span class="remetente">${remetente === 'user' ? 'Você' : remetente === 'assistant' ? 'Assistente' : 'Sistema'}</span>
+            <span class="timestamp text-muted">${horaFormatada}</span>
+        </div>
+        <div class="mensagem-conteudo">
+            ${conteudo}
+        </div>
+    `;
+    
+    chatMensagens.appendChild(mensagemDiv);
+    chatMensagens.scrollTop = chatMensagens.scrollHeight;
+}
+
+// Exibe indicador de digitação
+function exibirIndicadorDigitacao() {
+    const chatMensagens = document.getElementById('chatMensagens');
+    if (!chatMensagens) return;
+    
+    // Remove qualquer indicador existente
+    removerIndicadorDigitacao();
+    
+    // Cria novo indicador
+    const indicador = document.createElement('div');
+    indicador.id = 'typingIndicator';
+    indicador.className = 'mensagem assistant';
+    indicador.innerHTML = `
+        <div class="mensagem-header">
+            <i class="fas fa-robot"></i> <span class="remetente">Assistente</span>
+        </div>
+        <div class="mensagem-conteudo">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    
+    chatMensagens.appendChild(indicador);
+    chatMensagens.scrollTop = chatMensagens.scrollHeight;
+}
+
+// Remove indicador de digitação
+function removerIndicadorDigitacao() {
+    const indicador = document.getElementById('typingIndicator');
+    if (indicador) {
+        indicador.remove();
+    }
+}
+</script>
+{% endblock %}

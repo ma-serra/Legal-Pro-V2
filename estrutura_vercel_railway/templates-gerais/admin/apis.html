@@ -1,0 +1,478 @@
+{% extends "layout.html" %}
+
+{% block title %}Configuração de APIs - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Administração do Sistema</h1>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-3">
+            {% include "admin/admin_sidebar.html" %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Configuração de APIs</h2>
+                <div>
+                    <a href="/admin/token-monitor" class="btn btn-success me-2">
+                        <i class="fas fa-chart-line me-1"></i>Monitor de Tokens
+                    </a>
+                    <button class="btn btn-outline-secondary" id="btnTestarAPIs">
+                        <i class="fas fa-sync-alt me-1"></i>Testar Conexões
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Provedores de IA</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text mb-4">
+                        Configure as chaves de API dos provedores de Inteligência Artificial utilizados pelo sistema.
+                        As chaves são necessárias para que o sistema possa acessar os serviços de IA.
+                    </p>
+                    
+                    <div class="accordion" id="apiAccordion">
+                        <!-- OpenAI -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOpenAI">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOpenAI" aria-expanded="true" aria-controls="collapseOpenAI">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-robot me-2"></i>OpenAI (GPT-4o)
+                                        </div>
+                                        {% if api_status.openai.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.openai.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseOpenAI" class="accordion-collapse collapse show" aria-labelledby="headingOpenAI" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='openai') }}">
+                                        <div class="mb-3">
+                                            <label for="openai_api_key" class="form-label">Chave de API da OpenAI</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="openai_api_key" name="api_key" value="{{ '************' if api_status.openai.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="openai_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://platform.openai.com/account/api-keys" target="_blank">platform.openai.com/account/api-keys</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="openai">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Anthropic -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingAnthropic">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAnthropic" aria-expanded="false" aria-controls="collapseAnthropic">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-robot me-2"></i>Anthropic (Claude)
+                                        </div>
+                                        {% if api_status.anthropic.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.anthropic.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseAnthropic" class="accordion-collapse collapse" aria-labelledby="headingAnthropic" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='anthropic') }}">
+                                        <div class="mb-3">
+                                            <label for="anthropic_api_key" class="form-label">Chave de API da Anthropic</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="anthropic_api_key" name="api_key" value="{{ '************' if api_status.anthropic.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="anthropic_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="anthropic">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Google -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGoogle">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGoogle" aria-expanded="false" aria-controls="collapseGoogle">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-robot me-2"></i>Google (Gemini)
+                                        </div>
+                                        {% if api_status.google.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.google.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseGoogle" class="accordion-collapse collapse" aria-labelledby="headingGoogle" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='google') }}">
+                                        <div class="mb-3">
+                                            <label for="google_api_key" class="form-label">Chave de API do Google AI</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="google_api_key" name="api_key" value="{{ '************' if api_status.google.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="google_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://makersuite.google.com/app/apikeys" target="_blank">makersuite.google.com/app/apikeys</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="google">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AssemblyAI -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingAssemblyAI">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAssemblyAI" aria-expanded="false" aria-controls="collapseAssemblyAI">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-microphone me-2"></i>AssemblyAI
+                                        </div>
+                                        {% if api_status.assemblyai.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.assemblyai.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseAssemblyAI" class="accordion-collapse collapse" aria-labelledby="headingAssemblyAI" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='assemblyai') }}">
+                                        <div class="mb-3">
+                                            <label for="assemblyai_api_key" class="form-label">Chave de API da AssemblyAI</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="assemblyai_api_key" name="api_key" value="{{ '************' if api_status.assemblyai.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="assemblyai_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://www.assemblyai.com/app/account" target="_blank">assemblyai.com/app/account</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="assemblyai">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deepseek -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDeepseek">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDeepseek" aria-expanded="false" aria-controls="collapseDeepseek">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-robot me-2"></i>Deepseek (Deepseek Chat)
+                                        </div>
+                                        {% if api_status.deepseek.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.deepseek.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseDeepseek" class="accordion-collapse collapse" aria-labelledby="headingDeepseek" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='deepseek') }}">
+                                        <div class="mb-3">
+                                            <label for="deepseek_api_key" class="form-label">Chave de API da Deepseek</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="deepseek_api_key" name="api_key" value="{{ '************' if api_status.deepseek.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="deepseek_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://platform.deepseek.com/" target="_blank">platform.deepseek.com</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="deepseek">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Grok X.AI -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGrok">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrok" aria-expanded="false" aria-controls="collapseGrok">
+                                    <div class="d-flex align-items-center w-100">
+                                        <div class="flex-grow-1">
+                                            <i class="fas fa-robot me-2"></i>Grok X.AI (Grok 4)
+                                        </div>
+                                        {% if api_status.grok.is_valid %}
+                                            <span class="badge bg-success me-2">Conectado</span>
+                                        {% elif api_status.grok.has_key %}
+                                            <span class="badge bg-warning me-2">Chave Inválida</span>
+                                        {% else %}
+                                            <span class="badge bg-danger me-2">Não Configurado</span>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseGrok" class="accordion-collapse collapse" aria-labelledby="headingGrok" data-bs-parent="#apiAccordion">
+                                <div class="accordion-body">
+                                    <form method="POST" action="{{ url_for('admin_apis_update', provider='grok') }}">
+                                        <div class="mb-3">
+                                            <label for="grok_api_key" class="form-label">Chave de API do Grok X.AI</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="grok_api_key" name="api_key" value="{{ '************' if api_status.grok.has_key else '' }}">
+                                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="grok_api_key">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                Você pode obter sua chave da API em <a href="https://x.ai/api" target="_blank">x.ai/api</a>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-primary me-2">Salvar</button>
+                                            <button type="button" class="btn btn-outline-primary test-api" data-provider="grok">Testar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Configurações Avançadas</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_apis_config') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="default_provider" class="form-label">Provedor Padrão</label>
+                                <select class="form-select" id="default_provider" name="default_provider">
+                                    <option value="openai" {% if default_provider == 'openai' %}selected{% endif %}>OpenAI (GPT-5)</option>
+                                    <option value="anthropic" {% if default_provider == 'anthropic' %}selected{% endif %}>Anthropic (Claude 4.5)</option>
+                                    <option value="google" {% if default_provider == 'google' %}selected{% endif %}>Google (Gemini 2.5)</option>
+                                    <option value="deepseek" {% if default_provider == 'deepseek' %}selected{% endif %}>DeepSeek (R1 / V3)</option>
+                                    <option value="grok" {% if default_provider == 'grok' %}selected{% endif %}>Grok X.AI (Grok 4)</option>
+                                    <option value="perplexity" {% if default_provider == 'perplexity' %}selected{% endif %}>Perplexity (Llama)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="fallback_provider" class="form-label">Provedor de Fallback Inteligente</label>
+                                <select class="form-select" id="fallback_provider" name="fallback_provider">
+                                    <option value="">Nenhum</option>
+                                    <option value="openai" {% if fallback_provider == 'openai' %}selected{% endif %}>OpenAI (GPT-5 / GPT-4.1)</option>
+                                    <option value="anthropic" {% if fallback_provider == 'anthropic' %}selected{% endif %}>Anthropic (Claude 4.5)</option>
+                                    <option value="google" {% if fallback_provider == 'google' %}selected{% endif %}>Google (Gemini 2.5)</option>
+                                    <option value="deepseek" {% if fallback_provider == 'deepseek' %}selected{% endif %}>DeepSeek (R1 / V3)</option>
+                                    <option value="grok" {% if fallback_provider == 'grok' %}selected{% endif %}>Grok X.AI (Grok 4)</option>
+                                    <option value="perplexity" {% if fallback_provider == 'perplexity' %}selected{% endif %}>Perplexity (Llama)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enable_fallback" name="enable_fallback" {% if enable_fallback %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_fallback">Habilitar Fallback Automático</label>
+                                </div>
+                                <div class="form-text">Se habilitado, o sistema tentará usar o provedor de fallback em caso de falha.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="cache_results" name="cache_results" {% if cache_results %}checked{% endif %}>
+                                    <label class="form-check-label" for="cache_results">Habilitar Cache de Resultados</label>
+                                </div>
+                                <div class="form-text">Se habilitado, o sistema armazenará resultados de consultas repetidas para economizar chamadas de API.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Sistema de Fallback Inteligente</h5>
+                            <p>O sistema utiliza uma ordem específica de fallback para garantir alta disponibilidade:</p>
+                            <ol>
+                                <li><strong>Anthropic (Claude)</strong> - Primeira opção de fallback para processamento de texto jurídico de alta qualidade</li>
+                                <li><strong>Google (Gemini)</strong> - Segunda opção de fallback para processamento quando Anthropic não estiver disponível</li>
+                                <li><strong>Deepseek</strong> - Terceira opção de fallback para casos em que os provedores anteriores não estejam disponíveis</li>
+                                <li><strong>Grok</strong> - Quarta opção de fallback para casos em que os provedores anteriores não estejam disponíveis</li>
+                            </ol>
+                            <p class="mb-0">Esta ordem foi otimizada para garantir a melhor qualidade de processamento de textos jurídicos em caso de indisponibilidade do provedor principal.</p>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<!-- Script de validação de API removido temporariamente para debug -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle visibilidade das senhas
+        document.querySelectorAll('.toggle-password').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const inputField = document.getElementById(targetId);
+                
+                if (inputField.type === 'password') {
+                    inputField.type = 'text';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    inputField.type = 'password';
+                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+        
+        // Testar API
+        document.querySelectorAll('.test-api').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const provider = this.getAttribute('data-provider');
+                const inputField = document.getElementById(provider + '_api_key');
+                const apiKey = inputField.value;
+                
+                if (apiKey === '************' || apiKey === '') {
+                    alert('Por favor, insira uma chave de API válida primeiro.');
+                    return;
+                }
+                
+                // Mudar estado do botão para "Testando..."
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testando...';
+                this.disabled = true;
+                
+                // Fazer requisição para testar a API
+                fetch('/admin/apis/test/' + provider, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ api_key: apiKey })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('API conectada com sucesso!');
+                    } else {
+                        alert('Erro ao testar API: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro ao testar API: ' + error);
+                })
+                .finally(() => {
+                    // Restaurar estado do botão
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+            });
+        });
+        
+        // Testar todas as APIs
+        document.getElementById('btnTestarAPIs').addEventListener('click', function() {
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testando...';
+            this.disabled = true;
+            
+            fetch('/admin/apis/test_all', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.results) {
+                        // Processar os resultados detalhados
+                        let message = 'Resultados do teste de APIs:\n\n';
+                        
+                        Object.keys(data.results).forEach(provider => {
+                            const result = data.results[provider];
+                            const status = result.is_valid ? '✅ Conectada' : (result.has_key ? '❌ Falha na conexão' : '⚠️ Não configurada');
+                            message += `${provider.charAt(0).toUpperCase() + provider.slice(1)}: ${status}\n`;
+                        });
+                        
+                        alert(message);
+                    } else {
+                        alert('Teste de APIs concluído. Veja os resultados na página.');
+                    }
+                    window.location.reload();
+                } else {
+                    alert('Erro ao testar APIs: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao testar APIs: ' + error);
+            })
+            .finally(() => {
+                this.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Testar Conexões';
+                this.disabled = false;
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

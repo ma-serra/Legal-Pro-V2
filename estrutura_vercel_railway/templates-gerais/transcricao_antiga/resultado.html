@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Transcrição</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #21333d;
+            --bg-secondary: #355d69;
+            --bg-card: #2a4450;
+            --text-light: #ffffff;
+            --text-muted: #b8c5c9;
+            --accent-blue: #4a90e2;
+            --accent-green: #27ae60;
+            --accent-orange: #f39c12;
+            --accent-red: #e74c3c;
+            --border-color: #3a5866;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+            color: var(--text-light);
+            padding: 1.5rem 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: #355d69;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .home-button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            padding: 2rem 0;
+            margin-top: 3rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--text-light);
+        }
+
+        .header h1 {
+            color: var(--text-light);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .card-icon {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .transcription-text {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            line-height: 1.7;
+            color: var(--text-light);
+            font-size: 1rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 280px;
+        }
+
+        .segments-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .segment-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .segment-item:last-child {
+            border-bottom: none;
+        }
+
+        .segment-time {
+            background: var(--accent-blue);
+            color: var(--text-light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .segment-text {
+            flex: 1;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .speaker-tag {
+            background: var(--accent-orange);
+            color: var(--text-light);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .sentiment-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .sentiment-positive {
+            background: var(--accent-green);
+            color: var(--text-light);
+        }
+
+        .sentiment-negative {
+            background: var(--accent-red);
+            color: var(--text-light);
+        }
+
+        .sentiment-neutral {
+            background: #6c757d;
+            color: var(--text-light);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .btn-custom {
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary-custom {
+            background: var(--accent-blue);
+            color: var(--text-light);
+        }
+
+        .btn-primary-custom:hover {
+            background: #3a7bc8;
+            color: var(--text-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary-custom {
+            background: var(--accent-orange);
+            color: var(--text-light);
+        }
+
+        .btn-secondary-custom:hover {
+            background: #e67e22;
+            color: var(--text-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-custom {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--border-color);
+            color: var(--text-light);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .container {
+                padding: 0 0.5rem;
+            }
+        }
+        
+        /* Summary Section Styles - Force White Text */
+        #autoSummaryContent,
+        #autoSummaryContent *,
+        .summary-content,
+        .summary-content *,
+        .card-body,
+        .card-body * {
+            color: #ffffff !important;
+        }
+        
+        .summary-content h5,
+        #autoSummaryContent h5 {
+            color: #ffffff !important;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .summary-points,
+        #autoSummaryContent ul {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .summary-points li,
+        #autoSummaryContent li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            padding-left: 2rem;
+            color: #ffffff !important;
+        }
+        
+        .summary-points li:before,
+        #autoSummaryContent li:before {
+            content: "▪";
+            color: #00d4ff;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+            top: 0.75rem;
+        }
+        
+        .summary-conclusion,
+        #autoSummaryContent .summary-conclusion {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #00d4ff;
+            margin-top: 1rem;
+            font-style: italic;
+            color: #ffffff !important;
+        }
+        
+        /* Forçar cor branca nos textos da legenda dos gráficos Chart.js */
+        .chart-container canvas,
+        .chart-container .chartjs-legend,
+        .chart-container .chartjs-legend *,
+        .chart-container .chartjs-legend-item,
+        .chart-container .chartjs-legend-item span,
+        .chart-container .chartjs-legend ul li,
+        .chart-container .chartjs-legend ul li span,
+        .chart-container .chartjs-legend-text {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        /* Regras específicas para Chart.js v3+ */
+        canvas[id$="Chart"] + .chartjs-legend .chartjs-legend-item,
+        canvas[id$="Chart"] + .chartjs-legend ul li,
+        .chartjs-legend .chartjs-legend-item,
+        .chartjs-legend ul li,
+        .chartjs-legend-item-text,
+        .chartjs-legend-color-box + span {
+            color: #ffffff !important;
+        }
+
+        /* Override para qualquer texto da legenda */
+        [class*="chartjs-legend"] *,
+        [class*="chart-legend"] * {
+            color: #ffffff !important;
+        }
+
+        /* Regras específicas para elementos gerados pelo Chart.js */
+        canvas + ul li,
+        canvas ~ ul li,
+        .chartjs-legend ul li,
+        .chartjs-legend li,
+        .chartjs-legend span {
+            color: #ffffff !important;
+        }
+
+        /* Força cor em elementos de legenda inline */
+        div[style*="display: flex"] span,
+        div[style*="align-items: center"] span {
+            color: #ffffff !important;
+        }
+
+        /* Force white text for all dynamically generated summary content */
+        #autoSummaryContent p,
+        #autoSummaryContent span,
+        #autoSummaryContent div {
+            color: #ffffff !important;
+        }
+        
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        .dropdown-item {
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Button -->
+    <a href="/" class="home-button">
+        <i class="fas fa-home me-2"></i>Home
+    </a>
+
+    <div class="header">
+        <div class="container text-center">
+            <h1><i class="fas fa-file-alt"></i> Resultado da Transcrição</h1>
+            <p>Análise completa do áudio processado</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-value">{{ result.duracao_segundos | default(0) | round(1) }}s</span>
+                <div class="stat-label">Duração</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ result.estatisticas.total_palavras | default(0) }}</span>
+                <div class="stat-label">Palavras</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ result.segmentos | length }}</span>
+                <div class="stat-label">Segmentos</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ result.total_falantes | default(1) }}</span>
+                <div class="stat-label">Falantes</div>
+            </div>
+            {% if result.analise_sentimentos %}
+            <div class="stat-card">
+                <span class="stat-value">{{ (result.analise_sentimentos.resumo.confianca_analise * 100) | round(0) }}%</span>
+                <div class="stat-label">Confiança</div>
+            </div>
+            {% endif %}
+            <div class="stat-card">
+                <span class="stat-value">AssemblyAI</span>
+                <div class="stat-label">Motor</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column -->
+            <div>
+
+
+                <!-- Transcription Text -->
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <i class="fas fa-quote-left card-icon"></i>
+                        <h3 class="card-title">Texto Transcrito</h3>
+                    </div>
+                    <div class="transcription-text">
+                        {{ result.texto_completo | default("Nenhum texto transcrito encontrado.") }}
+                    </div>
+                </div>
+
+                <!-- Segments -->
+                {% if result.segmentos %}
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <i class="fas fa-list card-icon"></i>
+                        <h3 class="card-title">Segmentos Detalhados</h3>
+                    </div>
+                    <div class="segments-container">
+                        {% for segment in result.segmentos %}
+                        <div class="segment-item">
+                            <div class="segment-time">
+                                {{ "%02d:%02d" | format((segment.inicio // 60) | int, (segment.inicio % 60) | int) }}
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1;">
+                                <div>
+                                    <span class="speaker-tag">{{ segment.falante }}</span>
+                                </div>
+                                <div class="segment-text">{{ segment.texto }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Action Buttons inside segments card -->
+                    <div class="action-buttons" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <a href="{{ url_for('transcription_index') }}" class="btn-custom btn-primary-custom">
+                            <i class="fas fa-plus"></i>
+                            Nova Transcrição
+                        </a>
+                        <a href="{{ url_for('historico') }}" class="btn-custom btn-secondary-custom">
+                            <i class="fas fa-history"></i>
+                            Ver Histórico
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn-custom btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-pdf"></i>
+                                Exportar PDF
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#" onclick="downloadPDF('completo')">
+                                    <i class="fas fa-file-alt me-2"></i>Relatório Completo
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="downloadPDF('transcricao')">
+                                    <i class="fas fa-microphone me-2"></i>Transcrição
+                                </a></li>
+
+                            </ul>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button type="button" class="btn-custom btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-word"></i>
+                                Exportar Word
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#" onclick="downloadWord('completo')">
+                                    <i class="fas fa-file-alt me-2"></i>Relatório Completo
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="downloadWord('transcricao')">
+                                    <i class="fas fa-microphone me-2"></i>Transcrição
+                                </a></li>
+
+                            </ul>
+                        </div>
+                        
+
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Sentiment Analysis -->
+                {% if result.analise_sentimentos %}
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-heart card-icon"></i>
+                        <h3 class="card-title">Análise de Confiança</h3>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <span class="sentiment-badge sentiment-{{ result.analise_sentimentos.resumo.sentimento_dominante.lower() }}" style="color: #ffffff !important;">
+                            {% if result.analise_sentimentos.resumo.sentimento_dominante == 'positivo' %}
+                                <i class="fas fa-smile" style="color: #ffffff;"></i>
+                            {% elif result.analise_sentimentos.resumo.sentimento_dominante == 'negativo' %}
+                                <i class="fas fa-frown" style="color: #ffffff;"></i>
+                            {% else %}
+                                <i class="fas fa-meh" style="color: #ffffff;"></i>
+                            {% endif %}
+                            <span style="color: #ffffff !important;">{{ result.analise_sentimentos.resumo.sentimento_dominante.title() }}</span>
+                        </span>
+                    </div>
+                    
+                    <!-- Sentiment Distribution Chart -->
+                    <div class="chart-container" style="height: 300px; margin-bottom: 1.5rem;">
+                        <canvas id="sentimentDistributionChart"></canvas>
+                    </div>
+                    
+                    <!-- Emotion Breakdown Chart -->
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="emotionBreakdownChart"></canvas>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Speakers -->
+                {% if result.speakers %}
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <i class="fas fa-users card-icon"></i>
+                        <h3 class="card-title">Falantes Detectados</h3>
+                    </div>
+                    <div class="chart-container" id="speakersChart"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script>
+        // Corporate color palette
+        const colors = {
+            primary: '#4a90e2',
+            secondary: '#355d69',
+            success: '#27ae60',
+            warning: '#f39c12',
+            danger: '#e74c3c',
+            dark: '#21333d',
+            positive: '#27ae60',
+            negative: '#e74c3c',
+            neutral: '#6c757d'
+        };
+
+        // Sentiment Analysis Charts
+        {% if result.analise_sentimentos %}
+        try {
+            const sentimentData = {{ result.analise_sentimentos | tojson | safe }};
+            
+            // Extract sentiment distribution data
+            let polaridadeData = {
+                positivo: 15,
+                negativo: 15,
+                neutro: 70
+            };
+            
+            if (sentimentData.polaridade) {
+                polaridadeData.positivo = sentimentData.polaridade.positivo || 15;
+                polaridadeData.negativo = sentimentData.polaridade.negativo || 15;
+                polaridadeData.neutro = sentimentData.polaridade.neutro || 70;
+            }
+            
+            // Sentiment Distribution Chart (Doughnut)
+            const sentimentCtx = document.getElementById('sentimentDistributionChart').getContext('2d');
+            Chart.register(ChartDataLabels);
+            const sentimentChart = new Chart(sentimentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positivo', 'Negativo', 'Neutro'],
+                    datasets: [{
+                        data: [polaridadeData.positivo, polaridadeData.negativo, polaridadeData.neutro],
+                        backgroundColor: [colors.positive, colors.negative, colors.neutral],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                font: { size: 12, weight: 'bold' },
+                                usePointStyle: false
+                            },
+                            onClick: function() {}
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            color: '#ffffff',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            formatter: function(value) {
+                                return value.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Implementa observador para monitorar mudanças no DOM e aplicar cor branca
+            function setupLegendColorObserver() {
+                const canvas = document.getElementById('sentimentDistributionChart');
+                if (!canvas) return;
+                
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'childList') {
+                            applyWhiteColorToLegend();
+                        }
+                    });
+                });
+                
+                observer.observe(canvas.parentNode, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Aplica cor inicialmente
+                setTimeout(applyWhiteColorToLegend, 100);
+                setTimeout(applyWhiteColorToLegend, 500);
+                setTimeout(applyWhiteColorToLegend, 1000);
+            }
+            
+            function applyWhiteColorToLegend() {
+                const canvas = document.getElementById('sentimentDistributionChart');
+                if (!canvas) return;
+                
+                const container = canvas.parentNode;
+                
+                // Busca por todos os elementos com texto relacionado aos sentimentos
+                const allElements = container.querySelectorAll('*');
+                allElements.forEach(element => {
+                    const text = element.textContent;
+                    if (text && (text.includes('Positivo') || text.includes('Negativo') || text.includes('Neutro'))) {
+                        element.style.setProperty('color', '#ffffff', 'important');
+                        element.style.setProperty('fill', '#ffffff', 'important');
+                    }
+                });
+                
+                // Aplica em elementos específicos da legenda
+                const legendSelectors = [
+                    '.chartjs-legend span',
+                    '.chartjs-legend li',
+                    'ul li span',
+                    'div[style*="display: flex"] span'
+                ];
+                
+                legendSelectors.forEach(selector => {
+                    const elements = container.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        el.style.setProperty('color', '#ffffff', 'important');
+                    });
+                });
+            }
+            
+            setupLegendColorObserver();
+
+            // Emotion Breakdown Chart (Bar)
+            let emotionData = {
+                'Alegria': 20,
+                'Tristeza': 10,
+                'Raiva': 5,
+                'Medo': 5,
+                'Surpresa': 10,
+                'Neutro': 50
+            };
+            
+            if (sentimentData.emotions) {
+                emotionData = {
+                    'Alegria': sentimentData.emotions.alegria || 20,
+                    'Tristeza': sentimentData.emotions.tristeza || 10,
+                    'Raiva': sentimentData.emotions.raiva || 5,
+                    'Medo': sentimentData.emotions.medo || 5,
+                    'Surpresa': sentimentData.emotions.surpresa || 10,
+                    'Neutro': sentimentData.emotions.neutro || 50
+                };
+            }
+            
+            const emotionLabels = Object.keys(emotionData);
+            const emotionValues = Object.values(emotionData);
+            const emotionColors = ['#2ecc71', '#e74c3c', '#e67e22', '#9b59b6', '#f39c12', '#6c757d'];
+            
+            const emotionCtx = document.getElementById('emotionBreakdownChart').getContext('2d');
+            new Chart(emotionCtx, {
+                type: 'bar',
+                data: {
+                    labels: emotionLabels,
+                    datasets: [{
+                        label: 'Intensidade da Emoção',
+                        data: emotionValues,
+                        backgroundColor: emotionColors,
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#ffffff',
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            formatter: function(value) {
+                                return value.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.log('Error rendering sentiment charts:', error);
+        }
+        {% endif %}
+
+
+
+        // Export Functions
+        function downloadPDF(exportType = 'completo') {
+            const transcriptionData = {
+                texto_completo: `{{ result.texto_completo|e }}`,  <!-- Alterado: |safe removido por segurança -->
+                export_type: exportType,
+                filename: `{{ result.filename }}`,
+                duracao: `{{ result.duracao_segundos }}`,
+                timestamp: `{{ result.timestamp }}`,
+                segmentos: {{ result.segmentos|tojson if result.segmentos else '[]' }},
+                analise_sentimentos: {{ result.analise_sentimentos|tojson if result.analise_sentimentos else 'null' }}
+            };
+            
+            // Enviar dados para endpoint de exportação PDF
+            fetch('/transcription/export/pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(transcriptionData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Erro ao gerar PDF');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `transcricao_${transcriptionData.filename}_${new Date().getTime()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Erro ao exportar PDF:', error);
+                alert('Erro ao exportar PDF. Tente novamente.');
+            });
+        }
+
+        function downloadWord(exportType = 'completo') {
+            const transcriptionData = {
+                texto_completo: `{{ result.texto_completo|e }}`,  <!-- Alterado: |safe removido por segurança -->
+                export_type: exportType,
+                filename: `{{ result.filename }}`,
+                duracao: `{{ result.duracao_segundos }}`,
+                timestamp: `{{ result.timestamp }}`,
+                segmentos: {{ result.segmentos|tojson if result.segmentos else '[]' }},
+                analise_sentimentos: {{ result.analise_sentimentos|tojson if result.analise_sentimentos else 'null' }}
+            };
+            
+            // Enviar dados para endpoint de exportação Word
+            fetch('/transcription/export/word', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(transcriptionData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Erro ao gerar documento Word');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `transcricao_${transcriptionData.filename}_${new Date().getTime()}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Erro ao exportar Word:', error);
+                alert('Erro ao exportar documento Word. Tente novamente.');
+            });
+        }
+
+        function aplicarResumo() {
+            const transcriptionData = {
+                texto_completo: `{{ result.texto_completo|e }}`,  <!-- Alterado: |safe removido por segurança -->
+                segmentos: {{ result.segmentos|tojson if result.segmentos else '[]' }}
+            };
+            
+            // Mostrar loading
+            const resumoContainer = document.getElementById('resumoContainer');
+            if (!resumoContainer) {
+                // Criar container do resumo se não existir
+                const newContainer = document.createElement('div');
+                newContainer.id = 'resumoContainer';
+                newContainer.className = 'card mb-4';
+                newContainer.style.background = 'var(--bg-card)';
+                newContainer.style.border = '1px solid var(--border-color)';
+                newContainer.innerHTML = `
+                    <div class="card-header">
+                        <i class="fas fa-file-text card-icon"></i>
+                        <h3 class="card-title">Resumo Inteligente</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="resumoContent">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                                <p>Gerando resumo inteligente...</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Inserir após o primeiro card
+                const firstCard = document.querySelector('.card');
+                firstCard.parentNode.insertBefore(newContainer, firstCard.nextSibling);
+            } else {
+                document.getElementById('resumoContent').innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                        <p>Gerando resumo inteligente...</p>
+                    </div>
+                `;
+            }
+            
+            // Enviar dados para endpoint de resumo
+            fetch('/transcription/generate-summary', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(transcriptionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('resumoContent').innerHTML = `
+                        <div class="resumo-content">
+                            <h5 class="mb-3">📋 Resumo Principal</h5>
+                            <p class="resumo-text">${data.resumo}</p>
+                            
+                            <h5 class="mb-3 mt-4">🔍 Pontos-Chave</h5>
+                            <ul class="pontos-chave">
+                                ${data.pontos_chave.map(ponto => `<li>${ponto}</li>`).join('')}
+                            </ul>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6>📊 Estatísticas</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Palavras:</strong> ${data.estatisticas.total_palavras}</li>
+                                        <li><strong>Frases:</strong> ${data.estatisticas.total_frases}</li>
+                                        <li><strong>Duração:</strong> ${data.estatisticas.duracao}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>🎯 Classificação</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tipo:</strong> ${data.classificacao.tipo}</li>
+                                        <li><strong>Tom:</strong> ${data.classificacao.tom}</li>
+                                        <li><strong>Formalidade:</strong> ${data.classificacao.formalidade}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('resumoContent').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erro ao gerar resumo: ${data.error || 'Tente novamente'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gerar resumo:', error);
+                document.getElementById('resumoContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        Erro ao gerar resumo. Tente novamente.
+                    </div>
+                `;
+            });
+        }
+    </script>
+
+    <!-- System Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <span style="color: #ffffff !important;">
+                        &copy; 2025 Plataforma Multi Agentes - Ars Data Science | Todos os Direitos Reservados
+                    </span>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="/politicas-privacidade" style="color: #ffffff !important;" class="me-3">Políticas de Privacidade</a>
+                    <a href="/termos-uso" style="color: #ffffff !important;">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

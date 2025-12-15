@@ -1,0 +1,1099 @@
+{% extends "layout.html" %}
+
+{% block title %}Processos Jurídicos - Análise com IA{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-white">
+            <i class="fas fa-gavel me-2"></i>
+            Processos Jurídicos com Análise IA
+        </h1>
+        <div class="btn-group">
+            <a href="/processos-juridicos/cadastro" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>
+                Novo Processo
+            </a>
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalEstatisticas">
+                <i class="fas fa-chart-bar me-1"></i>
+                Estatísticas
+            </button>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total de Processos</h6>
+                            <h3 class="mb-0">{{ estatisticas.total_processos or 0 }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-folder-open fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Áreas Jurídicas</h6>
+                            <h3 class="mb-0">{{ estatisticas.areas_diferentes or 0 }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-balance-scale fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Valor Total</h6>
+                            <h6 class="mb-0">{{ (estatisticas.valor_total_causas or 0) | moeda_brl }}</h6>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Alto Risco</h6>
+                            <h3 class="mb-0">{{ estatisticas.processos_alto_risco or 0 }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label text-light">Filtrar por Área:</label>
+                            <select class="form-select bg-secondary text-light" id="filtroArea">
+                                <option value="">Todas as Áreas</option>
+                                <option value="Direito Civil">Direito Civil</option>
+                                <option value="Direito Trabalhista">Direito Trabalhista</option>
+                                <option value="Direito Empresarial">Direito Empresarial</option>
+                                <option value="Direito Tributário">Direito Tributário</option>
+                                <option value="Direito Previdenciário">Direito Previdenciário</option>
+                                <option value="Direito Penal">Direito Penal</option>
+                                <option value="Direito Imobiliário">Direito Imobiliário</option>
+                                <option value="Direito Bancário">Direito Bancário</option>
+                                <option value="Direito do Consumidor">Direito do Consumidor</option>
+                                <option value="Direito de Família">Direito de Família</option>
+                                <option value="Direito Administrativo">Direito Administrativo</option>
+                                <option value="Direito Constitucional">Direito Constitucional</option>
+                                <option value="Direito Ambiental">Direito Ambiental</option>
+                                <option value="Direito Digital">Direito Digital</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-light">Filtrar por Risco:</label>
+                            <select class="form-select bg-secondary text-light" id="filtroRisco">
+                                <option value="">Todos os Riscos</option>
+                                <option value="Baixo">Baixo</option>
+                                <option value="Médio">Médio</option>
+                                <option value="Alto">Alto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-light">Buscar:</label>
+                            <input type="text" class="form-control bg-secondary text-light" id="buscaProcessos" placeholder="Número CNJ, Cliente, etc.">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100" id="limparFiltros" title="Limpar todos os filtros">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Processos -->
+    <div class="row" id="listaProcessos">
+        {% for processo in processos %}
+        <div class="col-md-6 mb-4 processo-card" 
+             data-area="{{ processo.area_juridica }}" 
+             data-risco="{{ processo.risco }}"
+             data-numero="{{ processo.numero_processo_cnj }}"
+             data-cliente="{{ processo.cliente }}">
+            <div class="card bg-dark text-light h-100 border-left-{{ 'success' if processo.risco == 'Baixo' else 'warning' if processo.risco == 'Médio' else 'danger' }}">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-gavel me-2"></i>
+                            {{ processo.numero_processo_cnj[:17] }}...
+                        </h6>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-robot me-1"></i>
+                                Análise IA
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'estrategica')">
+                                    <i class="fas fa-chess me-2"></i>Análise Estratégica
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'tecnica')">
+                                    <i class="fas fa-cogs me-2"></i>Análise Técnica
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'estatistica')">
+                                    <i class="fas fa-chart-line me-2"></i>Análise Estatística
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="analisarProcesso({{ processo.id }}, 'preditiva')">
+                                    <i class="fas fa-crystal-ball me-2"></i>Análise Preditiva
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Cliente:</small>
+                            <div class="font-weight-bold">{{ processo.cliente }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Área:</small>
+                            <div class="badge bg-info">{{ processo.area_juridica }}</div>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <small class="text-muted">Valor da Causa:</small>
+                            <div class="text-success">{{ processo.valor_da_causa | moeda_brl }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Risco:</small>
+                            <div class="badge bg-{{ 'success' if processo.risco == 'Baixo' else 'warning' if processo.risco == 'Médio' else 'danger' }}">
+                                {{ processo.risco }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Resumo dos Fatos:</small>
+                        <div class="small">{{ processo.resumo_dos_fatos[:120] }}{% if processo.resumo_dos_fatos|length > 120 %}...{% endif %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Status:</small>
+                            <div class="badge bg-secondary">{{ processo.status or 'Em andamento' }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Fase:</small>
+                            <div class="badge bg-primary">{{ processo.fase_processual or 'Inicial' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100">
+                        <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-eye me-1"></i>Detalhes
+                        </a>
+                        <a href="{{ url_for('processo_editar', processo_id=processo.id) }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <button class="btn btn-outline-success btn-sm" onclick="verHistoricoAnalises({{ processo.id }})">
+                            <i class="fas fa-history me-1"></i>Histórico IA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not processos %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-center">
+                <div class="card-body">
+                    <i class="fas fa-folder-open fa-5x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhum processo encontrado</h4>
+                    <p class="text-muted">Cadastre seu primeiro processo jurídico para começar a usar as análises com IA.</p>
+                    <a href="/processos-juridicos/cadastro" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        Cadastrar Primeiro Processo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Análise IA -->
+<div class="modal fade" id="modalAnaliseIA" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2"></i>
+                    Análise com Inteligência Artificial
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Configuração da Análise -->
+                <div id="configuracaoAnalise">
+                    <!-- Configurações Básicas -->
+                    <div class="card mb-3 bg-secondary">
+                        <div class="card-header bg-primary">
+                            <h6 class="mb-0 text-light"><i class="fas fa-cogs me-2"></i>Configurações Básicas</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tipo de Análise:</label>
+                                    <select class="form-select bg-secondary text-light" id="tipoAnalise">
+                                        <option value="estrategica">Análise Estratégica</option>
+                                        <option value="tecnica">Análise Técnica Jurídica</option>
+                                        <option value="estatistica">Análise Estatística</option>
+                                        <option value="preditiva">Análise Preditiva</option>
+                                        <option value="completa">Análise Completa (Todos os tipos)</option>
+                                        <option value="personalizada">Análise Personalizada</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">API Provider:</label>
+                                    <select class="form-select bg-secondary text-light" id="apiProvider">
+                                        <option value="openai">OpenAI</option>
+                                        <option value="anthropic">Anthropic</option>
+                                        <option value="gemini">Google Gemini</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Modelo de IA:</label>
+                                    <select class="form-select bg-secondary text-light" id="modeloIA">
+                                        <!-- Opções serão populadas dinamicamente via JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nível de Detalhamento:</label>
+                                    <select class="form-select bg-secondary text-light" id="nivelDetalhamento">
+                                        <option value="basico">Básico - Resumo executivo</option>
+                                        <option value="intermediario" selected>Intermediário - Análise detalhada</option>
+                                        <option value="avancado">Avançado - Análise completa com citações</option>
+                                        <option value="especialista">Especialista - Análise técnica profunda</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Temperatura (Criatividade):</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="range" class="form-range me-3" id="temperatura" min="0" max="1" step="0.1" value="0.3">
+                                        <span id="temperaturaValue" class="badge bg-info">0.3</span>
+                                    </div>
+                                    <small class="text-muted">0.0 = Mais conservador, 1.0 = Mais criativo</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configurações Avançadas -->
+                    <div class="card mb-3 bg-secondary">
+                        <div class="card-header bg-info">
+                            <h6 class="mb-0 text-light">
+                                <i class="fas fa-sliders-h me-2"></i>Configurações Avançadas
+                                <button class="btn btn-sm btn-outline-light float-end" type="button" data-bs-toggle="collapse" data-bs-target="#configAvancadas">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="configAvancadas">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Máximo de Tokens:</label>
+                                        <select class="form-select bg-secondary text-light" id="maxTokens">
+                                            <option value="1000">1.000 tokens (~750 palavras)</option>
+                                            <option value="2000" selected>2.000 tokens (~1.500 palavras)</option>
+                                            <option value="4000">4.000 tokens (~3.000 palavras)</option>
+                                            <option value="8000">8.000 tokens (~6.000 palavras)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Foco da Análise:</label>
+                                        <select class="form-select bg-secondary text-light" id="focoAnalise">
+                                            <option value="geral">Análise Geral</option>
+                                            <option value="riscos">Foco em Riscos Jurídicos</option>
+                                            <option value="estrategia">Foco em Estratégia Processual</option>
+                                            <option value="jurisprudencia">Foco em Jurisprudência</option>
+                                            <option value="doutrina">Foco em Doutrina</option>
+                                            <option value="precedentes">Foco em Precedentes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Aspectos Específicos (opcional):</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="incluirValores">
+                                                    <label class="form-check-label" for="incluirValores">
+                                                        Análise de Valores
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="incluirPrazos">
+                                                    <label class="form-check-label" for="incluirPrazos">
+                                                        Análise de Prazos
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="incluirRecursos">
+                                                    <label class="form-check-label" for="incluirRecursos">
+                                                        Possibilidades Recursais
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Contexto Adicional (opcional):</label>
+                                    <textarea class="form-control bg-secondary text-light" id="contextoAdicional" rows="3" placeholder="Informações adicionais que podem influenciar a análise..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Personalizado -->
+                    <div class="card mb-3 bg-secondary" id="promptPersonalizadoCard" style="display: none;">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0"><i class="fas fa-edit me-2"></i>Prompt Personalizado</h6>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control bg-secondary text-light" id="promptPersonalizado" rows="4" placeholder="Digite seu prompt personalizado para a análise..."></textarea>
+                            <small class="text-muted">Use variáveis como {processo_numero}, {area_juridica}, {cliente}, etc.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área de Resultados -->
+                <div class="d-none" id="areaResultados">
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-brain me-2"></i>
+                                Resultado da Análise
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="resultadoAnalise"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div class="d-none text-center" id="loadingAnalise">
+                    <div class="spinner-border text-primary me-2" role="status"></div>
+                    <span>Analisando processo com IA...</span>
+                    <div class="mt-2">
+                        <small class="text-muted">Isso pode levar alguns minutos dependendo da complexidade</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnIniciarAnalise">
+                    <i class="fas fa-play me-1"></i>
+                    Iniciar Análise
+                </button>
+                <button type="button" class="btn btn-success d-none" id="btnSalvarAnalise">
+                    <i class="fas fa-save me-1"></i>
+                    Salvar Resultado
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Estatísticas Detalhadas -->
+<div class="modal fade" id="modalEstatisticas" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estatísticas Detalhadas dos Processos Jurídicos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading -->
+                <div class="d-none text-center" id="loadingEstatisticas">
+                    <div class="spinner-border text-primary me-2" role="status"></div>
+                    <span>Carregando estatísticas...</span>
+                </div>
+                
+                <!-- Conteúdo das Estatísticas -->
+                <div id="conteudoEstatisticas">
+                    <!-- Estatísticas Gerais -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-folder-open fa-2x mb-2"></i>
+                                    <h4 id="stat-total-processos">-</h4>
+                                    <small>Total de Processos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-balance-scale fa-2x mb-2"></i>
+                                    <h4 id="stat-areas-juridicas">-</h4>
+                                    <small>Áreas Jurídicas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                                    <h4 id="stat-valor-total">-</h4>
+                                    <small>Valor Total</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                    <h4 id="stat-alto-risco">-</h4>
+                                    <small>Alto Risco</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráficos e Análises -->
+                    <div class="row">
+                        <!-- Distribuição por Área Jurídica -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-secondary">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Distribuição por Área Jurídica</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chartAreas" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Distribuição por Risco -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-secondary">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Distribuição por Nível de Risco</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chartRiscos" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Processos por Estado -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-secondary">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Top 10 Estados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chartEstados" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Valores por Área -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-secondary">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Valores por Área Jurídica</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chartValores" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabela de Resumo -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card bg-secondary">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Resumo Detalhado por Área Jurídica</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-dark table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Área Jurídica</th>
+                                                    <th>Qtd. Processos</th>
+                                                    <th>Valor Total</th>
+                                                    <th>Risco Baixo</th>
+                                                    <th>Risco Médio</th>
+                                                    <th>Risco Alto</th>
+                                                    <th>Valor Médio</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tabelaResumoAreas">
+                                                <!-- Dados serão carregados via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success" onclick="exportarEstatisticas()">
+                    <i class="fas fa-download me-1"></i>Exportar Dados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let processoAtualAnalise = null;
+
+// Configuração de modelos por provider
+const modelosPorProvider = {
+    'openai': [
+        { value: 'gpt-4o', text: 'OpenAI GPT-4o (Recomendado)' },
+        { value: 'gpt-4o-mini', text: 'OpenAI GPT-4o Mini' },
+        { value: 'gpt-4-turbo', text: 'OpenAI GPT-4 Turbo' }
+    ],
+    'anthropic': [
+        { value: 'claude-sonnet-4-20250514', text: 'Claude Sonnet 4' },
+        { value: 'claude-3-7-sonnet-20250219', text: 'Claude 3.7 Sonnet' },
+        { value: 'claude-3-5-sonnet-20241022', text: 'Claude 3.5 Sonnet' }
+    ],
+    'gemini': [
+        { value: 'gemini-2.5-pro', text: 'Gemini 2.5 Pro' },
+        { value: 'gemini-2.5-flash', text: 'Gemini 2.5 Flash' },
+        { value: 'gemini-1.5-pro', text: 'Gemini 1.5 Pro' }
+    ]
+};
+
+// Função para atualizar modelos baseado no provider
+function atualizarModelosPorProvider() {
+    const apiProvider = document.getElementById('apiProvider');
+    const modeloSelect = document.getElementById('modeloIA');
+    
+    // Verificar se os elementos existem
+    if (!apiProvider || !modeloSelect) {
+        return;
+    }
+    
+    const providerValue = apiProvider.value;
+    
+    // Limpar opções existentes
+    modeloSelect.innerHTML = '';
+    
+    // Adicionar novas opções baseadas no provider
+    if (modelosPorProvider[providerValue]) {
+        modelosPorProvider[providerValue].forEach(modelo => {
+            const option = document.createElement('option');
+            option.value = modelo.value;
+            option.textContent = modelo.text;
+            modeloSelect.appendChild(option);
+        });
+    }
+}
+
+// Configurar eventos quando DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se estamos na página que tem o modal de análise IA
+    const modalAnaliseIA = document.getElementById('modalAnaliseIA');
+    if (!modalAnaliseIA) {
+        return; // Sair se não estivermos na página correta
+    }
+    
+    const apiProviderSelect = document.getElementById('apiProvider');
+    const tipoAnaliseSelect = document.getElementById('tipoAnalise');
+    const temperaturaSlider = document.getElementById('temperatura');
+    const temperaturaValue = document.getElementById('temperaturaValue');
+    
+    if (apiProviderSelect) {
+        // Configurar modelo inicial
+        atualizarModelosPorProvider();
+        
+        // Adicionar evento de mudança
+        apiProviderSelect.addEventListener('change', atualizarModelosPorProvider);
+    }
+    
+    // Evento para mostrar/esconder prompt personalizado
+    if (tipoAnaliseSelect) {
+        tipoAnaliseSelect.addEventListener('change', function() {
+            const promptCard = document.getElementById('promptPersonalizadoCard');
+            if (promptCard) {
+                if (this.value === 'personalizada') {
+                    promptCard.style.display = 'block';
+                } else {
+                    promptCard.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    // Evento para atualizar valor da temperatura
+    if (temperaturaSlider && temperaturaValue) {
+        temperaturaSlider.addEventListener('input', function() {
+            temperaturaValue.textContent = this.value;
+        });
+    }
+});
+
+// Função para iniciar análise IA
+function analisarProcesso(processoId, tipoAnalise = null) {
+    processoAtualAnalise = processoId;
+    
+    // Configurar modal
+    if (tipoAnalise) {
+        document.getElementById('tipoAnalise').value = tipoAnalise;
+    }
+    
+    // Garantir que os modelos estão atualizados
+    atualizarModelosPorProvider();
+    
+    // Resetar interface
+    document.getElementById('configuracaoAnalise').classList.remove('d-none');
+    document.getElementById('areaResultados').classList.add('d-none');
+    document.getElementById('loadingAnalise').classList.add('d-none');
+    document.getElementById('btnIniciarAnalise').classList.remove('d-none');
+    document.getElementById('btnSalvarAnalise').classList.add('d-none');
+    
+    // Mostrar modal
+    new bootstrap.Modal(document.getElementById('modalAnaliseIA')).show();
+}
+
+// Iniciar análise
+document.getElementById('btnIniciarAnalise').addEventListener('click', function() {
+    if (!processoAtualAnalise) return;
+    
+    const tipoAnalise = document.getElementById('tipoAnalise').value;
+    const modeloIA = document.getElementById('modeloIA').value;
+    const apiProvider = document.getElementById('apiProvider').value;
+    
+    // Mostrar loading
+    document.getElementById('configuracaoAnalise').classList.add('d-none');
+    document.getElementById('loadingAnalise').classList.remove('d-none');
+    this.classList.add('d-none');
+    
+    // Fazer análise
+    fetch(`/processos-juridicos/analise/${processoAtualAnalise}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tipo_analise: tipoAnalise,
+            modelo_ia: modeloIA,
+            api_provider: apiProvider
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingAnalise').classList.add('d-none');
+        
+        if (data.success) {
+            // Mostrar resultado
+            document.getElementById('areaResultados').classList.remove('d-none');
+            document.getElementById('btnSalvarAnalise').classList.remove('d-none');
+            
+            // Formatar resultado
+            const resultado = data.resultado;
+            let html = `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Tipo:</strong> ${resultado.tipo}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Modelo:</strong> ${resultado.modelo_usado}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Confiança:</strong> ${(resultado.confianca * 100).toFixed(1)}%
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Data:</strong> ${new Date().toLocaleString()}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong>Análise:</strong>
+                    <div class="mt-2 p-3 bg-dark rounded">
+                        ${resultado.analise.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            `;
+            
+            if (resultado.metadata) {
+                html += `
+                    <div class="mb-3">
+                        <strong>Metadados:</strong>
+                        <pre class="bg-dark p-2 rounded mt-2">${JSON.stringify(resultado.metadata, null, 2)}</pre>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('resultadoAnalise').innerHTML = html;
+            
+        } else {
+            // Mostrar erro
+            document.getElementById('areaResultados').classList.remove('d-none');
+            document.getElementById('resultadoAnalise').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Erro na análise: ${data.error}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('loadingAnalise').classList.add('d-none');
+        document.getElementById('areaResultados').classList.remove('d-none');
+        document.getElementById('resultadoAnalise').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Erro de conexão: ${error.message}
+            </div>
+        `;
+    });
+});
+
+// Inicializar filtros quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners para os filtros
+    document.getElementById('filtroArea').addEventListener('change', filtrarProcessos);
+    document.getElementById('filtroRisco').addEventListener('change', filtrarProcessos);
+    document.getElementById('buscaProcessos').addEventListener('input', filtrarProcessos);
+    document.getElementById('limparFiltros').addEventListener('click', limparFiltros);
+});
+
+// Função para limpar todos os filtros
+function limparFiltros() {
+    document.getElementById('filtroArea').value = '';
+    document.getElementById('filtroRisco').value = '';
+    document.getElementById('buscaProcessos').value = '';
+    filtrarProcessos();
+}
+
+function filtrarProcessos() {
+    const area = document.getElementById('filtroArea').value;
+    const risco = document.getElementById('filtroRisco').value;
+    const busca = document.getElementById('buscaProcessos').value.toLowerCase();
+    
+    const cards = document.querySelectorAll('.processo-card');
+    let processosVisiveis = 0;
+    
+    cards.forEach(card => {
+        let mostrar = true;
+        
+        // Filtro por área jurídica
+        if (area && card.dataset.area !== area) {
+            mostrar = false;
+        }
+        
+        // Filtro por risco
+        if (risco && card.dataset.risco !== risco) {
+            mostrar = false;
+        }
+        
+        // Filtro por busca de texto
+        if (busca) {
+            const textos = [
+                card.dataset.numero || '',
+                card.dataset.cliente || '',
+                card.querySelector('.card-body')?.textContent || ''
+            ].join(' ').toLowerCase();
+            if (!textos.includes(busca)) {
+                mostrar = false;
+            }
+        }
+        
+        if (mostrar) {
+            card.style.display = 'block';
+            processosVisiveis++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Mostrar contador de processos filtrados
+    const titulo = document.querySelector('h1');
+    if (titulo) {
+        const baseText = 'Processos Jurídicos com Análise IA';
+        if (processosVisiveis < cards.length) {
+            titulo.innerHTML = `<i class="fas fa-gavel me-2"></i>${baseText} <small class="text-muted">(${processosVisiveis} de ${cards.length})</small>`;
+        } else {
+            titulo.innerHTML = `<i class="fas fa-gavel me-2"></i>${baseText}`;
+        }
+    }
+}
+
+function verHistoricoAnalises(processoId) {
+    // Redirecionar para página específica de histórico de análises IA
+    window.location.href = `/processos-juridicos/historico-analises/${processoId}/visualizar`;
+}
+
+// Variáveis globais para os gráficos
+let chartAreas, chartRiscos, chartEstados, chartValores;
+
+// Função para carregar estatísticas detalhadas
+async function carregarEstatisticasDetalhadas() {
+    document.getElementById('loadingEstatisticas').classList.remove('d-none');
+    document.getElementById('conteudoEstatisticas').style.opacity = '0.5';
+    
+    try {
+        const response = await fetch('/processos-juridicos/estatisticas-detalhadas');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Atualizar cards de estatísticas
+            document.getElementById('stat-total-processos').textContent = data.estatisticas.total_processos;
+            document.getElementById('stat-areas-juridicas').textContent = data.estatisticas.areas_diferentes;
+            document.getElementById('stat-valor-total').textContent = formatarMoeda(data.estatisticas.valor_total_causas);
+            document.getElementById('stat-alto-risco').textContent = data.estatisticas.processos_alto_risco;
+            
+            // Criar gráficos
+            criarGraficoAreas(data.estatisticas.por_area);
+            criarGraficoRiscos(data.estatisticas.por_risco);
+            criarGraficoEstados(data.estatisticas.por_estado);
+            criarGraficoValores(data.estatisticas.valores_por_area);
+            
+            // Preencher tabela
+            preencherTabelaResumo(data.estatisticas.resumo_detalhado);
+        } else {
+            throw new Error(data.error || 'Erro ao carregar estatísticas');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+        alert('Erro ao carregar estatísticas: ' + error.message);
+    } finally {
+        document.getElementById('loadingEstatisticas').classList.add('d-none');
+        document.getElementById('conteudoEstatisticas').style.opacity = '1';
+    }
+}
+
+// Função para criar gráfico de áreas jurídicas
+function criarGraficoAreas(dados) {
+    const ctx = document.getElementById('chartAreas').getContext('2d');
+    if (chartAreas) chartAreas.destroy();
+    
+    chartAreas = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: dados.map(item => item.area),
+            datasets: [{
+                data: dados.map(item => item.quantidade),
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                    '#9966FF', '#FF9F40', '#C9CBCF', '#4BC0C0',
+                    '#FF6384', '#36A2EB', '#FFCE56', '#9966FF',
+                    '#FF9F40', '#C9CBCF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: 'white', font: { size: 10 } }
+                }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de riscos
+function criarGraficoRiscos(dados) {
+    const ctx = document.getElementById('chartRiscos').getContext('2d');
+    if (chartRiscos) chartRiscos.destroy();
+    
+    chartRiscos = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: dados.map(item => item.risco),
+            datasets: [{
+                data: dados.map(item => item.quantidade),
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: 'white' }
+                }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de estados
+function criarGraficoEstados(dados) {
+    const ctx = document.getElementById('chartEstados').getContext('2d');
+    if (chartEstados) chartEstados.destroy();
+    
+    chartEstados = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dados.map(item => item.estado),
+            datasets: [{
+                label: 'Processos',
+                data: dados.map(item => item.quantidade),
+                backgroundColor: '#36A2EB'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { ticks: { color: 'white' } },
+                x: { ticks: { color: 'white' } }
+            },
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            }
+        }
+    });
+}
+
+// Função para criar gráfico de valores por área
+function criarGraficoValores(dados) {
+    const ctx = document.getElementById('chartValores').getContext('2d');
+    if (chartValores) chartValores.destroy();
+    
+    chartValores = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dados.map(item => item.area),
+            datasets: [{
+                label: 'Valor Total (R$)',
+                data: dados.map(item => item.valor_total),
+                backgroundColor: '#FFCE56'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { 
+                    ticks: { 
+                        color: 'white',
+                        callback: function(value) {
+                            return formatarMoeda(value);
+                        }
+                    }
+                },
+                x: { 
+                    ticks: { 
+                        color: 'white',
+                        maxRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            }
+        }
+    });
+}
+
+// Função para preencher tabela de resumo
+function preencherTabelaResumo(dados) {
+    const tbody = document.getElementById('tabelaResumoAreas');
+    tbody.innerHTML = '';
+    
+    dados.forEach(item => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td><strong>${item.area}</strong></td>
+            <td>${item.total_processos}</td>
+            <td>${formatarMoeda(item.valor_total)}</td>
+            <td><span class="badge bg-success">${item.risco_baixo}</span></td>
+            <td><span class="badge bg-warning">${item.risco_medio}</span></td>
+            <td><span class="badge bg-danger">${item.risco_alto}</span></td>
+            <td>${formatarMoeda(item.valor_medio)}</td>
+        `;
+    });
+}
+
+// Função para formatar valores monetários
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor || 0);
+}
+
+// Função para exportar estatísticas
+function exportarEstatisticas() {
+    // Implementar exportação dos dados (CSV, PDF, etc.)
+    alert('Funcionalidade de exportação será implementada em breve!');
+}
+
+// Event listener para quando o modal é aberto
+document.getElementById('modalEstatisticas').addEventListener('shown.bs.modal', function () {
+    carregarEstatisticasDetalhadas();
+});
+</script>
+
+<style>
+.border-left-success {
+    border-left: 4px solid #28a745 !important;
+}
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+.border-left-danger {
+    border-left: 4px solid #dc3545 !important;
+}
+</style>
+
+{% endblock %}

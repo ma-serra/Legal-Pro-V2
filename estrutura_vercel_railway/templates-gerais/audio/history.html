@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Transcrições - Legal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #47b6b5;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-light: #e0e0e0;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .transcription-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .transcription-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+        }
+
+        .transcription-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .transcription-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            background: rgba(40, 167, 69, 0.8);
+            color: white;
+        }
+
+        .status-processing {
+            background: rgba(255, 193, 7, 0.8);
+            color: black;
+        }
+
+        .status-error {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+        }
+
+        .transcription-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(224, 224, 224, 0.8);
+        }
+
+        .transcription-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+
+        .btn-outline-secondary {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+            background: transparent;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .pagination-container {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .pagination .page-link {
+            background-color: var(--card-bg);
+            border: 2px solid #555;
+            color: var(--text-light);
+        }
+
+        .pagination .page-link:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .empty-state {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: rgba(224, 224, 224, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h1><i class="fas fa-history"></i> Histórico de Transcrições</h1>
+                    <p class="mb-0">Suas transcrições de áudio com Whisper</p>
+                </div>
+                <a href="/audio/" class="btn btn-light">
+                    <i class="fas fa-plus"></i> Nova Transcrição
+                </a>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="error-message">
+                <h4>{{ error }}</h4>
+                <p>Tente recarregar a página ou contate o suporte.</p>
+            </div>
+        {% elif not transcriptions %}
+            <div class="empty-state">
+                <i class="fas fa-microphone empty-icon"></i>
+                <h3>Nenhuma transcrição encontrada</h3>
+                <p class="mb-4">Você ainda não fez nenhuma transcrição de áudio.</p>
+                <a href="/audio/" class="btn btn-primary">
+                    <i class="fas fa-microphone"></i> Criar Primeira Transcrição
+                </a>
+            </div>
+        {% else %}
+            {% for transcription in transcriptions %}
+                <div class="transcription-card">
+                    <div class="transcription-header">
+                        <div>
+                            <div class="transcription-title">
+                                <i class="fas fa-file-audio"></i>
+                                {{ transcription.filename }}
+                            </div>
+                            <small class="text-muted">
+                                Criado em: {{ transcription.started_at.strftime('%d/%m/%Y %H:%M') if transcription.started_at else 'N/A' }}
+                            </small>
+                        </div>
+                        <span class="status-badge status-{{ transcription.status }}">
+                            {% if transcription.status == 'completed' %}
+                                <i class="fas fa-check"></i> Concluída
+                            {% elif transcription.status == 'processing' %}
+                                <i class="fas fa-spinner fa-spin"></i> Processando
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle"></i> Erro
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="transcription-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            {% if transcription.duration_seconds %}
+                                {% set duration_minutes = (transcription.duration_seconds / 60) | round(1) %}
+                                {{ duration_minutes }} min
+                            {% else %}
+                                --:--
+                            {% endif %}
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-users"></i>
+                            {{ transcription.speakers_detected or 0 }} falantes
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-font"></i>
+                            {{ transcription.word_count or 0 }} palavras
+                        </div>
+                        {% if transcription.completed_at %}
+                            <div class="meta-item">
+                                <i class="fas fa-check-circle"></i>
+                                {{ transcription.completed_at.strftime('%d/%m %H:%M') }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="transcription-actions">
+                        {% if transcription.status == 'completed' %}
+                            <a href="/audio/result/{{ transcription.id }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Transcrição
+                            </a>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="exportTranscript('{{ transcription.id }}', 'pdf')">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="exportTranscript('{{ transcription.id }}', 'docx')">
+                                <i class="fas fa-file-word"></i> Word
+                            </button>
+                        {% elif transcription.status == 'processing' %}
+                            <a href="/audio/status/{{ transcription.id }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-sync"></i> Verificar Status
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" onclick="retryTranscription('{{ transcription.id }}')">
+                                <i class="fas fa-redo"></i> Tentar Novamente
+                            </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-outline-secondary btn-sm" onclick="deleteTranscription('{{ transcription.id }}')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if total > per_page %}
+                <div class="pagination-container">
+                    <nav aria-label="Navegação de páginas">
+                        <ul class="pagination justify-content-center">
+                            {% if has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('audio_transcription.history', page=page-1) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for p in range(1, ((total / per_page) | round | int) + 1) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('audio_transcription.history', page=p) }}">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                            
+                            {% if has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('audio_transcription.history', page=page+1) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    
+                    <small class="text-muted">
+                        Exibindo {{ ((page-1) * per_page) + 1 }} - {{ [page * per_page, total] | min }} de {{ total }} transcrições
+                    </small>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <script>
+        function exportTranscript(transcriptId, format) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/audio/export/${format}`;
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'transcript_id';
+            input.value = transcriptId;
+            form.appendChild(input);
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function retryTranscription(transcriptId) {
+            if (confirm('Deseja tentar processar esta transcrição novamente?')) {
+                fetch(`/audio/retry/${transcriptId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Erro: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao tentar processar novamente');
+                });
+            }
+        }
+
+        function deleteTranscription(transcriptId) {
+            if (confirm('Tem certeza que deseja excluir esta transcrição? Esta ação não pode ser desfeita.')) {
+                fetch(`/audio/delete/${transcriptId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Erro: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao excluir transcrição');
+                });
+            }
+        }
+
+        // Atualizar status em tempo real para transcrições em processamento
+        document.addEventListener('DOMContentLoaded', function() {
+            const processingCards = document.querySelectorAll('.status-processing');
+            
+            processingCards.forEach(card => {
+                const transcriptId = card.closest('.transcription-card').querySelector('.btn').href.split('/').pop();
+                
+                if (transcriptId) {
+                    setTimeout(() => checkTranscriptionStatus(transcriptId), 5000);
+                }
+            });
+        });
+
+        function checkTranscriptionStatus(transcriptId) {
+            fetch(`/audio/status/${transcriptId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.status === 'completed') {
+                        location.reload();
+                    } else if (data.success && data.status === 'processing') {
+                        setTimeout(() => checkTranscriptionStatus(transcriptId), 10000);
+                    } else if (data.status === 'error') {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar status:', error);
+                });
+        }
+    </script>
+</body>
+</html>

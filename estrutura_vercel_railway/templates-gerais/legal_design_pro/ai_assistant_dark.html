@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente de IA - Legal Design Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-color: #ecf0f1;
+            --bg-dark: #1a1a1a;
+            --card-bg: #2d3748;
+            --border-color: #4a5568;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--primary-color) 100%);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-dark {
+            background: var(--card-bg) !important;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--accent-color), #2980b9);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: var(--accent-color);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.ai {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .model-selector {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, var(--secondary-color) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        .stats-card {
+            background: linear-gradient(45deg, var(--accent-color), #2980b9);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .form-control {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 0;
+        }
+
+        .form-control:focus {
+            background: var(--card-bg);
+            border-color: var(--accent-color);
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .text-muted {
+            color: #ffffff !important;
+        }
+
+        .badge {
+            background: var(--accent-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        /* Força cor branca para todos os elementos textuais */
+        h1, h2, h3, h4, h5, h6, p, span, div, label, small, strong, b {
+            color: #ffffff !important;
+        }
+
+        .card-body h2, .card-body h3, .card-body h4, .card-body h5, .card-body h6 {
+            color: #ffffff !important;
+        }
+
+        .card-body p, .card-body span, .card-body div, .card-body small {
+            color: #ffffff !important;
+        }
+
+        .feature-card h6 {
+            color: #ffffff !important;
+        }
+
+        .modal-body p, .modal-body strong, .modal-body span {
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-robot me-2"></i>Assistente de IA
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+                <a class="nav-link" href="/legal-design-pro-v2/">
+                    <i class="fas fa-edit me-1"></i>Editor
+                </a>
+                <a class="nav-link" href="/legal-design-pro/biblioteca">
+                    <i class="fas fa-images me-1"></i>Biblioteca
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-robot feature-icon"></i>
+                        <h2 class="fw-bold mb-3">Assistente de IA Jurídico</h2>
+                        <p class="text-muted">Poderoso assistente de inteligência artificial para criação e análise de documentos jurídicos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="mb-1">{{ available_models|length }}</h3>
+                    <small>Modelos Disponíveis</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="mb-1">{{ features|length }}</h3>
+                    <small>Funcionalidades</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="mb-1">24/7</h3>
+                    <small>Disponibilidade</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="mb-1">∞</h3>
+                    <small>Consultas</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Chat Interface -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments me-2"></i>Chat com IA
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Model Selector -->
+                        <div class="mb-3">
+                            <label class="form-label">Modelo de IA:</label>
+                            <select class="model-selector form-select">
+                                <!-- OpenAI Models -->
+                                <optgroup label="OpenAI">
+                                    <option value="gpt-4o" selected>GPT-4o</option>
+                                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                    <option value="o1-preview">o1-preview</option>
+                                    <option value="o1-mini">o1-mini</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="gpt-4">GPT-4</option>
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                </optgroup>
+                                <!-- Anthropic Models -->
+                                <optgroup label="Anthropic Claude">
+                                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                                    <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+                                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                                    <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                                    <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                                </optgroup>
+                                <!-- Google Models -->
+                                <optgroup label="Google Gemini">
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-pro">Gemini Pro</option>
+                                    <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Image Gen</option>
+                                </optgroup>
+                                <!-- DeepSeek Models -->
+                                <optgroup label="DeepSeek">
+                                    <option value="deepseek-chat">DeepSeek Chat</option>
+                                    <option value="deepseek-coder">DeepSeek Coder</option>
+                                    <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Chat Messages -->
+                        <div class="chat-container" id="chatContainer">
+                            <div class="message ai">
+                                <i class="fas fa-robot me-2"></i>
+                                <strong>Assistente IA:</strong> Olá! Sou seu assistente jurídico. Como posso ajudá-lo hoje?
+                            </div>
+                        </div>
+
+                        <!-- Input -->
+                        <div class="input-group mt-3">
+                            <input type="text" class="form-control" id="messageInput" placeholder="Digite sua pergunta...">
+                            <button class="btn btn-primary" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-magic me-2"></i>Funcionalidades
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for feature in features %}
+                        <div class="feature-card mb-3">
+                            <i class="fas fa-{{ loop.index0 == 0 and 'edit' or (loop.index0 == 1 and 'file-alt' or 'lightbulb') }} feature-icon"></i>
+                            <h6>{{ feature }}</h6>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>Ações Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="quickAction('gerar_contrato')">
+                                <i class="fas fa-file-contract me-2"></i>Gerar Contrato
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAction('revisar_peticao')">
+                                <i class="fas fa-search me-2"></i>Revisar Petição
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAction('analisar_documento')">
+                                <i class="fas fa-chart-line me-2"></i>Analisar Documento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const responses = [
+                    "Entendi sua solicitação. Baseando-me na legislação brasileira, posso orientá-lo da seguinte forma...",
+                    "Analisando o contexto jurídico, recomendo as seguintes ações...",
+                    "De acordo com a jurisprudência atual, a melhor abordagem seria...",
+                    "Vou gerar um documento personalizado para sua situação. Um momento..."
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage(randomResponse, 'ai');
+            }, 1000);
+        }
+        
+        function addMessage(text, sender) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            if (sender === 'ai') {
+                messageDiv.innerHTML = `<i class="fas fa-robot me-2"></i><strong>Assistente IA:</strong> ${text}`;
+            } else {
+                messageDiv.innerHTML = `<strong>Você:</strong> ${text}`;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function quickAction(action) {
+            const actions = {
+                'gerar_contrato': 'Vou ajudá-lo a gerar um contrato. Que tipo de contrato você precisa?',
+                'revisar_peticao': 'Posso revisar sua petição. Por favor, cole o texto aqui.',
+                'analisar_documento': 'Vou analisar seu documento. Você pode colá-lo no chat ou fazer upload.'
+            };
+            
+            addMessage(actions[action], 'ai');
+        }
+        
+        // Allow Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

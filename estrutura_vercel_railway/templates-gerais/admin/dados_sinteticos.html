@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geração de Dados Sintéticos - Legal Design Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #4a5568;
+            --accent-color: #e53e3e;
+            --success-color: #38a169;
+            --warning-color: #d69e2e;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 20px auto;
+            max-width: 1200px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            backdrop-filter: blur(5px);
+        }
+
+        .generation-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 20px;
+            margin: 20px 0;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--accent-color);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 20px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header Section -->
+            <div class="header-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1><i class="fas fa-database"></i> Geração de Dados Sintéticos</h1>
+                        <p class="mb-0">Sistema de criação de dados realistas para testes e desenvolvimento</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <h4><i class="fas fa-chart-bar"></i> Estatísticas Atuais</h4>
+                            <p><strong>Total de Processos:</strong> {{ total_processos }}</p>
+                            <p><strong>Valor Total:</strong> {{ valor_total | moeda_brl }}</p>
+                            <p><strong>Áreas Jurídicas:</strong> {{ areas|length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Form -->
+            <div class="generation-form">
+                <h3><i class="fas fa-magic"></i> Gerador de Processos Sintéticos</h3>
+                <p class="text-muted">Configure os parâmetros para gerar dados sintéticos realistas</p>
+
+                <form id="syntheticDataForm">
+                    <div class="row">
+                        <!-- Quantidade -->
+                        <div class="col-md-6">
+                            <div class="form-section">
+                                <h5><i class="fas fa-hashtag"></i> Quantidade</h5>
+                                <div class="mb-3">
+                                    <label for="quantidade" class="form-label">Número de Processos</label>
+                                    <input type="number" class="form-control" id="quantidade" name="quantidade" 
+                                           value="25" min="1" max="1000" required>
+                                    <div class="form-text">Entre 1 e 1000 processos</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Área de Foco -->
+                        <div class="col-md-6">
+                            <div class="form-section">
+                                <h5><i class="fas fa-balance-scale"></i> Distribuição por Área</h5>
+                                <div class="mb-3">
+                                    <label for="area_foco" class="form-label">Área de Foco (Opcional)</label>
+                                    <select class="form-select" id="area_foco" name="area_foco">
+                                        <option value="">Distribuição Equilibrada</option>
+                                        <option value="Direito Civil">Direito Civil</option>
+                                        <option value="Direito Trabalhista">Direito Trabalhista</option>
+                                        <option value="Direito do Consumidor">Direito do Consumidor</option>
+                                        <option value="Direito Empresarial">Direito Empresarial</option>
+                                        <option value="Direito Tributário">Direito Tributário</option>
+                                        <option value="Direito Criminal">Direito Criminal</option>
+                                        <option value="Direito Previdenciário">Direito Previdenciário</option>
+                                        <option value="Direito Imobiliário">Direito Imobiliário</option>
+                                        <option value="Direito Digital">Direito Digital</option>
+                                        <option value="Direito Bancário">Direito Bancário</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="percentual_container" style="display: none;">
+                                    <label for="percentual_foco" class="form-label">Percentual da Área de Foco</label>
+                                    <input type="range" class="form-range" id="percentual_foco" name="percentual_foco" 
+                                           value="40" min="20" max="80">
+                                    <div class="form-text">Percentual: <span id="percentual_display">40%</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opções Avançadas -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-cogs"></i> Opções Avançadas</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="limpar_antes" name="limpar_antes">
+                            <label class="form-check-label text-danger" for="limpar_antes">
+                                <strong>Limpar dados existentes antes da geração</strong>
+                            </label>
+                            <div class="form-text text-danger">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                CUIDADO: Esta opção removerá TODOS os processos existentes!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-play"></i> Gerar Dados Sintéticos
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-secondary w-100" onclick="loadStatistics()">
+                                <i class="fas fa-refresh"></i> Atualizar Estatísticas
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Progress Bar -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%" id="progressBar">
+                            Gerando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2">Gerando dados sintéticos...</p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" style="display: none;">
+                    <hr>
+                    <h4><i class="fas fa-chart-line"></i> Resultados da Geração</h4>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+
+            <!-- Current Data Statistics -->
+            <div class="generation-form">
+                <h3><i class="fas fa-chart-pie"></i> Distribuição Atual dos Dados</h3>
+                
+                {% if areas %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Área Jurídica</th>
+                                <th>Quantidade</th>
+                                <th>Percentual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for area, quantidade in areas %}
+                            <tr>
+                                <td><i class="fas fa-gavel"></i> {{ area }}</td>
+                                <td><span class="badge bg-primary">{{ quantidade }}</span></td>
+                                <td>{{ "%.1f"|format((quantidade / total_processos * 100) if total_processos > 0 else 0) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Nenhum processo encontrado no banco de dados.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide percentual input based on area selection
+        document.getElementById('area_foco').addEventListener('change', function() {
+            const percentualContainer = document.getElementById('percentual_container');
+            if (this.value) {
+                percentualContainer.style.display = 'block';
+            } else {
+                percentualContainer.style.display = 'none';
+            }
+        });
+
+        // Update percentual display
+        document.getElementById('percentual_foco').addEventListener('input', function() {
+            document.getElementById('percentual_display').textContent = this.value + '%';
+        });
+
+        // Handle form submission
+        document.getElementById('syntheticDataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                quantidade: parseInt(formData.get('quantidade')),
+                area_foco: formData.get('area_foco') || null,
+                percentual_foco: parseInt(formData.get('percentual_foco')),
+                limpar_antes: formData.has('limpar_antes')
+            };
+
+            // Show loading
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            try {
+                const response = await fetch('/admin/gerar-dados-sinteticos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                // Hide loading
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+                if (result.status === 'success') {
+                    showSuccess(result);
+                } else {
+                    showError(result.message || 'Erro desconhecido');
+                }
+
+            } catch (error) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                showError('Erro de conexão: ' + error.message);
+            }
+        });
+
+        function showSuccess(result) {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle"></i> Geração Concluída com Sucesso!</h5>
+                    <p>${result.message}</p>
+                    <p><strong>Processos Inseridos:</strong> ${result.processos_inseridos}</p>
+                </div>
+            `;
+            
+            if (result.estatisticas) {
+                let statsHtml = '<h6>Estatísticas Detalhadas:</h6><ul>';
+                for (const [key, value] of Object.entries(result.estatisticas)) {
+                    if (key === 'distribuicao_por_area') {
+                        statsHtml += '<li><strong>Distribuição por Área:</strong><ul>';
+                        for (const [area, count] of Object.entries(value)) {
+                            statsHtml += `<li>${area}: ${count} processos</li>`;
+                        }
+                        statsHtml += '</ul></li>';
+                    } else {
+                        statsHtml += `<li><strong>${key}:</strong> ${value}</li>`;
+                    }
+                }
+                statsHtml += '</ul>';
+                resultsContent.innerHTML += `<div class="mt-3">${statsHtml}</div>`;
+            }
+
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Reload page after 3 seconds to update statistics
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        }
+
+        function showError(message) {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Erro na Geração</h5>
+                    <p>${message}</p>
+                </div>
+            `;
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function loadStatistics() {
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

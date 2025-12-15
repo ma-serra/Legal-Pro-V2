@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Validação Multi-Agente Expandida{% endblock %}
+
+{% block head %}
+<style>
+.redirect-container {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.redirect-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    color: white;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    max-width: 600px;
+}
+
+.redirect-card h2 {
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+}
+
+.redirect-card p {
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.btn-redirect {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-redirect:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.loading-spinner {
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="redirect-container">
+        <div class="redirect-card">
+            <h2><i class="fas fa-users me-3"></i>Validação Multi-Agente Expandida</h2>
+            <p>Redirecionando para a interface completa de análise multi-agente com todos os especialistas jurídicos...</p>
+            
+            {% if executor_selecionado %}
+            <div class="alert alert-info" style="background: rgba(255,255,255,0.1); border: none; color: white;">
+                <strong>Executor Selecionado:</strong> {{ executor_selecionado.nome }}
+            </div>
+            {% endif %}
+            
+            <a href="{{ url_for('juridico_especialistas_init_app') }}{% if request.args.get('executor_id') %}?executor_id={{ request.args.get('executor_id') }}{% endif %}" 
+               class="btn btn-redirect btn-lg">
+                <i class="fas fa-arrow-right me-2"></i>Acessar Interface Multi-Agente
+            </a>
+            
+            <div class="loading-spinner">
+                <div class="spinner-border spinner-border-sm text-white" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Redirecionar automaticamente após 3 segundos
+setTimeout(function() {
+    const executorId = new URLSearchParams(window.location.search).get('executor_id');
+    let redirectUrl = "{{ url_for('juridico_especialistas_init_app') }}";
+    if (executorId) {
+        redirectUrl += `?executor_id=${executorId}`;
+    }
+    window.location.href = redirectUrl;
+}, 3000);
+</script>
+{% endblock %}

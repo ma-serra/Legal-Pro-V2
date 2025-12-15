@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+
+{% block title %}Relatório de Consenso - {{ relatorio.numero_relatorio }} - Legal Pro{% endblock %}
+
+{% block head %}
+<style>
+    body { 
+        background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%) !important; 
+        color: white !important;
+    }
+    .card {
+        background: rgba(26, 33, 50, 0.95);
+        border: 1px solid #3a4a5c;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        color: white !important;
+    }
+    .card-body {
+        color: white !important;
+    }
+    .consenso-header {
+        background: linear-gradient(135deg, #316286, #1B4332);
+        color: white;
+        border: none;
+        border-radius: 15px;
+    }
+    .section-card {
+        background: rgba(26, 33, 50, 0.9);
+        border-left: 4px solid #316286;
+        margin-bottom: 20px;
+        color: white !important;
+    }
+    .risk-critical { border-left-color: #e74c3c; }
+    .risk-moderate { border-left-color: #f39c12; }
+    .risk-low { border-left-color: #27ae60; }
+    .improvement-urgent { border-left-color: #e74c3c; }
+    .improvement-important { border-left-color: #f39c12; }
+    .improvement-suggested { border-left-color: #3498db; }
+    .strategy-short { border-left-color: #e74c3c; }
+    .strategy-medium { border-left-color: #f39c12; }
+    .strategy-long { border-left-color: #27ae60; }
+    .metric-box {
+        background: linear-gradient(135deg, #316286, #2E5266);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .badge-consenso { background-color: #16a085; }
+    .badge-gerado { background-color: #3498db; }
+    .badge-revisado { background-color: #f39c12; }
+    .badge-aprovado { background-color: #27ae60; }
+    .concordancia-bar {
+        background: #2c3e50;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 20px;
+    }
+    .concordancia-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%);
+        transition: width 0.3s ease;
+    }
+    
+    /* FORÇA COR BRANCA EM TODOS OS ELEMENTOS - MÁXIMA PRIORIDADE */
+    * {
+        color: white !important;
+    }
+    
+    /* Sobrescreve TODOS os estilos de texto */
+    p, span, div, li, small, strong, h1, h2, h3, h4, h5, h6, 
+    .card, .card-body, .card-header, .section-card,
+    .lead, .mb-1, .mb-2, .mb-3, .fs-6, 
+    .text-muted, .text-dark, .text-light,
+    ul, ol, dl, dt, dd, blockquote, pre, code {
+        color: white !important;
+    }
+    
+    /* Headers específicos */
+    .card-header, .card-header *, .consenso-header, .consenso-header * {
+        color: white !important;
+    }
+    
+    /* Todos os elementos Bootstrap */
+    .badge, .btn, .alert, .list-group-item {
+        color: white !important;
+    }
+    
+    /* Força branco em elementos específicos do template */
+    .container-fluid *, .row *, .col-* * {
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card consenso-header">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-handshake me-2"></i>{{ relatorio.titulo_relatorio }}
+                            </h2>
+                            <p class="mb-1">
+                                <strong>ID:</strong> {{ relatorio.numero_relatorio }} | 
+                                <strong>Análise Base:</strong> {{ relatorio.analise_numero_registro }}
+                            </p>
+                            <small>
+                                {% if relatorio.data_criacao %}
+                                    Gerado em {{ relatorio.data_criacao }}
+                                {% else %}
+                                    Data não disponível
+                                {% endif %}
+                                {% if relatorio.tempo_processamento %}
+                                    • Processamento: {{ relatorio.tempo_processamento|round(1) }}s
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge badge-{{ relatorio.status }} fs-6 me-2">{{ relatorio.status.title() }}</span>
+                            <br>
+                            <a href="{{ url_for('historico_analises_multiagente') }}" class="btn btn-outline-light mt-2">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar ao Histórico
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de Consenso -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ relatorio.nivel_concordancia|default(0)|round(1) }}%</h4>
+                <small>Nível de Concordância</small>
+                <div class="concordancia-bar mt-2">
+                    <div class="concordancia-fill" style="width: {{ relatorio.nivel_concordancia|default(0) }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ relatorio.impacto_estimado|default('N/A') }}</h4>
+                <small>Impacto Estimado</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ relatorio.viabilidade_implementacao|default('N/A') }}</h4>
+                <small>Viabilidade</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <h4 class="mb-1">{{ relatorio.versao|default(1) }}</h4>
+                <small>Versão do Relatório</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consenso Geral -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Consenso Geral</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ relatorio.consenso_geral|default('Consenso não disponível') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convergências e Divergências -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card section-card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Pontos de Convergência</h6>
+                </div>
+                <div class="card-body">
+                    {% if relatorio.pontos_convergencia %}
+                        <ul class="list-unstyled">
+                            {% for ponto in relatorio.pontos_convergencia %}
+                                <li class="mb-2"><i class="fas fa-arrow-right text-success me-2"></i>{{ ponto }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-white">Nenhum ponto de convergência identificado</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card section-card">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Pontos de Divergência</h6>
+                </div>
+                <div class="card-body">
+                    {% if relatorio.pontos_divergencia %}
+                        <ul class="list-unstyled">
+                            {% for ponto in relatorio.pontos_divergencia %}
+                                <li class="mb-2"><i class="fas fa-arrow-right text-warning me-2"></i>{{ ponto }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-white">Nenhum ponto de divergência identificado</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Riscos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Análise de Riscos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Riscos Críticos -->
+                        <div class="col-md-4">
+                            <div class="card risk-critical">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Riscos Críticos</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.riscos_criticos %}
+                                        {% for risco in relatorio.riscos_criticos %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) }}</strong>
+                                                {% if risco.impacto %}
+                                                    <br><small class="text-muted">Impacto: {{ risco.impacto }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco crítico identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Riscos Moderados -->
+                        <div class="col-md-4">
+                            <div class="card risk-moderate">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Riscos Moderados</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.riscos_moderados %}
+                                        {% for risco in relatorio.riscos_moderados %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) }}</strong>
+                                                {% if risco.impacto %}
+                                                    <br><small class="text-muted">Impacto: {{ risco.impacto }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco moderado identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Riscos Baixos -->
+                        <div class="col-md-4">
+                            <div class="card risk-low">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Riscos Baixos</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.riscos_baixos %}
+                                        {% for risco in relatorio.riscos_baixos %}
+                                            <div class="mb-3">
+                                                <strong>{{ risco.risco|default(risco) }}</strong>
+                                                {% if risco.impacto %}
+                                                    <br><small class="text-muted">Impacto: {{ risco.impacto }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhum risco baixo identificado</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Melhorias Recomendadas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Melhorias Recomendadas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Urgentes -->
+                        <div class="col-md-4">
+                            <div class="card improvement-urgent">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Urgentes</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.melhorias_urgentes %}
+                                        {% for melhoria in relatorio.melhorias_urgentes %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) }}</strong>
+                                                {% if melhoria.beneficio %}
+                                                    <br><small class="text-muted">Benefício: {{ melhoria.beneficio }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria urgente identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Importantes -->
+                        <div class="col-md-4">
+                            <div class="card improvement-important">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Importantes</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.melhorias_importantes %}
+                                        {% for melhoria in relatorio.melhorias_importantes %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) }}</strong>
+                                                {% if melhoria.beneficio %}
+                                                    <br><small class="text-muted">Benefício: {{ melhoria.beneficio }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria importante identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Sugeridas -->
+                        <div class="col-md-4">
+                            <div class="card improvement-suggested">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">Sugeridas</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.melhorias_sugeridas %}
+                                        {% for melhoria in relatorio.melhorias_sugeridas %}
+                                            <div class="mb-3">
+                                                <strong>{{ melhoria.melhoria|default(melhoria) }}</strong>
+                                                {% if melhoria.beneficio %}
+                                                    <br><small class="text-muted">Benefício: {{ melhoria.beneficio }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma melhoria sugerida identificada</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estratégias por Prazo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chess me-2"></i>Estratégias Recomendadas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Curto Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-short">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Curto Prazo (0-3 meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.estrategias_curto_prazo %}
+                                        {% for estrategia in relatorio.estrategias_curto_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma estratégia de curto prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Médio Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-medium">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Médio Prazo (3-12 meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.estrategias_medio_prazo %}
+                                        {% for estrategia in relatorio.estrategias_medio_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-white">Nenhuma estratégia de médio prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Longo Prazo -->
+                        <div class="col-md-4">
+                            <div class="card strategy-long">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Longo Prazo (12+ meses)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if relatorio.estrategias_longo_prazo %}
+                                        {% for estrategia in relatorio.estrategias_longo_prazo %}
+                                            <div class="mb-3">
+                                                <strong>{{ estrategia.estrategia|default(estrategia) }}</strong>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %>
+                                        <p class="text-white">Nenhuma estratégia de longo prazo definida</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recursos Necessários -->
+    {% if relatorio.recursos_necessarios %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Recursos Necessários</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recurso in relatorio.recursos_necessarios %}
+                            <div class="col-md-6 mb-2">
+                                <i class="fas fa-cog text-primary me-2"></i>{{ recurso }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📊 Relatório de Consenso carregado:', '{{ relatorio.numero_relatorio }}');
+});
+</script>
+{% endblock %}

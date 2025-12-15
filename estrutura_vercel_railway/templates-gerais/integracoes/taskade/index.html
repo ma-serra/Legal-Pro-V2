@@ -1,0 +1,221 @@
+{% extends "layout.html" %}
+
+{% block title %}Integração com Taskade{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Integração com Taskade</h2>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Status da Integração</h5>
+                </div>
+                <div class="card-body">
+                    {% if token_valido %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i> Integração com Taskade configurada e funcionando.
+                            {% if oauth_valido %}
+                                <span class="badge bg-primary ms-2"><i class="fas fa-lock me-1"></i> OAuth 2.0</span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Integração com Taskade não configurada ou token inválido.
+                        </div>
+                        <a href="{{ url_for('taskade.config') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-cog me-1"></i> Configurar Integração
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if token_valido %}
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Workspaces</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <p class="card-text flex-grow-1">Gerencie seus workspaces e projetos no Taskade.</p>
+                                <a href="{{ url_for('taskade.workspaces') }}" class="btn btn-primary mt-auto">
+                                    <i class="fas fa-building me-1"></i> Ver Workspaces
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Agentes</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <p class="card-text flex-grow-1">Visualize e gerencie agentes inteligentes no Taskade.</p>
+                                <a href="{{ url_for('taskade.agentes') }}" class="btn btn-primary mt-auto">
+                                    <i class="fas fa-robot me-1"></i> Ver Agentes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Meus Projetos</h5>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <p class="card-text flex-grow-1">Acesso rápido aos seus projetos pessoais no Taskade.</p>
+                                <a href="#" class="btn btn-primary mt-auto">
+                                    <i class="fas fa-folder me-1"></i> Ver Meus Projetos
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Configurações</h5>
+                        
+                        <div class="btn-group">
+                            <button id="btn-testar-conexao-rapido" class="btn btn-sm btn-info">
+                                <i class="fas fa-plug me-1"></i> Testar Conexão
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Método de Autenticação:</h6>
+                                    <p class="text-muted">
+                                        {% if oauth_valido %}
+                                            <i class="fas fa-lock me-1"></i> 
+                                            <span class="fst-italic">OAuth 2.0</span>
+                                            <span class="badge bg-primary ms-2">Mais seguro</span>
+                                        {% elif api_token_masked %}
+                                            <i class="fas fa-key me-1"></i> 
+                                            <span class="fst-italic">Token de API Pessoal</span>
+                                        {% else %}
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <span class="fst-italic">Não configurado</span>
+                                            <a href="{{ url_for('taskade.config') }}" class="ms-2 badge bg-warning text-dark">Configurar</a>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                {% if not oauth_valido and api_token_masked %}
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Token API:</h6>
+                                    <p class="text-muted">
+                                        <i class="fas fa-key me-1"></i> 
+                                        <span class="fst-italic">{{ api_token_masked }}</span>
+                                        <small class="text-muted fst-italic ms-2">(armazenado com segurança)</small>
+                                    </p>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Status:</h6>
+                                    {% if token_valido %}
+                                        <p class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i> Conectado
+                                            
+                                            {% if workspaces_count is defined and workspaces_count > 0 %}
+                                                <span class="badge bg-info ms-2">{{ workspaces_count }} workspaces</span>
+                                            {% endif %}
+                                        </p>
+                                    {% else %}
+                                        <p class="text-danger">
+                                            <i class="fas fa-times-circle me-1"></i> Desconectado
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div id="conexao-status-rapido" class="alert d-none mt-3"></div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p class="mb-3">Gerencie suas configurações de conexão com o Taskade, incluindo token de API e preferências de sincronização.</p>
+                                
+                                <a href="{{ url_for('taskade.config') }}" class="btn btn-secondary">
+                                    <i class="fas fa-cog me-1"></i> Gerenciar Configurações
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnTestarConexaoRapido = document.getElementById('btn-testar-conexao-rapido');
+        
+        if (btnTestarConexaoRapido) {
+            const conexaoStatusRapido = document.getElementById('conexao-status-rapido');
+        
+            btnTestarConexaoRapido.addEventListener('click', function() {
+                // Substituir o texto do botão por um spinner durante o teste
+                const btnTextoOriginal = btnTestarConexaoRapido.innerHTML;
+                btnTestarConexaoRapido.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Testando...';
+                btnTestarConexaoRapido.disabled = true;
+                
+                // Fazer requisição para testar a conexão
+                fetch('/taskade/api/test-connection')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Restaurar o botão
+                        btnTestarConexaoRapido.innerHTML = btnTextoOriginal;
+                        btnTestarConexaoRapido.disabled = false;
+                        
+                        // Exibir resultado
+                        if (data.status === 'success') {
+                            mostrarStatus('success', `
+                                <strong>Conexão estabelecida com sucesso!</strong><br>
+                                ${data.message}
+                                ${data.data && data.data.workspaces_count ? 
+                                `<br>Workspaces encontrados: ${data.data.workspaces_count}` : ''}
+                            `);
+                        } else {
+                            mostrarStatus('danger', `
+                                <strong>Falha na conexão!</strong><br>
+                                ${data.message || 'Não foi possível conectar à API Taskade.'}
+                            `);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        btnTestarConexaoRapido.innerHTML = btnTextoOriginal;
+                        btnTestarConexaoRapido.disabled = false;
+                        mostrarStatus('danger', `
+                            <strong>Erro ao testar conexão!</strong><br>
+                            ${error.message || 'Ocorreu um erro inesperado ao testar a conexão.'}
+                        `);
+                    });
+            });
+            
+            function mostrarStatus(tipo, mensagem) {
+                conexaoStatusRapido.className = `alert alert-${tipo} mt-3`;
+                conexaoStatusRapido.innerHTML = mensagem;
+                conexaoStatusRapido.classList.remove('d-none');
+                
+                // Scroll para o alerta
+                conexaoStatusRapido.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Esconder o alerta após 10 segundos
+                setTimeout(() => {
+                    conexaoStatusRapido.classList.add('d-none');
+                }, 10000);
+            }
+        }
+    });
+</script>
+{% endblock %}

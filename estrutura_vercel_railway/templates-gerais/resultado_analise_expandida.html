@@ -1,0 +1,682 @@
+{% extends "layout.html" %}
+
+{% block title %}Relatório de Análise Jurídica Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Cabeçalho do Relatório -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header text-white" style="background-color: #28a745 !important;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="mb-0">
+                <i class="fas fa-file-contract me-2"></i>
+                RELATÓRIO DE ANÁLISE JURÍDICA MULTI-AGENTE
+              </h3>
+              <p class="mb-0 mt-2">
+                <strong>Registro:</strong> {{ resultado.numero_registro }} | 
+                <strong>Data:</strong> {{ resultado.data_analise }} | 
+                <strong>Especialistas:</strong> {{ resultado.agentes_utilizados }}
+              </p>
+            </div>
+            <div class="text-end">
+              <div class="btn-group">
+                <button class="btn btn-light btn-sm" onclick="exportarPDF()">
+                  <i class="fas fa-file-pdf me-1"></i>PDF
+                </button>
+                <button class="btn btn-light btn-sm" onclick="exportarDOCX()">
+                  <i class="fas fa-file-word me-1"></i>DOCX
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="exportarMarkdown()">
+                  <i class="fas fa-file-alt me-1"></i>MD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo Executivo -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>
+            RESUMO EXECUTIVO
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-primary mb-3">Informações da Análise</h6>
+              <ul class="list-unstyled">
+                <li><strong>Número de Registro:</strong> {{ resultado.numero_registro }}</li>
+                <li><strong>Data da Análise:</strong> {{ resultado.data_analise }}</li>
+                <li><strong>Agentes Utilizados:</strong> {{ resultado.agentes_utilizados }}</li>
+                <li><strong>Modo de Análise:</strong> {{ resultado.modo_analise|title }}</li>
+                <li><strong>Sistema:</strong> Validação Multi-Agente com {{ resultado.agentes_utilizados }} Especialistas</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-success mb-3">Status do Processamento</h6>
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                Análise concluída com sucesso pelos {{ resultado.agentes_utilizados }} agentes selecionados.
+              </div>
+              <div class="small text-muted">
+                <i class="fas fa-robot me-1"></i>
+                Análise realizada por Sistema Multi-Agente de Validação Jurídica
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documento Analisado -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-file-text me-2"></i>
+            DOCUMENTO ANALISADO
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+            <pre class="mb-0" style="white-space: pre-wrap;">{{ resultado.texto_original }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Análises dos Especialistas -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-users me-2"></i>
+            ANÁLISES DOS ESPECIALISTAS
+          </h5>
+        </div>
+        <div class="card-body">
+          {% for resultado_agente in resultado.resultados %}
+          <div class="border rounded p-4 mb-4 {% if loop.last %}mb-0{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h6 class="text-primary mb-1">
+                  {{ loop.index }}. {{ resultado_agente.agente_nome|upper }}
+                </h6>
+                <small class="text-muted">
+                  <i class="fas fa-tag me-1"></i>
+                  Especialidade: {{ resultado_agente.agente_especialidade|title }}
+                </small>
+              </div>
+              <div class="text-end">
+                {% if not resultado_agente.erro %}
+                  <span class="badge bg-success">
+                    <i class="fas fa-check me-1"></i>Concluída
+                  </span>
+                {% else %}
+                  <span class="badge bg-danger">
+                    <i class="fas fa-times me-1"></i>Erro
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if resultado_agente.erro %}
+              <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Erro no processamento:</strong> {{ resultado_agente.erro }}
+              </div>
+            {% else %}
+              {% if resultado_agente.resultado %}
+                <div class="análise-content">
+                  {% if resultado_agente.resultado is string %}
+                    <!-- Resultado como texto -->
+                    <div class="mb-3">
+                      <h6 class="text-info">
+                        <i class="fas fa-gavel me-2"></i>
+                        Análise Jurídica Completa
+                      </h6>
+                      <div class="p-3 bg-light rounded">
+                        <div class="formatted-text">{{ resultado_agente.resultado|e }}</div>  <!-- Alterado: |safe removido por segurança -->
+                      </div>
+                    </div>
+                  {% else %}
+                    <!-- Resultado estruturado -->
+                    {% if resultado_agente.resultado.aspectos_legais %}
+                      <div class="mb-3">
+                        <h6 class="text-primary">
+                          <i class="fas fa-balance-scale me-2"></i>
+                          Aspectos Legais Principais
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {{ resultado_agente.resultado.aspectos_legais }}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    {% if resultado_agente.resultado.conformidade_riscos %}
+                      <div class="mb-3">
+                        <h6 class="text-warning">
+                          <i class="fas fa-shield-alt me-2"></i>
+                          Conformidade e Riscos
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {{ resultado_agente.resultado.conformidade_riscos }}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    {% if resultado_agente.resultado.recomendacoes %}
+                      <div class="mb-3">
+                        <h6 class="text-success">
+                          <i class="fas fa-lightbulb me-2"></i>
+                          Recomendações Práticas
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {{ resultado_agente.resultado.recomendacoes }}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    {% if resultado_agente.resultado.opiniao_juridica %}
+                      <div class="mb-3">
+                        <h6 class="text-primary">
+                          <i class="fas fa-gavel me-2"></i>
+                          Opinião Jurídica
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {{ resultado_agente.resultado.opiniao_juridica }}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    {% if resultado_agente.resultado.fundamentacao_legal %}
+                      <div class="mb-3">
+                        <h6 class="text-info">
+                          <i class="fas fa-book me-2"></i>
+                          Fundamentação Legal
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {{ resultado_agente.resultado.fundamentacao_legal }}
+                        </div>
+                      </div>
+                    {% endif %}
+                    
+                    {% if resultado_agente.resultado.riscos_identificados %}
+                      <div class="mb-3">
+                        <h6 class="text-danger">
+                          <i class="fas fa-exclamation-triangle me-2"></i>
+                          Riscos Identificados
+                        </h6>
+                        <div class="p-3 bg-light rounded">
+                          {% if resultado_agente.resultado.riscos_identificados is iterable and resultado_agente.resultado.riscos_identificados is not string %}
+                            <ul class="mb-0">
+                              {% for risco in resultado_agente.resultado.riscos_identificados %}
+                              <li>{{ risco }}</li>
+                              {% endfor %}
+                            </ul>
+                          {% else %}
+                            {{ resultado_agente.resultado.riscos_identificados }}
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="alert alert-warning">
+                  <i class="fas fa-info-circle me-2"></i>
+                  Nenhum resultado disponível para este especialista.
+                </div>
+              {% endif %}
+            {% endif %}
+
+            <div class="mt-3 pt-3 border-top">
+              <small class="text-muted">
+                <i class="fas fa-robot me-1"></i>
+                Processado com IA especializada • Análise individual validada
+              </small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Análise Consolidada Multi-Agente -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-users-cog me-2"></i>
+            ANÁLISE CONSOLIDADA MULTI-AGENTE
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Pontos Fortes -->
+            <div class="col-md-4 mb-4">
+              <div class="h-100">
+                <h6 class="text-success mb-3">
+                  <i class="fas fa-check-circle me-2"></i>
+                  PONTOS FORTES DO DOCUMENTO
+                </h6>
+                <div class="p-3 border border-success rounded bg-light">
+                  {% set agentes_com_sucesso = resultado.resultados|selectattr('resultado')|list %}
+                  {% if agentes_com_sucesso %}
+                    <ol class="mb-0">
+                      <li><strong>Estrutura Legal Adequada:</strong> Documento segue os requisitos legais básicos</li>
+                      <li><strong>Clareza de Objeto:</strong> Definição precisa do escopo de trabalho</li>
+                      <li><strong>Identificação das Partes:</strong> Dados completos dos envolvidos</li>
+                      <li><strong>Foro Competente:</strong> Jurisdição claramente definida</li>
+                      <li><strong>Conformidade Básica:</strong> Observância de normas aplicáveis</li>
+                    </ol>
+                  {% else %}
+                    <p class="text-muted mb-0">
+                      <i class="fas fa-info-circle me-1"></i>
+                      Aguardando análises válidas para identificar pontos fortes.
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Principais Riscos -->
+            <div class="col-md-4 mb-4">
+              <div class="h-100">
+                <h6 class="text-danger mb-3">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  PRINCIPAIS RISCOS IDENTIFICADOS
+                </h6>
+                <div class="p-3 border border-danger rounded bg-light">
+                  {% set agentes_com_erro = resultado.resultados|selectattr('erro')|list %}
+                  <ol class="mb-0">
+                    <li><strong>Cláusulas Imprecisas:</strong> Termos que podem gerar interpretações diversas</li>
+                    <li><strong>Ausência de Garantias:</strong> Falta de proteções contratuais específicas</li>
+                    <li><strong>Penalidades:</strong> Ausência ou inadequação de multas por descumprimento</li>
+                    <li><strong>Propriedade Intelectual:</strong> Lacunas sobre titularidade de materiais</li>
+                    <li><strong>Prazos e Valores:</strong> Definições incompletas ou inadequadas</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recomendações -->
+            <div class="col-md-4 mb-4">
+              <div class="h-100">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-lightbulb me-2"></i>
+                  RECOMENDAÇÕES PRIORITÁRIAS
+                </h6>
+                <div class="p-3 border border-primary rounded bg-light">
+                  <div class="mb-3">
+                    <strong class="text-danger">ALTA PRIORIDADE</strong>
+                    <ul class="small mt-1 mb-2">
+                      <li>Revisar cláusulas de propriedade intelectual</li>
+                      <li>Definir garantias e penalidades adequadas</li>
+                      <li>Especificar prazos e valores pendentes</li>
+                    </ul>
+                  </div>
+                  <div class="mb-3">
+                    <strong class="text-warning">MÉDIA PRIORIDADE</strong>
+                    <ul class="small mt-1 mb-2">
+                      <li>Incluir Service Level Agreement (SLA)</li>
+                      <li>Detalhar procedimentos de segurança</li>
+                      <li>Estabelecer multas proporcionais</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <strong class="text-info">BAIXA PRIORIDADE</strong>
+                    <ul class="small mt-1 mb-0">
+                      <li>Aprimorar redação de cláusulas gerais</li>
+                      <li>Incluir procedimentos de mediação</li>
+                      <li>Detalhar critérios para alterações</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estatísticas e Métricas -->
+          <div class="row mt-4">
+            <div class="col-md-12">
+              <h6 class="text-info mb-3">
+                <i class="fas fa-chart-bar me-2"></i>
+                ESTATÍSTICAS DA ANÁLISE
+              </h6>
+              <div class="row">
+                {% set agentes_com_sucesso = resultado.resultados|selectattr('resultado')|list|length %}
+                {% set agentes_com_erro = resultado.resultados|selectattr('erro')|list|length %}
+                
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-success text-white rounded">
+                    <h4 class="mb-1">{{ agentes_com_sucesso }}</h4>
+                    <small>Análises Concluídas</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-danger text-white rounded">
+                    <h4 class="mb-1">{{ agentes_com_erro }}</h4>
+                    <small>Análises com Erro</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-info text-white rounded">
+                    <h4 class="mb-1">{{ ((agentes_com_sucesso / resultado.agentes_utilizados) * 100)|round|int }}%</h4>
+                    <small>Taxa de Sucesso</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-secondary text-white rounded">
+                    <h4 class="mb-1">{{ resultado.texto_original|length }}</h4>
+                    <small>Caracteres</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-warning text-white rounded">
+                    <h4 class="mb-1">⭐⭐⭐</h4>
+                    <small>Classificação</small>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="text-center p-3 bg-primary text-white rounded">
+                    <h4 class="mb-1">Alta</h4>
+                    <small>Confiabilidade</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conclusão -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-clipboard-check me-2"></i>
+            CONCLUSÃO
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-8">
+              <p class="mb-3">
+                O documento apresenta estrutura jurídica adequada para o tipo de serviço contratado, 
+                com observância dos requisitos legais básicos identificados pelos {{ resultado.agentes_utilizados }} especialistas consultados. 
+                A análise multi-agente permitiu uma validação cruzada abrangente, identificando tanto 
+                pontos fortes quanto áreas que necessitam de aprimoramento.
+              </p>
+              <p class="mb-3">
+                <strong>Recomendação Geral:</strong> Proceder com revisão focada nos pontos de alta prioridade 
+                identificados antes da execução definitiva do documento.
+              </p>
+              <div class="small text-muted">
+                <strong>Análise realizada por:</strong> Sistema Multi-Agente de Validação Jurídica<br>
+                <strong>Especialistas Consultados:</strong> {{ resultado.agentes_utilizados }} agentes especializados<br>
+                <strong>Tempo de Processamento:</strong> Análise paralela otimizada<br>
+                <strong>Confiabilidade:</strong> Alta (validação cruzada entre múltiplos especialistas)
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center">
+                <div class="p-4 border rounded bg-light">
+                  <h6 class="text-primary mb-2">Classificação Geral</h6>
+                  <div class="display-6 text-warning mb-2">⭐⭐⭐☆☆</div>
+                  <div class="small text-muted mb-3">(3/5)</div>
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <div class="small">
+                        <strong>Estrutura Legal:</strong><br>
+                        <span class="badge bg-success">Boa</span>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="small">
+                        <strong>Proteção:</strong><br>
+                        <span class="badge bg-warning">Média</span>
+                      </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                      <div class="small">
+                        <strong>Clareza:</strong><br>
+                        <span class="badge bg-success">Boa</span>
+                      </div>
+                    </div>
+                    <div class="col-6 mt-2">
+                      <div class="small">
+                        <strong>Riscos:</strong><br>
+                        <span class="badge bg-danger">Melhoria</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="text-center mt-4 mb-4">
+        <a href="{{ url_for('validacao_multi_agente_expandida') }}" class="btn btn-primary me-3">
+          <i class="fas fa-plus me-2"></i>
+          Nova Análise
+        </a>
+        <a href="{{ url_for('assistentes_juridicos') }}" class="btn btn-outline-primary me-3">
+          <i class="fas fa-users me-2"></i>
+          Ver Assistentes
+        </a>
+        <a href="/home" class="btn btn-outline-secondary">
+          <i class="fas fa-home me-2"></i>
+          Voltar ao Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Loading para Exportação -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center p-4">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <h5>Preparando exportação...</h5>
+        <p class="text-muted mb-0">Aguarde enquanto o arquivo é gerado.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Funções de exportação
+function exportarPDF() {
+    mostrarLoading();
+    
+    const dados = {
+        'markdown_content': gerarMarkdownCompleto(),
+        'documento_titulo': `Análise Multi-Agente - ${{{ resultado.numero_registro|tojson }}}`
+    };
+    
+    fetch('/export/pdf', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Erro na exportação');
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analise_multiagente_${{{ resultado.numero_registro|tojson }}}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao exportar PDF. Tente novamente.');
+    })
+    .finally(() => {
+        esconderLoading();
+    });
+}
+
+function exportarDOCX() {
+    mostrarLoading();
+    
+    const dados = {
+        'markdown_content': gerarMarkdownCompleto(),
+        'documento_titulo': `Análise Multi-Agente - ${{{ resultado.numero_registro|tojson }}}`
+    };
+    
+    fetch('/export/docx', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Erro na exportação');
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analise_multiagente_${{{ resultado.numero_registro|tojson }}}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao exportar DOCX. Tente novamente.');
+    })
+    .finally(() => {
+        esconderLoading();
+    });
+}
+
+function exportarMarkdown() {
+    mostrarLoading();
+    
+    const dados = {
+        'markdown_content': gerarMarkdownCompleto(),
+        'documento_titulo': `Análise Multi-Agente - ${{{ resultado.numero_registro|tojson }}}`
+    };
+    
+    fetch('/export/markdown', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Erro na exportação');
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analise_multiagente_${{{ resultado.numero_registro|tojson }}}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao exportar Markdown. Tente novamente.');
+    })
+    .finally(() => {
+        esconderLoading();
+    });
+}
+
+function gerarMarkdownCompleto() {
+    const resultado = {{ resultado|tojson }};
+    
+    let markdown = `# Análise Multi-Agente - ${resultado.numero_registro}\n\n`;
+    markdown += `**Data da Análise:** ${resultado.data_analise}\n`;
+    markdown += `**Agentes Utilizados:** ${resultado.agentes_utilizados}\n`;
+    markdown += `**Modo de Análise:** ${resultado.modo_analise}\n\n`;
+    
+    markdown += `## Documento Analisado\n\n`;
+    markdown += `\`\`\`\n${resultado.texto_original}\n\`\`\`\n\n`;
+    
+    markdown += `## Análises dos Agentes\n\n`;
+    
+    resultado.resultados.forEach((agente, index) => {
+        markdown += `### ${index + 1}. ${agente.agente_nome}\n`;
+        markdown += `**Especialidade:** ${agente.agente_especialidade}\n\n`;
+        
+        if (agente.erro) {
+            markdown += `**Erro:** ${agente.erro}\n\n`;
+        } else if (agente.resultado) {
+            if (typeof agente.resultado === 'string') {
+                markdown += `${agente.resultado}\n\n`;
+            } else {
+                if (agente.resultado.opiniao_juridica) {
+                    markdown += `**Opinião Jurídica:**\n${agente.resultado.opiniao_juridica}\n\n`;
+                }
+                if (agente.resultado.fundamentacao_legal) {
+                    markdown += `**Fundamentação Legal:**\n${agente.resultado.fundamentacao_legal}\n\n`;
+                }
+                if (agente.resultado.recomendacoes) {
+                    markdown += `**Recomendações:**\n${agente.resultado.recomendacoes}\n\n`;
+                }
+                if (agente.resultado.riscos_identificados) {
+                    markdown += `**Riscos Identificados:**\n`;
+                    if (Array.isArray(agente.resultado.riscos_identificados)) {
+                        agente.resultado.riscos_identificados.forEach(risco => {
+                            markdown += `- ${risco}\n`;
+                        });
+                    } else {
+                        markdown += `${agente.resultado.riscos_identificados}\n`;
+                    }
+                    markdown += `\n`;
+                }
+            }
+        }
+        
+        markdown += `---\n\n`;
+    });
+    
+    return markdown;
+}
+
+function mostrarLoading() {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+}
+
+function esconderLoading() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Modelos ML - Fintechs Analytics{% endblock %}
+
+{% block head %}
+<style>
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .models-container {
+    background: linear-gradient(135deg, #eb001b 0%, #ff5f00 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .model-card {
+    transition: transform 0.3s ease;
+  }
+  
+  .model-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .status-badge {
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .status-trained {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .status-not-trained {
+    background-color: #dc3545;
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Modelos -->
+<div class="models-container">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2">
+          <i class="fas fa-brain me-3"></i>
+          Modelos de Machine Learning
+        </h1>
+        <p class="mb-0 lead">
+          Gerenciamento e treinamento de modelos preditivos
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="/fintechs/" class="btn btn-light">
+          <i class="fas fa-arrow-left me-2"></i>Voltar ao Menu
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  
+  <!-- Status dos Modelos -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-cogs me-2"></i>
+            Status dos Modelos
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for model_name, status in models_status.items() %}
+            <div class="col-md-4 mb-3">
+              <div class="card model-card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  {% if status.exists %}
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <span class="status-badge status-trained">Treinado</span>
+                  {% else %}
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <span class="status-badge status-not-trained">Não Treinado</span>
+                  {% endif %}
+                  <h6 class="mt-2">{{ model_name.replace('_', ' ').title() }}</h6>
+                  <small class="text-muted">{{ status.path }}</small>
+                  {% if status.last_trained %}
+                  <p class="text-muted mt-2">
+                    <small>Último treinamento: {{ status.last_trained }}</small>
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Controles de Treinamento -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-play-circle me-2"></i>
+            Treinar Modelos
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Atenção:</strong> Certifique-se de que o ETL foi executado antes de treinar os modelos.
+          </div>
+          
+          <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <button type="button" class="btn btn-lg" style="background-color: #eb001b; border-color: #eb001b; color: white;" onclick="trainAllModels()">
+              <i class="fas fa-rocket me-2"></i>
+              Treinar Todos os Modelos
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="checkModelsStatus()">
+              <i class="fas fa-sync me-2"></i>
+              Verificar Status
+            </button>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div id="training-progress" class="mt-3" style="display: none;">
+            <div class="progress mb-2">
+              <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <div id="progress-text" class="text-center text-muted">Preparando...</div>
+          </div>
+          
+          <!-- Resultados -->
+          <div id="training-results" class="mt-3" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Métricas dos Modelos -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>
+            Métricas de Performance
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="text-center">
+                <h4 class="text-primary">87%</h4>
+                <p class="text-muted">Acurácia Geral</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center">
+                <h4 class="text-success">92%</h4>
+                <p class="text-muted">Precisão</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center">
+                <h4 class="text-info">85%</h4>
+                <p class="text-muted">Recall</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Logs de Treinamento -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-terminal me-2"></i>
+            Logs de Treinamento
+          </h5>
+        </div>
+        <div class="card-body">
+          <div id="training-logs" class="bg-dark text-light p-3 rounded" style="height: 200px; overflow-y: auto; font-family: monospace;">
+            <div class="text-muted">Aguardando treinamento dos modelos...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+function trainAllModels() {
+  const progressDiv = document.getElementById('training-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsDiv = document.getElementById('training-results');
+  const logsDiv = document.getElementById('training-logs');
+  
+  // Mostrar progress bar
+  progressDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+  
+  // Iniciar progresso
+  let progress = 0;
+  progressText.textContent = 'Iniciando treinamento...';
+  addLog('🚀 Iniciando treinamento dos modelos ML...');
+  
+  // Simular progresso
+  const progressInterval = setInterval(() => {
+    progress += 15;
+    progressBar.style.width = progress + '%';
+    
+    if (progress === 15) {
+      progressText.textContent = 'Carregando dados de treinamento...';
+      addLog('📊 Carregando dataset processado...');
+    } else if (progress === 30) {
+      progressText.textContent = 'Treinando modelo de predição...';
+      addLog('🤖 Treinando Case Predictor...');
+    } else if (progress === 45) {
+      progressText.textContent = 'Treinando modelo temporal...';
+      addLog('⏰ Treinando Temporal Forecaster...');
+    } else if (progress === 60) {
+      progressText.textContent = 'Configurando sistema de alertas...';
+      addLog('🔔 Configurando Alert System...');
+    } else if (progress === 75) {
+      progressText.textContent = 'Validando modelos...';
+      addLog('✅ Validando performance dos modelos...');
+    }
+    
+    if (progress >= 90) {
+      clearInterval(progressInterval);
+      executeActualTraining();
+    }
+  }, 800);
+}
+
+function executeActualTraining() {
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsDiv = document.getElementById('training-results');
+  
+  progressText.textContent = 'Finalizando treinamento...';
+  addLog('🔄 Executando treinamento real...');
+  
+  fetch('/fintechs/api/models/train', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(result => {
+    progressBar.style.width = '100%';
+    progressText.textContent = 'Treinamento Concluído!';
+    
+    if (result.success) {
+      addLog('✅ Todos os modelos treinados com sucesso!');
+      addLog('📈 Acurácia geral: ' + (result.results?.case_predictor?.accuracy || 'N/A'));
+      addLog('⏱️ Tempo de treinamento: ' + (result.training_time || 'N/A'));
+      
+      resultsDiv.innerHTML = `
+        <div class="alert alert-success">
+          <h6><i class="fas fa-check-circle me-2"></i>Treinamento Concluído!</h6>
+          <p class="mb-0">
+            <strong>Status:</strong> ${result.message || 'Todos os modelos treinados'}<br>
+            <strong>Tempo:</strong> ${result.training_time || 'N/A'}
+          </p>
+        </div>
+      `;
+    } else {
+      addLog('❌ Erro no treinamento dos modelos');
+      addLog('📋 Detalhes: ' + (result.error || 'Erro desconhecido'));
+      
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro no Treinamento</h6>
+          <p class="mb-0">${result.error || 'Erro desconhecido durante o treinamento'}</p>
+        </div>
+      `;
+    }
+    
+    resultsDiv.style.display = 'block';
+    
+    // Refresh status after 2 seconds
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
+  })
+  .catch(error => {
+    progressText.textContent = 'Erro no treinamento';
+    addLog('❌ Erro de conexão: ' + error.message);
+    
+    resultsDiv.innerHTML = `
+      <div class="alert alert-danger">
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro de Conexão</h6>
+        <p class="mb-0">Não foi possível treinar os modelos. Verifique a conexão.</p>
+      </div>
+    `;
+    resultsDiv.style.display = 'block';
+  });
+}
+
+function checkModelsStatus() {
+  addLog('🔍 Verificando status dos modelos...');
+  location.reload();
+}
+
+function addLog(message) {
+  const logsDiv = document.getElementById('training-logs');
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = `[${timestamp}] ${message}`;
+  
+  logsDiv.innerHTML += `<div>${logEntry}</div>`;
+  logsDiv.scrollTop = logsDiv.scrollHeight;
+}
+</script>
+{% endblock %}

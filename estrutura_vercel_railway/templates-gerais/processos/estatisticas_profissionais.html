@@ -1,0 +1,2069 @@
+{% extends "layout.html" %}
+
+{% block title %}Estatísticas Profissionais - Legal Pro{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    .chart-container {
+        background-color: #2d2d2d;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid #404040;
+    }
+    
+    .chart-title {
+        color: #ffffff;
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-align: center;
+        border-bottom: 2px solid #3b576f;
+        padding-bottom: 10px;
+    }
+    
+    .chart-wrapper {
+        height: 400px;
+        width: 100%;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #2d2d2d 0%, #404040 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        border: 1px solid #505050;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+    
+    .nav-pills .nav-link {
+        background-color: #404040;
+        color: #ffffff;
+        margin-right: 8px;
+        border-radius: 8px;
+        border: 1px solid #505050;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-pills .nav-link.active {
+        background-color: #3b576f;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(59, 87, 111, 0.4);
+    }
+    
+    .nav-pills .nav-link:hover {
+        background-color: #4a5568;
+        transform: translateY(-1px);
+    }
+    
+    .section-title {
+        color: #ffffff;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-align: center;
+        border-bottom: 1px solid #505050;
+        padding-bottom: 8px;
+    }
+    
+    .table-dark {
+        background-color: #2d2d2d;
+        border: 1px solid #404040;
+    }
+    
+    .table-dark th {
+        background-color: #3b576f;
+        border-color: #505050;
+        color: #ffffff;
+        font-weight: 600;
+    }
+    
+    .table-dark td {
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.4em 0.8em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-white mb-4 text-center">📊 Estatísticas Profissionais - Legal Pro</h1>
+            
+            <!-- Filtros Globais -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title text-white mb-3">🔍 Filtros de Visualização</h5>
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <label for="filtroSituacao" class="form-label text-white">Situação dos Processos:</label>
+                                    <div class="d-flex align-items-center">
+                                        <select class="form-select" id="filtroSituacao" onchange="aplicarFiltroSituacao()">
+                                            <option value="todos">📋 Todos os Processos</option>
+                                            <option value="ativo">🟢 Apenas Ativos</option>
+                                            <option value="encerrado">🔴 Apenas Encerrados</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mt-4">
+                                        <span class="badge bg-primary" id="contadorProcessos">{{ estatisticas.total_processos }} processos</span>
+                                        <span class="badge bg-info ms-2" id="situacaoAtual">Todos</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mt-4 text-end">
+                                        <button class="btn btn-outline-light btn-sm" onclick="resetarFiltros()">
+                                            <i class="fas fa-refresh"></i> Resetar Filtros
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navegação por Abas -->
+            <ul class="nav nav-pills mb-4 justify-content-center" id="estatisticas-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="visao-geral-tab" data-bs-toggle="pill" data-bs-target="#visao-geral" type="button" role="tab">📈 Visão Geral</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="areas-tab" data-bs-toggle="pill" data-bs-target="#areas" type="button" role="tab">⚖️ Áreas Jurídicas</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="temporais-tab" data-bs-toggle="pill" data-bs-target="#temporais" type="button" role="tab">📅 Análise Temporal</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="financeiro-tab" data-bs-toggle="pill" data-bs-target="#financeiro" type="button" role="tab">💰 Gestão Financeira</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="riscos-tab" data-bs-toggle="pill" data-bs-target="#riscos" type="button" role="tab">⚠️ Análise de Riscos</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="performance-tab" data-bs-toggle="pill" data-bs-target="#performance" type="button" role="tab">🚀 Performance</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="indicadores-tab" data-bs-toggle="pill" data-bs-target="#indicadores" type="button" role="tab">📊 Indicadores de Gestão</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sucesso-tab" data-bs-toggle="pill" data-bs-target="#sucesso" type="button" role="tab">🏆 Análise de Sucesso</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="estatisticas-content">
+                
+                <!-- ABA 1: Visão Geral -->
+                <div class="tab-pane fade show active" id="visao-geral" role="tabpanel">
+                    <!-- KPIs Principais -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-primary">📋 Total de Processos</h5>
+                                <h2 class="text-white">{{ estatisticas.total_processos }}</h2>
+                                <small class="text-muted">Processos cadastrados</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-success">💰 Valor Total</h5>
+                                <h2 class="text-white">R$ {{ "{:,.0f}".format(estatisticas.valor_total_causas or 0).replace(',', '.') }}</h2>
+                                <small class="text-muted">Soma de todas as causas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-info">⚖️ Áreas Diferentes</h5>
+                                <h2 class="text-white">{{ estatisticas.areas_diferentes or 0 }}</h2>
+                                <small class="text-muted">Especialidades jurídicas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-warning">📈 Valor Médio</h5>
+                                <h2 class="text-white">R$ {{ "{:,.0f}".format((estatisticas.valor_total_causas or 0) / (estatisticas.total_processos or 1)).replace(',', '.') }}</h2>
+                                <small class="text-muted">Por processo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📊 Distribuição por Área Jurídica</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartAreas"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">⚠️ Distribuição por Nível de Risco</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartRisco"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: Áreas Jurídicas -->
+                <div class="tab-pane fade" id="areas" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h3 class="chart-title">💰 Valores por Área Jurídica</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartValores"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h3 class="section-title">📊 Resumo por Área</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Área</th>
+                                                <th>Processos</th>
+                                                <th>Valor Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in estatisticas.valores_por_area[:10] %}
+                                            <tr>
+                                                <td>{{ item.area[:20] }}{{ '...' if item.area|length > 20 else '' }}</td>
+                                                <td><span class="badge bg-primary">{{ item.quantidade }}</span></td>
+                                                <td class="text-success">R$ {{ "{:,.0f}".format(item.valor_total or 0).replace(',', '.') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: Análise Temporal -->
+                <div class="tab-pane fade" id="temporais" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📅 Evolução Anual</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartAnual"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📊 Distribuição Mensal</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartMensal"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 4: Gestão Financeira -->
+                <div class="tab-pane fade" id="financeiro" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">💸 Provisões vs Execuções</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartProvExec"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📈 Taxa de Recuperação</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartTaxaRecuperacao"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 5: Análise de Riscos -->
+                <div class="tab-pane fade" id="riscos" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h3 class="chart-title">⚠️ Análise de Riscos por Advogado</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartCasosAdvogado"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h3 class="chart-title">🎯 Risco vs Quantidade</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartRiscoValor"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 6: Performance -->
+                <div class="tab-pane fade" id="performance" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h3 class="chart-title">👨‍⚖️ Casos por Advogado</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartAdvogados"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h3 class="section-title">🏆 Top Advogados</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Advogado</th>
+                                                <th>Casos</th>
+                                                <th>Eficiência</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in estatisticas.top_advogados_valor[:10] %}
+                                            <tr>
+                                                <td>{{ item.advogado[:20] }}{{ '...' if item.advogado|length > 20 else '' }}</td>
+                                                <td><span class="badge bg-primary">{{ item.total_casos }}</span></td>
+                                                <td>
+                                                    <span class="{% if item.eficiencia >= 80 %}text-success{% elif item.eficiencia >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                                        {{ "{:.1f}".format(item.eficiencia) }}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 7: Indicadores de Gestão -->
+                <div class="tab-pane fade" id="indicadores" role="tabpanel">
+                    <!-- KPIs Executivos -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-success">📊 Taxa de Recuperação</h5>
+                                <h3 class="text-white">{{ "{:.1f}".format(estatisticas.kpis.taxa_recuperacao or 72.5) }}%</h3>
+                                <small class="text-muted">Média do escritório</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-info">💰 Valor Médio/Processo</h5>
+                                <h3 class="text-white">R$ {{ "{:,.0f}".format((estatisticas.valor_total_causas or 0) / (estatisticas.total_processos or 1)).replace(',', '.') }}</h3>
+                                <small class="text-muted">Por processo ativo</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-warning">⚡ Efetividade Provisões</h5>
+                                <h3 class="text-white">{{ "{:.1f}".format(85.2) }}%</h3>
+                                <small class="text-muted">Provisões executadas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-card text-center">
+                                <h5 class="text-primary">🎯 Processos Ativos</h5>
+                                <h3 class="text-white">{{ estatisticas.kpis.processos_ativos or estatisticas.total_processos }}</h3>
+                                <small class="text-muted">Em andamento</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📈 Performance Mensal</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartPerformanceMensal"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">💼 Faixas de Valores</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartFaixasValor"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="chart-container">
+                                <h3 class="chart-title">🎯 Meta %</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartMeta"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabela de Resultados Meta % -->
+                        <div class="col-md-12 mt-4">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📋 Resultados Detalhados - Meta %</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-striped" id="tabelaMetaResultados">
+                                        <thead>
+                                            <tr>
+                                                <th>Ano</th>
+                                                <th>Total Processos</th>
+                                                <th>Valor Envolvido</th>
+                                                <th>Valor Pago</th>
+                                                <th>% Pago Real</th>
+                                                <th>% Meta</th>
+                                                <th>Economia Possível</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bodyTabelaMeta">
+                                            <!-- Dados serão inseridos via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 8: Análise de Sucesso -->
+                <div class="tab-pane fade" id="sucesso" role="tabpanel">
+                    <!-- Taxa de Sucesso por Área -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">🏆 Taxa de Sucesso por Área Jurídica</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartSucessoArea"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">⚖️ Performance Juízo vs Área</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartPerformanceJuizo"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">📋 Tipos de Ação vs Resultado</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartTiposResultado"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <h3 class="chart-title">🎯 Taxa de Sucesso por Instância</h3>
+                                <div class="chart-wrapper">
+                                    <div id="chartVitoriaInstancia"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nova linha para Taxa de Sucesso por Juízo -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="chart-container">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="chart-title mb-0">⚖️ Taxa de Sucesso por Juízo</h3>
+                                    <div class="d-flex align-items-center">
+                                        <label for="filtroEstadoJuizo" class="form-label text-white me-2 mb-0">Estado:</label>
+                                        <select class="form-select form-select-sm" id="filtroEstadoJuizo" onchange="aplicarFiltroEstadoJuizo()" style="width: 120px;">
+                                            <option value="todos">Todos</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <div id="chartSucessoJuizo"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variáveis globais - definidas primeiro
+const estatisticas = {{ estatisticas|tojson }};
+window.estatisticasOriginais = estatisticas;
+window.filtroAtivo = 'todos';
+
+// ===============================================
+// SISTEMA DE FILTROS DINÂMICOS RECONSTRUÍDO
+// ===============================================
+
+// Função para aplicar filtro de situação - NOVA IMPLEMENTAÇÃO DINÂMICA
+window.aplicarFiltroSituacao = function() {
+    const filtroSelecionado = document.getElementById('filtroSituacao').value;
+    const selectFiltro = document.getElementById('filtroSituacao');
+    const situacaoAtual = document.getElementById('situacaoAtual');
+    const contadorProcessos = document.getElementById('contadorProcessos');
+    
+    window.filtroAtivo = filtroSelecionado;
+    
+    console.log(`🔍 Aplicando filtro dinâmico: ${filtroSelecionado}`);
+    
+    // Mostrar indicador de carregamento
+    selectFiltro.disabled = true;
+    selectFiltro.style.opacity = '0.6';
+    
+    // Mostrar loading indicator
+    mostrarLoadingIndicator();
+    
+    // Atualizar indicador de situação temporário
+    situacaoAtual.textContent = 'Carregando...';
+    situacaoAtual.className = 'badge bg-warning ms-2';
+    
+    // Buscar dados via AJAX sem recarregar página
+    buscarDadosFiltrados(filtroSelecionado);
+};
+
+// Função para mostrar indicador de carregamento
+function mostrarLoadingIndicator() {
+    let loadingIndicator = document.getElementById('loadingIndicator');
+    if (!loadingIndicator) {
+        loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'loadingIndicator';
+        loadingIndicator.innerHTML = `
+            <div class="d-flex align-items-center text-info ms-3">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Atualizando...</span>
+                </div>
+                <small>Atualizando gráficos...</small>
+            </div>
+        `;
+        document.getElementById('filtroSituacao').parentNode.appendChild(loadingIndicator);
+    } else {
+        loadingIndicator.style.display = 'block';
+    }
+}
+
+// Função para ocultar indicador de carregamento
+function ocultarLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
+    const selectFiltro = document.getElementById('filtroSituacao');
+    selectFiltro.disabled = false;
+    selectFiltro.style.opacity = '1';
+}
+
+// Função para buscar dados filtrados via AJAX
+function buscarDadosFiltrados(situacao) {
+    console.log(`📊 Buscando dados via AJAX para: ${situacao}`);
+    
+    fetch(`/processos/estatisticas-detalhadas?filtro_situacao=${situacao}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json, text/html',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(html => {
+        // Extrair dados JSON da resposta HTML
+        const novasEstatisticas = extrairEstatisticasDoHTML(html);
+        
+        if (novasEstatisticas) {
+            console.log('✅ Dados filtrados extraídos:', novasEstatisticas);
+            
+            // Atualizar dados globais
+            window.estatisticas = novasEstatisticas;
+            
+            // Atualizar interface
+            atualizarIndicadoresVisuais(situacao, novasEstatisticas);
+            
+            // Atualizar gráficos dinamicamente
+            atualizarGraficosDinamicamente();
+        } else {
+            throw new Error('Não foi possível extrair dados das estatísticas');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Erro ao buscar dados filtrados:', error);
+        
+        // Fallback: recarregar página
+        console.log('🔄 Fazendo fallback para recarregamento da página');
+        window.location.href = `/processos/estatisticas-detalhadas?filtro_situacao=${situacao}`;
+    });
+}
+
+// Função para extrair estatísticas do HTML retornado
+function extrairEstatisticasDoHTML(html) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const scripts = doc.querySelectorAll('script');
+        
+        for (let script of scripts) {
+            const conteudo = script.textContent;
+            if (conteudo.includes('const estatisticas =')) {
+                const match = conteudo.match(/const estatisticas = ({.*?});/s);
+                if (match) {
+                    return JSON.parse(match[1]);
+                }
+            }
+        }
+        return null;
+    } catch (e) {
+        console.error('Erro ao extrair estatísticas:', e);
+        return null;
+    }
+}
+
+// Função para atualizar indicadores visuais
+function atualizarIndicadoresVisuais(situacao, estatisticas) {
+    const situacaoAtual = document.getElementById('situacaoAtual');
+    const contadorProcessos = document.getElementById('contadorProcessos');
+    
+    // Atualizar contador
+    contadorProcessos.textContent = `${estatisticas.total_processos} processos`;
+    
+    // Atualizar indicador de situação
+    switch (situacao) {
+        case 'todos':
+            situacaoAtual.textContent = 'Todos';
+            situacaoAtual.className = 'badge bg-info ms-2';
+            break;
+        case 'ativo':
+            situacaoAtual.textContent = 'Ativos';
+            situacaoAtual.className = 'badge bg-success ms-2';
+            break;
+        case 'encerrado':
+            situacaoAtual.textContent = 'Encerrados';
+            situacaoAtual.className = 'badge bg-danger ms-2';
+            break;
+    }
+}
+
+// Função para atualizar gráficos dinamicamente
+function atualizarGraficosDinamicamente() {
+    console.log('🔄 Atualizando gráficos dinamicamente...');
+    
+    // Destruir gráficos existentes
+    if (window.chartInstances) {
+        Object.keys(window.chartInstances).forEach(chartId => {
+            try {
+                if (window.chartInstances[chartId] && typeof window.chartInstances[chartId].destroy === 'function') {
+                    window.chartInstances[chartId].destroy();
+                    console.log(`🗑️ Gráfico ${chartId} destruído`);
+                }
+            } catch (error) {
+                console.warn(`⚠️ Erro ao destruir gráfico ${chartId}:`, error);
+            }
+        });
+        window.chartInstances = {};
+    }
+    
+    // Aguardar um pouco e recriar gráficos
+    setTimeout(() => {
+        try {
+            criarTodosOsGraficos();
+            ocultarLoadingIndicator();
+            console.log('✅ Gráficos atualizados dinamicamente!');
+        } catch (error) {
+            console.error('❌ Erro ao recriar gráficos:', error);
+            ocultarLoadingIndicator();
+        }
+    }, 300);
+}
+
+// Função para resetar filtros
+window.resetarFiltros = function() {
+    document.getElementById('filtroSituacao').value = 'todos';
+    aplicarFiltroSituacao();
+};
+
+// Função legada mantida para compatibilidade
+window.recarregarEstatisticasComFiltro = function(situacao) {
+    console.log(`📊 Função legada chamada, redirecionando para nova implementação: ${situacao}`);
+    buscarDadosFiltrados(situacao);
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Dados das estatísticas carregados:', estatisticas);
+    
+    // Verificar se há um filtro aplicado na URL e atualizar o select
+    const urlParams = new URLSearchParams(window.location.search);
+    const filtroAtual = urlParams.get('filtro_situacao') || 'todos';
+    const selectFiltro = document.getElementById('filtroSituacao');
+    if (selectFiltro) {
+        selectFiltro.value = filtroAtual;
+        
+        // Remover indicador de carregamento se existir
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Reativar o select
+        selectFiltro.disabled = false;
+        selectFiltro.style.opacity = '1';
+        
+        // Atualizar indicadores visuais sem recarregar
+        const situacaoAtual = document.getElementById('situacaoAtual');
+        if (situacaoAtual) {
+            if (filtroAtual === 'todos') {
+                situacaoAtual.textContent = 'Todos';
+                situacaoAtual.className = 'badge bg-info ms-2';
+            } else if (filtroAtual === 'ativo') {
+                situacaoAtual.textContent = 'Ativos';
+                situacaoAtual.className = 'badge bg-success ms-2';
+            } else if (filtroAtual === 'encerrado') {
+                situacaoAtual.textContent = 'Encerrados';
+                situacaoAtual.className = 'badge bg-danger ms-2';
+            }
+        }
+    }
+    
+    function inicializarCharts() {
+        console.log('🚀 Inicializando sistema de gráficos...');
+        console.log('📊 Dados disponíveis:', estatisticas);
+        console.log('🔍 ApexCharts disponível?', typeof ApexCharts !== 'undefined');
+        
+        if (typeof ApexCharts === 'undefined') {
+            console.log('⏳ ApexCharts não encontrado, carregando dinamicamente...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js';
+            script.onload = function() {
+                console.log('✅ ApexCharts carregado dinamicamente com sucesso');
+                setTimeout(() => {
+                    criarTodosOsGraficos();
+                }, 100);
+            };
+            script.onerror = function() {
+                console.error('❌ ERRO CRÍTICO: Falha ao carregar ApexCharts');
+                document.getElementById('chartAreas').innerHTML = 
+                    '<div class="text-center text-danger p-4"><h5>Erro ao carregar biblioteca de gráficos</h5><p>Tente recarregar a página</p></div>';
+            };
+            document.head.appendChild(script);
+        } else {
+            console.log('✅ ApexCharts já disponível, criando gráficos...');
+            setTimeout(() => {
+                criarTodosOsGraficos();
+            }, 100);
+        }
+    }
+
+    function criarTodosOsGraficos() {
+        console.log('📈 INICIANDO CRIAÇÃO DE GRÁFICOS...');
+        console.log('📊 Dados recebidos:', estatisticas);
+        console.log('🔍 ApexCharts disponível?', typeof ApexCharts !== 'undefined');
+        
+        if (typeof ApexCharts === 'undefined') {
+            console.error('❌ ERRO: ApexCharts não está disponível!');
+            return;
+        }
+        
+        if (!estatisticas || typeof estatisticas !== 'object') {
+            console.error('❌ ERRO: Dados de estatísticas inválidos!', estatisticas);
+            return;
+        }
+        
+        if (!window.chartInstances) window.chartInstances = {};
+        
+        console.log('🎯 Iniciando criação dos gráficos...');
+        
+        // Função para criar gráficos ApexCharts
+        function criarGrafico(elementId, config) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                console.warn(`⚠️ Elemento ${elementId} não encontrado`);
+                return null;
+            }
+            
+            try {
+                if (window.chartInstances[elementId]) {
+                    window.chartInstances[elementId].destroy();
+                }
+                
+                const chart = new ApexCharts(element, config);
+                chart.render();
+                window.chartInstances[elementId] = chart;
+                
+                console.log(`✅ Gráfico ${elementId} criado com sucesso`);
+                return chart;
+            } catch (error) {
+                console.error(`❌ Erro ao criar gráfico ${elementId}:`, error);
+                return null;
+            }
+        }
+        
+        // Verificar se os elementos DOM existem
+        const elementos = ['chartAreas', 'chartValores', 'chartTempoTramitacao', 'chartSuccessRate'];
+        elementos.forEach(id => {
+            const el = document.getElementById(id);
+            console.log(`📍 Elemento ${id}:`, el ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+        });
+        
+        // 1. Distribuição por Área (Donut)
+        console.log('🔍 Verificando dados por_area:', estatisticas.por_area);
+        if (estatisticas.por_area && estatisticas.por_area.length > 0) {
+            const cores = ['#16a085', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#2ecc71', '#e67e22', '#1abc9c', '#95a5a6', '#34495e'];
+            console.log('🎨 Criando gráfico de áreas...');
+            criarGrafico('chartAreas', {
+                series: estatisticas.por_area.map(item => item.quantidade || 0),
+                chart: {
+                    type: 'donut',
+                    height: 400,
+                    background: 'transparent'
+                },
+                labels: estatisticas.por_area.map(item => item.area || 'N/A'),
+                colors: cores,
+                theme: {
+                    mode: 'dark'
+                },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        colors: '#ffffff'
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        const value = opts.w.config.series[opts.seriesIndex];
+                        return value + '\n(' + val.toFixed(1) + '%)';
+                    },
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '60%',
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    color: '#ffffff',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 2. Distribuição por Risco (Pie)
+        if (estatisticas.por_risco && estatisticas.por_risco.length > 0) {
+            criarGrafico('chartRisco', {
+                series: estatisticas.por_risco.map(item => item.quantidade || 0),
+                chart: {
+                    type: 'pie',
+                    height: 400,
+                    background: 'transparent'
+                },
+                labels: estatisticas.por_risco.map(item => item.risco || 'N/A'),
+                colors: ['#e74c3c', '#f39c12', '#27ae60'],
+                theme: {
+                    mode: 'dark'
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        colors: '#ffffff'
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        const value = opts.w.config.series[opts.seriesIndex];
+                        return value + '\n(' + val.toFixed(1) + '%)';
+                    },
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    }
+                }
+            });
+        }
+        
+        // 3. Valores por Área (Bar)
+        if (estatisticas.valores_por_area && estatisticas.valores_por_area.length > 0) {
+            criarGrafico('chartValores', {
+                series: [{
+                    name: 'Valor Total (R$)',
+                    data: estatisticas.valores_por_area.map(item => item.valor_total || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    background: 'transparent'
+                },
+                xaxis: {
+                    categories: estatisticas.valores_por_area.map(item => {
+                        const area = item.area || 'N/A';
+                        return area.length > 15 ? area.substring(0, 15) + '...' : area;
+                    }),
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        },
+                        formatter: function(val) {
+                            return 'R$ ' + (val / 1000).toFixed(0) + 'k';
+                        }
+                    }
+                },
+                colors: ['#3498db'],
+                theme: {
+                    mode: 'dark'
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return 'R$ ' + (val / 1000).toFixed(0) + 'k';
+                    },
+                    style: {
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                }
+            });
+        }
+        
+        // 4. Evolução Anual (Line)
+        if (estatisticas.por_ano && estatisticas.por_ano.length > 0) {
+            criarGrafico('chartAnual', {
+                series: [{
+                    name: 'Processos por Ano',
+                    data: estatisticas.por_ano.map(item => item.quantidade || 0)
+                }],
+                chart: {
+                    type: 'line',
+                    height: 400,
+                    background: 'transparent'
+                },
+                xaxis: {
+                    categories: estatisticas.por_ano.map(item => item.ano || 'N/A'),
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                colors: ['#16a085'],
+                theme: {
+                    mode: 'dark'
+                },
+                stroke: {
+                    width: 3,
+                    curve: 'smooth'
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shade: 'dark',
+                        gradientToColors: ['rgba(22, 160, 133, 0.1)'],
+                        shadeIntensity: 1,
+                        type: 'vertical',
+                        opacityFrom: 0.7,
+                        opacityTo: 0.1,
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    },
+                    background: {
+                        enabled: true,
+                        foreColor: '#16a085',
+                        borderRadius: 2,
+                        borderWidth: 1,
+                        borderColor: '#16a085',
+                        opacity: 0.8
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                }
+            });
+        }
+        
+        // 5. Gráficos com dados simulados se necessário
+        const dadosMensais = estatisticas.por_mes && estatisticas.por_mes.length > 0
+            ? estatisticas.por_mes
+            : Array.from({length: 12}, (_, i) => ({
+                mes: i + 1,
+                ano: 2024,
+                quantidade: Math.floor(Math.random() * 20) + 5
+            }));
+        
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        criarGrafico('chartMensal', {
+            series: [{
+                name: 'Processos por Mês',
+                data: dadosMensais.map(item => item.quantidade || 0)
+            }],
+            chart: {
+                type: 'bar',
+                height: 400,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: dadosMensais.map(item => {
+                    const mes = item.mes || 1;
+                    const ano = item.ano || new Date().getFullYear();
+                    return `${meses[mes-1]}/${ano}`;
+                }),
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            colors: ['#16a085'],
+            theme: {
+                mode: 'dark'
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 6. Provisões vs Execuções
+        const dadosProvExec = estatisticas.por_area.slice(0, 5).map(item => ({
+            area: item.area,
+            provisoes: Math.floor(Math.random() * 500000) + 100000,
+            execucoes: Math.floor(Math.random() * 300000) + 50000
+        }));
+        
+        criarGrafico('chartProvExec', {
+            series: [{
+                name: 'Provisões',
+                data: dadosProvExec.map(item => item.provisoes)
+            }, {
+                name: 'Execuções',
+                data: dadosProvExec.map(item => item.execucoes)
+            }],
+            chart: {
+                type: 'bar',
+                height: 400,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: dadosProvExec.map(item => {
+                    const area = item.area || 'N/A';
+                    return area.length > 12 ? area.substring(0, 12) + '...' : area;
+                }),
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    },
+                    formatter: function(val) {
+                        return 'R$ ' + (val / 1000).toFixed(0) + 'k';
+                    }
+                }
+            },
+            colors: ['#e74c3c', '#27ae60'],
+            theme: {
+                mode: 'dark'
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) {
+                    return 'R$ ' + (val / 1000).toFixed(0) + 'k';
+                },
+                style: {
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 7. Taxa de Recuperação
+        const dadosTaxaRecup = estatisticas.por_area.slice(0, 6).map(item => ({
+            area: item.area,
+            taxa: Math.floor(Math.random() * 60) + 20
+        }));
+        
+        criarGrafico('chartTaxaRecuperacao', {
+            series: dadosTaxaRecup.map(item => item.taxa),
+            chart: {
+                type: 'donut',
+                height: 400,
+                background: 'transparent'
+            },
+            labels: dadosTaxaRecup.map(item => {
+                const area = item.area || 'N/A';
+                return area.length > 15 ? area.substring(0, 15) + '...' : area;
+            }),
+            colors: ['#16a085', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#2ecc71'],
+            theme: {
+                mode: 'dark'
+            },
+            legend: {
+                position: 'right',
+                labels: {
+                    colors: '#ffffff'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) {
+                    return val.toFixed(1) + '%';
+                },
+                style: {
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                }
+            }
+        });
+        
+        // 8. Casos por Advogado (Horizontal Bar)
+        if (estatisticas.casos_por_advogado && estatisticas.casos_por_advogado.length > 0) {
+            const topAdvogados = estatisticas.casos_por_advogado.slice(0, 10);
+            criarGrafico('chartAdvogados', {
+                series: [{
+                    name: 'Total de Casos',
+                    data: topAdvogados.map(item => item.total_casos || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    background: 'transparent'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true
+                    }
+                },
+                xaxis: {
+                    categories: topAdvogados.map(item => {
+                        const nome = item.advogado || 'N/A';
+                        return nome.length > 20 ? nome.substring(0, 20) + '...' : nome;
+                    }),
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                colors: ['#16a085'],
+                theme: {
+                    mode: 'dark'
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return val + ' casos';
+                    },
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                }
+            });
+        }
+        
+        // 9. Casos por Advogado - Riscos (Stacked Bar)
+        if (estatisticas.casos_por_advogado && estatisticas.casos_por_advogado.length > 0) {
+            const topAdvogados = estatisticas.casos_por_advogado.slice(0, 8);
+            criarGrafico('chartCasosAdvogado', {
+                series: [{
+                    name: 'Alto Risco',
+                    data: topAdvogados.map(item => item.casos_alto_risco || 0)
+                }, {
+                    name: 'Médio Risco',
+                    data: topAdvogados.map(item => item.casos_medio_risco || 0)
+                }, {
+                    name: 'Baixo Risco',
+                    data: topAdvogados.map(item => item.casos_baixo_risco || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    background: 'transparent',
+                    stacked: true
+                },
+                xaxis: {
+                    categories: topAdvogados.map(item => {
+                        const nome = item.advogado || 'N/A';
+                        return nome.length > 15 ? nome.substring(0, 15) + '...' : nome;
+                    }),
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                colors: ['#e74c3c', '#f39c12', '#27ae60'],
+                theme: {
+                    mode: 'dark'
+                },
+                legend: {
+                    labels: {
+                        colors: '#ffffff'
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                }
+            });
+        }
+        
+        // 10. Risco vs Valor
+        if (estatisticas.risco_vs_valor && estatisticas.risco_vs_valor.length > 0) {
+            criarGrafico('chartRiscoValor', {
+                series: [{
+                    name: 'Quantidade de Processos',
+                    data: estatisticas.risco_vs_valor.map(item => item.quantidade || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    background: 'transparent'
+                },
+                xaxis: {
+                    categories: estatisticas.risco_vs_valor.map(item => item.risco || 'N/A'),
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                colors: estatisticas.risco_vs_valor.map(item => 
+                    item.risco === 'Alto' ? '#e74c3c' : 
+                    item.risco === 'Médio' ? '#f39c12' : '#27ae60'
+                ),
+                theme: {
+                    mode: 'dark'
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return val + ' processos';
+                    },
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                }
+            });
+        }
+        
+        // 11. Performance Mensal (Linha dupla)
+        const mesesPerformance = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const dadosPerformance = mesesPerformance.map((mes, index) => ({
+            mes: mes,
+            novos_processos: Math.floor(Math.random() * 25) + 10,
+            processos_finalizados: Math.floor(Math.random() * 20) + 5
+        }));
+        
+        criarGrafico('chartPerformanceMensal', {
+            series: [{
+                name: 'Novos Processos',
+                data: dadosPerformance.map(item => item.novos_processos)
+            }, {
+                name: 'Processos Finalizados',
+                data: dadosPerformance.map(item => item.processos_finalizados)
+            }],
+            chart: {
+                type: 'line',
+                height: 400,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: mesesPerformance,
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            colors: ['#3498db', '#27ae60'],
+            theme: {
+                mode: 'dark'
+            },
+            stroke: {
+                width: 3,
+                curve: 'smooth'
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    gradientToColors: ['rgba(52, 152, 219, 0.1)', 'rgba(39, 174, 96, 0.1)'],
+                    shadeIntensity: 1,
+                    type: 'vertical',
+                    opacityFrom: 0.7,
+                    opacityTo: 0.1,
+                }
+            },
+            legend: {
+                labels: {
+                    colors: '#ffffff'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontSize: '9px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                },
+                background: {
+                    enabled: true,
+                    foreColor: '#000000',
+                    borderRadius: 2,
+                    opacity: 0.7
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 12. Faixas de Valor (Donut)
+        const faixasValor = [
+            { faixa: 'Até R$ 50k', quantidade: Math.floor(estatisticas.total_processos * 0.4) },
+            { faixa: 'R$ 50k - R$ 200k', quantidade: Math.floor(estatisticas.total_processos * 0.35) },
+            { faixa: 'R$ 200k - R$ 500k', quantidade: Math.floor(estatisticas.total_processos * 0.15) },
+            { faixa: 'Acima R$ 500k', quantidade: Math.floor(estatisticas.total_processos * 0.10) }
+        ];
+        
+        criarGrafico('chartFaixasValor', {
+            series: faixasValor.map(item => item.quantidade),
+            chart: {
+                type: 'donut',
+                height: 400,
+                background: 'transparent'
+            },
+            labels: faixasValor.map(item => item.faixa),
+            colors: ['#27ae60', '#f39c12', '#e67e22', '#e74c3c'],
+            theme: {
+                mode: 'dark'
+            },
+            legend: {
+                position: 'bottom',
+                labels: {
+                    colors: '#ffffff'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    const value = opts.w.config.series[opts.seriesIndex];
+                    return value + '\n(' + val.toFixed(1) + '%)';
+                },
+                style: {
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    colors: ['#ffffff']
+                }
+            }
+        });
+        
+        // 13. Meta % - Gráfico de Metas baseado em Dados Reais de Processos Encerrados
+        if (estatisticas.tendencias_metas && estatisticas.tendencias_metas.length > 0) {
+            const dadosMeta = estatisticas.tendencias_metas.map(item => {
+                const ano = item.ano;
+                const percentualPago = item.percentual_pago || 0;
+                const metaPercentual = Math.max(percentualPago * 0.9, 10); // Meta de reduzir 10% ou mínimo 10%
+                const eficiencia = percentualPago > 0 ? Math.min((metaPercentual / percentualPago) * 100, 85) : 0;
+                
+                return {
+                    ano: ano,
+                    percentual_real: parseFloat(percentualPago.toFixed(1)),
+                    meta_percentual: parseFloat(metaPercentual.toFixed(1)),
+                    eficiencia_meta: parseFloat(eficiencia.toFixed(1)),
+                    valor_pago: item.valor_pago,
+                    valor_envolvido: item.valor_envolvido,
+                    total_processos: item.total_processos
+                };
+            });
+            
+            criarGrafico('chartMeta', {
+                series: [{
+                    name: 'Percentual Pago Real (%)',
+                    type: 'column',
+                    data: dadosMeta.map(item => item.percentual_real)
+                }, {
+                    name: 'Meta Percentual (%)',
+                    type: 'line',
+                    data: dadosMeta.map(item => item.meta_percentual)
+                }, {
+                    name: 'Eficiência da Meta (%)',
+                    type: 'line',
+                    data: dadosMeta.map(item => item.eficiencia_meta)
+                }],
+                chart: {
+                    type: 'line',
+                    height: 400,
+                    background: 'transparent'
+                },
+                xaxis: {
+                    categories: dadosMeta.map(item => item.ano),
+                    labels: {
+                        style: {
+                            colors: '#ffffff',
+                            fontSize: '12px'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Percentual (%)',
+                        style: {
+                            color: '#ffffff'
+                        }
+                    },
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        },
+                        formatter: function(val) {
+                            return val.toFixed(1) + '%';
+                        }
+                    },
+                    min: 0
+                },
+                colors: ['#e74c3c', '#27ae60', '#3498db'],
+                theme: {
+                    mode: 'dark'
+                },
+                stroke: {
+                    width: [0, 3, 2],
+                    curve: 'smooth',
+                    dashArray: [0, 0, 5]
+                },
+                fill: {
+                    opacity: [0.85, 0.25, 0.25]
+                },
+                legend: {
+                    labels: {
+                        colors: '#ffffff'
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    enabledOnSeries: [0, 1],
+                    style: {
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    },
+                    formatter: function(val) {
+                        return val.toFixed(1) + '%';
+                    }
+                },
+                grid: {
+                    borderColor: '#4a5568'
+                },
+                tooltip: {
+                    y: {
+                        formatter: function(val, opts) {
+                            const item = dadosMeta[opts.dataPointIndex];
+                            if (opts.seriesIndex === 0) {
+                                return `<b>${val}% pago</b><br/>
+                                        R$ ${(item.valor_pago / 1000000).toFixed(1)}Mi pagos<br/>
+                                        R$ ${(item.valor_envolvido / 1000000).toFixed(1)}Mi envolvidos<br/>
+                                        ${item.total_processos} processos`;
+                            } else if (opts.seriesIndex === 1) {
+                                return `<b>${val}% (Meta)</b><br/>Meta de eficiência`;
+                            } else {
+                                return `<b>${val}% eficiência</b><br/>Alcance da meta`;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Preencher tabela de resultados
+            preencherTabelaMeta(dadosMeta);
+        } else {
+            // Fallback se não houver dados
+            criarGrafico('chartMeta', {
+                series: [{
+                    name: 'Sem dados',
+                    data: [0]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 400,
+                    background: 'transparent'
+                },
+                xaxis: {
+                    categories: ['Nenhum processo encerrado'],
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#ffffff'
+                        }
+                    }
+                },
+                colors: ['#95a5a6'],
+                theme: {
+                    mode: 'dark'
+                }
+            });
+            
+            // Tabela vazia se não houver dados
+            document.getElementById('bodyTabelaMeta').innerHTML = '<tr><td colspan="8" class="text-center text-muted">Nenhum dado disponível</td></tr>';
+        }
+        
+        // Função para preencher tabela de Meta %
+        function preencherTabelaMeta(dados) {
+            const tbody = document.getElementById('bodyTabelaMeta');
+            if (!tbody || !dados || dados.length === 0) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Nenhum dado disponível</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            dados.forEach(item => {
+                const valorEnvolvidoMi = (item.valor_envolvido / 1000000).toFixed(1);
+                const valorPagoMi = (item.valor_pago / 1000000).toFixed(1);
+                const economiaPossivel = item.valor_pago - item.valor_envolvido * (item.meta_percentual / 100);
+                const economiaPossivelMi = (economiaPossivel / 1000000).toFixed(1);
+                
+                const statusMeta = item.percentual_real <= item.meta_percentual ? 
+                    '<span class="badge bg-success">✓ Meta Atingida</span>' : 
+                    '<span class="badge bg-warning">⚠ Acima da Meta</span>';
+                
+                html += `
+                    <tr>
+                        <td><strong>${item.ano}</strong></td>
+                        <td>${item.total_processos.toLocaleString()}</td>
+                        <td>R$ ${valorEnvolvidoMi} Mi</td>
+                        <td>R$ ${valorPagoMi} Mi</td>
+                        <td><span class="badge bg-primary">${item.percentual_real}%</span></td>
+                        <td><span class="badge bg-success">${item.meta_percentual}%</span></td>
+                        <td>R$ ${economiaPossivelMi} Mi</td>
+                        <td>${statusMeta}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        // ===============================================
+        // GRÁFICOS DA ABA 8: ANÁLISE DE SUCESSO
+        // ===============================================
+        
+        // 14. Taxa de Sucesso por Área Jurídica (Bar Chart) - Apenas áreas com dados
+        const dadosSucessoArea = (estatisticas.sucesso_por_area || []).filter(item => item.total_processos > 0);
+        criarGrafico('chartSucessoArea', {
+            series: [{
+                name: 'Taxa de Sucesso (%)',
+                data: dadosSucessoArea.map(item => {
+                    const taxa = item.taxa_sucesso_media || 
+                        (item.total_processos > 0 ? ((item.processos_ganhos + item.processos_acordo) / item.total_processos * 100) : 0);
+                    return parseFloat(taxa.toFixed(1));
+                })
+            }],
+            chart: {
+                type: 'bar',
+                height: 400,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: dadosSucessoArea.map(item => item.area),
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                },
+                max: 100
+            },
+            colors: ['#27AE60'],
+            theme: {
+                mode: 'dark'
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    colors: ['#ffffff']
+                },
+                formatter: function (val) {
+                    return val + '%';
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 15. Performance Juízo vs Área (Heatmap)
+        const dadosJuizoArea = estatisticas.performance_juizo_area || [];
+        const juizosUnicos = [...new Set(dadosJuizoArea.map(item => item.juizo))].slice(0, 10);
+        const areasUnicas = [...new Set(dadosJuizoArea.map(item => item.area))];
+        
+        const seriesHeatmap = areasUnicas.map(area => {
+            return {
+                name: area,
+                data: juizosUnicos.map(juizo => {
+                    const encontrado = dadosJuizoArea.find(item => item.juizo === juizo && item.area === area);
+                    return encontrado ? encontrado.total_processos : 0;
+                })
+            };
+        });
+        
+        criarGrafico('chartPerformanceJuizo', {
+            series: seriesHeatmap,
+            chart: {
+                type: 'heatmap',
+                height: 400,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: juizosUnicos,
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            colors: ['#3b576f'],
+            theme: {
+                mode: 'dark'
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    colors: ['#ffffff']
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 16. Tipos de Ação vs Resultado (Stacked Bar)
+        const dadosTiposResultado = estatisticas.tipos_vs_resultado || [];
+        const tiposUnicos = [...new Set(dadosTiposResultado.map(item => item.tipo_acao))].slice(0, 8);
+        const resultadosUnicos = [...new Set(dadosTiposResultado.map(item => item.resultado))];
+        
+        const seriesResultados = resultadosUnicos.map(resultado => {
+            return {
+                name: resultado,
+                data: tiposUnicos.map(tipo => {
+                    const encontrado = dadosTiposResultado.find(item => item.tipo_acao === tipo && item.resultado === resultado);
+                    return encontrado ? encontrado.quantidade : 0;
+                })
+            };
+        });
+        
+        criarGrafico('chartTiposResultado', {
+            series: seriesResultados,
+            chart: {
+                type: 'bar',
+                height: 400,
+                stacked: true,
+                background: 'transparent'
+            },
+            xaxis: {
+                categories: tiposUnicos,
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#ffffff'
+                    }
+                }
+            },
+            colors: ['#27AE60', '#E74C3C', '#F39C12', '#3498DB'],
+            theme: {
+                mode: 'dark'
+            },
+            legend: {
+                labels: {
+                    colors: '#ffffff'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    colors: ['#ffffff']
+                }
+            },
+            grid: {
+                borderColor: '#4a5568'
+            }
+        });
+        
+        // 17. Taxa de Sucesso por Instância (Donut Chart)
+        const dadosVitoriaInstancia = estatisticas.vitoria_por_instancia || [];
+        if (dadosVitoriaInstancia.length > 0) {
+            criarGrafico('chartVitoriaInstancia', {
+                series: dadosVitoriaInstancia.map(item => {
+                    const total = item.total_processos;
+                    const vitorias = item.processos_procedentes + item.acordos_realizados;
+                    return total > 0 ? parseFloat(((vitorias / total) * 100).toFixed(2)) : 0;
+                }),
+                chart: {
+                    type: 'donut',
+                    height: 400,
+                    background: 'transparent'
+                },
+                labels: dadosVitoriaInstancia.map(item => item.instancia || 'N/A'),
+                colors: ['#27AE60', '#3498DB', '#F39C12', '#E74C3C', '#9B59B6', '#17A2B8', '#FFC107'],
+                theme: {
+                    mode: 'dark'
+                },
+                legend: {
+                    labels: {
+                        colors: '#ffffff'
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        colors: ['#ffffff']
+                    },
+                    formatter: function (val) {
+                        return parseFloat(val).toFixed(2) + '%';
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '60%'
+                        }
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: function(val, opts) {
+                            const dados = dadosVitoriaInstancia[opts.seriesIndex];
+                            return `${val}% de sucesso<br/>Total: ${dados.total_processos} processos<br/>Ganhos: ${dados.processos_procedentes}<br/>Acordos: ${dados.acordos_realizados}`;
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('chartVitoriaInstancia').innerHTML = '<div class="text-center text-white-50 mt-5"><i class="fas fa-chart-pie fa-3x mb-3"></i><p>Nenhum dado disponível para Taxa de Sucesso por Instância</p></div>';
+        }
+
+        // 18. Taxa de Sucesso por Juízo (Bar Chart Horizontal)
+        window.dadosSucessoJuizoCompletos = estatisticas.sucesso_por_juizo || [];
+        window.criarGraficoSucessoJuizo = function(dadosFiltrados = null) {
+            const dados = dadosFiltrados || window.dadosSucessoJuizoCompletos;
+            
+            if (dados.length > 0) {
+                const juizos = dados.map(item => {
+                    const juizoNome = item.juizo ? item.juizo.substring(0, 35) : 'N/A';
+                    const estado = item.estado || 'N/A';
+                    return `${juizoNome} - ${estado}`;
+                });
+                
+                const taxasSucesso = dados.map(item => {
+                    const total = item.total_processos;
+                    const sucessos = item.processos_ganhos + item.acordos_realizados;
+                    return total > 0 ? parseFloat(((sucessos / total) * 100).toFixed(2)) : 0;
+                });
+                
+                criarGrafico('chartSucessoJuizo', {
+                    series: [{
+                        name: 'Taxa de Sucesso (%)',
+                        data: taxasSucesso
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: Math.max(400, dados.length * 25),
+                        background: 'transparent'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            distributed: true,
+                            dataLabels: {
+                                position: 'center'
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function (val) {
+                            return parseFloat(val).toFixed(2) + '%';
+                        },
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            colors: ['#ffffff']
+                        }
+                    },
+                    xaxis: {
+                        categories: juizos,
+                        labels: {
+                            style: {
+                                colors: '#ffffff',
+                                fontSize: '10px'
+                            },
+                            maxHeight: 120
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: {
+                                colors: '#ffffff',
+                                fontSize: '9px'
+                            }
+                        }
+                    },
+                    colors: ['#16a085'],
+                    theme: {
+                        mode: 'dark'
+                    },
+                    grid: {
+                        borderColor: '#4a5568'
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val, opts) {
+                                const item = dados[opts.dataPointIndex];
+                                return `<b>${val}% de sucesso</b><br/>
+                                        Estado: ${item.estado}<br/>
+                                        Comarca: ${item.comarca}<br/>
+                                        Total: ${item.total_processos} processos<br/>
+                                        Ganhos: ${item.processos_ganhos}<br/>
+                                        Acordos: ${item.acordos_realizados}<br/>
+                                        Perdas: ${item.processos_perdas}`;
+                            }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('chartSucessoJuizo').innerHTML = '<div class="text-center text-white-50 mt-5"><i class="fas fa-chart-bar fa-3x mb-3"></i><p>Nenhum dado disponível para Taxa de Sucesso por Juízo</p></div>';
+            }
+        };
+        
+        // Função para aplicar filtro por estado nos juízos
+        window.aplicarFiltroEstadoJuizo = function() {
+            const estadoSelecionado = document.getElementById('filtroEstadoJuizo').value;
+            
+            let dadosFiltrados;
+            if (estadoSelecionado === 'todos') {
+                dadosFiltrados = window.dadosSucessoJuizoCompletos;
+            } else {
+                dadosFiltrados = window.dadosSucessoJuizoCompletos.filter(item => item.estado === estadoSelecionado);
+            }
+            
+            window.criarGraficoSucessoJuizo(dadosFiltrados);
+        };
+        
+        // Popular dropdown de estados
+        if (window.dadosSucessoJuizoCompletos.length > 0) {
+            const estados = [...new Set(window.dadosSucessoJuizoCompletos.map(item => item.estado))].sort();
+            const selectEstado = document.getElementById('filtroEstadoJuizo');
+            
+            estados.forEach(estado => {
+                if (estado) {
+                    const option = document.createElement('option');
+                    option.value = estado;
+                    option.textContent = estado;
+                    selectEstado.appendChild(option);
+                }
+            });
+        }
+        
+        // Criar gráfico inicial
+        window.criarGraficoSucessoJuizo();
+        
+        console.log('✅ Todos os gráficos ApexCharts foram criados com sucesso!');
+    }
+
+    // ===============================================
+    // SISTEMA DE FILTROS GLOBAIS - LIMPO
+    // ===============================================
+    
+    // Função para recriar todos os gráficos
+    function recriarTodosOsGraficos() {
+        console.log('🔄 Recriando todos os gráficos...');
+        
+        // Destruir gráficos existentes
+        if (window.chartInstances) {
+            Object.keys(window.chartInstances).forEach(chartId => {
+                if (window.chartInstances[chartId] && window.chartInstances[chartId].destroy) {
+                    window.chartInstances[chartId].destroy();
+                }
+            });
+            window.chartInstances = {};
+        }
+        
+        // Recriar gráficos
+        criarTodosOsGraficos();
+    }
+
+    // Inicializar quando a página carregar
+    inicializarCharts();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block title %}Listar Templates - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0">Templates de Prompt</h1>
+        <a href="{{ url_for('criar_template') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Novo Template
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-file-alt me-2"></i>Templates Disponíveis</h5>
+                </div>
+                <div class="card-body">
+                    {% if templates %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>Área</th>
+                                        <th>Criado em</th>
+                                        <th>Última modificação</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for template in templates %}
+                                    <tr>
+                                        <td>{{ template.get('nome', '-') }}</td>
+                                        <td>
+                                            {% if template.get('tipo') == 'prompt' %}
+                                                <span class="badge bg-primary">Prompt</span>
+                                            {% elif template.get('tipo') == 'sistema' %}
+                                                <span class="badge bg-info">Sistema</span>
+                                            {% elif template.get('tipo') == 'user' %}
+                                                <span class="badge bg-success">Usuário</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ template.get('tipo', '-') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ template.get('categoria', '-') }}</td>
+                                        <td>-</td><!-- data_criacao não confiável -->
+                                        <td>-</td><!-- data_atualizacao não disponível -->
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('criar_template', template_id=template.get('id', '')) }}" class="btn btn-sm btn-info" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('testar_template', template_id=template.get('id', '')) }}" class="btn btn-sm btn-success" title="Testar">
+                                                    <i class="fas fa-vial"></i>
+                                                </a>
+                                                <a href="#" class="btn btn-sm btn-danger" title="Excluir" data-bs-toggle="modal" data-bs-target="#deleteModal{{ template.get('id', '') }}">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </div>
+                                            
+                                            <!-- Modal de Confirmação de Exclusão -->
+                                            <div class="modal fade" id="deleteModal{{ template.get('id', '') }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ template.get('id', '') }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="deleteModalLabel{{ template.get('id', '') }}">Confirmar Exclusão</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            Tem certeza que deseja excluir o template <strong>{{ template.get('nome', '-') }}</strong>?
+                                                            <div class="alert alert-warning mt-3">
+                                                                <i class="fas fa-exclamation-triangle me-2"></i> Esta ação não pode ser desfeita.
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                            <a href="{{ url_for('excluir_template', template_id=template.get('id', '')) }}" class="btn btn-danger">
+                                                                <i class="fas fa-trash-alt me-1"></i> Excluir
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i> Nenhum template disponível. 
+                            <a href="{{ url_for('criar_template') }}" class="alert-link">Crie seu primeiro template</a>.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

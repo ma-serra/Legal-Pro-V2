@@ -1,0 +1,224 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ titulo|default('Criar Template') }} - Sistema Multi-Agente{% endblock %}
+
+{% block head %}
+<style>
+    .template-editor {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        min-height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0">{{ titulo|default('Criar Novo Template') }}</h1>
+        <a href="{{ url_for('listar_templates') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <form method="post" id="template-form">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Informações Básicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="nome" class="form-label">Nome do Template</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ valores.nome|default('') }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tipo" class="form-label">Tipo</label>
+                                <select class="form-select" id="tipo" name="tipo" required>
+                                    <option value="" {% if not valores.tipo %}selected disabled{% endif %}>Selecione um tipo</option>
+                                    <option value="prompt" {% if valores.tipo == 'prompt' %}selected{% endif %}>Prompt</option>
+                                    <option value="sistema" {% if valores.tipo == 'sistema' %}selected{% endif %}>Sistema</option>
+                                    <option value="user" {% if valores.tipo == 'user' %}selected{% endif %}>Usuário</option>
+                                    <option value="personalizado" {% if valores.tipo == 'personalizado' %}selected{% endif %}>Personalizado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="categoria" class="form-label">Categoria</label>
+                                <select class="form-select" id="categoria" name="categoria">
+                                    <option value="" {% if not valores.categoria %}selected disabled{% endif %}>Selecione uma categoria</option>
+                                    {% for categoria in categorias %}
+                                    <option value="{{ categoria }}" {% if valores.categoria == categoria %}selected{% endif %}>{{ categoria|title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="2">{{ valores.descricao|default('') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-file-code me-2"></i>Conteúdo do Template</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="prompt_sistema" class="form-label">Prompt de Sistema <small class="text-muted">(Instruções para o modelo)</small></label>
+                            <textarea class="form-control template-editor" id="prompt_sistema" name="prompt_sistema" rows="8" required>{{ valores.prompt_sistema|default('') }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="prompt_usuario" class="form-label">Prompt de Usuário <small class="text-muted">(Suporta marcações como {{texto}}, {{contexto}})</small></label>
+                            <textarea class="form-control template-editor" id="prompt_usuario" name="prompt_usuario" rows="5">{{ valores.prompt_usuario|default('') }}</textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Dicas para criar um bom template:</h6>
+                            <ul class="mb-0">
+                                <li>Use <code>{{texto}}</code> para inserir o texto de entrada do usuário</li>
+                                <li>Use <code>{{contexto}}</code> para inserir contexto específico</li>
+                                <li>Use <code>{{usuario}}</code> para inserir informações do usuário</li>
+                                <li>Templates de sistema devem definir claramente o papel e limitações do agente</li>
+                                <li>Templates de prompt devem ser específicos quanto ao formato de saída desejado</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-sliders-h me-2"></i>Opções Avançadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="publico" name="publico" {% if valores.configuracoes and valores.configuracoes.publico %}checked{% endif %}>
+                                    <label class="form-check-label" for="publico">Disponibilizar para todos os usuários</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="versionar" name="versionar" {% if valores.configuracoes and valores.configuracoes.versionar %}checked{% endif %}>
+                                    <label class="form-check-label" for="versionar">Manter histórico de versões</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="modelo_recomendado" class="form-label">Modelo Recomendado</label>
+                                <select class="form-select" id="modelo_recomendado" name="modelo_recomendado">
+                                    <option value="" {% if not valores.configuracoes or not valores.configuracoes.modelo_recomendado %}selected{% endif %}>Qualquer modelo</option>
+                                    <option value="gpt-4o" {% if valores.configuracoes and valores.configuracoes.modelo_recomendado == 'gpt-4o' %}selected{% endif %}>OpenAI GPT-4o</option>
+                                    <option value="claude-sonnet-4-20250514" {% if valores.configuracoes and valores.configuracoes.modelo_recomendado == 'claude-sonnet-4-20250514' %}selected{% endif %}>Anthropic Claude 3.5 Sonnet</option>
+                                    <option value="deepseek-chat" {% if valores.configuracoes and valores.configuracoes.modelo_recomendado == 'deepseek-chat' %}selected{% endif %}>DeepSeek Chat</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tags" class="form-label">Tags (separadas por vírgula)</label>
+                                <input type="text" class="form-control" id="tags" name="tags" value="{{ valores.tags|default('') }}" placeholder="Ex: contrato, revisão, jurídico">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Salvar Template
+                        </button>
+                        <button type="button" id="btn-test" class="btn btn-outline-info ms-2">
+                            <i class="fas fa-vial me-1"></i> Testar Template
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-undo me-1"></i> Limpar Campos
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal de Teste do Template -->
+    <div class="modal fade" id="testModal" tabindex="-1" aria-labelledby="testModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="testModalLabel">Testar Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="test-input" class="form-label">Texto de Entrada ({input})</label>
+                        <textarea class="form-control" id="test-input" rows="4" placeholder="Digite um texto para testar o template..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="test-context" class="form-label">Contexto ({context})</label>
+                        <textarea class="form-control" id="test-context" rows="2" placeholder="Contexto adicional..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resultado:</label>
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Visualização do Template Processado</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="test-result" class="p-3 bg-light rounded">
+                                    <div class="placeholder-glow">
+                                        <p class="placeholder col-7"></p>
+                                        <p class="placeholder col-4"></p>
+                                        <p class="placeholder col-8"></p>
+                                        <p class="placeholder col-12"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="btn-apply-test">
+                        <i class="fas fa-play me-1"></i> Processar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicialização do modal de teste
+        const testModal = document.getElementById('testModal');
+        
+        // Abrir modal de teste
+        document.getElementById('btn-test').addEventListener('click', function(e) {
+            e.preventDefault();
+            new bootstrap.Modal(testModal).show();
+        });
+        
+        // Processar teste do template
+        document.getElementById('btn-apply-test').addEventListener('click', function() {
+            const templateContent = document.getElementById('template_content').value;
+            const testInput = document.getElementById('test-input').value;
+            const testContext = document.getElementById('test-context').value;
+            
+            if (!templateContent) {
+                alert('Por favor, preencha o conteúdo do template primeiro.');
+                return;
+            }
+            
+            // Processamento simples de template para demonstração
+            let result = templateContent
+                .replace(/{input}/g, testInput || '[Entrada do usuário]')
+                .replace(/{context}/g, testContext || '[Contexto]')
+                .replace(/{user_info}/g, 'Usuário: Admin');
+            
+            // Exibir resultado
+            document.getElementById('test-result').innerHTML = `<pre>${result}</pre>`;
+        });
+    });
+</script>
+{% endblock %}

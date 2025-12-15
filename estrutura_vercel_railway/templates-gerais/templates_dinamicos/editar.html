@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Template: {{ template_data.nome }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="background: #2c3e50;">
+    <!-- Header -->
+    <div class="bg-warning text-dark p-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('templates_dinamicos_index') }}" class="btn btn-outline-dark me-3" title="Voltar aos templates">
+                <i class="fas fa-arrow-left"></i>
+                <span class="d-none d-sm-inline ms-1">Templates</span>
+            </a>
+            <i class="fas fa-edit me-2"></i>
+            <h4 class="mb-0">Editar Template: {{ template_data.nome }}</h4>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success" onclick="salvarTemplate()">
+                <i class="fas fa-save me-1"></i> Salvar Alterações
+            </button>
+            <button type="button" class="btn-close" onclick="window.history.back()"></button>
+        </div>
+    </div>
+
+    <div class="row g-0" style="height: calc(100vh - 80px);">
+        <!-- Painel Esquerdo - Propriedades do Template -->
+        <div class="col-md-3 bg-secondary text-white p-4" style="height: 100%; overflow-y: auto;">
+            <h5 class="text-white mb-3">
+                <i class="fas fa-cog me-2"></i>
+                Propriedades
+            </h5>
+            
+            <form id="propriedadesForm">
+                <div class="mb-3">
+                    <label class="form-label text-white">Nome do Template</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" 
+                           id="nomeTemplate" value="{{ template_data.nome }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Descrição</label>
+                    <textarea class="form-control bg-dark text-white border-secondary" 
+                              id="descricaoTemplate" rows="3" required>{{ template_data.descricao }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Ícone (FontAwesome)</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" 
+                           id="iconeTemplate" value="{{ template_data.icone }}" 
+                           placeholder="fas fa-file-alt">
+                </div>
+
+                <hr class="border-light my-4">
+
+                <h6 class="text-white mb-2">
+                    <i class="fas fa-tags me-1"></i>
+                    Campos ({{ template_data.campos|length }})
+                </h6>
+
+                <div id="camposList" class="mb-3">
+                    {% for campo in template_data.campos %}
+                    <div class="campo-item bg-dark p-2 rounded mb-2 border border-secondary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-white fw-bold">{{ campo.label }}</small>
+                            <button type="button" class="btn btn-sm btn-danger" 
+                                    onclick="removerCampo('{{ campo.name }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">
+                            <code class="text-warning">{{ '{{' + campo.name + '}}' }}</code>
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button type="button" class="btn btn-primary w-100" onclick="adicionarCampo()">
+                    <i class="fas fa-plus me-1"></i> Adicionar Campo
+                </button>
+            </form>
+        </div>
+
+        <!-- Painel Central - Editor de Conteúdo -->
+        <div class="col-md-6 bg-white p-4" style="height: 100%; overflow-y: auto;">
+            <div class="mb-3">
+                <h5>
+                    <i class="fas fa-code me-2"></i>
+                    Editor de Conteúdo HTML
+                </h5>
+                <p class="text-muted small">
+                    Use <code>{{ '{{nome_do_campo}}' }}</code> para inserir campos personalizáveis
+                </p>
+            </div>
+
+            <textarea id="editorConteudo" class="form-control font-monospace" 
+                      rows="30" style="min-height: 600px;">{{ template_data.conteudo }}</textarea>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-sm btn-info" onclick="inserirCampoNoEditor()">
+                    <i class="fas fa-braces me-1"></i> Inserir Campo
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="formatarHTML()">
+                    <i class="fas fa-code me-1"></i> Formatar HTML
+                </button>
+            </div>
+        </div>
+
+        <!-- Painel Direito - Preview -->
+        <div class="col-md-3 bg-light p-4" style="height: 100%; overflow-y: auto;">
+            <h5 class="mb-3">
+                <i class="fas fa-eye me-2"></i>
+                Preview
+            </h5>
+            
+            <div id="preview" class="border rounded p-3 bg-white" style="min-height: 400px;">
+                <p class="text-muted text-center">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Carregando preview...
+                </p>
+            </div>
+
+            <button type="button" class="btn btn-sm btn-outline-primary w-100 mt-3" 
+                    onclick="atualizarPreview()">
+                <i class="fas fa-sync me-1"></i> Atualizar Preview
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar Campo -->
+<div class="modal fade" id="modalAdicionarCampo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar Novo Campo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNovoCampo">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Campo</label>
+                        <input type="text" class="form-control" id="novoCampoNome" 
+                               placeholder="Ex: nome_cliente" required>
+                        <small class="text-muted">Apenas letras minúsculas e underline</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Label</label>
+                        <input type="text" class="form-control" id="novoCampoLabel" 
+                               placeholder="Ex: Nome do Cliente" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Campo</label>
+                        <select class="form-select" id="novoCampoTipo">
+                            <option value="text">Texto</option>
+                            <option value="textarea">Texto Longo</option>
+                            <option value="date">Data</option>
+                            <option value="email">Email</option>
+                            <option value="number">Número</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Placeholder</label>
+                        <input type="text" class="form-control" id="novoCampoPlaceholder" 
+                               placeholder="Ex: Digite o nome completo">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="novoCampoRequired">
+                        <label class="form-check-label" for="novoCampoRequired">
+                            Campo obrigatório
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarNovoCampo()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let campos = {{ template_data.campos|tojson }};
+
+function adicionarCampo() {
+    const modal = new bootstrap.Modal(document.getElementById('modalAdicionarCampo'));
+    modal.show();
+}
+
+function confirmarNovoCampo() {
+    const nome = document.getElementById('novoCampoNome').value;
+    const label = document.getElementById('novoCampoLabel').value;
+    const tipo = document.getElementById('novoCampoTipo').value;
+    const placeholder = document.getElementById('novoCampoPlaceholder').value;
+    const required = document.getElementById('novoCampoRequired').checked;
+
+    if (!nome || !label) {
+        alert('Por favor, preencha todos os campos obrigatórios');
+        return;
+    }
+
+    const novoCampo = {
+        name: nome,
+        label: label,
+        type: tipo,
+        placeholder: placeholder,
+        required: required
+    };
+
+    campos.push(novoCampo);
+    renderizarCampos();
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalAdicionarCampo'));
+    modal.hide();
+    
+    document.getElementById('formNovoCampo').reset();
+}
+
+function removerCampo(nome) {
+    if (confirm(`Remover o campo "${nome}"?`)) {
+        campos = campos.filter(c => c.name !== nome);
+        renderizarCampos();
+    }
+}
+
+{% raw %}
+function renderizarCampos() {
+    const lista = document.getElementById('camposList');
+    lista.innerHTML = campos.map(campo => `
+        <div class="campo-item bg-dark p-2 rounded mb-2 border border-secondary">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-white fw-bold">${campo.label}</small>
+                <button type="button" class="btn btn-sm btn-danger" 
+                        onclick="removerCampo('${campo.name}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <small class="text-muted">
+                <code class="text-warning">{{${campo.name}}}</code>
+            </small>
+        </div>
+    `).join('');
+}
+{% endraw %}
+
+function atualizarPreview() {
+    const conteudo = document.getElementById('editorConteudo').value;
+    const preview = document.getElementById('preview');
+    preview.innerHTML = conteudo;
+}
+
+{% raw %}
+function inserirCampoNoEditor() {
+    if (campos.length === 0) {
+        alert('Adicione campos primeiro');
+        return;
+    }
+
+    const campo = campos[0].name;
+    const editor = document.getElementById('editorConteudo');
+    const pos = editor.selectionStart;
+    const text = editor.value;
+    const placeholder = `{{${campo}}}`;
+    
+    editor.value = text.substring(0, pos) + placeholder + text.substring(pos);
+    editor.focus();
+}
+{% endraw %}
+
+function formatarHTML() {
+    alert('Funcionalidade de formatação HTML será implementada em breve');
+}
+
+async function salvarTemplate() {
+    const dados = {
+        nome: document.getElementById('nomeTemplate').value,
+        descricao: document.getElementById('descricaoTemplate').value,
+        icone: document.getElementById('iconeTemplate').value,
+        campos: campos,
+        conteudo: document.getElementById('editorConteudo').value
+    };
+
+    if (!dados.nome || !dados.descricao || !dados.conteudo) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/templates-dinamicos/{{ template_data.id }}/atualizar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dados)
+        });
+
+        const resultado = await response.json();
+
+        if (resultado.sucesso) {
+            alert('Template salvo com sucesso!');
+            window.location.href = '/templates-dinamicos';
+        } else {
+            alert('Erro ao salvar: ' + resultado.erro);
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao salvar template');
+    }
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => {
+    atualizarPreview();
+});
+</script>
+
+<style>
+.campo-item {
+    transition: all 0.3s ease;
+}
+
+.campo-item:hover {
+    transform: translateX(2px);
+}
+
+#editorConteudo {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+#preview {
+    font-size: 13px;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}

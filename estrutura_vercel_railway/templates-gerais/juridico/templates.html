@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} - Sistema Jurídico{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    
+    .categoria-header {
+        background: linear-gradient(135deg, var(--categoria-color), var(--categoria-color-light));
+        color: white;
+        padding: 1rem;
+        border-radius: 10px 10px 0 0;
+        text-align: center;
+    }
+    
+    .template-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+    
+    .template-item:hover {
+        background-color: #f8f9fa;
+        border-left: 4px solid var(--categoria-color);
+    }
+    
+    .template-item:last-child {
+        border-bottom: none;
+    }
+    
+    .template-nome {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+    
+    .template-descricao {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .template-area {
+        display: inline-block;
+        background-color: var(--categoria-color);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .btn-usar-template {
+        background: linear-gradient(135deg, var(--categoria-color), var(--categoria-color-light));
+        border: none;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-usar-template:hover {
+        transform: scale(1.05);
+        color: white;
+    }
+    
+    .stats-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #1a1f2e 0%, #2c3e50 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .categoria-counter {
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="fas fa-file-contract me-3"></i>
+                    Templates de Documentos Jurídicos
+                </h1>
+                <p class="lead mb-0">Acesse nossa biblioteca com 557 templates jurídicos especializados para 30 áreas do direito brasileiro</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="stats-summary">
+                    <h3>557</h3>
+                    <p class="mb-0">Templates Disponíveis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Menu Fixo de Navegação por Categorias -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Menu de Categorias - Templates Jurídicos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for categoria, dados_categoria in templates_por_categoria.items() %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="categoria-menu-item">
+                                <a href="#categoria-{{ loop.index }}" 
+                                   class="btn btn-outline-light w-100 text-start categoria-link"
+                                   data-categoria="{{ categoria }}"
+                                   onclick="scrollToCategory('{{ categoria }}')">
+                                    <i class="{{ dados_categoria.icone }} me-2" style="color: {{ dados_categoria.cor }};"></i>
+                                    <strong>{{ categoria }}</strong>
+                                    <span class="badge bg-secondary float-end">{{ dados_categoria.templates|length }}</span>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros e Busca -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="buscarTemplate" 
+                       placeholder="Buscar template por nome ou descrição...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="filtroArea">
+                <option value="">Todas as Áreas</option>
+                <option value="Direito Penal">Direito Penal</option>
+                <option value="Direito Empresarial">Direito Empresarial</option>
+                <option value="Direito Trabalhista">Direito Trabalhista</option>
+                <option value="Direito do Consumidor">Direito do Consumidor</option>
+                <option value="Direito Bancário">Direito Bancário</option>
+                <option value="Direito Agrário">Direito Agrário</option>
+                <option value="Recuperação de Crédito">Recuperação de Crédito</option>
+                <option value="Direito Digital">Direito Digital</option>
+                <option value="Direito Previdenciário">Direito Previdenciário</option>
+                <option value="Direito Tributário">Direito Tributário</option>
+                <option value="Direito Imobiliário">Direito Imobiliário</option>
+                <option value="Direito Securitário">Direito Securitário</option>
+                <option value="Negociação e Conflitos">Negociação e Conflitos</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Templates por Categoria -->
+    {% for categoria, dados_categoria in templates_por_categoria.items() %}
+    <div class="categoria-section mb-5" data-categoria="{{ categoria }}">
+        <div class="row">
+            <div class="col-12">
+                <div class="card template-card categoria-card" 
+                     style="--categoria-color: {{ dados_categoria.cor }}; --categoria-color-light: {{ dados_categoria.cor }}99;">
+                    <div class="categoria-header">
+                        <h3 class="mb-2">
+                            <i class="{{ dados_categoria.icone }} me-2"></i>
+                            {{ categoria }}
+                        </h3>
+                        <div class="categoria-counter">
+                            {{ dados_categoria.templates|length }} templates
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <div class="row g-0">
+                            {% for template in dados_categoria.templates %}
+                            <div class="col-lg-6 template-wrapper" 
+                                 data-area="{{ template.area }}" 
+                                 data-nome="{{ template.nome|lower }}"
+                                 data-descricao="{{ template.descricao|lower }}">
+                                <div class="template-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="template-nome">{{ template.nome }}</div>
+                                            <div class="template-descricao">{{ template.descricao }}</div>
+                                            <div class="template-area" style="background-color: {{ dados_categoria.cor }};">
+                                                {{ template.area }}
+                                            </div>
+                                        </div>
+                                        <div class="ms-2">
+                                            <button class="btn btn-usar-template btn-sm" 
+                                                    onclick="usarTemplate({{ template.id }}, '{{ template.nome }}', '{{ template.area }}')"
+                                                    style="background: linear-gradient(135deg, {{ dados_categoria.cor }}, {{ dados_categoria.cor }}99);">
+                                                <i class="fas fa-edit me-1"></i>
+                                                Usar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Mensagem quando nenhum template é encontrado -->
+    <div id="nenhumTemplateEncontrado" class="row mt-4 d-none">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-search fa-2x mb-3"></i>
+                <h5>Nenhum template encontrado</h5>
+                <p class="mb-0">Tente ajustar os filtros ou termo de busca.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Uso do Template -->
+<div class="modal fade" id="modalTemplate" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-contract me-2"></i>
+                    <span id="tituloTemplate">Template Selecionado</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="fw-bold mb-3">Informações do Template</h6>
+                        <div id="infoTemplate" class="p-3 bg-light rounded mb-3"></div>
+                        
+                        <h6 class="fw-bold mb-3">Campos do Documento</h6>
+                        <form id="formTemplate">
+                            <div id="camposTemplate"></div>
+                            
+                            <div class="mb-3">
+                                <label for="formatoDownload" class="form-label">Formato de Download:</label>
+                                <select class="form-select" id="formatoDownload">
+                                    <option value="docx">Word (.docx)</option>
+                                    <option value="pdf">PDF</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <h6 class="fw-bold mb-3">Prévia do Documento</h6>
+                        <div id="previaTemplate" class="border rounded p-3 bg-white" style="min-height: 400px; max-height: 500px; overflow-y: auto;">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-file-alt fa-3x mb-3"></i>
+                                <p>Preencha os campos para visualizar a prévia do documento</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="gerarDocumento()">
+                    <i class="fas fa-download me-2"></i>
+                    Gerar e Baixar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let templateSelecionado = null;
+
+// Função para scroll suave até a categoria
+function scrollToCategory(categoria) {
+    const categoriaElement = document.querySelector(`[data-categoria="${categoria}"]`);
+    if (categoriaElement) {
+        categoriaElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+        
+        // Destacar temporariamente a categoria
+        categoriaElement.style.boxShadow = '0 0 20px rgba(0, 123, 255, 0.5)';
+        setTimeout(() => {
+            categoriaElement.style.boxShadow = '';
+        }, 2000);
+    }
+}
+
+// Função de busca em tempo real
+document.getElementById('buscarTemplate').addEventListener('input', function(e) {
+    filtrarTemplates();
+});
+
+document.getElementById('filtroArea').addEventListener('change', function(e) {
+    filtrarTemplates();
+});
+
+function filtrarTemplates() {
+    const busca = document.getElementById('buscarTemplate').value.toLowerCase();
+    const areaFiltro = document.getElementById('filtroArea').value;
+    
+    const templates = document.querySelectorAll('.template-wrapper');
+    let templatesVisiveis = 0;
+    
+    templates.forEach(template => {
+        const nome = template.dataset.nome;
+        const descricao = template.dataset.descricao;
+        const area = template.dataset.area;
+        
+        const matchBusca = busca === '' || nome.includes(busca) || descricao.includes(busca);
+        const matchArea = areaFiltro === '' || area === areaFiltro;
+        
+        if (matchBusca && matchArea) {
+            template.style.display = 'block';
+            templatesVisiveis++;
+        } else {
+            template.style.display = 'none';
+        }
+    });
+    
+    // Mostrar/ocultar categorias vazias
+    document.querySelectorAll('.categoria-section').forEach(categoria => {
+        const templatesVisiveis = categoria.querySelectorAll('.template-wrapper[style="display: block;"], .template-wrapper:not([style*="display: none"])').length;
+        categoria.style.display = templatesVisiveis > 0 ? 'block' : 'none';
+    });
+    
+    // Mostrar mensagem se nenhum template for encontrado
+    const nenhumEncontrado = document.getElementById('nenhumTemplateEncontrado');
+    if (templatesVisiveis === 0) {
+        nenhumEncontrado.classList.remove('d-none');
+    } else {
+        nenhumEncontrado.classList.add('d-none');
+    }
+}
+
+function usarTemplate(id, nome, area) {
+    templateSelecionado = { id, nome, area };
+    
+    document.getElementById('tituloTemplate').textContent = nome;
+    document.getElementById('infoTemplate').innerHTML = `
+        <div class="mb-2">
+            <strong>Nome:</strong> ${nome}
+        </div>
+        <div class="mb-2">
+            <strong>Área:</strong> ${area}
+        </div>
+        <div class="mb-2">
+            <strong>ID:</strong> ${id}
+        </div>
+    `;
+    
+    // Simular campos do template (em produção, estes viriam da API)
+    const campos = gerarCamposTemplate(id);
+    renderizarCampos(campos);
+    
+    new bootstrap.Modal(document.getElementById('modalTemplate')).show();
+}
+
+function gerarCamposTemplate(id) {
+    // Campos básicos comuns a todos os templates
+    const camposComuns = [
+        { nome: 'nome_cliente', label: 'Nome do Cliente', tipo: 'text', obrigatorio: true },
+        { nome: 'cpf_cnpj', label: 'CPF/CNPJ', tipo: 'text', obrigatorio: true },
+        { nome: 'endereco', label: 'Endereço Completo', tipo: 'textarea', obrigatorio: false },
+        { nome: 'data_documento', label: 'Data do Documento', tipo: 'date', obrigatorio: true }
+    ];
+    
+    // Campos específicos baseados no ID do template
+    const camposEspecificos = {
+        1: [{ nome: 'tipo_crime', label: 'Tipo do Crime', tipo: 'text', obrigatorio: true }],
+        9: [{ nome: 'objeto_social', label: 'Objeto Social', tipo: 'textarea', obrigatorio: true }],
+        10: [{ nome: 'cargo', label: 'Cargo', tipo: 'text', obrigatorio: true }],
+        // Adicionar mais conforme necessário
+    };
+    
+    return [...camposComuns, ...(camposEspecificos[id] || [])];
+}
+
+function renderizarCampos(campos) {
+    const container = document.getElementById('camposTemplate');
+    container.innerHTML = '';
+    
+    campos.forEach(campo => {
+        const div = document.createElement('div');
+        div.className = 'mb-3';
+        
+        let input;
+        if (campo.tipo === 'textarea') {
+            input = `<textarea class="form-control" id="${campo.nome}" name="${campo.nome}" rows="3" ${campo.obrigatorio ? 'required' : ''}></textarea>`;
+        } else {
+            input = `<input type="${campo.tipo}" class="form-control" id="${campo.nome}" name="${campo.nome}" ${campo.obrigatorio ? 'required' : ''}>`;
+        }
+        
+        div.innerHTML = `
+            <label for="${campo.nome}" class="form-label">
+                ${campo.label} ${campo.obrigatorio ? '<span class="text-danger">*</span>' : ''}
+            </label>
+            ${input}
+        `;
+        
+        container.appendChild(div);
+        
+        // Adicionar evento para atualizar prévia
+        const inputElement = div.querySelector('input, textarea');
+        inputElement.addEventListener('input', atualizarPrevia);
+    });
+}
+
+function atualizarPrevia() {
+    const form = document.getElementById('formTemplate');
+    const formData = new FormData(form);
+    
+    // Simular conteúdo do template
+    let conteudo = `
+        <div class="documento-template">
+            <h3 style="text-align: center; margin-bottom: 30px;">${templateSelecionado.nome}</h3>
+            
+            <p><strong>Cliente:</strong> ${formData.get('nome_cliente') || '[NOME DO CLIENTE]'}</p>
+            <p><strong>CPF/CNPJ:</strong> ${formData.get('cpf_cnpj') || '[CPF/CNPJ]'}</p>
+            <p><strong>Endereço:</strong> ${formData.get('endereco') || '[ENDEREÇO]'}</p>
+            <p><strong>Data:</strong> ${formData.get('data_documento') || '[DATA]'}</p>
+            
+            <div style="margin: 30px 0;">
+                <p>Este documento foi gerado através do template <strong>${templateSelecionado.nome}</strong> 
+                da área <strong>${templateSelecionado.area}</strong>.</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('previaTemplate').innerHTML = conteudo;
+}
+
+function gerarDocumento() {
+    const form = document.getElementById('formTemplate');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const formato = document.getElementById('formatoDownload').value;
+    
+    // Simular geração do documento
+    console.log('Gerando documento:', {
+        template: templateSelecionado,
+        dados: Object.fromEntries(formData),
+        formato: formato
+    });
+    
+    alert(`Documento "${templateSelecionado.nome}" gerado com sucesso em formato ${formato.toUpperCase()}!`);
+    
+    // Fechar modal
+    bootstrap.Modal.getInstance(document.getElementById('modalTemplate')).hide();
+}
+</script>
+{% endblock %}

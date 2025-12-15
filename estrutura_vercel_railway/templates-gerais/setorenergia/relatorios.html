@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Relatórios Gerenciais</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .report-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #0089CF;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .report-card h4 {
+            color: #ffffff;
+        }
+        
+        .report-card p {
+            color: #ffffff !important;
+            opacity: 0.9;
+        }
+        
+        .report-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 137, 207, 0.3);
+        }
+        
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #0089CF 0%, #00539F 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0089CF 0%, #00539F 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 137, 207, 0.4);
+        }
+        
+        .btn-secondary {
+            background-color: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            color: #ffffff;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4a4a4a;
+            color: #ffffff;
+        }
+        
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .report-preview {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+        
+        .report-preview.active {
+            display: block;
+        }
+        
+        .report-header {
+            border-bottom: 2px solid #0089CF;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .report-section {
+            margin-bottom: 2rem;
+        }
+        
+        .report-table {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .report-table th {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #0089CF;
+        }
+        
+        .report-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .report-table tr:hover {
+            background-color: #333333;
+        }
+        
+        .kpi-box {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            border-left: 4px solid #0089CF;
+        }
+        
+        .kpi-box h3 {
+            color: #000000;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .kpi-box p {
+            color: #000000;
+            margin: 0.5rem 0 0 0;
+            font-weight: 500;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000000;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        @media print {
+            .sidebar, .filter-card, .btn-primary, .btn-secondary {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .report-preview {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item active">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h2 class="mb-0"><i class="fas fa-file-alt me-2"></i>Relatórios Gerenciais</h2>
+            <p class="mb-0 mt-2" style="opacity: 0.9;">Selecione o tipo de relatório e configure os filtros</p>
+        </div>
+
+        <!-- Filtros Globais -->
+        <div class="filter-card">
+            <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filtros Globais</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Período Inicial</label>
+                    <input type="date" class="form-control" id="dataInicio" value="2024-01-01">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Período Final</label>
+                    <input type="date" class="form-control" id="dataFim" value="2025-12-31">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Comarca</label>
+                    <select class="form-select" id="comarcaFiltro">
+                        <option value="todas">Todas as Comarcas</option>
+                        <option value="porto-alegre">Porto Alegre</option>
+                        <option value="caxias-do-sul">Caxias do Sul</option>
+                        <option value="pelotas">Pelotas</option>
+                        <option value="santa-maria">Santa Maria</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Processo</label>
+                    <select class="form-select" id="tipoProcesso">
+                        <option value="todos">Todos os Tipos</option>
+                        <option value="danos-materiais">Danos Materiais</option>
+                        <option value="danos-morais">Danos Morais</option>
+                        <option value="lucros-cessantes">Lucros Cessantes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards de Relatórios -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('executivo')">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h4>Relatório Executivo</h4>
+                    <p class="mb-0">Visão geral dos processos, KPIs principais e análise de risco financeiro</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('varas')">
+                    <div class="report-icon">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                    <h4>Análise por Vara</h4>
+                    <p class="mb-0">Performance detalhada por vara judicial, taxa de sucesso e valores médios</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('financeiro')">
+                    <div class="report-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h4>Risco Financeiro</h4>
+                    <p class="mb-0">Análise de exposição financeira, provisões e estimativas de condenação</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('climatico')">
+                    <div class="report-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <h4>Correlação Climática</h4>
+                    <p class="mb-0">Processos correlacionados com eventos climáticos extremos</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('juizes')">
+                    <div class="report-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4>Performance de Advogados</h4>
+                    <p class="mb-0">Análise de performance dos advogados responsáveis por processos</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="report-card" onclick="gerarRelatorio('temporal')">
+                    <div class="report-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h4>Análise Temporal</h4>
+                    <p class="mb-0">Evolução dos processos ao longo do tempo e sazonalidade</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview do Relatório -->
+        <div class="report-preview" id="reportPreview">
+            <div class="report-header">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3 id="reportTitle">Relatório Executivo</h3>
+                        <p class="text-muted mb-0" id="reportSubtitle">Selecione um relatório para visualizar</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-primary me-2" onclick="exportarExcel()" id="btnExcel">
+                            <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                        </button>
+                        <button class="btn btn-primary me-2" onclick="exportarPDF()">
+                            <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="fecharPreview()">
+                            <i class="fas fa-times me-2"></i>Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reportContent">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Templates Expandidos -->
+    <script src="/static/js/cpfl_relatorios_templates.js"></script>
+    
+    <script>
+        let currentReportType = null;
+        
+        function exportarExcel() {
+            if (!currentReportType) {
+                alert('Selecione um relatório primeiro');
+                return;
+            }
+            
+            const urlMap = {
+                'executivo': '/setorenergia/api/export/relatorio-executivo/excel',
+                'varas': '/setorenergia/api/export/relatorio-varas/excel',
+                'financeiro': '/setorenergia/api/export/relatorio-financeiro/excel',
+                'juizes': '/setorenergia/api/export/relatorio-juizes/excel',
+                'climatico': '/setorenergia/api/export/relatorio-executivo/excel',
+                'temporal': '/setorenergia/api/export/relatorio-executivo/excel'
+            };
+            
+            const url = urlMap[currentReportType];
+            if (url) {
+                window.location.href = url;
+            } else {
+                alert('Exportação não disponível para este tipo de relatório');
+            }
+        }
+        
+        function gerarRelatorio(tipo) {
+            currentReportType = tipo;
+            const preview = document.getElementById('reportPreview');
+            const content = document.getElementById('reportContent');
+            const title = document.getElementById('reportTitle');
+            const subtitle = document.getElementById('reportSubtitle');
+            
+            const dataInicio = document.getElementById('dataInicio').value;
+            const dataFim = document.getElementById('dataFim').value;
+            const comarca = document.getElementById('comarcaFiltro').value;
+            
+            const dataAtual = new Date().toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            subtitle.innerHTML = `Gerado em: ${dataAtual} | Período: ${new Date(dataInicio).toLocaleDateString('pt-BR')} a ${new Date(dataFim).toLocaleDateString('pt-BR')}`;
+            
+            switch(tipo) {
+                case 'executivo':
+                    title.textContent = 'Relatório Executivo';
+                    content.innerHTML = window.gerarRelatorioExecutivoExpandido ? window.gerarRelatorioExecutivoExpandido() : gerarRelatorioExecutivo();
+                    break;
+                case 'varas':
+                    title.textContent = 'Análise por Vara Judicial';
+                    content.innerHTML = gerarRelatorioVaras();
+                    break;
+                case 'financeiro':
+                    title.textContent = 'Análise de Risco Financeiro';
+                    content.innerHTML = gerarRelatorioFinanceiro();
+                    break;
+                case 'climatico':
+                    title.textContent = 'Correlação com Eventos Climáticos';
+                    content.innerHTML = gerarRelatorioClimatico();
+                    break;
+                case 'juizes':
+                    title.textContent = 'Performance de Advogados';
+                    content.innerHTML = gerarRelatorioJuizes();
+                    break;
+                case 'temporal':
+                    title.textContent = 'Análise Temporal de Processos';
+                    content.innerHTML = gerarRelatorioTemporal();
+                    break;
+            }
+            
+            preview.classList.add('active');
+            window.scrollTo({ top: preview.offsetTop - 100, behavior: 'smooth' });
+        }
+        
+        function gerarRelatorioExecutivo() {
+            return `
+                <div class="report-section">
+                    <h4>KPIs Principais</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="kpi-box">
+                                <h3>3.216</h3>
+                                <p>Total de Processos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-box">
+                                <h3>R$ 119,4M</h3>
+                                <p>Risco Total</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-box">
+                                <h3>39,67%</h3>
+                                <p>Taxa de Sucesso</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-box">
+                                <h3>R$ 37,1K</h3>
+                                <p>Valor Médio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Distribuição por Tipo de Processo</h4>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Quantidade</th>
+                                <th>Risco Total</th>
+                                <th>Taxa de Sucesso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Danos Materiais</td>
+                                <td>1.287</td>
+                                <td>R$ 48,3M</td>
+                                <td><span class="badge-success">42,5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Danos Morais</td>
+                                <td>1.094</td>
+                                <td>R$ 38,7M</td>
+                                <td><span class="badge-warning">35,2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Lucros Cessantes</td>
+                                <td>835</td>
+                                <td>R$ 32,4M</td>
+                                <td><span class="badge-danger">28,9%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Top 5 Comarcas com Maior Risco</h4>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Comarca</th>
+                                <th>Processos</th>
+                                <th>Risco Total</th>
+                                <th>Taxa de Sucesso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Porto Alegre</td>
+                                <td>687</td>
+                                <td>R$ 28,4M</td>
+                                <td><span class="badge-warning">38,2%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Caxias do Sul</td>
+                                <td>423</td>
+                                <td>R$ 16,8M</td>
+                                <td><span class="badge-success">41,5%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Pelotas</td>
+                                <td>298</td>
+                                <td>R$ 11,2M</td>
+                                <td><span class="badge-warning">36,7%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Santa Maria</td>
+                                <td>254</td>
+                                <td>R$ 9,8M</td>
+                                <td><span class="badge-success">43,1%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Santa Bárbara do Sul</td>
+                                <td>187</td>
+                                <td>R$ 7,3M</td>
+                                <td><span class="badge-danger">32,4%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function gerarRelatorioVaras() {
+            return `
+                <div class="report-section">
+                    <h4>Performance por Vara Judicial</h4>
+                    <p class="text-muted">Análise detalhada de 105 varas judiciais do Rio Grande do Sul</p>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Vara</th>
+                                <th>Comarca</th>
+                                <th>Processos</th>
+                                <th>Taxa de Sucesso</th>
+                                <th>Valor Médio</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1ª Vara Cível</td>
+                                <td>Porto Alegre</td>
+                                <td>156</td>
+                                <td><span class="badge-success">48,7%</span></td>
+                                <td>R$ 42,3K</td>
+                                <td><span class="badge-success">Favorável</span></td>
+                            </tr>
+                            <tr>
+                                <td>2ª Vara Cível</td>
+                                <td>Caxias do Sul</td>
+                                <td>128</td>
+                                <td><span class="badge-success">45,2%</span></td>
+                                <td>R$ 38,9K</td>
+                                <td><span class="badge-success">Favorável</span></td>
+                            </tr>
+                            <tr>
+                                <td>1ª Vara Cível</td>
+                                <td>Pelotas</td>
+                                <td>94</td>
+                                <td><span class="badge-warning">36,5%</span></td>
+                                <td>R$ 35,1K</td>
+                                <td><span class="badge-warning">Neutro</span></td>
+                            </tr>
+                            <tr>
+                                <td>3ª Vara Cível</td>
+                                <td>Santa Maria</td>
+                                <td>87</td>
+                                <td><span class="badge-danger">28,3%</span></td>
+                                <td>R$ 31,7K</td>
+                                <td><span class="badge-danger">Desfavorável</span></td>
+                            </tr>
+                            <tr>
+                                <td>Vara Única</td>
+                                <td>Santa Bárbara do Sul</td>
+                                <td>67</td>
+                                <td><span class="badge-warning">33,8%</span></td>
+                                <td>R$ 29,4K</td>
+                                <td><span class="badge-warning">Neutro</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Estatísticas Gerais</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>105</h3>
+                                <p>Varas Analisadas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>39,67%</h3>
+                                <p>Taxa Média de Sucesso</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 37,1K</h3>
+                                <p>Valor Médio por Processo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function gerarRelatorioFinanceiro() {
+            return `
+                <div class="report-section">
+                    <h4>Exposição Financeira Total</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 119,4M</h3>
+                                <p>Risco Total</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 47,4M</h3>
+                                <p>Provisão Estimada</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 72,0M</h3>
+                                <p>Risco Potencial</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Distribuição de Risco por Faixa de Valor</h4>
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Faixa de Valor</th>
+                                <th>Quantidade</th>
+                                <th>% Total</th>
+                                <th>Valor Total</th>
+                                <th>Classificação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Até R$ 10.000</td>
+                                <td>834</td>
+                                <td>25,9%</td>
+                                <td>R$ 5,2M</td>
+                                <td><span class="badge-success">Baixo Risco</span></td>
+                            </tr>
+                            <tr>
+                                <td>R$ 10.001 - R$ 50.000</td>
+                                <td>1.547</td>
+                                <td>48,1%</td>
+                                <td>R$ 42,8M</td>
+                                <td><span class="badge-warning">Médio Risco</span></td>
+                            </tr>
+                            <tr>
+                                <td>R$ 50.001 - R$ 100.000</td>
+                                <td>612</td>
+                                <td>19,0%</td>
+                                <td>R$ 41,3M</td>
+                                <td><span class="badge-danger">Alto Risco</span></td>
+                            </tr>
+                            <tr>
+                                <td>Acima de R$ 100.000</td>
+                                <td>223</td>
+                                <td>6,9%</td>
+                                <td>R$ 30,1M</td>
+                                <td><span class="badge-danger">Risco Crítico</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function gerarRelatorioClimatico() {
+            return `
+                <div class="report-section">
+                    <h4>Eventos Climáticos Extremos Identificados</h4>
+                    <p class="text-muted">Correlação entre processos judiciais e fenômenos meteorológicos</p>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Evento</th>
+                                <th>Data</th>
+                                <th>Comarca</th>
+                                <th>Processos Associados</th>
+                                <th>Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Temporal Severo</td>
+                                <td>15/01/2024</td>
+                                <td>Porto Alegre</td>
+                                <td>45</td>
+                                <td>R$ 2,8M</td>
+                            </tr>
+                            <tr>
+                                <td>Vendaval</td>
+                                <td>03/03/2024</td>
+                                <td>Caxias do Sul</td>
+                                <td>32</td>
+                                <td>R$ 1,9M</td>
+                            </tr>
+                            <tr>
+                                <td>Chuva Intensa</td>
+                                <td>22/05/2024</td>
+                                <td>Santa Maria</td>
+                                <td>28</td>
+                                <td>R$ 1,5M</td>
+                            </tr>
+                            <tr>
+                                <td>Granizo</td>
+                                <td>10/09/2024</td>
+                                <td>Pelotas</td>
+                                <td>23</td>
+                                <td>R$ 1,2M</td>
+                            </tr>
+                            <tr>
+                                <td>Geada Severa</td>
+                                <td>18/07/2024</td>
+                                <td>Vacaria</td>
+                                <td>15</td>
+                                <td>R$ 0,8M</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Estatísticas de Correlação Climática</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>143</h3>
+                                <p>Processos Correlacionados</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 8,2M</h3>
+                                <p>Valor Total</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>4,4%</h3>
+                                <p>% do Total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function gerarRelatorioJuizes() {
+            return `
+                <div class="report-section">
+                    <h4>Ranking de Performance de Advogados</h4>
+                    <p class="text-muted">Baseado em taxa de sucesso e histórico de decisões dos processos</p>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Posição</th>
+                                <th>Advogado</th>
+                                <th>Escritório</th>
+                                <th>Processos</th>
+                                <th>Taxa de Sucesso</th>
+                                <th>Classificação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1º</td>
+                                <td>Dr. Fulano Teste Silva</td>
+                                <td>Escritório Exemplo & Associados</td>
+                                <td>2.847</td>
+                                <td><span class="badge-success">68,3%</span></td>
+                                <td><span class="badge-success">Excelente</span></td>
+                            </tr>
+                            <tr>
+                                <td>2º</td>
+                                <td>Dra. Ciclana Demo Santos</td>
+                                <td>Advocacia Sample Ltda</td>
+                                <td>198</td>
+                                <td><span class="badge-success">62,1%</span></td>
+                                <td><span class="badge-success">Muito Bom</span></td>
+                            </tr>
+                            <tr>
+                                <td>3º</td>
+                                <td>Dr. Beltrano Modelo Costa</td>
+                                <td>Fictício Advogados</td>
+                                <td>124</td>
+                                <td><span class="badge-success">58,7%</span></td>
+                                <td><span class="badge-success">Muito Bom</span></td>
+                            </tr>
+                            <tr>
+                                <td>4º</td>
+                                <td>Dra. Simulada Amostra Lima</td>
+                                <td>Placeholder Consultoria Jurídica</td>
+                                <td>87</td>
+                                <td><span class="badge-warning">52,4%</span></td>
+                                <td><span class="badge-warning">Bom</span></td>
+                            </tr>
+                            <tr>
+                                <td>5º</td>
+                                <td>Dr. João Fictício Exemplo</td>
+                                <td>Demo & Teste Advocacia</td>
+                                <td>63</td>
+                                <td><span class="badge-warning">47,6%</span></td>
+                                <td><span class="badge-warning">Regular</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-4">
+                        <h5>Indicadores de Performance</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="kpi-box">
+                                    <h4 style="color: #000000 !important;">3.319</h4>
+                                    <p style="color: #000000 !important;">Total de Processos Atribuídos</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="kpi-box">
+                                    <h4 style="color: #000000 !important;">61,8%</h4>
+                                    <p style="color: #000000 !important;">Taxa Média de Sucesso</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="kpi-box">
+                                    <h4 style="color: #000000 !important;">R$ 119,4M</h4>
+                                    <p style="color: #000000 !important;">Valor Total Gerenciado</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function gerarRelatorioTemporal() {
+            return `
+                <div class="report-section">
+                    <h4>Evolução Mensal de Processos</h4>
+                    <p class="text-muted">Distribuição temporal e análise de sazonalidade</p>
+                    
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Mês/Ano</th>
+                                <th>Novos Processos</th>
+                                <th>Sentenças</th>
+                                <th>Taxa de Sucesso</th>
+                                <th>Valor Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Janeiro/2024</td>
+                                <td>287</td>
+                                <td>145</td>
+                                <td><span class="badge-success">41,2%</span></td>
+                                <td>R$ 38,5K</td>
+                            </tr>
+                            <tr>
+                                <td>Fevereiro/2024</td>
+                                <td>245</td>
+                                <td>168</td>
+                                <td><span class="badge-warning">37,8%</span></td>
+                                <td>R$ 36,2K</td>
+                            </tr>
+                            <tr>
+                                <td>Março/2024</td>
+                                <td>312</td>
+                                <td>189</td>
+                                <td><span class="badge-success">42,5%</span></td>
+                                <td>R$ 39,8K</td>
+                            </tr>
+                            <tr>
+                                <td>Abril/2024</td>
+                                <td>298</td>
+                                <td>156</td>
+                                <td><span class="badge-warning">38,9%</span></td>
+                                <td>R$ 37,3K</td>
+                            </tr>
+                            <tr>
+                                <td>Maio/2024</td>
+                                <td>334</td>
+                                <td>203</td>
+                                <td><span class="badge-success">43,7%</span></td>
+                                <td>R$ 40,1K</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <h4>Insights de Sazonalidade</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>Maio</h3>
+                                <p>Mês com Mais Processos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>43,7%</h3>
+                                <p>Melhor Taxa de Sucesso</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="kpi-box">
+                                <h3>R$ 40,1K</h3>
+                                <p>Maior Valor Médio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function exportarPDF() {
+            window.print();
+        }
+        
+        function fecharPreview() {
+            document.getElementById('reportPreview').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

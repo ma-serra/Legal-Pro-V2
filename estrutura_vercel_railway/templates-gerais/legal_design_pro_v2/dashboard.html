@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Design Pro V2 - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #2d2d2d;
+            --accent-color: #4a90e2;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --card-bg: #2d2d2d;
+            --hover-bg: #3a3a3a;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--secondary-color);
+            border-bottom: 2px solid var(--accent-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #404040;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            color: var(--text-primary);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+        }
+
+        .area-card {
+            height: 250px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .area-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .area-card:hover::before {
+            opacity: 1;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--accent-color), #357abd);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .area-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, rgba(74,144,226,0.1), rgba(53,122,189,0.1));
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .template-preview {
+            background: var(--hover-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: background 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .template-preview:hover {
+            background: #454545;
+        }
+
+        .template-preview .card-title {
+            color: var(--text-primary) !important;
+        }
+
+        .template-preview .card-text {
+            color: var(--text-secondary) !important;
+        }
+
+        .template-preview .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        .badge-custom {
+            background: var(--accent-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background: #1a1a1a;
+            color: #ffffff;
+            padding: 20px 0;
+            border-top: 1px solid #3a4a5a;
+            margin-top: auto;
+        }
+        
+        .footer-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('legal_design_pro_v2.dashboard') }}">
+                <i class="bi bi-scales"></i> Sistema Ars Data Science de Design Pro
+            </a>
+            <div class="navbar-nav me-auto">
+                <!-- Logo ARS -->
+                <a class="nav-link px-2 py-2" href="/home">
+                    <img loading="lazy" src="/static/ars-logo.png" alt="ARS Data Science" style="width: 40px; height: 40px; border-radius: 8px;">
+                </a>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-house"></i> Home
+                </a>
+                <a class="nav-link" href="{{ url_for('legal_design_pro_v2.templates') }}">
+                    <i class="bi bi-collection"></i> Templates
+                </a>
+                <a class="nav-link" href="{{ url_for('legal_design_pro_v2.editor') }}">
+                    <i class="bi bi-pencil-square"></i> Editor
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="display-4 mb-4">
+                <i class="bi bi-star-fill text-warning"></i> Design Pro V2
+            </h1>
+            <p class="lead mb-4">
+                Sistema profissional completo com 557 templates autênticos distribuídos em 18 áreas especializadas do direito
+            </p>
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span>Templates Autênticos</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span>18 Áreas Especializadas</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span>Editor Profissional</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Estatísticas -->
+        <div class="row mb-5">
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-text display-4 mb-3"></i>
+                        <h3>{{ estatisticas.total_templates }}</h3>
+                        <p class="mb-0">Templates Profissionais</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-collection display-4 mb-3"></i>
+                        <h3>{{ estatisticas.total_areas }}</h3>
+                        <p class="mb-0">Áreas Jurídicas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-award display-4 mb-3"></i>
+                        <h3>100%</h3>
+                        <p class="mb-0">Conteúdo Autêntico</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Áreas Jurídicas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-center mb-4">
+                    <i class="bi bi-briefcase"></i> Áreas Jurídicas Especializadas
+                </h2>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for area in areas %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card area-card" onclick="window.location.href='{{ url_for('legal_design_pro_v2.templates', area=area.id) }}'">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <i class="{{ area.icone }} area-icon" style="color: {{ area.cor }}"></i>
+                        <h5 class="card-title fw-bold text-white">{{ area.nome }}</h5>
+                        <p class="card-text text-light mb-3">{{ area.descricao }}</p>
+                        <div class="mt-auto">
+                            <span class="badge-custom text-white">{{ area.total_templates }} templates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Ações Rápidas -->
+        <div class="row mt-5 mb-4">
+            <div class="col-12 text-center">
+                <h3 class="mb-4">
+                    <i class="bi bi-lightning-charge"></i> Ações Rápidas
+                </h3>
+                <a href="{{ url_for('legal_design_pro_v2.templates') }}" class="btn btn-primary me-3 btn-lg">
+                    <i class="bi bi-search"></i> Explorar Templates
+                </a>
+                <a href="{{ url_for('legal_design_pro_v2.editor') }}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-plus-circle"></i> Criar Documento
+                </a>
+            </div>
+        </div>
+
+        <!-- Templates Mais Usados -->
+        {% if estatisticas.templates_mais_usados %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4">
+                    <i class="bi bi-graph-up"></i> Templates Mais Utilizados
+                </h3>
+                <div class="row">
+                    {% for template in estatisticas.templates_mais_usados %}
+                    <div class="col-md-4 mb-3">
+                        <div class="template-preview">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ template.nome }}</h6>
+                                <span class="badge bg-primary">{{ template.uso_contador or 0 }} usos</span>
+                            </div>
+                            <p class="card-text text-secondary small mb-2">
+                                <i class="{{ template.area.icone }}"></i> {{ template.area.nome }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ template.tempo_estimado }}min
+                                </small>
+                                <a href="{{ url_for('legal_design_pro_v2.editor', template=template.id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="bi bi-play-circle"></i> Usar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Informações do Sistema -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5><i class="bi bi-info-circle"></i> Sistema Ars Data Science de Legal Design Pro</h5>
+                        <p class="text-secondary mb-0">
+                            Desenvolvido com templates autênticos para máxima eficiência jurídica. 
+                            Cada documento segue as melhores práticas do direito brasileiro.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1">© 2025 Ars Data Science - Todos os Direitos Reservados</p>
+                    <p class="mb-0">Email: suporte@arsdatascience.com.br</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="/legal/politica-privacidade" class="footer-link">Política de Privacidade</a>
+                    <span class="mx-2">|</span>
+                    <a href="/legal/termos-uso" class="footer-link">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Animação suave para cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.area-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

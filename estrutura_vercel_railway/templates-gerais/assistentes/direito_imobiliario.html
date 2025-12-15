@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Assistente de Direito Imobiliário - Análise de Matrículas{% endblock %}
+
+{% block content %}
+<style>
+    .imobiliario-container {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .main-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .header-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .header-section p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .content-section {
+        padding: 40px;
+    }
+    
+    .agent-card {
+        background: #f8f9fa;
+        border: 2px solid #1abc9c;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .agent-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(26, 188, 156, 0.2);
+    }
+    
+    .agent-name {
+        color: #2c3e50;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .capabilities-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .capabilities-list li {
+        background: #e8f6f3;
+        color: #16a085;
+        padding: 8px 15px;
+        margin: 5px 0;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .analysis-form {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 30px 0;
+    }
+    
+    .btn-analyze {
+        background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(26, 188, 156, 0.3);
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin: 30px 0;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .results-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 30px;
+        margin-top: 30px;
+        display: none;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .process-list, .document-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .list-item {
+        background: white;
+        border-left: 4px solid #1abc9c;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+
+<div class="imobiliario-container">
+    <div class="container">
+        <div class="main-card">
+            <!-- Header -->
+            <div class="header-section">
+                <h1><i class="fas fa-home me-3"></i>Assistente de Direito Imobiliário</h1>
+                <p>Sistema especializado em análise de matrículas e documentos imobiliários</p>
+            </div>
+            
+            <!-- Content -->
+            <div class="content-section">
+                
+                <!-- Estatísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">{{ estatisticas.total_agentes_disponíveis }}</span>
+                        <span class="stat-label">Agentes Especializados</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">{{ estatisticas.total_processos }}</span>
+                        <span class="stat-label">Processos Imobiliários</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">{{ estatisticas.total_documentos }}</span>
+                        <span class="stat-label">Documentos Analisados</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Especialidades Principais</span>
+                    </div>
+                </div>
+                
+                <!-- Agente Principal -->
+                {% if agente_principal %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="agent-card">
+                            <div class="agent-name">
+                                <i class="fas fa-star text-warning me-2"></i>
+                                {{ agente_principal.nome }}
+                            </div>
+                            <p class="text-muted mb-3">{{ agente_principal.descricao }}</p>
+                            
+                            <h6 class="mb-2"><i class="fas fa-cogs me-2"></i>Capacidades Especializadas:</h6>
+                            <ul class="capabilities-list">
+                                {% for capacidade in estatisticas.especialidades_principais %}
+                                <li>{{ capacidade }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário de Análise -->
+                    <div class="col-md-4">
+                        <div class="analysis-form">
+                            <h5 class="mb-3"><i class="fas fa-search me-2"></i>Análise de Matrícula</h5>
+                            <form id="analysisForm">
+                                <div class="mb-3">
+                                    <label for="matriculaText" class="form-label">Texto da Matrícula:</label>
+                                    <textarea class="form-control" id="matriculaText" rows="6" 
+                                              placeholder="Cole aqui o texto da matrícula para análise..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-analyze w-100">
+                                    <i class="fas fa-search me-2"></i>Analisar Matrícula
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Loading e Resultados -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Analisando...</span>
+                    </div>
+                    <p class="mt-2">Analisando matrícula com agente especializado...</p>
+                </div>
+                
+                <div class="results-container" id="resultsContainer">
+                    <h5><i class="fas fa-clipboard-check me-2"></i>Resultado da Análise</h5>
+                    <div id="analysisResult"></div>
+                </div>
+                
+                <!-- Outros Agentes -->
+                {% if outros_agentes %}
+                <div class="mt-5">
+                    <h4 class="mb-4"><i class="fas fa-users me-2"></i>Outros Agentes Disponíveis</h4>
+                    <div class="row">
+                        {% for agente in outros_agentes %}
+                        <div class="col-md-6">
+                            <div class="list-item">
+                                <strong>{{ agente.nome }}</strong>
+                                <p class="mb-0 text-muted small">{{ agente.descricao }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Dados Integrados -->
+                <div class="row mt-5">
+                    <!-- Processos do PostgreSQL -->
+                    {% if processos %}
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-database me-2"></i>Processos Imobiliários (PostgreSQL)</h5>
+                        <div class="process-list">
+                            {% for processo in processos %}
+                            <div class="list-item">
+                                <strong>{{ processo.numero_processo_cnj }}</strong>
+                                <p class="mb-1">{{ processo.cliente }}</p>
+                                <small class="text-muted">{{ processo.comarca }} - {{ processo.estado }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Documentos -->
+                    {% if documentos %}
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-file-alt me-2"></i>Documentos Imobiliários</h5>
+                        <div class="document-list">
+                            {% for documento in documentos %}
+                            <div class="list-item">
+                                <strong>{{ documento.nome_arquivo }}</strong>
+                                <p class="mb-1">{{ documento.tipo_documento }}</p>
+                                <small class="text-muted">{{ documento.data_upload.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Integração Qdrant -->
+                {% if qdrant_config %}
+                <div class="mt-4 p-3" style="background: #e8f6f3; border-radius: 10px;">
+                    <h6><i class="fas fa-vector-square me-2"></i>Integração com Base Vetorial (Qdrant)</h6>
+                    <p class="mb-2"><strong>Coleção:</strong> {{ qdrant_config.collection }}</p>
+                    <p class="mb-0"><strong>Áreas Especializadas:</strong> 
+                        {% for area in qdrant_config.areas_especializadas %}
+                            <span class="badge bg-secondary me-1">{{ area }}</span>
+                        {% endfor %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const textoMatricula = document.getElementById('matriculaText').value.trim();
+    if (!textoMatricula) {
+        alert('Por favor, insira o texto da matrícula para análise.');
+        return;
+    }
+    
+    // Mostrar loading
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsContainer').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/analise-matricula', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                texto_matricula: textoMatricula
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Esconder loading
+        document.getElementById('loadingSpinner').style.display = 'none';
+        
+        if (data.success) {
+            // Mostrar resultados
+            document.getElementById('analysisResult').innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Análise realizada por: ${data.agente_usado}</h6>
+                </div>
+                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #1abc9c;">
+                    <pre style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${data.analise}</pre>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    Contexto adicional do Qdrant: ${data.contexto_qdrant} documentos | 
+                    ${new Date(data.timestamp).toLocaleString('pt-BR')}
+                </small>
+            `;
+            document.getElementById('resultsContainer').style.display = 'block';
+        } else {
+            alert('Erro na análise: ' + data.error);
+        }
+    } catch (error) {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        alert('Erro ao realizar análise: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

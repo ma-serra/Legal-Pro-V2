@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}Perfil - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Perfil do Usuário</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nome de usuário:</strong> {{ current_user.username }}</p>
+                    <p><strong>E-mail:</strong> {{ current_user.email }}</p>
+                    <p><strong>Nome:</strong> {{ current_user.first_name }} {{ current_user.last_name }}</p>
+                    <p><strong>Papel:</strong> {% if current_user.role %}{{ current_user.role.name }}{% else %}Nenhum{% endif %}</p>
+                    <p><strong>Status:</strong> {% if current_user.active %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-danger">Inativo</span>{% endif %}</p>
+                    <p><strong>Último login:</strong> {% if current_user.last_login %}{{ current_user.last_login|datetimeformat }}{% else %}Nunca{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Alterar Senha</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('alterar_senha') }}">
+                        <div class="mb-3">
+                            <label for="senha_atual" class="form-label">Senha Atual</label>
+                            <input type="password" class="form-control" id="senha_atual" name="senha_atual" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nova_senha" class="form-label">Nova Senha</label>
+                            <input type="password" class="form-control" id="nova_senha" name="nova_senha" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmacao" class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-control" id="confirmacao" name="confirmacao" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                    </form>
+                </div>
+            </div>
+            
+            {% if current_user.is_admin %}
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Ferramentas de Administração</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('admin_usuarios') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users me-2"></i> Gerenciar Usuários
+                        </a>
+                        <a href="{{ url_for('admin_roles') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-tag me-2"></i> Gerenciar Papéis
+                        </a>
+                        <a href="{{ url_for('admin_permissoes') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-key me-2"></i> Gerenciar Permissões
+                        </a>
+                        <a href="{{ url_for('admin_usuarios') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tachometer-alt me-2"></i> Painel de Controle
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

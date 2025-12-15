@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+{% set page_title = "Sincronização de Base de Dados" %}
+
+{% block extra_css %}
+<style>
+.sync-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.sync-stats {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.table-stats {
+    font-size: 0.9rem;
+}
+
+.sync-action {
+    min-height: 120px;
+    transition: transform 0.2s;
+}
+
+.sync-action:hover {
+    transform: translateY(-2px);
+}
+
+.status-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
+
+.db-info {
+    background: linear-gradient(45deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card sync-card">
+                <div class="card-body text-center py-4">
+                    <h1 class="mb-3">
+                        <i class="fas fa-sync-alt me-3"></i>
+                        Sincronização de Base de Dados
+                    </h1>
+                    <p class="lead mb-0">Gerenciar e sincronizar dados entre ambientes Development e Production</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status das Bases -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card db-info">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Development Database
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-light">Tamanho:</small><br>
+                            <strong id="dev-size">37.3MB / 10GB</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-light">Status:</small><br>
+                            <span class="badge bg-success">Ativo</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-light">Último Backup:</small><br>
+                        <span id="dev-backup">Hoje às 23:45</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card db-info">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-server me-2"></i>
+                        Production Database
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-light">Tamanho:</small><br>
+                            <strong id="prod-size">34.48MB / 10GB</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-light">Status:</small><br>
+                            <span class="badge bg-warning">Sincronização Pendente</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-light">Último Sync:</small><br>
+                        <span id="prod-sync">Pendente</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas das Tabelas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Estatísticas das Tabelas Críticas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-stats" id="table-stats">
+                            <thead>
+                                <tr>
+                                    <th>Tabela</th>
+                                    <th>Development</th>
+                                    <th>Production</th>
+                                    <th>Diferença</th>
+                                    <th>Status</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-tbody">
+                                <tr>
+                                    <td><strong>analise_processo_ia</strong></td>
+                                    <td><span class="badge bg-primary">-</span></td>
+                                    <td><span class="badge bg-info">-</span></td>
+                                    <td><span class="text-muted">-</span></td>
+                                    <td><span class="status-badge bg-secondary">Carregando...</span></td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('analise_processo_ia')">Sync</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>processo_juridico</strong></td>
+                                    <td><span class="badge bg-primary">-</span></td>
+                                    <td><span class="badge bg-info">-</span></td>
+                                    <td><span class="text-muted">-</span></td>
+                                    <td><span class="status-badge bg-secondary">Carregando...</span></td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('processo_juridico')">Sync</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>user</strong></td>
+                                    <td><span class="badge bg-primary">-</span></td>
+                                    <td><span class="badge bg-info">-</span></td>
+                                    <td><span class="text-muted">-</span></td>
+                                    <td><span class="status-badge bg-secondary">Carregando...</span></td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('user')">Sync</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>assistente_juridico</strong></td>
+                                    <td><span class="badge bg-primary">-</span></td>
+                                    <td><span class="badge bg-info">-</span></td>
+                                    <td><span class="text-muted">-</span></td>
+                                    <td><span class="status-badge bg-secondary">Carregando...</span></td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('assistente_juridico')">Sync</button></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>template_juridico</strong></td>
+                                    <td><span class="badge bg-primary">-</span></td>
+                                    <td><span class="badge bg-info">-</span></td>
+                                    <td><span class="text-muted">-</span></td>
+                                    <td><span class="status-badge bg-secondary">Carregando...</span></td>
+                                    <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('template_juridico')">Sync</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações de Sincronização -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card sync-action h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                    <h5>Sincronizar Dev → Prod</h5>
+                    <p class="text-muted">Transferir dados do Development para Production</p>
+                    <button class="btn btn-primary" onclick="fullSync('dev_to_prod')">
+                        <i class="fas fa-arrow-right me-2"></i>Sincronizar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card sync-action h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-upload fa-3x text-warning mb-3"></i>
+                    <h5>Sincronizar Prod → Dev</h5>
+                    <p class="text-muted">Transferir dados do Production para Development</p>
+                    <button class="btn btn-warning" onclick="fullSync('prod_to_dev')">
+                        <i class="fas fa-arrow-left me-2"></i>Sincronizar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card sync-action h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                    <h5>Gerar Relatório</h5>
+                    <p class="text-muted">Análise completa das diferenças entre bases</p>
+                    <button class="btn btn-success" onclick="generateReport()">
+                        <i class="fas fa-file-alt me-2"></i>Gerar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log de Atividades -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Log de Atividades
+                    </h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()">
+                        <i class="fas fa-trash me-1"></i>Limpar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="sync-log" style="height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace;">
+                        <div class="text-muted">Aguardando atividade...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let logContainer = document.getElementById('sync-log');
+
+function addLogEntry(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const iconMap = {
+        'info': 'fas fa-info-circle text-primary',
+        'success': 'fas fa-check-circle text-success', 
+        'warning': 'fas fa-exclamation-triangle text-warning',
+        'error': 'fas fa-times-circle text-danger'
+    };
+    
+    const entry = document.createElement('div');
+    entry.className = 'mb-2';
+    entry.innerHTML = `
+        <span class="text-muted">${timestamp}</span>
+        <i class="${iconMap[type]} me-2"></i>
+        ${message}
+    `;
+    
+    // Limpar mensagem inicial
+    if (logContainer.querySelector('.text-muted')?.textContent === 'Aguardando atividade...') {
+        logContainer.innerHTML = '';
+    }
+    
+    logContainer.appendChild(entry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function syncTable(tableName) {
+    addLogEntry(`Iniciando sincronização da tabela: ${tableName}`, 'info');
+    
+    fetch('/admin/sync-table', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            table: tableName,
+            direction: 'dev_to_prod'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addLogEntry(`✅ Tabela ${tableName} sincronizada com sucesso`, 'success');
+            updateTableStats();
+        } else {
+            addLogEntry(`❌ Erro ao sincronizar ${tableName}: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        addLogEntry(`❌ Erro de conexão: ${error.message}`, 'error');
+    });
+}
+
+function fullSync(direction) {
+    const directionText = direction === 'dev_to_prod' ? 'Development → Production' : 'Production → Development';
+    
+    if (!confirm(`Confirma sincronização completa ${directionText}?`)) {
+        return;
+    }
+    
+    addLogEntry(`🔄 Iniciando sincronização completa: ${directionText}`, 'info');
+    
+    fetch('/admin/sync-full', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            direction: direction
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addLogEntry(`✅ Sincronização completa executada com sucesso`, 'success');
+            addLogEntry(`📊 ${data.tables_synced} tabelas sincronizadas`, 'info');
+            updateTableStats();
+        } else {
+            addLogEntry(`❌ Erro na sincronização: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        addLogEntry(`❌ Erro de conexão: ${error.message}`, 'error');
+    });
+}
+
+function generateReport() {
+    addLogEntry('📊 Gerando relatório de sincronização...', 'info');
+    
+    fetch('/admin/sync-report')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addLogEntry(`✅ Relatório gerado: ${data.filename}`, 'success');
+            
+            // Criar link para download
+            const link = document.createElement('a');
+            link.href = `/admin/download-report/${data.filename}`;
+            link.download = data.filename;
+            link.textContent = `📄 Baixar ${data.filename}`;
+            
+            const entry = document.createElement('div');
+            entry.className = 'mb-2 ps-4';
+            entry.appendChild(link);
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        } else {
+            addLogEntry(`❌ Erro ao gerar relatório: ${data.message}`, 'error');
+        }
+    })
+    .catch(error => {
+        addLogEntry(`❌ Erro de conexão: ${error.message}`, 'error');
+    });
+}
+
+function updateTableStats() {
+    fetch('/admin/table-stats')
+    .then(response => response.json())
+    .then(data => {
+        const tbody = document.getElementById('stats-tbody');
+        tbody.innerHTML = '';
+        
+        Object.entries(data.tables).forEach(([table, stats]) => {
+            const row = document.createElement('tr');
+            const diff = stats.development - stats.production;
+            const statusClass = diff === 0 ? 'bg-success' : (Math.abs(diff) < 10 ? 'bg-warning' : 'bg-danger');
+            const statusText = diff === 0 ? 'Sincronizado' : 'Pendente';
+            
+            row.innerHTML = `
+                <td><strong>${table}</strong></td>
+                <td><span class="badge bg-primary">${stats.development}</span></td>
+                <td><span class="badge bg-info">${stats.production}</span></td>
+                <td><span class="${diff === 0 ? 'text-success' : 'text-warning'}">${diff > 0 ? '+' : ''}${diff}</span></td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td><button class="btn btn-sm btn-outline-secondary" onclick="syncTable('${table}')">Sync</button></td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    });
+}
+
+function clearLog() {
+    logContainer.innerHTML = '<div class="text-muted">Log limpo...</div>';
+}
+
+// Atualizar estatísticas a cada 30 segundos
+setInterval(updateTableStats, 30000);
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    addLogEntry('🚀 Sistema de sincronização iniciado', 'success');
+    updateTableStats();
+});
+</script>
+{% endblock %}

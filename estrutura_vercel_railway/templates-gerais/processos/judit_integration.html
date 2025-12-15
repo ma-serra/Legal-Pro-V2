@@ -1,0 +1,1772 @@
+{% extends "base.html" %}
+
+{% block title %}Integração Judit - Busca Processual Avançada{% endblock %}
+
+{% block head %}
+<div class="homepage-container" style="display:none;">
+  <!-- Elemento invisível para ativar o estilo da página inicial -->
+</div>
+<style>
+  body {
+    background-color: #3e5a70 !important;
+    min-height: 100vh;
+    color: #ffffff !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .judit-header {
+    background: linear-gradient(135deg, #5a7ba8 0%, #4a6b96 100%);
+    color: #ffffff;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: 15px;
+    border: 2px solid #6b8bb5;
+  }
+
+  .judit-card {
+    background: rgba(75, 105, 135, 0.3);
+    border: 2px dashed #6b8bb5;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    color: #ffffff;
+  }
+
+  .judit-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(107, 139, 181, 0.4);
+    border-color: #7c9fc7;
+    background: rgba(90, 123, 168, 0.4);
+  }
+
+  .btn-judit {
+    background: #5a7ba8;
+    color: #ffffff;
+    border: 2px solid #6b8bb5;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-judit:hover {
+    background: #6b8bb5;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(90, 123, 168, 0.5);
+    border-color: #7c9fc7;
+  }
+
+  .form-control {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid #6b8bb5;
+    color: #ffffff;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .form-control:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #7c9fc7;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(107, 139, 181, 0.6);
+  }
+
+  .form-control::placeholder {
+    color: #c4d4e6;
+    font-weight: 400;
+  }
+
+  .form-control option {
+    background: #3e5a70;
+    color: #ffffff;
+    border: none;
+  }
+
+  .form-label {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .text-muted {
+    color: #c4d4e6 !important;
+  }
+
+  .result-container {
+    display: none;
+    background: rgba(75, 105, 135, 0.2);
+    border: 2px dashed #6b8bb5;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    color: #5a7ba8;
+    margin: 2rem 0;
+  }
+
+  .status-indicator {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 1rem;
+    border: 2px solid;
+  }
+
+  .status-connected {
+    background: rgba(40, 167, 69, 0.3);
+    color: #28a745;
+    border-color: #28a745;
+  }
+
+  .status-disconnected {
+    background: rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .monitoring-item {
+    background: rgba(75, 105, 135, 0.3);
+    border: 2px dashed #6b8bb5;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: #ffffff;
+  }
+
+  .icon-judit {
+    font-size: 3rem;
+    color: #5a7ba8;
+    margin-bottom: 1rem;
+  }
+
+  .nav-tabs .nav-link {
+    background: rgba(75, 105, 135, 0.2);
+    border: 2px solid #6b8bb5;
+    color: #c4d4e6;
+    margin-right: 5px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 500;
+    padding: 12px 20px;
+  }
+
+  .nav-tabs .nav-link.active {
+    background: #5a7ba8;
+    color: #ffffff;
+    border-color: #6b8bb5;
+    font-weight: 600;
+  }
+
+  .nav-tabs .nav-link:hover {
+    background: rgba(90, 123, 168, 0.4);
+    color: #ffffff;
+    border-color: #7c9fc7;
+  }
+
+  .tab-content {
+    background: rgba(75, 105, 135, 0.2);
+    border: 2px dashed #6b8bb5;
+    border-radius: 0 12px 12px 12px;
+    padding: 2rem;
+    color: #ffffff;
+  }
+
+  .alert-judit {
+    background: rgba(90, 123, 168, 0.3);
+    border: 2px dashed #6b8bb5;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .badge {
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.875rem;
+  }
+
+  .badge.bg-primary {
+    background-color: #5a7ba8 !important;
+    border: 1px solid #6b8bb5;
+  }
+
+  .badge.bg-warning {
+    background-color: #f39c12 !important;
+    color: #2c3e50 !important;
+    border: 1px solid #e67e22;
+  }
+
+  .badge.bg-info {
+    background-color: #3498db !important;
+    border: 1px solid #2980b9;
+  }
+
+  .badge.bg-dark {
+    background-color: #2c3e50 !important;
+    border: 1px solid #34495e;
+  }
+
+  .badge.bg-success {
+    background-color: #27ae60 !important;
+    border: 1px solid #229954;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+
+  .form-check-label {
+    color: #ffffff;
+    font-weight: 500;
+  }
+
+  .form-check-input:checked {
+    background-color: #5a7ba8;
+    border-color: #6b8bb5;
+  }
+
+  small.text-muted {
+    color: #c4d4e6 !important;
+    font-weight: 400;
+  }
+
+  .border {
+    border-color: #6b8bb5 !important;
+  }
+
+  .rounded {
+    border-radius: 8px !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Header da Integração Judit -->
+  <div class="judit-header text-center">
+    <h1 class="mb-3">
+      <i class="fas fa-search icon-judit"></i>
+      Integração Plataforma Judit
+    </h1>
+    <p class="lead mb-0">Busca processual avançada, monitoramento inteligente e consulta de documentos</p>
+  </div>
+
+  <!-- Status da Conexão -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="judit-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>Status da Integração</h5>
+          <div id="status-indicator" class="status-indicator">
+            <i class="fas fa-circle me-2"></i>
+            Verificando conexão...
+          </div>
+        </div>
+        <small class="text-muted">Última verificação: <span id="last-check">-</span></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegação por Abas -->
+  <ul class="nav nav-tabs" id="juditTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="busca-tab" data-bs-toggle="tab" data-bs-target="#busca" type="button">
+        <i class="fas fa-search me-2"></i>Busca Processual
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="monitoramento-tab" data-bs-toggle="tab" data-bs-target="#monitoramento" type="button">
+        <i class="fas fa-bell me-2"></i>Monitoramento
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tribunais-tab" data-bs-toggle="tab" data-bs-target="#tribunais" type="button">
+        <i class="fas fa-landmark me-2"></i>Tribunais
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="documentos-tab" data-bs-toggle="tab" data-bs-target="#documentos" type="button">
+        <i class="fas fa-file-alt me-2"></i>Documentos
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="juditTabContent">
+    
+    <!-- Aba de Busca Processual -->
+    <div class="tab-pane fade show active" id="busca" role="tabpanel">
+      <h4 class="mb-4">
+        <i class="fas fa-search me-2"></i>
+        Busca Processual e por Documento
+      </h4>
+
+      <div class="row">
+        <!-- Busca por CNJ -->
+        <div class="col-md-6 mb-4">
+          <div class="judit-card">
+            <h5>
+              <i class="fas fa-gavel me-2"></i>
+              Busca por CNJ
+            </h5>
+            <p class="text-muted">Consulte processos utilizando o número CNJ</p>
+            
+            <form id="form-busca-cnj">
+              <div class="mb-3">
+                <label for="numero-cnj" class="form-label">Número CNJ</label>
+                <input type="text" class="form-control" id="numero-cnj" 
+                       placeholder="0000000-00.0000.0.00.0000" required>
+                <small class="text-muted">Formato: NNNNNNN-DD.AAAA.J.TR.OOOO</small>
+              </div>
+              
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="incluir-anexos-cnj">
+                <label class="form-check-label" for="incluir-anexos-cnj">
+                  Incluir anexos do processo
+                </label>
+              </div>
+              
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="salvar-banco-cnj" checked>
+                <label class="form-check-label" for="salvar-banco-cnj">
+                  <i class="fas fa-database me-1"></i>
+                  Sincronizar com banco de dados
+                </label>
+                <small class="text-muted d-block">Salva ou atualiza processos encontrados no sistema</small>
+              </div>
+              
+              <button type="submit" class="btn btn-judit w-100">
+                <i class="fas fa-search me-2"></i>
+                Buscar Processo
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Busca por Documento -->
+        <div class="col-md-6 mb-4">
+          <div class="judit-card">
+            <h5>
+              <i class="fas fa-id-card me-2"></i>
+              Busca por Documento
+            </h5>
+            <p class="text-muted">Busque processos por CPF ou CNPJ</p>
+            
+            <form id="form-busca-documento">
+              <div class="mb-3">
+                <label for="tipo-documento" class="form-label">Tipo de Documento</label>
+                <select class="form-control" id="tipo-documento" required>
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="numero-documento" class="form-label">Número do Documento</label>
+                <input type="text" class="form-control" id="numero-documento" 
+                       placeholder="000.000.000-00" required>
+              </div>
+              
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <label class="form-label mb-0">
+                    <i class="fas fa-landmark me-2"></i>Tribunais (opcional)
+                  </label>
+                  <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="modo-tribunal" id="modo-lista" checked>
+                    <label class="btn btn-outline-light btn-sm" for="modo-lista">
+                      <i class="fas fa-list me-1"></i>Lista
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="modo-tribunal" id="modo-checkbox">
+                    <label class="btn btn-outline-light btn-sm" for="modo-checkbox">
+                      <i class="fas fa-check-square me-1"></i>Checkboxes
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Modo Lista Suspensa -->
+                <div id="tribunais-lista-container">
+                  <select class="form-control" id="tribunais" multiple size="8" style="min-height: 180px;">
+                    <optgroup label="🏛️ Tribunais de Justiça Estaduais (TJ)">
+                      <option value="TJAC">TJAC - Acre</option>
+                      <option value="TJAL">TJAL - Alagoas</option>
+                      <option value="TJAP">TJAP - Amapá</option>
+                      <option value="TJAM">TJAM - Amazonas</option>
+                      <option value="TJBA">TJBA - Bahia</option>
+                      <option value="TJCE">TJCE - Ceará</option>
+                      <option value="TJDF">TJDF - Distrito Federal</option>
+                      <option value="TJES">TJES - Espírito Santo</option>
+                      <option value="TJGO">TJGO - Goiás</option>
+                      <option value="TJMA">TJMA - Maranhão</option>
+                      <option value="TJMT">TJMT - Mato Grosso</option>
+                      <option value="TJMS">TJMS - Mato Grosso do Sul</option>
+                      <option value="TJMG">TJMG - Minas Gerais</option>
+                      <option value="TJPA">TJPA - Pará</option>
+                      <option value="TJPB">TJPB - Paraíba</option>
+                      <option value="TJPR">TJPR - Paraná</option>
+                      <option value="TJPE">TJPE - Pernambuco</option>
+                      <option value="TJPI">TJPI - Piauí</option>
+                      <option value="TJRJ">TJRJ - Rio de Janeiro</option>
+                      <option value="TJRN">TJRN - Rio Grande do Norte</option>
+                      <option value="TJRS">TJRS - Rio Grande do Sul</option>
+                      <option value="TJRO">TJRO - Rondônia</option>
+                      <option value="TJRR">TJRR - Roraima</option>
+                      <option value="TJSC">TJSC - Santa Catarina</option>
+                      <option value="TJSP">TJSP - São Paulo</option>
+                      <option value="TJSE">TJSE - Sergipe</option>
+                      <option value="TJTO">TJTO - Tocantins</option>
+                    </optgroup>
+                    <optgroup label="⚖️ Tribunais Regionais do Trabalho (TRT)">
+                      <option value="TRT1">TRT1 - 1ª Região (Rio de Janeiro)</option>
+                      <option value="TRT2">TRT2 - 2ª Região (São Paulo)</option>
+                      <option value="TRT3">TRT3 - 3ª Região (Minas Gerais)</option>
+                      <option value="TRT4">TRT4 - 4ª Região (Rio Grande do Sul)</option>
+                      <option value="TRT5">TRT5 - 5ª Região (Bahia)</option>
+                      <option value="TRT6">TRT6 - 6ª Região (Pernambuco)</option>
+                      <option value="TRT7">TRT7 - 7ª Região (Ceará)</option>
+                      <option value="TRT8">TRT8 - 8ª Região (Pará e Amapá)</option>
+                      <option value="TRT9">TRT9 - 9ª Região (Paraná)</option>
+                      <option value="TRT10">TRT10 - 10ª Região (DF e Tocantins)</option>
+                      <option value="TRT11">TRT11 - 11ª Região (Amazonas e Roraima)</option>
+                      <option value="TRT12">TRT12 - 12ª Região (Santa Catarina)</option>
+                      <option value="TRT15">TRT15 - 15ª Região (Campinas e Região)</option>
+                      <option value="TST">TST - Tribunal Superior do Trabalho</option>
+                    </optgroup>
+                    <optgroup label="🏛️ Tribunais Regionais Federais (TRF)">
+                      <option value="TRF1">TRF1 - 1ª Região</option>
+                      <option value="TRF2">TRF2 - 2ª Região</option>
+                      <option value="TRF3">TRF3 - 3ª Região</option>
+                      <option value="TRF4">TRF4 - 4ª Região</option>
+                      <option value="TRF5">TRF5 - 5ª Região</option>
+                      <option value="TRF6">TRF6 - 6ª Região</option>
+                    </optgroup>
+                    <optgroup label="👑 Tribunais Superiores">
+                      <option value="STF">STF - Supremo Tribunal Federal</option>
+                      <option value="STJ">STJ - Superior Tribunal de Justiça</option>
+                      <option value="TSE">TSE - Tribunal Superior Eleitoral</option>
+                      <option value="STM">STM - Superior Tribunal Militar</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <!-- Modo Checkboxes -->
+                <div id="tribunais-checkbox-container" style="display: none;">
+                  <div class="tribunal-checkboxes" style="max-height: 180px; overflow-y: auto; border: 2px solid #6b8bb5; border-radius: 8px; padding: 15px; background: rgba(255, 255, 255, 0.05);">
+                    
+                    <!-- Tribunais de Justiça Estaduais -->
+                    <div class="mb-3">
+                      <h6 class="text-primary mb-2">
+                        <i class="fas fa-balance-scale me-1"></i>Tribunais de Justiça Estaduais (TJ)
+                      </h6>
+                      <div class="row">
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAC" id="cb-tj-ac" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ac">TJAC - Acre</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAL" id="cb-tj-al" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-al">TJAL - Alagoas</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAM" id="cb-tj-am" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-am">TJAM - Amazonas</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAP" id="cb-tj-ap" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ap">TJAP - Amapá</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJBA" id="cb-tj-ba" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ba">TJBA - Bahia</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJCE" id="cb-tj-ce" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ce">TJCE - Ceará</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJDF" id="cb-tj-df" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-df">TJDF - Distrito Federal</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJES" id="cb-tj-es" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-es">TJES - Espírito Santo</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJGO" id="cb-tj-go" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-go">TJGO - Goiás</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMA" id="cb-tj-ma" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ma">TJMA - Maranhão</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMG" id="cb-tj-mg" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-mg">TJMG - Minas Gerais</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMS" id="cb-tj-ms" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ms">TJMS - Mato Grosso do Sul</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMT" id="cb-tj-mt" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-mt">TJMT - Mato Grosso</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPA" id="cb-tj-pa" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-pa">TJPA - Pará</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPB" id="cb-tj-pb" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-pb">TJPB - Paraíba</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPE" id="cb-tj-pe" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-pe">TJPE - Pernambuco</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPI" id="cb-tj-pi" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-pi">TJPI - Piauí</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPR" id="cb-tj-pr" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-pr">TJPR - Paraná</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRJ" id="cb-tj-rj" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-rj">TJRJ - Rio de Janeiro</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRN" id="cb-tj-rn" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-rn">TJRN - Rio Grande do Norte</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRO" id="cb-tj-ro" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-ro">TJRO - Rondônia</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRR" id="cb-tj-rr" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-rr">TJRR - Roraima</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRS" id="cb-tj-rs" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-rs">TJRS - Rio Grande do Sul</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSC" id="cb-tj-sc" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-sc">TJSC - Santa Catarina</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSE" id="cb-tj-se" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-se">TJSE - Sergipe</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSP" id="cb-tj-sp" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-sp">TJSP - São Paulo</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJTO" id="cb-tj-to" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tj-to">TJTO - Tocantins</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tribunais Regionais do Trabalho -->
+                    <div class="mb-3">
+                      <h6 class="text-warning mb-2">
+                        <i class="fas fa-hard-hat me-1"></i>Tribunais Regionais do Trabalho (TRT)
+                      </h6>
+                      <div class="row">
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT1" id="cb-trt-1" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trt-1">TRT1 - Rio de Janeiro</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT2" id="cb-trt-2" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trt-2">TRT2 - São Paulo</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT3" id="cb-trt-3" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trt-3">TRT3 - Minas Gerais</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT4" id="cb-trt-4" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trt-4">TRT4 - Rio Grande do Sul</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT5" id="cb-trt-5" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trt-5">TRT5 - Bahia</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TST" id="cb-tst" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tst">TST - Superior do Trabalho</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tribunais Regionais Federais -->
+                    <div class="mb-3">
+                      <h6 class="text-info mb-2">
+                        <i class="fas fa-flag me-1"></i>Tribunais Regionais Federais (TRF)
+                      </h6>
+                      <div class="row">
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF1" id="cb-trf-1" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-1">TRF1 - 1ª Região</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF2" id="cb-trf-2" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-2">TRF2 - 2ª Região</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF3" id="cb-trf-3" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-3">TRF3 - 3ª Região</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF4" id="cb-trf-4" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-4">TRF4 - 4ª Região</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF5" id="cb-trf-5" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-5">TRF5 - 5ª Região</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF6" id="cb-trf-6" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-trf-6">TRF6 - 6ª Região</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tribunais Superiores -->
+                    <div class="mb-2">
+                      <h6 class="text-light mb-2">
+                        <i class="fas fa-crown me-1"></i>Tribunais Superiores
+                      </h6>
+                      <div class="row">
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="STF" id="cb-stf" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-stf">STF - Supremo</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="STJ" id="cb-stj" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-stj">STJ - Superior de Justiça</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="TSE" id="cb-tse" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-tse">TSE - Superior Eleitoral</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3 mb-1">
+                          <div class="form-check">
+                            <input class="form-check-input tribunal-checkbox" type="checkbox" value="STM" id="cb-stm" name="tribunais-cb">
+                            <label class="form-check-label" for="cb-stm">STM - Superior Militar</label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <small class="text-muted d-block mt-2" id="tribunais-feedback">
+                  <i class="fas fa-mouse-pointer me-1"></i>
+                  <span id="feedback-lista">Mantenha Ctrl pressionado para selecionar múltiplos tribunais.</span>
+                  <span id="feedback-checkbox" style="display: none;">Selecione os tribunais desejados usando as opções.</span>
+                  <strong>90+ tribunais</strong> disponíveis na plataforma Judit!
+                </small>
+                
+                <div class="mt-2">
+                  <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="selecionarTodosTribunais()">
+                    <i class="fas fa-check-square me-1"></i>Selecionar Todos
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="limparSelecaoTribunais()">
+                    <i class="fas fa-times me-1"></i>Limpar Seleção
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-light" onclick="selecionarTribunaisPrincipais()">
+                    <i class="fas fa-star me-1"></i>Principais (SP, RJ, MG)
+                  </button>
+                </div>
+              </div>
+              
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="salvar-banco-documento" checked>
+                <label class="form-check-label" for="salvar-banco-documento">
+                  <i class="fas fa-database me-1"></i>
+                  Sincronizar com banco de dados
+                </label>
+                <small class="text-muted d-block">Salva ou atualiza processos encontrados no sistema</small>
+              </div>
+              
+              <button type="submit" class="btn btn-judit w-100">
+                <i class="fas fa-search me-2"></i>
+                Buscar por Documento
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Busca por OAB -->
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <div class="judit-card">
+            <h5>
+              <i class="fas fa-user-tie me-2"></i>
+              Busca por OAB
+            </h5>
+            <p class="text-muted">Encontre processos relacionados a um número de OAB específico</p>
+            
+            <form id="form-busca-oab" class="row">
+              <div class="col-md-4 mb-3">
+                <label for="numero-oab" class="form-label">Número OAB</label>
+                <input type="text" class="form-control" id="numero-oab" placeholder="123456" required>
+              </div>
+              
+              <div class="col-md-4 mb-3">
+                <label for="uf-oab" class="form-label">UF</label>
+                <select class="form-control" id="uf-oab" required>
+                  <option value="">Selecione o Estado</option>
+                  <option value="AC">AC - Acre</option>
+                  <option value="AL">AL - Alagoas</option>
+                  <option value="AP">AP - Amapá</option>
+                  <option value="AM">AM - Amazonas</option>
+                  <option value="BA">BA - Bahia</option>
+                  <option value="CE">CE - Ceará</option>
+                  <option value="DF">DF - Distrito Federal</option>
+                  <option value="ES">ES - Espírito Santo</option>
+                  <option value="GO">GO - Goiás</option>
+                  <option value="MA">MA - Maranhão</option>
+                  <option value="MT">MT - Mato Grosso</option>
+                  <option value="MS">MS - Mato Grosso do Sul</option>
+                  <option value="MG">MG - Minas Gerais</option>
+                  <option value="PA">PA - Pará</option>
+                  <option value="PB">PB - Paraíba</option>
+                  <option value="PR">PR - Paraná</option>
+                  <option value="PE">PE - Pernambuco</option>
+                  <option value="PI">PI - Piauí</option>
+                  <option value="RJ">RJ - Rio de Janeiro</option>
+                  <option value="RN">RN - Rio Grande do Norte</option>
+                  <option value="RS">RS - Rio Grande do Sul</option>
+                  <option value="RO">RO - Rondônia</option>
+                  <option value="RR">RR - Roraima</option>
+                  <option value="SC">SC - Santa Catarina</option>
+                  <option value="SP">SP - São Paulo</option>
+                  <option value="SE">SE - Sergipe</option>
+                  <option value="TO">TO - Tocantins</option>
+                </select>
+              </div>
+              
+              <div class="col-md-4 mb-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-judit w-100">
+                  <i class="fas fa-search me-2"></i>
+                  Buscar por OAB
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading e Resultados -->
+      <div class="loading-spinner" id="loading-busca">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-2">Processando busca...</p>
+      </div>
+
+      <div class="result-container" id="resultados-busca">
+        <h5>Resultados da Busca</h5>
+        <div id="conteudo-resultados"></div>
+      </div>
+    </div>
+
+    <!-- Aba de Monitoramento -->
+    <div class="tab-pane fade" id="monitoramento" role="tabpanel">
+      <h4 class="mb-4">
+        <i class="fas fa-bell me-2"></i>
+        Monitoramento de Processos
+      </h4>
+
+      <div class="row">
+        <!-- Criar Monitoramento -->
+        <div class="col-md-6 mb-4">
+          <div class="judit-card">
+            <h5>
+              <i class="fas fa-plus me-2"></i>
+              Criar Monitoramento
+            </h5>
+            
+            <form id="form-criar-monitoramento">
+              <div class="mb-3">
+                <label for="tipo-monitoramento" class="form-label">Tipo de Monitoramento</label>
+                <select class="form-control" id="tipo-monitoramento" required>
+                  <option value="cnj">Monitoramento por CNJ</option>
+                  <option value="cpf">Monitoramento por CPF</option>
+                  <option value="cnpj">Monitoramento por CNPJ</option>
+                  <option value="custom">Monitoramento Customizado</option>
+                </select>
+              </div>
+              
+              <div class="mb-3" id="campo-valor-monitoramento">
+                <label for="valor-monitoramento" class="form-label">Valor</label>
+                <input type="text" class="form-control" id="valor-monitoramento" 
+                       placeholder="Digite o valor a ser monitorado" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="recorrencia" class="form-label">Recorrência (dias)</label>
+                <select class="form-control" id="recorrencia">
+                  <option value="1">Diário</option>
+                  <option value="7">Semanal</option>
+                  <option value="15">Quinzenal</option>
+                  <option value="30">Mensal</option>
+                </select>
+              </div>
+              
+              <button type="submit" class="btn btn-judit w-100">
+                <i class="fas fa-bell me-2"></i>
+                Criar Monitoramento
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Lista de Monitoramentos -->
+        <div class="col-md-6 mb-4">
+          <div class="judit-card">
+            <h5>
+              <i class="fas fa-list me-2"></i>
+              Meus Monitoramentos
+            </h5>
+            
+            <div id="lista-monitoramentos">
+              <div class="text-center text-muted">
+                <i class="fas fa-bell fa-3x mb-3"></i>
+                <p>Carregando monitoramentos...</p>
+              </div>
+            </div>
+            
+            <button class="btn btn-outline-light btn-sm w-100 mt-3" onclick="carregarMonitoramentos()">
+              <i class="fas fa-sync me-2"></i>
+              Atualizar Lista
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba de Tribunais -->
+    <div class="tab-pane fade" id="tribunais" role="tabpanel">
+      <h4 class="mb-4">
+        <i class="fas fa-landmark me-2"></i>
+        Cobertura de Tribunais da Judit
+      </h4>
+      
+      <div class="alert-judit">
+        <h5><i class="fas fa-info-circle me-2"></i>Cobertura Nacional Completa</h5>
+        <p class="mb-0">A plataforma Judit oferece acesso a <strong>mais de 90 tribunais brasileiros</strong> em tempo real, cobrindo todas as esferas da Justiça:</p>
+      </div>
+
+      <!-- Tribunais de Justiça Estaduais -->
+      <div class="judit-card mb-4">
+        <h5 class="mb-3">
+          <i class="fas fa-balance-scale me-2" style="color: #28a745;"></i>
+          Tribunais de Justiça Estaduais (TJ) - 27 Tribunais
+        </h5>
+        <p class="text-muted mb-3">Todos os Tribunais de Justiça estaduais + Distrito Federal</p>
+        
+        <div class="row" id="tribunais-estaduais">
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJAC</span>Acre</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJAL</span>Alagoas</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJAP</span>Amapá</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJAM</span>Amazonas</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJBA</span>Bahia</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJCE</span>Ceará</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJDF</span>Distrito Federal</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJES</span>Espírito Santo</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJGO</span>Goiás</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJMA</span>Maranhão</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJMT</span>Mato Grosso</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJMS</span>Mato Grosso do Sul</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJMG</span>Minas Gerais</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJPA</span>Pará</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJPB</span>Paraíba</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJPR</span>Paraná</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJPE</span>Pernambuco</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJPI</span>Piauí</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJRJ</span>Rio de Janeiro</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJRN</span>Rio Grande do Norte</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJRS</span>Rio Grande do Sul</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJRO</span>Rondônia</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJRR</span>Roraima</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJSC</span>Santa Catarina</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJSP</span>São Paulo</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJSE</span>Sergipe</div>
+          <div class="col-md-3 mb-2"><span class="badge bg-primary me-2">TJTO</span>Tocantins</div>
+        </div>
+      </div>
+
+      <!-- Tribunais Regionais do Trabalho -->
+      <div class="judit-card mb-4">
+        <h5 class="mb-3">
+          <i class="fas fa-hard-hat me-2" style="color: #ffc107;"></i>
+          Tribunais Regionais do Trabalho (TRT) - 24 Tribunais + TST
+        </h5>
+        <p class="text-muted mb-3">Cobertura completa da Justiça do Trabalho</p>
+        
+        <div class="row">
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT1</span>1ª Região (Rio de Janeiro)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT2</span>2ª Região (São Paulo)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT3</span>3ª Região (Minas Gerais)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT4</span>4ª Região (Rio Grande do Sul)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT5</span>5ª Região (Bahia)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT6</span>6ª Região (Pernambuco)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT7</span>7ª Região (Ceará)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT8</span>8ª Região (Pará e Amapá)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT9</span>9ª Região (Paraná)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT10</span>10ª Região (DF e Tocantins)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT11</span>11ª Região (Amazonas e Roraima)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT12</span>12ª Região (Santa Catarina)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT13</span>13ª Região (Paraíba)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT14</span>14ª Região (Rondônia e Acre)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT15</span>15ª Região (Campinas e Região)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT16</span>16ª Região (Maranhão)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT17</span>17ª Região (Espírito Santo)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT18</span>18ª Região (Goiás)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT19</span>19ª Região (Alagoas)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT20</span>20ª Região (Sergipe)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT21</span>21ª Região (Rio Grande do Norte)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT22</span>22ª Região (Piauí)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT23</span>23ª Região (Mato Grosso)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-warning text-dark me-2">TRT24</span>24ª Região (Mato Grosso do Sul)</div>
+          <div class="col-md-4 mb-2"><span class="badge bg-danger me-2">TST</span>Tribunal Superior do Trabalho</div>
+        </div>
+      </div>
+
+      <!-- Tribunais Regionais Federais -->
+      <div class="judit-card mb-4">
+        <h5 class="mb-3">
+          <i class="fas fa-flag me-2" style="color: #17a2b8;"></i>
+          Tribunais Regionais Federais (TRF) - 6 Tribunais
+        </h5>
+        <p class="text-muted mb-3">Cobertura completa da Justiça Federal</p>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF1</span><strong>1ª Região</strong><br>
+              <small class="text-muted">AC, AM, AP, BA, DF, GO, MA, MT, PA, PI, RO, RR, TO</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF2</span><strong>2ª Região</strong><br>
+              <small class="text-muted">ES, RJ</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF3</span><strong>3ª Região</strong><br>
+              <small class="text-muted">MS, SP</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF4</span><strong>4ª Região</strong><br>
+              <small class="text-muted">PR, RS, SC</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF5</span><strong>5ª Região</strong><br>
+              <small class="text-muted">AL, CE, PB, PE, RN, SE</small>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="border rounded p-3">
+              <span class="badge bg-info me-2">TRF6</span><strong>6ª Região</strong><br>
+              <small class="text-muted">MG</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tribunais Superiores -->
+      <div class="judit-card mb-4">
+        <h5 class="mb-3">
+          <i class="fas fa-crown me-2" style="color: #6f42c1;"></i>
+          Tribunais Superiores - 5 Tribunais
+        </h5>
+        <p class="text-muted mb-3">Instâncias superiores do Poder Judiciário</p>
+        
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="badge bg-dark me-2">STF</span>Supremo Tribunal Federal
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="badge bg-dark me-2">STJ</span>Superior Tribunal de Justiça
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="badge bg-dark me-2">TST</span>Tribunal Superior do Trabalho
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="badge bg-dark me-2">STM</span>Superior Tribunal Militar
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="badge bg-dark me-2">TSE</span>Tribunal Superior Eleitoral
+          </div>
+        </div>
+      </div>
+
+      <!-- Tribunais Especializados -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="judit-card">
+            <h5 class="mb-3">
+              <i class="fas fa-shield-alt me-2" style="color: #fd7e14;"></i>
+              Tribunais de Justiça Militar - 3 Tribunais
+            </h5>
+            <div class="mb-2"><span class="badge bg-warning text-dark me-2">TJMMG</span>Minas Gerais</div>
+            <div class="mb-2"><span class="badge bg-warning text-dark me-2">TJMRS</span>Rio Grande do Sul</div>
+            <div class="mb-2"><span class="badge bg-warning text-dark me-2">TJMSP</span>São Paulo</div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="judit-card">
+            <h5 class="mb-3">
+              <i class="fas fa-vote-yea me-2" style="color: #20c997;"></i>
+              Conselhos de Justiça - 3 Órgãos
+            </h5>
+            <div class="mb-2"><span class="badge bg-success me-2">CNJ</span>Conselho Nacional de Justiça</div>
+            <div class="mb-2"><span class="badge bg-success me-2">CJF</span>Conselho da Justiça Federal</div>
+            <div class="mb-2"><span class="badge bg-success me-2">CSJT</span>Conselho Superior da Justiça do Trabalho</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo da Cobertura -->
+      <div class="judit-card mt-4">
+        <h5 class="mb-3">
+          <i class="fas fa-chart-pie me-2" style="color: #e83e8c;"></i>
+          Resumo da Cobertura
+        </h5>
+        
+        <div class="row text-center">
+          <div class="col-md-2 mb-3">
+            <h3 class="text-primary">90+</h3>
+            <small class="text-muted">Tribunais Integrados</small>
+          </div>
+          <div class="col-md-2 mb-3">
+            <h3 class="text-success">27</h3>
+            <small class="text-muted">TJs Estaduais</small>
+          </div>
+          <div class="col-md-2 mb-3">
+            <h3 class="text-warning">24+1</h3>
+            <small class="text-muted">TRTs + TST</small>
+          </div>
+          <div class="col-md-2 mb-3">
+            <h3 class="text-info">6</h3>
+            <small class="text-muted">TRFs</small>
+          </div>
+          <div class="col-md-2 mb-3">
+            <h3 class="text-dark">5</h3>
+            <small class="text-muted">Superiores</small>
+          </div>
+          <div class="col-md-2 mb-3">
+            <h3 class="text-secondary">9</h3>
+            <small class="text-muted">Outros</small>
+          </div>
+        </div>
+        
+        <div class="alert-judit mt-3">
+          <h6><i class="fas fa-clock me-2"></i>Tempo de Resposta</h6>
+          <p class="mb-1">• <strong>Consultas em tempo real:</strong> até 9 segundos</p>
+          <p class="mb-1">• <strong>Atualização de dados:</strong> diária e contínua</p>
+          <p class="mb-0">• <strong>Sistemas integrados:</strong> PJe, E-SAJ, E-STF, E-STJ, PROJUDI, Creta e outros</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba de Documentos -->
+    <div class="tab-pane fade" id="documentos" role="tabpanel">
+      <h4 class="mb-4">
+        <i class="fas fa-file-alt me-2"></i>
+        Consulta de Documentos e Anexos
+      </h4>
+
+      <div class="alert-judit">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Informação:</strong> Esta funcionalidade permite baixar documentos específicos dos processos. 
+        É necessário ter os IDs corretos dos anexos obtidos através das buscas processuais.
+      </div>
+
+      <div class="judit-card">
+        <h5>
+          <i class="fas fa-download me-2"></i>
+          Baixar Documento/Anexo
+        </h5>
+        
+        <form id="form-baixar-documento" class="row">
+          <div class="col-md-4 mb-3">
+            <label for="numero-processo-doc" class="form-label">Número do Processo</label>
+            <input type="text" class="form-control" id="numero-processo-doc" required>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label for="numero-instancia-doc" class="form-label">Número da Instância</label>
+            <input type="text" class="form-control" id="numero-instancia-doc" required>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <label for="id-anexo" class="form-label">ID do Anexo</label>
+            <input type="text" class="form-control" id="id-anexo" required>
+          </div>
+          
+          <div class="col-12">
+            <button type="submit" class="btn btn-judit">
+              <i class="fas fa-download me-2"></i>
+              Baixar Documento
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts específicos da integração Judit -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Verificar status da conexão
+  verificarStatusJudit();
+  
+  // Carregar monitoramentos inicial
+  carregarMonitoramentos();
+  
+  // Event listeners para os formulários
+  setupFormularios();
+});
+
+function verificarStatusJudit() {
+  fetch('/api/judit/status')
+    .then(response => response.json())
+    .then(data => {
+      const indicator = document.getElementById('status-indicator');
+      const lastCheck = document.getElementById('last-check');
+      
+      if (data.judit_connected && data.api_key_configured) {
+        indicator.className = 'status-indicator status-connected';
+        indicator.innerHTML = '<i class="fas fa-check-circle me-2"></i>Conectado';
+      } else {
+        indicator.className = 'status-indicator status-disconnected';
+        indicator.innerHTML = '<i class="fas fa-times-circle me-2"></i>Desconectado';
+      }
+      
+      lastCheck.textContent = new Date(data.timestamp).toLocaleString('pt-BR');
+    })
+    .catch(error => {
+      console.error('Erro ao verificar status:', error);
+      const indicator = document.getElementById('status-indicator');
+      indicator.className = 'status-indicator status-disconnected';
+      indicator.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Erro';
+    });
+}
+
+function setupFormularios() {
+  // Busca por CNJ
+  document.getElementById('form-busca-cnj').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const numeroCnj = document.getElementById('numero-cnj').value;
+    const incluirAnexos = document.getElementById('incluir-anexos-cnj').checked;
+    
+    const salvarBanco = document.getElementById('salvar-banco-cnj').checked;
+    
+    executarBusca('cnj', {
+      numero_cnj: numeroCnj,
+      incluir_anexos: incluirAnexos,
+      salvar_no_banco: salvarBanco
+    });
+  });
+  
+  // Busca por documento
+  document.getElementById('form-busca-documento').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const tipoDocumento = document.getElementById('tipo-documento').value;
+    const numeroDocumento = document.getElementById('numero-documento').value;
+    const salvarBanco = document.getElementById('salvar-banco-documento').checked;
+    
+    executarBusca('documento', {
+      documento: numeroDocumento,
+      tipo: tipoDocumento,
+      salvar_no_banco: salvarBanco
+    });
+  });
+  
+  // Busca por OAB
+  document.getElementById('form-busca-oab').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const numeroOab = document.getElementById('numero-oab').value;
+    const ufOab = document.getElementById('uf-oab').value;
+    
+    executarBusca('oab', {
+      numero_oab: numeroOab,
+      uf_oab: ufOab
+    });
+  });
+  
+  // Criar monitoramento
+  document.getElementById('form-criar-monitoramento').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const tipo = document.getElementById('tipo-monitoramento').value;
+    const valor = document.getElementById('valor-monitoramento').value;
+    const recorrencia = parseInt(document.getElementById('recorrencia').value);
+    
+    criarMonitoramento({
+      tipo: tipo,
+      [tipo === 'cnj' ? 'numero_cnj' : 'documento']: valor,
+      recorrencia: recorrencia
+    });
+  });
+}
+
+function executarBusca(tipo, dados) {
+  mostrarLoading(true);
+  
+  let endpoint = '';
+  let payload = {};
+  
+  if (tipo === 'cnj') {
+    endpoint = '/api/judit/buscar-cnj';
+    payload = { 
+      numero_cnj: dados.numero_cnj,
+      salvar_no_banco: dados.salvar_no_banco || false
+    };
+  } else if (tipo === 'documento') {
+    endpoint = '/api/judit/buscar-documento';
+    payload = { 
+      documento: dados.documento, 
+      tipo: dados.tipo,
+      salvar_no_banco: dados.salvar_no_banco || false
+    };
+  }
+  
+  fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    mostrarLoading(false);
+    exibirResultados(data);
+  })
+  .catch(error => {
+    mostrarLoading(false);
+    console.error('Erro na busca:', error);
+    exibirErro('Erro ao executar busca: ' + error.message);
+  });
+}
+
+function criarMonitoramento(dados) {
+  fetch('/api/judit/criar-monitoramento', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(dados)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      exibirErro('Erro ao criar monitoramento: ' + data.message);
+    } else {
+      exibirSucesso('Monitoramento criado com sucesso!');
+      carregarMonitoramentos();
+      document.getElementById('form-criar-monitoramento').reset();
+    }
+  })
+  .catch(error => {
+    console.error('Erro ao criar monitoramento:', error);
+    exibirErro('Erro ao criar monitoramento: ' + error.message);
+  });
+}
+
+function carregarMonitoramentos() {
+  fetch('/api/judit/listar-monitoramentos')
+    .then(response => response.json())
+    .then(data => {
+      const container = document.getElementById('lista-monitoramentos');
+      
+      if (data.error) {
+        container.innerHTML = '<div class="text-center text-muted"><p>Erro ao carregar monitoramentos</p></div>';
+        return;
+      }
+      
+      const monitoramentos = data.monitoramentos || [];
+      
+      if (monitoramentos.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-muted">
+            <i class="fas fa-bell-slash fa-3x mb-3"></i>
+            <p>Nenhum monitoramento encontrado</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = monitoramentos.map(mon => `
+        <div class="monitoring-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6>${mon.search?.search_type || 'N/A'}</h6>
+              <p class="text-muted mb-1">${mon.search?.search_key || 'N/A'}</p>
+              <small class="text-muted">Recorrência: ${mon.recurrence || 1} dia(s)</small>
+            </div>
+            <span class="badge bg-${mon.status === 'active' ? 'success' : 'warning'}">
+              ${mon.status || 'Unknown'}
+            </span>
+          </div>
+        </div>
+      `).join('');
+    })
+    .catch(error => {
+      console.error('Erro ao carregar monitoramentos:', error);
+      document.getElementById('lista-monitoramentos').innerHTML = 
+        '<div class="text-center text-muted"><p>Erro ao carregar monitoramentos</p></div>';
+    });
+}
+
+function mostrarLoading(mostrar) {
+  const loading = document.getElementById('loading-busca');
+  const resultados = document.getElementById('resultados-busca');
+  
+  if (mostrar) {
+    loading.style.display = 'block';
+    resultados.style.display = 'none';
+  } else {
+    loading.style.display = 'none';
+  }
+}
+
+function exibirResultados(data) {
+  const container = document.getElementById('conteudo-resultados');
+  const resultadosDiv = document.getElementById('resultados-busca');
+  
+  if (data.error) {
+    container.innerHTML = `
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Erro:</strong> ${data.message}
+      </div>
+    `;
+  } else {
+    // Processar e exibir resultados
+    container.innerHTML = `
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Busca concluída com sucesso!</strong>
+      </div>
+      <pre class="bg-dark text-light p-3 rounded">${JSON.stringify(data, null, 2)}</pre>
+    `;
+  }
+  
+  resultadosDiv.style.display = 'block';
+}
+
+function exibirErro(mensagem) {
+  // Implementar notificação de erro
+  alert('Erro: ' + mensagem);
+}
+
+function exibirSucesso(mensagem) {
+  // Implementar notificação de sucesso
+  alert('Sucesso: ' + mensagem);
+}
+
+// Funções para alternar entre modos de tribunal
+function alternarModoTribunal() {
+  const modoLista = document.getElementById('modo-lista').checked;
+  const modoCheckbox = document.getElementById('modo-checkbox').checked;
+  
+  const listaContainer = document.getElementById('tribunais-lista-container');
+  const checkboxContainer = document.getElementById('tribunais-checkbox-container');
+  const feedbackLista = document.getElementById('feedback-lista');
+  const feedbackCheckbox = document.getElementById('feedback-checkbox');
+  
+  if (modoLista) {
+    listaContainer.style.display = 'block';
+    checkboxContainer.style.display = 'none';
+    feedbackLista.style.display = 'inline';
+    feedbackCheckbox.style.display = 'none';
+  } else if (modoCheckbox) {
+    listaContainer.style.display = 'none';
+    checkboxContainer.style.display = 'block';
+    feedbackLista.style.display = 'none';
+    feedbackCheckbox.style.display = 'inline';
+  }
+  
+  // Sincronizar seleções
+  sincronizarSelecoesTribunais();
+}
+
+// Sincronizar seleções entre lista e checkboxes
+function sincronizarSelecoesTribunais() {
+  const modoListaElement = document.getElementById('modo-lista');
+  if (!modoListaElement) return;
+  
+  const modoLista = modoListaElement.checked;
+  
+  if (modoLista) {
+    // Sincronizar de checkboxes para lista
+    const checkboxes = document.querySelectorAll('.tribunal-checkbox:checked');
+    const select = document.getElementById('tribunais');
+    
+    if (select) {
+      // Limpar seleção atual
+      for (let option of select.options) {
+        option.selected = false;
+      }
+      
+      // Aplicar seleções dos checkboxes
+      checkboxes.forEach(checkbox => {
+        const option = select.querySelector(`option[value="${checkbox.value}"]`);
+        if (option) {
+          option.selected = true;
+        }
+      });
+    }
+  } else {
+    // Sincronizar de lista para checkboxes
+    const selectedOptions = document.querySelectorAll('#tribunais option:checked');
+    const checkboxes = document.querySelectorAll('.tribunal-checkbox');
+    
+    // Limpar checkboxes
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    // Aplicar seleções da lista
+    selectedOptions.forEach(option => {
+      const checkbox = document.querySelector(`.tribunal-checkbox[value="${option.value}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+    });
+  }
+  
+  atualizarFeedbackTribunais();
+}
+
+// Funções para seleção de tribunais (adaptadas para modo híbrido)
+function selecionarTodosTribunais() {
+  const modoLista = document.getElementById('modo-lista').checked;
+  
+  if (modoLista) {
+    // Modo lista
+    const select = document.getElementById('tribunais');
+    for (let i = 0; i < select.options.length; i++) {
+      select.options[i].selected = true;
+    }
+  } else {
+    // Modo checkbox
+    const checkboxes = document.querySelectorAll('.tribunal-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = true;
+    });
+  }
+  
+  sincronizarSelecoesTribunais();
+  exibirMensagemTemporaria('Todos os tribunais selecionados!', 'success');
+}
+
+function limparSelecaoTribunais() {
+  const modoLista = document.getElementById('modo-lista').checked;
+  
+  if (modoLista) {
+    // Modo lista
+    const select = document.getElementById('tribunais');
+    for (let i = 0; i < select.options.length; i++) {
+      select.options[i].selected = false;
+    }
+  } else {
+    // Modo checkbox
+    const checkboxes = document.querySelectorAll('.tribunal-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+  }
+  
+  sincronizarSelecoesTribunais();
+  exibirMensagemTemporaria('Seleção de tribunais limpa!', 'info');
+}
+
+function selecionarTribunaisPrincipais() {
+  // Limpar seleção primeiro
+  limparSelecaoTribunais();
+  
+  const principais = ['TJSP', 'TJRJ', 'TJMG', 'TRT2', 'TRT1', 'TRT3', 'TRF3', 'TRF2', 'STF', 'STJ'];
+  const modoLista = document.getElementById('modo-lista').checked;
+  
+  if (modoLista) {
+    // Modo lista
+    principais.forEach(codigo => {
+      const option = document.querySelector(`#tribunais option[value="${codigo}"]`);
+      if (option) {
+        option.selected = true;
+      }
+    });
+  } else {
+    // Modo checkbox
+    principais.forEach(codigo => {
+      const checkbox = document.querySelector(`.tribunal-checkbox[value="${codigo}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+    });
+  }
+  
+  sincronizarSelecoesTribunais();
+  exibirMensagemTemporaria('Tribunais principais selecionados (SP, RJ, MG)!', 'warning');
+}
+
+function atualizarFeedbackTribunais() {
+  const modoListaElement = document.getElementById('modo-lista');
+  if (!modoListaElement) return;
+  
+  const modoLista = modoListaElement.checked;
+  let selecionados = 0;
+  let totalTribunais = 0;
+  
+  if (modoLista) {
+    const selectedOptions = document.querySelectorAll('#tribunais option:checked');
+    const allOptions = document.querySelectorAll('#tribunais option');
+    selecionados = selectedOptions.length;
+    totalTribunais = allOptions.length;
+  } else {
+    const checkedBoxes = document.querySelectorAll('.tribunal-checkbox:checked');
+    const allCheckboxes = document.querySelectorAll('.tribunal-checkbox');
+    selecionados = checkedBoxes.length;
+    totalTribunais = allCheckboxes.length;
+  }
+  
+  const feedbackElement = document.getElementById('tribunais-feedback');
+  const feedbackTexto = modoLista ? document.getElementById('feedback-lista') : document.getElementById('feedback-checkbox');
+  
+  if (!feedbackElement || !feedbackTexto) return;
+  
+  if (selecionados === 0) {
+    feedbackTexto.innerHTML = modoLista ? 
+      'Mantenha Ctrl pressionado para selecionar múltiplos tribunais.' :
+      'Selecione os tribunais desejados usando as opções.';
+    feedbackElement.className = 'text-muted d-block mt-2';
+  } else if (selecionados === 1) {
+    feedbackTexto.innerHTML = `<i class="fas fa-check me-1"></i>1 tribunal selecionado`;
+    feedbackElement.className = 'text-success d-block mt-2';
+  } else {
+    feedbackTexto.innerHTML = `<i class="fas fa-check-double me-1"></i><strong>${selecionados}</strong> tribunais selecionados de ${totalTribunais} disponíveis`;
+    feedbackElement.className = 'text-success d-block mt-2';
+  }
+}
+
+function exibirMensagemTemporaria(mensagem, tipo) {
+  const feedbackElement = document.getElementById('tribunais-feedback');
+  if (!feedbackElement) return;
+  
+  const originalContent = feedbackElement.innerHTML;
+  const originalClass = feedbackElement.className;
+  
+  let icon = '';
+  let colorClass = '';
+  
+  switch(tipo) {
+    case 'success':
+      icon = 'fas fa-check';
+      colorClass = 'text-success';
+      break;
+    case 'info':
+      icon = 'fas fa-info-circle';
+      colorClass = 'text-info';
+      break;
+    case 'warning':
+      icon = 'fas fa-star';
+      colorClass = 'text-warning';
+      break;
+  }
+  
+  feedbackElement.innerHTML = `<i class="${icon} me-1"></i>${mensagem} <strong>90+ tribunais</strong> disponíveis na plataforma Judit!`;
+  feedbackElement.className = `${colorClass} d-block mt-2`;
+  
+  setTimeout(() => {
+    if (feedbackElement) {
+      feedbackElement.innerHTML = originalContent;
+      feedbackElement.className = originalClass;
+    }
+  }, 3000);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Listeners para alternar modo
+  const modoLista = document.getElementById('modo-lista');
+  const modoCheckbox = document.getElementById('modo-checkbox');
+  
+  if (modoLista) {
+    modoLista.addEventListener('change', alternarModoTribunal);
+  }
+  if (modoCheckbox) {
+    modoCheckbox.addEventListener('change', alternarModoTribunal);
+  }
+  
+  // Listener para lista suspensa
+  const tribunaisSelect = document.getElementById('tribunais');
+  if (tribunaisSelect) {
+    tribunaisSelect.addEventListener('change', function() {
+      const modoListaChecked = document.getElementById('modo-lista');
+      if (modoListaChecked && modoListaChecked.checked) {
+        atualizarFeedbackTribunais();
+      }
+    });
+  }
+  
+  // Listeners para checkboxes
+  const checkboxes = document.querySelectorAll('.tribunal-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const modoCheckboxChecked = document.getElementById('modo-checkbox');
+      if (modoCheckboxChecked && modoCheckboxChecked.checked) {
+        atualizarFeedbackTribunais();
+      }
+    });
+  });
+  
+  // Inicializar feedback após um pequeno delay
+  setTimeout(() => {
+    atualizarFeedbackTribunais();
+  }, 100);
+});
+
+// Atualizar placeholder do campo valor baseado no tipo de monitoramento
+const tipoMonitoramento = document.getElementById('tipo-monitoramento');
+if (tipoMonitoramento) {
+  tipoMonitoramento.addEventListener('change', function() {
+    const valor = document.getElementById('valor-monitoramento');
+    if (!valor) return;
+    
+    const tipo = this.value;
+    
+    switch(tipo) {
+      case 'cnj':
+        valor.placeholder = '0000000-00.0000.0.00.0000';
+        break;
+      case 'cpf':
+        valor.placeholder = '000.000.000-00';
+        break;
+      case 'cnpj':
+        valor.placeholder = '00.000.000/0000-00';
+        break;
+      case 'custom':
+        valor.placeholder = 'Configuração customizada';
+        break;
+    }
+  });
+}
+</script>
+{% endblock %}

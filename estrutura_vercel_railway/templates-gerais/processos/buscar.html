@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+
+{% block title %}Busca de Processos - Legal Design Pro V2{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #357abd;
+        --dark-bg: #1e293b;
+        --darker-bg: #0f172a;
+        --blue-accent: #3b82f6;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #e2e8f0;
+    }
+    
+    .main-container {
+        background: rgba(30, 41, 59, 0.95);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        margin: 20px auto;
+        backdrop-filter: blur(10px);
+        max-width: 1400px;
+        border: 1px solid rgba(74, 144, 226, 0.2);
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px 15px 0 0;
+        border: 2px solid var(--blue-accent);
+        border-bottom: none;
+    }
+    
+    .search-section {
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 2px solid var(--blue-accent);
+    }
+    
+    .results-section {
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 2px solid var(--blue-accent);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: 2px solid var(--blue-accent);
+        color: white;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+    }
+    
+    .process-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 2px solid var(--blue-accent);
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+        color: #e2e8f0;
+    }
+    
+    .process-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2);
+        border-color: var(--primary-color);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid var(--blue-accent);
+    }
+    
+    .field-value {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    /* Estilização para inputs e selects no tema azul */
+    .form-control, .form-select {
+        background: rgba(30, 41, 59, 0.8);
+        border: 2px solid rgba(74, 144, 226, 0.3);
+        color: #e2e8f0;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+        color: #e2e8f0;
+    }
+    
+    .form-floating > label {
+        color: #94a3b8;
+    }
+    
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label {
+        color: var(--primary-color);
+    }
+    
+    .text-muted {
+        color: #94a3b8 !important;
+    }
+    
+    .text-primary {
+        color: var(--primary-color) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-search me-3"></i>Busca Inteligente de Processos
+                    </h1>
+                    <p class="mt-2 mb-0">Pesquise processos usando critérios avançados como CPF, CNPJ, número do processo ou área jurídica</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('home_dashboard_init_app') }}" class="btn btn-outline-light">
+                        <i class="fas fa-home me-2"></i>Home
+                    </a>
+                    <a href="{{ url_for('processos_juridicos') }}" class="btn btn-light">
+                        <i class="fas fa-list me-2"></i>Lista de Processos
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Busca -->
+        <div class="search-section">
+            <h3 class="section-title">
+                <i class="fas fa-filter me-2"></i>Critérios de Busca
+            </h3>
+            
+            <form method="POST" action="{{ url_for('processos_buscar_post') }}">
+                <!-- Busca Específica -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h5 class="text-primary mb-3"><i class="fas fa-crosshairs me-2"></i>Busca Específica</h5>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="numero_processo" name="numero_processo" 
+                                   value="{{ numero_processo if numero_processo else '' }}" 
+                                   placeholder="0000000-00.0000.0.00.0000">
+                            <label for="numero_processo">Número do Processo CNJ</label>
+                        </div>
+                        <small class="text-muted">Ex: 1234567-89.2024.5.03.0001</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cpf_autor" name="cpf_autor" 
+                                   value="{{ cpf_autor if cpf_autor else '' }}" 
+                                   placeholder="000.000.000-00" maxlength="14">
+                            <label for="cpf_autor">CPF do Autor (Pessoa Física)</label>
+                        </div>
+                        <small class="text-muted">CPF da pessoa física (autor)</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="cnpj_cliente" name="cnpj_cliente" 
+                                   value="{{ cnpj_cliente if cnpj_cliente else '' }}" 
+                                   placeholder="00.000.000/0000-00" maxlength="18">
+                            <label for="cnpj_cliente">CNPJ do Cliente</label>
+                        </div>
+                        <small class="text-muted">CNPJ da empresa cliente</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="advogado_nome" name="advogado_nome" 
+                                   value="{{ advogado_nome if advogado_nome else '' }}" 
+                                   placeholder="Nome do advogado">
+                            <label for="advogado_nome">Nome do Advogado</label>
+                        </div>
+                        <small class="text-muted">Advogado do caso ou adverso</small>
+                    </div>
+                </div>
+                
+                <!-- Busca Geral -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5 class="text-primary mb-3"><i class="fas fa-search me-2"></i>Busca Geral</h5>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="termo_busca" name="termo_busca" 
+                                   value="{{ termo_busca if termo_busca else '' }}" 
+                                   placeholder="Digite qualquer termo para busca...">
+                            <label for="termo_busca">Termo de Busca Geral</label>
+                        </div>
+                        <small class="text-muted">Busca em: cliente, autor, título, empresa, resumo dos fatos</small>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="area_juridica" name="area_juridica">
+                                <option value="">Todas as áreas</option>
+                                <option value="Direito Civil" {{ 'selected' if area_juridica == 'Direito Civil' }}>Direito Civil</option>
+                                <option value="Direito Trabalhista" {{ 'selected' if area_juridica == 'Direito Trabalhista' }}>Direito Trabalhista</option>
+                                <option value="Direito Empresarial" {{ 'selected' if area_juridica == 'Direito Empresarial' }}>Direito Empresarial</option>
+                                <option value="Direito Tributário" {{ 'selected' if area_juridica == 'Direito Tributário' }}>Direito Tributário</option>
+                                <option value="Direito Previdenciário" {{ 'selected' if area_juridica == 'Direito Previdenciário' }}>Direito Previdenciário</option>
+                                <option value="Direito Penal" {{ 'selected' if area_juridica == 'Direito Penal' }}>Direito Penal</option>
+                                <option value="Direito Imobiliário" {{ 'selected' if area_juridica == 'Direito Imobiliário' }}>Direito Imobiliário</option>
+                                <option value="Direito Bancário" {{ 'selected' if area_juridica == 'Direito Bancário' }}>Direito Bancário</option>
+                                <option value="Direito do Consumidor" {{ 'selected' if area_juridica == 'Direito do Consumidor' }}>Direito do Consumidor</option>
+                                <option value="Direito de Família" {{ 'selected' if area_juridica == 'Direito de Família' }}>Direito de Família</option>
+                                <option value="Direito Administrativo" {{ 'selected' if area_juridica == 'Direito Administrativo' }}>Direito Administrativo</option>
+                                <option value="Direito Constitucional" {{ 'selected' if area_juridica == 'Direito Constitucional' }}>Direito Constitucional</option>
+                                <option value="Direito Ambiental" {{ 'selected' if area_juridica == 'Direito Ambiental' }}>Direito Ambiental</option>
+                                <option value="Direito Digital" {{ 'selected' if area_juridica == 'Direito Digital' }}>Direito Digital</option>
+                            </select>
+                            <label for="area_juridica">Área Jurídica</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="risco" name="risco">
+                                <option value="">Todos os riscos</option>
+                                <option value="Remoto" {{ 'selected' if risco == 'Remoto' }}>Remoto</option>
+                                <option value="Possível" {{ 'selected' if risco == 'Possível' }}>Possível</option>
+                                <option value="Provável" {{ 'selected' if risco == 'Provável' }}>Provável</option>
+                            </select>
+                            <label for="risco">Nível de Risco</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Todos os status</option>
+                                <option value="Ativo" {{ 'selected' if status == 'Ativo' }}>Ativo</option>
+                                <option value="Suspenso" {{ 'selected' if status == 'Suspenso' }}>Suspenso</option>
+                                <option value="Arquivado" {{ 'selected' if status == 'Arquivado' }}>Arquivado</option>
+                                <option value="Finalizado" {{ 'selected' if status == 'Finalizado' }}>Finalizado</option>
+                            </select>
+                            <label for="status">Status</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                                   value="{{ data_inicio if data_inicio else '' }}">
+                            <label for="data_inicio">Data Início</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="data_fim" name="data_fim" 
+                                   value="{{ data_fim if data_fim else '' }}">
+                            <label for="data_fim">Data Fim</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Buscar Processos
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Resultados da Busca -->
+        {% if busca_realizada %}
+        <div class="results-section">
+            <div class="stats-card">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h4 class="mb-1">{{ estatisticas.total_encontrados }}</h4>
+                        <small>Processos Encontrados</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="mb-1">{{ estatisticas.valor_total | moeda_brl }}</h4>
+                        <small>Valor Total das Causas</small>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="mb-1">{{ estatisticas.filtros_aplicados|length }}</h4>
+                        <small>Filtros Aplicados</small>
+                    </div>
+                </div>
+                
+                {% if estatisticas.filtros_aplicados %}
+                <div class="mt-3">
+                    <small><strong>Filtros aplicados:</strong></small>
+                    <div class="mt-1">
+                        {% for filtro in estatisticas.filtros_aplicados %}
+                        <span class="badge bg-light text-dark me-1 mb-1">{{ filtro }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <h3 class="section-title">
+                <i class="fas fa-list-alt me-2"></i>Resultados da Busca
+            </h3>
+            
+            {% if processos %}
+            <div class="row">
+                {% for processo in processos %}
+                <div class="col-12 mb-3">
+                    <div class="card process-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title mb-2">
+                                        <i class="fas fa-gavel me-2 text-primary"></i>
+                                        {{ processo.numero_processo_cnj }}
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Área:</strong> <span class="field-value">{{ processo.area_juridica }}</span></p>
+                                            <p class="mb-1"><strong>Advogado:</strong> <span class="field-value">{{ processo.advogado_do_caso }}</span></p>
+                                            {% if processo.titulo %}
+                                            <p class="mb-1"><strong>Título:</strong> <span class="field-value">{{ processo.titulo }}</span></p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Fase:</strong> <span class="field-value">{{ processo.fase_processual }}</span></p>
+                                            <p class="mb-1"><strong>Risco:</strong> 
+                                                <span class="badge bg-{{ 'danger' if processo.risco == 'Alto' else 'warning' if processo.risco == 'Médio' else 'success' }}">
+                                                    {{ processo.risco }}
+                                                </span>
+                                            </p>
+                                            {% if processo.status %}
+                                            <p class="mb-1"><strong>Status:</strong> <span class="field-value">{{ processo.status }}</span></p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="text-muted mt-2 mb-0">{{ processo.resumo_dos_fatos[:150] }}{% if processo.resumo_dos_fatos|length > 150 %}...{% endif %}</p>
+                                </div>
+                                
+                                <div class="col-md-4 text-end">
+                                    <h4 class="text-primary mb-2">{{ processo.valor_da_causa | moeda_brl }}</h4>
+                                    <small class="text-muted d-block mb-3">Valor da Causa</small>
+                                    
+                                    <a href="{{ url_for('processo_detalhes', processo_id=processo.id) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3 text-muted">Nenhum processo encontrado</h4>
+                <p class="text-muted">Tente ajustar os critérios de busca para encontrar mais resultados.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="results-section">
+            <div class="text-center py-5">
+                <i class="fas fa-search text-primary" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Busca Inteligente de Processos</h4>
+                <p class="text-muted">Use os filtros acima para encontrar processos específicos no sistema.</p>
+                <p class="text-muted"><strong>Dica:</strong> O campo "Termo de Busca Geral" pesquisa em múltiplos campos simultaneamente.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Máscaras para CPF e CNPJ
+    document.addEventListener('DOMContentLoaded', function() {
+        const cpfField = document.getElementById('cpf_autor');
+        const cnpjField = document.getElementById('cnpj_cliente');
+        
+        // Máscara para CPF
+        if (cpfField) {
+            cpfField.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 11) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    e.target.value = value;
+                }
+            });
+        }
+        
+        // Máscara para CNPJ
+        if (cnpjField) {
+            cnpjField.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 14) {
+                    value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                    e.target.value = value;
+                }
+            });
+        }
+        
+        // Limpar todos os campos de busca
+        function limparCampos() {
+            document.getElementById('numero_processo').value = '';
+            document.getElementById('cpf_autor').value = '';
+            document.getElementById('cnpj_cliente').value = '';
+            document.getElementById('advogado_nome').value = '';
+            document.getElementById('termo_busca').value = '';
+            document.getElementById('area_juridica').value = '';
+            document.getElementById('risco').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('data_inicio').value = '';
+            document.getElementById('data_fim').value = '';
+        }
+        
+        // Adicionar botão de limpar (se não existir)
+        const form = document.querySelector('form');
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton && !form.querySelector('.btn-clear')) {
+            const clearButton = document.createElement('button');
+            clearButton.type = 'button';
+            clearButton.className = 'btn btn-outline-secondary btn-clear ms-2';
+            clearButton.innerHTML = '<i class="fas fa-eraser me-2"></i>Limpar';
+            clearButton.onclick = limparCampos;
+            submitButton.parentNode.appendChild(clearButton);
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado do Treinamento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .result-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .coef-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/modelos_juridicos_nav.html' %}
+
+    <div class="container mt-4">
+        <!-- Header de Sucesso -->
+        <div class="card result-header mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h2><i class="fas fa-trophy"></i> Modelo Treinado com Sucesso!</h2>
+                        <p class="lead mb-0">Regressão Logística para Predição de Vitória</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-robot" style="font-size: 4rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas de Performance -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <h3 class="text-primary">{{ "%.4f"|format(resultado.auc) }}</h3>
+                    <p class="mb-0">AUC-ROC</p>
+                    <small class="text-muted">
+                        {% if resultado.auc >= 0.8 %}Excelente
+                        {% elif resultado.auc >= 0.7 %}Bom
+                        {% elif resultado.auc >= 0.6 %}Razoável
+                        {% else %}Baixo{% endif %}
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <h3 class="text-success">{{ resultado.coeficientes|length }}</h3>
+                    <p class="mb-0">Features</p>
+                    <small class="text-muted">Coeficientes analisados</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <h3 class="text-info">
+                        {{ (resultado.coeficientes[resultado.coeficientes.coeficiente > 0])|length }}
+                    </h3>
+                    <p class="mb-0">Impacto Positivo</p>
+                    <small class="text-muted">Estratégias favoráveis</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coeficientes do Modelo -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-chart-bar"></i> Coeficientes do Modelo</h5>
+                    </div>
+                    <div class="card-body coef-table">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Coeficiente</th>
+                                    <th>Impacto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for index, row in resultado.coeficientes.iterrows() %}
+                                <tr>
+                                    <td><code>{{ row.feature }}</code></td>
+                                    <td>
+                                        <span class="{{ 'text-success' if row.coeficiente > 0 else 'text-danger' }}">
+                                            {{ "%.4f"|format(row.coeficiente) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if row.coeficiente > 0 %}
+                                        <span class="badge bg-success">Positivo</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Negativo</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matriz de Confusão -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h6><i class="fas fa-table"></i> Matriz de Confusão</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if resultado.confusion_matrix %}
+                        <table class="table table-bordered text-center">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Predito 0</th>
+                                    <th>Predito 1</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>Real 0</th>
+                                    <td class="bg-light">{{ resultado.confusion_matrix[0][0] }}</td>
+                                    <td class="bg-warning">{{ resultado.confusion_matrix[0][1] }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Real 1</th>
+                                    <td class="bg-warning">{{ resultado.confusion_matrix[1][0] }}</td>
+                                    <td class="bg-light">{{ resultado.confusion_matrix[1][1] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Top 5 Features -->
+                <div class="card mt-3">
+                    <div class="card-header bg-success text-white">
+                        <h6><i class="fas fa-star"></i> Top 5 Features</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% for index, row in resultado.coeficientes.head(5).iterrows() %}
+                            <li class="mb-2">
+                                <strong>{{ loop.index }}.</strong>
+                                <span class="badge bg-secondary">{{ "%.3f"|format(row.coeficiente|abs) }}</span>
+                                <br><small>{{ row.feature }}</small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatório de Classificação -->
+        {% if resultado.classification_report %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-clipboard-list"></i> Relatório de Classificação</h6>
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-light p-3 rounded">{{ resultado.classification_report }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ações -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-tools"></i> Próximas Ações</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="{{ url_for('modelos_juridicos.recomendar_defesa') }}" 
+                                   class="btn btn-primary btn-lg w-100 mb-2">
+                                    <i class="fas fa-magic"></i> Usar Modelo para Recomendações
+                                </a>
+                                
+                                <a href="{{ url_for('modelos_juridicos.visualizacoes') }}" 
+                                   class="btn btn-info btn-lg w-100 mb-2">
+                                    <i class="fas fa-chart-pie"></i> Ver Visualizações
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{{ url_for('modelos_juridicos.exportar_dados') }}" 
+                                   class="btn btn-success btn-lg w-100 mb-2">
+                                    <i class="fas fa-download"></i> Exportar Modelo
+                                </a>
+                                
+                                <a href="{{ url_for('modelos_juridicos.treinar_modelo') }}" 
+                                   class="btn btn-warning btn-lg w-100 mb-2">
+                                    <i class="fas fa-redo"></i> Novo Treinamento
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

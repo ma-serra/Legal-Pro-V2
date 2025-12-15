@@ -1,0 +1,763 @@
+{% extends "layout.html" %}
+
+{% block title %}Sistema Multi-Agente - Análise de Texto{% endblock %}
+
+{% block content %}
+<div class="homepage-container" style="display:none;">
+  <!-- Elemento invisível para ativar o estilo da página inicial -->
+</div>
+<style>
+  /* Cor de fundo específica para a página /home */
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .agent-card {
+    transition: all 0.3s ease;
+    border: 2px solid #6c757d !important;
+    border-radius: 8px;
+    height: 100%;
+  }
+  
+  .agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .agent-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+  }
+  
+  .dropzone {
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: rgba(0, 0, 0, 0.025);
+  }
+  
+  .dropzone:hover {
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+  }
+  
+  .nav-tabs .nav-link {
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+  }
+  
+  .nav-tabs .nav-link.active {
+    border-bottom: 3px solid var(--bs-primary);
+    background-color: transparent;
+    color: var(--bs-primary);
+  }
+  
+  .nav-tabs .nav-link:hover:not(.active) {
+    border-bottom: 3px solid var(--bs-border-color);
+  }
+  
+  .main-heading {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Cores personalizadas */
+  .stats-card {
+    background: linear-gradient(135deg, #3a5772 0%, #2c4356 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(58, 87, 114, 0.3);
+  }
+  
+  .template-card {
+    background: linear-gradient(135deg, #336866 0%, #2a5553 100%);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  
+  .template-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(51, 104, 102, 0.3);
+  }
+
+
+</style>
+
+<div class="container py-5">
+  <!-- Cards de Estatísticas no Topo -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card stats-card text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title fw-bold">Documentos</h6>
+              <h4 class="mb-1 fw-bold">{{ dashboard_data.documentos.total if dashboard_data else '25' }}</h4>
+              <small class="opacity-75">
+                <i class="fas fa-layer-group me-1"></i>
+                {{ dashboard_data.documentos.areas_cobertas if dashboard_data else '18' }} áreas cobertas
+              </small>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-file-alt fa-2x opacity-75"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="row text-center">
+              <div class="col-6">
+                <div class="border-end border-white border-opacity-25">
+                  <h6 class="mb-0">{{ dashboard_data.documentos.processados if dashboard_data else '25' }}</h6>
+                  <small class="opacity-75">Processados</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <h6 class="mb-0">PDF/DOCX</h6>
+                <small class="opacity-75">Formatos</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card template-card text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title fw-bold">Base Vetorial</h6>
+              <h4 class="mb-1 fw-bold">{{ dashboard_data.base_vetorial.embeddings if dashboard_data else '39' }}</h4>
+              <small class="opacity-75">
+                <i class="fas fa-microchip me-1"></i>
+                Embeddings ativos
+              </small>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-database fa-2x opacity-75"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="row text-center">
+              <div class="col-6">
+                <div class="border-end border-white border-opacity-25">
+                  <h6 class="mb-0">{{ dashboard_data.base_vetorial.tabelas if dashboard_data else '18' }}</h6>
+                  <small class="opacity-75">Tabelas</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <h6 class="mb-0">1536</h6>
+                <small class="opacity-75">Dimensões</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title fw-bold">Agentes</h6>
+              <h4 class="mb-1 fw-bold">{{ total_agentes or '330' }}</h4>
+              <small class="opacity-75">
+                <i class="fas fa-layer-group me-1"></i>
+                Especialistas
+              </small>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-robot fa-2x opacity-75"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="row text-center">
+              <div class="col-6">
+                <div class="border-end border-white border-opacity-25">
+                  <h6 class="mb-0">{{ total_agentes or '330' }}</h6>
+                  <small class="opacity-75">Especialistas</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <h6 class="mb-0">5</h6>
+                <small class="opacity-75">Modelos ML</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="card-title fw-bold">Templates</h6>
+              <h4 class="mb-1 fw-bold">557</h4>
+              <small class="opacity-75">
+                <i class="fas fa-layer-group me-1"></i>
+                30 áreas cobertas
+              </small>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-file-contract fa-2x opacity-75"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div class="row text-center">
+              <div class="col-6">
+                <div class="border-end border-white border-opacity-25">
+                  <h6 class="mb-0">557</h6>
+                  <small class="opacity-75">Especializados</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <h6 class="mb-0">30</h6>
+                <small class="opacity-75">Categorias</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="main-heading">
+        <img src="/static/icone_multiagente.png" alt="Multi-Agente" class="me-2" style="width: 1.5em; height: 1.5em; vertical-align: middle;"><span style="color: white;">Sistema de Análise Multi-Agente</span>
+      </h1>
+      <p class="lead" style="color: white;">Agentes especializados para analisar documentos e extrair insights relevantes na tomada de decisão.</p>
+    </div>
+  </div>
+
+  <!-- Seção de Cadastrar e Acessar Processos -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-rocket me-2 text-white"></i><span style="color: white;">Cadastrar e Acessar Processos</span>
+        <!-- Updated: 2025-08-22 22:47 -->
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-5">
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-gavel agent-icon" style="color: #3b576f;"></i>
+          <h5 class="card-title" style="color: white;">Cadastro de Processo</h5>
+          <p class="card-text text-muted">Registre novos processos jurídicos com informações completas incluindo dados do cliente, valores e fases processuais.</p>
+          <a href="/processos/cadastro" class="btn btn-sm" style="background-color: #3b576f; border-color: #3b576f; color: white; font-weight: 600;">
+            <i class="fas fa-plus me-2"></i>Cadastrar Processo
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-list-alt agent-icon" style="color: #c29e74;"></i>
+          <h5 class="card-title" style="color: white;">Lista de Processos</h5>
+          <p class="card-text text-muted">Visualize e gerencie todos os processos cadastrados com filtros por área jurídica, status e outras categorias.</p>
+          <a href="/processos/lista" class="btn btn-sm" style="background-color: #c29e74; border-color: #c29e74; color: white; font-weight: 600;">
+            <i class="fas fa-eye me-2"></i>Ver Processos
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-search agent-icon" style="color: #6e2125;"></i>
+          <h5 class="card-title" style="color: white;">Busca Inteligente</h5>
+          <p class="card-text text-muted">Pesquise processos usando critérios avançados como CPF, CNPJ, número do processo ou área jurídica.</p>
+          <a href="/processos/buscar" class="btn btn-sm" style="background-color: #6e2125; border-color: #6e2125; color: white; font-weight: 600;">
+            <i class="fas fa-search me-2"></i>Buscar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-chart-bar agent-icon" style="color: #fec208;"></i>
+          <h5 class="card-title" style="color: white;">Estatísticas</h5>
+          <p class="card-text text-muted">Visualize dashboards completos com análises estatísticas, performance, indicadores de gestão e métricas financeiras.</p>
+          <a href="/processos/estatisticas-detalhadas" class="btn btn-sm" style="background-color: #fec208; border-color: #fec208; color: white; font-weight: 600;">
+            <i class="fas fa-chart-line me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-user-plus agent-icon" style="color: #28a745;"></i>
+          <h5 class="card-title" style="color: white;">Cadastrar Cliente</h5>
+          <p class="card-text text-muted">Registre novos clientes com informações completas incluindo dados pessoais, contatos e documentos necessários.</p>
+          <a href="/clientes/cadastro" class="btn btn-sm" style="background-color: #28a745; border-color: #28a745; color: white; font-weight: 600;">
+            <i class="fas fa-user-plus me-2"></i>Cadastrar Cliente
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção Clientes -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-users me-2 text-white"></i><span style="color: white;">Sessao Clientes</span>
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-5">
+    <div class="col-md-6 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-credit-card agent-icon" style="color: #ff5f00;"></i>
+          <h5 class="card-title" style="color: white;">Fintechs</h5>
+          <p class="card-text text-muted">Visões Estretégicas e Preditivas dos Processos com base nos tipos de processos,região, orgão, estado e comarca.</p>
+          <a href="/fintechs/" class="btn btn-sm" style="background-color: #ff5f00; border-color: #ff5f00; color: white; font-weight: 600;">
+            <i class="fas fa-credit-card me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-bolt agent-icon" style="color: #0066cc;"></i>
+          <h5 class="card-title" style="color: white;">Setor de Energia</h5>
+          <p class="card-text text-muted">Visões Estretégicas e Preditivas dos Processos com base em dados internos, climáticos e geográficos e populacionais.</p>
+          <a href="/setorenergia/" class="btn btn-sm" style="background-color: #0066cc; border-color: #0066cc; color: white; font-weight: 600;">
+            <i class="fas fa-bolt me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção Reuniões Zoom -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-video me-2" style="color: #2D8CFF;"></i><span style="color: white;">Sessão Reuniões Zoom</span>
+      </h3>
+    </div>
+  </div>
+  
+  <!-- Primeira linha - 4 cards -->
+  <div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-plus-circle me-2" style="color: #00d4ff;"></i>Nova Reunião
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Crie uma nova reunião de videoconferência pelo Zoom.</p>
+          <a href="/zoom_api/create_meeting" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Criar Reunião
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-list me-2" style="color: #00d4ff;"></i>Minhas Reuniões
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Veja todas as suas reuniões agendadas no Zoom.</p>
+          <a href="/zoom_api/meetings" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Reuniões
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-sign-in-alt me-2" style="color: #00d4ff;"></i>Entrar em Reunião
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Entre rapidamente em uma reunião do Zoom com o ID.</p>
+          <a href="/zoom_api/meetings" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Reuniões
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-video me-2" style="color: #00d4ff;"></i>Gravações
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Acesse gravações das reuniões realizadas pelo Zoom.</p>
+          <a href="/zoom_api/recordings" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Gravações
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segunda linha - 4 cards -->
+  <div class="row mb-5">
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-calendar me-2" style="color: #00d4ff;"></i>Calendário
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Visualize suas reuniões em formato de calendário.</p>
+          <a href="/zoom_api/calendar" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Calendário
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-broadcast-tower me-2" style="color: #00d4ff;"></i>Webinars
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Gerencie e participe de webinars no Zoom.</p>
+          <a href="/zoom_api/webinars" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Webinars
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-users me-2" style="color: #00d4ff;"></i>Participantes
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Veja e gerencie participantes das reuniões.</p>
+          <a href="/zoom_api/meetings" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Reuniões
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-3">
+      <div class="card h-100" style="background-color: #3a3f47; border: 1px solid #555; border-radius: 12px;">
+        <div class="card-body p-3">
+          <h6 class="mb-2" style="color: #b8bec5;">
+            <i class="fas fa-user-circle me-2" style="color: #00d4ff;"></i>Perfil Zoom
+          </h6>
+          <p class="mb-3" style="font-size: 0.85rem; color: #9ca3af;">Visualize e edite suas configurações do Zoom.</p>
+          <a href="/zoom_api/user" class="btn w-100" style="background-color: #00d4ff; color: #000; font-weight: 600; border-radius: 6px;">
+            Ver Perfil
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção de Ferramentas Especializadas -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3 class="mb-3">
+        <i class="fas fa-tools me-2 text-white"></i><span style="color: white;">Ferramentas Especializadas</span>
+      </h3>
+    </div>
+  </div>
+  
+  <div class="row mb-5">
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-microphone agent-icon" style="color: #3b576f;"></i>
+          <h5 class="card-title" style="color: white;">Transcrição de Áudio</h5>
+          <p class="card-text text-muted">Converta arquivos de áudio em texto com análise de sentimentos e múltiplos falantes.</p>
+          <a href="/transcricao-audio/" class="btn btn-sm" style="background-color: #3b576f; border-color: #3b576f; color: white; font-weight: 600;">
+            <i class="fas fa-microphone me-2"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-video agent-icon" style="color: #c29e74;"></i>
+          <h5 class="card-title" style="color: white;">Transcrição de Vídeo</h5>
+          <p class="card-text text-muted">Transcrição avançada com AssemblyAI, detecção de falantes e análise de sentimentos em tempo real.</p>
+          <a href="/transcricao-video/" class="btn btn-sm" style="background-color: #c29e74; border-color: #c29e74; color: white; font-weight: 600;">
+            <i class="fas fa-video me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-gavel agent-icon" style="color: #6e2125;"></i>
+          <h5 class="card-title" style="color: white;">Especialistas Jurídicos</h5>
+          <p class="card-text text-muted">Módulo jurídico com {{ total_agentes or '330' }} agentes especialistas cobrindo {{ templates_areas_count or '18' }} áreas do direito brasileiro.</p>
+          <a href="/juridico/especialistas" class="btn btn-sm" style="background-color: #6e2125; border-color: #6e2125; color: white; font-weight: 600;">
+            <i class="fas fa-balance-scale me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-chart-line agent-icon" style="color: #5a8ea3;"></i>
+          <h5 class="card-title" style="color: white;">Análise Estatística e Preditiva</h5>
+          <p class="card-text text-muted">Sistema de análise inferencial avançada com inteligência artificial e métricas preditivas.</p>
+          <a href="/juridico/analise-estatistica-preditiva" class="btn btn-sm" style="background-color: #5a8ea3; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-chart-line me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-robot agent-icon" style="color: #1f9379;"></i>
+          <h5 class="card-title" style="color: white;">Análise Multi Agentes</h5>
+          <p class="card-text text-muted">Sistema avançado de análise colaborativa com múltiplos especialistas jurídicos para validação cruzada de documentos.</p>
+          <a href="/validacao-multi-agente-expandida" class="btn btn-sm" style="background-color: #1f9379; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-robot me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-project-diagram agent-icon" style="color: #47b6b5;"></i>
+          <h5 class="card-title" style="color: white;">Editor de Fluxos</h5>
+          <p class="card-text text-muted">Crie fluxos automatizados personalizados com canvas visual de arrastar e soltar.</p>
+          <a href="/fluxos" class="btn btn-sm" style="background-color: #47b6b5; border-color: #47b6b5; color: white; font-weight: 600;">
+            <i class="fas fa-sitemap me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-cogs agent-icon" style="color: #0e70fe;"></i>
+          <h5 class="card-title" style="color: white;">Editor de Componentes</h5>
+          <p class="card-text text-muted">Gerencie e configure componentes do sistema de fluxos com interface visual intuitiva.</p>
+          <a href="/componentes_editor" class="btn btn-sm" style="background-color: #0e70fe; border-color: #0e70fe; color: white; font-weight: 600;">
+            <i class="fas fa-cogs me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-magic agent-icon" style="color: #8b5a3c;"></i>
+          <h5 class="card-title" style="color: white;">Legal Design Pro</h5>
+          <p class="card-text text-muted">Sistema inteligente de criação de peças jurídicas com design visual avançado e geração automatizada por IA.</p>
+          <a href="/legal-design-pro-v2/" class="btn btn-sm" style="background-color: #8b5a3c; border-color: #8b5a3c; color: white; font-weight: 600;">
+            <i class="fas fa-magic me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-brain agent-icon" style="color: #667eea;"></i>
+          <h5 class="card-title" style="color: white;">Mapas Mentais</h5>
+          <p class="card-text text-muted">
+            <span class="badge bg-success me-1" style="font-size: 0.7rem;">NOVO</span>
+            Crie estratégias jurídicas inteligentes com GPT-4o + Whisper. Processe áudio, texto e documentos para gerar mapas mentais especializados.
+          </p>
+          <div class="mb-3">
+            <div class="d-flex flex-wrap gap-1 justify-content-center">
+              <span class="badge bg-primary" style="font-size: 0.65rem;">Áudio → GPT-4o</span>
+              <span class="badge bg-info" style="font-size: 0.65rem;">Texto → GPT-4o</span>
+              <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">PDF/DOCX</span>
+            </div>
+          </div>
+          <a href="/mapa-mental-pro" class="btn btn-sm" style="background-color: #667eea; border-color: #667eea; color: white; font-weight: 600;">
+            <i class="fas fa-brain me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-pencil-square agent-icon" style="color: #40a9a3;"></i>
+          <h5 class="card-title" style="color: white;">Creation Tools</h5>
+          <p class="card-text text-muted">Editor profissional com mais de 50 elementos interativos, handles de redimensionamento e ferramentas avançadas de design jurídico.</p>
+          <a href="/legal-design-pro-v2/editor" class="btn btn-sm" style="background-color: #40a9a3; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-edit me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-file-contract agent-icon" style="color: #ffc107;"></i>
+          <h5 class="card-title" style="color: white;">Legal Templates</h5>
+          <p class="card-text text-muted">Biblioteca completa com 557 templates para criação de documentos jurídicos em Legal Design distribuídos em 18 áreas especializadas do direito.</p>
+          <a href="/legal-design-pro-v2/templates" class="btn btn-sm" style="background-color: #ffc107; color: #212529; font-weight: 600; border: none;">
+            <i class="fas fa-folder me-2" style="color: #212529;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-file-alt agent-icon" style="color: #28a745;"></i>
+          <h5 class="card-title" style="color: white;">Templates Jurídicos Dinâmicos</h5>
+          <p class="card-text text-muted">Sistema profissional de templates com campos dinâmicos.</p>
+          <a href="/templates-dinamicos" class="btn btn-sm" style="background-color: #28a745; color: white; font-weight: 600; border: none;">
+            <i class="fas fa-file-alt me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-exchange-alt agent-icon" style="color: #e74c3c;"></i>
+          <h5 class="card-title" style="color: white;">Comparação de Versões</h5>
+          <p class="card-text text-muted">Análise multi-agente com 4 especialistas (Contratual, Compliance, Riscos, Revisão). Análise via OpenAI GPT-4o integrada ao sistema.</p>
+          <div class="mb-3">
+            <div class="d-flex flex-wrap gap-1 justify-content-center">
+              <span class="badge bg-success" style="font-size: 0.65rem;">Multi-Agente</span>
+              <span class="badge bg-primary" style="font-size: 0.65rem;">GPT-4o</span>
+              <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">4 Especialistas</span>
+            </div>
+          </div>
+          <a href="/comparacao-documentos/" class="btn btn-sm" style="background-color: #e74c3c; border-color: #e74c3c; color: white; font-weight: 600;">
+            <i class="fas fa-exchange-alt me-2" style="color: white;"></i>Acessar
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card agent-card h-100 border-2">
+        <div class="card-body text-center p-4">
+          <i class="fas fa-brain agent-icon" style="color: #28a745;"></i>
+          <h5 class="card-title" style="color: white;">Análise Legal BERTimbau</h5>
+          <p class="card-text text-muted">Análise avançada de documentos jurídicos com o modelo de IA especializado em português brasileiro.</p>
+          <div class="mb-3">
+            <div class="d-flex flex-wrap gap-1 justify-content-center">
+              <span class="badge bg-success" style="font-size: 0.65rem;">BERTimbau</span>
+              <span class="badge bg-info" style="font-size: 0.65rem;">PT-BR</span>
+              <span class="badge bg-primary" style="font-size: 0.65rem;">NLP</span>
+            </div>
+          </div>
+          <a href="/analise-legal-bert/" class="btn btn-sm" style="background-color: #28a745; border-color: #28a745; color: white; font-weight: 600;">
+            <i class="fas fa-brain me-2" style="color: white;"></i>Analisar com IA
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Script para drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    const dropzone = document.getElementById('dropzone');
+    const textArea = document.getElementById('texto');
+    
+    // Verificar se os elementos existem antes de adicionar event listeners
+    if (dropzone && textArea) {
+        // Drag and drop events
+        dropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    textArea.value = event.target.result;
+                };
+                
+                reader.readAsText(file);
+            }
+        });
+        
+        // Click to select file
+        dropzone.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.pdf,.docx,.html,.csv,.xlsx,.xls,.md';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        textArea.value = event.target.result;
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            
+            input.click();
+        });
+    }
+});
+</script>
+{% endblock %}

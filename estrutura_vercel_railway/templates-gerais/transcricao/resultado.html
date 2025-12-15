@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Transcrição - Legal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #47b6b5;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-light: #e0e0e0;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .transcript-text {
+            background: #404040;
+            border-radius: 10px;
+            padding: 25px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            border-left: 4px solid var(--secondary-color);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .speaker-segment {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(71, 182, 181, 0.1);
+        }
+
+        .speaker-header {
+            color: var(--secondary-color);
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .timestamp {
+            color: rgba(224, 224, 224, 0.7);
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .sentiment-positive { background: rgba(40, 167, 69, 0.8); }
+        .sentiment-negative { background: rgba(220, 53, 69, 0.8); }
+        .sentiment-neutral { background: rgba(108, 117, 125, 0.8); }
+
+        .emotion-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .emotion-alegria { background: rgba(255, 215, 0, 0.8); color: #000; }
+        .emotion-tristeza { background: rgba(65, 105, 225, 0.8); color: #fff; }
+        .emotion-raiva { background: rgba(220, 20, 60, 0.8); color: #fff; }
+        .emotion-medo { background: rgba(147, 112, 219, 0.8); color: #fff; }
+        .emotion-surpresa { background: rgba(255, 140, 0, 0.8); color: #fff; }
+        .emotion-nojo { background: rgba(143, 188, 143, 0.8); color: #000; }
+        .emotion-neutro { background: rgba(128, 128, 128, 0.8); color: #fff; }
+
+        .emotion-details {
+            margin-top: 5px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(71, 182, 181, 0.3);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            color: rgba(224, 224, 224, 0.8);
+            margin-top: 5px;
+        }
+
+        .key-points {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .key-point {
+            background: rgba(71, 182, 181, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .key-point i {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        #emotionChart {
+            max-width: 100%;
+            max-height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-check-circle"></i> Transcrição Concluída</h1>
+                    <p class="mb-0">{{ transcription_data.filename if transcription_data.filename else 'audio.mp3' }}</p>
+                </div>
+                <div class="navigation-buttons">
+                    <a href="/" class="btn btn-outline-light me-2">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/transcricao-audio/historico" class="btn btn-outline-light me-2">
+                        <i class="fas fa-history"></i> Histórico
+                    </a>
+                    <a href="/transcricao-audio/" class="btn btn-light">
+                        <i class="fas fa-plus"></i> Nova Transcrição
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ transcription_data.duration | round(1) if transcription_data.duration else '0.0' }}s</div>
+                <div class="stat-label">Duração</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ transcription_data.segments | length if transcription_data.segments else 1 }}</div>
+                <div class="stat-label">Segmentos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ (transcription_data.sentiment_analysis.confianca * 100) | round if transcription_data.sentiment_analysis else '85' }}%</div>
+                <div class="stat-label">Confiança</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ transcription_data.sentiment_analysis.sentimento.title() if transcription_data.sentiment_analysis else 'Neutro' }}</div>
+                <div class="stat-label">Tom Geral</div>
+            </div>
+        </div>
+
+        {% if transcription_data.sentiment_analysis %}
+        <div class="result-card">
+            <h3><i class="fas fa-brain"></i> Análise de Sentimentos e Emoções</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sentimento Detectado</h5>
+                    <div class="sentiment-badge sentiment-{{ transcription_data.sentiment_analysis.sentimento.lower() }}">
+                        {{ transcription_data.sentiment_analysis.sentimento.title() }}
+                    </div>
+                    <p class="mt-2"><strong>Confiança:</strong> {{ (transcription_data.sentiment_analysis.confianca * 100) | round }}%</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Resumo da Análise</h5>
+                    <p>{{ transcription_data.sentiment_analysis.resumo }}</p>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Emoções por Segmento (SER) -->
+            {% if transcription_data.segments and transcription_data.segments[0].emotion %}
+            <div class="mt-4">
+                <h5><i class="fas fa-chart-bar"></i> Análise de Emoções por Segmento (SER)</h5>
+                <div class="chart-container">
+                    <canvas id="segmentEmotionChart"></canvas>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Gráfico Consolidado de Emoções SER -->
+            {% if transcription_data.segments and transcription_data.segments[0].emotion_scores %}
+            <div class="mt-4">
+                <h5><i class="fas fa-chart-pie"></i> Análise de Emoções Detectadas (SER)</h5>
+                <div class="chart-container">
+                    <canvas id="consolidatedEmotionChart"></canvas>
+                </div>
+            </div>
+            {% endif %}
+            
+
+        </div>
+        
+        {% if transcription_data.sentiment_analysis.pontos_chave %}
+        <div class="result-card">
+            <h3><i class="fas fa-key"></i> Pontos-Chave Identificados</h3>
+            <div class="key-points">
+                {% for ponto in transcription_data.sentiment_analysis.pontos_chave %}
+                    <div class="key-point">
+                        <i class="fas fa-arrow-right"></i> {{ ponto }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="result-card">
+            <h3><i class="fas fa-file-alt"></i> Transcrição com Diarização</h3>
+            
+            {% if transcription_data.segments %}
+                <div class="transcript-text">
+                    {% for segment in transcription_data.segments %}
+                        <div class="speaker-segment">
+                            <div class="speaker-header">
+                                <span class="timestamp">[{{ "%.1f"|format(segment.start) }}s - {{ "%.1f"|format(segment.end) }}s]</span>
+                                {{ segment.speaker }}
+                                {% if segment.emotion %}
+                                <span class="emotion-badge emotion-{{ segment.emotion }}">
+                                    <i class="fas fa-heart"></i> {{ segment.emotion|title }}
+                                    <small>({{ "%.0f"|format(segment.emotion_confidence * 100) }}%)</small>
+                                </span>
+                                {% else %}
+                                <span class="sentiment-badge sentiment-{{ transcription_data.sentiment_analysis.sentimento.lower() if transcription_data.sentiment_analysis else 'neutral' }}">
+                                    {{ transcription_data.sentiment_analysis.sentimento.title() if transcription_data.sentiment_analysis else 'Neutro' }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div>{{ segment.text }}</div>
+                            {% if segment.emotion_scores %}
+                            <div class="emotion-details">
+                                <small style="color: white;">
+                                    <i class="fas fa-chart-line"></i> 
+                                    {% for emotion, score in segment.emotion_scores.items() %}
+                                        {% if score > 5 %}{{ emotion }}: {{ "%.0f"|format(score) }}%{% if not loop.last %}, {% endif %}{% endif %}
+                                    {% endfor %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="transcript-text">
+                    <div class="speaker-segment">
+                        <div class="speaker-header">
+                            <span class="timestamp">[0:00 - {{ transcription_data.duration | round(1) if transcription_data.duration else '0.0' }}s]</span>
+                            Falante Único
+                            <span class="sentiment-badge sentiment-{{ transcription_data.sentiment_analysis.sentimento.lower() if transcription_data.sentiment_analysis else 'neutral' }}">
+                                {{ transcription_data.sentiment_analysis.sentimento.title() if transcription_data.sentiment_analysis else 'Neutro' }}
+                            </span>
+                        </div>
+                        <div>{{ transcription_data.text if transcription_data.text else 'Transcrição não disponível' }}</div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="export-buttons">
+                <button class="btn btn-export" onclick="exportTranscript('pdf')">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </button>
+                <button class="btn btn-export" onclick="exportTranscript('docx')">
+                    <i class="fas fa-file-word"></i> Exportar Word
+                </button>
+                <button class="btn btn-export" onclick="exportTranscript('txt')">
+                    <i class="fas fa-file-text"></i> Exportar TXT
+                </button>
+                <button class="btn btn-export" onclick="copyToClipboard()">
+                    <i class="fas fa-copy"></i> Copiar Texto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Configuração global de cores para emoções
+        const globalEmotionColors = {
+            'alegria': '#FFD700',
+            'tristeza': '#4169E1', 
+            'raiva': '#DC143C',
+            'medo': '#9370DB',
+            'surpresa': '#FF8C00',
+            'nojo': '#8FBC8F',
+            'neutro': '#808080',
+            'confiança': '#32CD32',
+            'ansiedade': '#FF6347',
+            'entusiasmo': '#FF1493',
+            'frustração': '#B22222'
+        };
+        
+        // Gráfico de Emoções por Segmento (SER)
+        {% if transcription_data.segments and transcription_data.segments[0].emotion %}
+        const segmentData = {{ transcription_data.segments | tojson | safe }};
+        
+        // Agregar emoções por segmento
+        const emotionCount = {};
+        segmentData.forEach(segment => {
+            if (segment.emotion) {
+                emotionCount[segment.emotion] = (emotionCount[segment.emotion] || 0) + 1;
+            }
+        });
+        
+        // Criar gráfico de segmentos se há dados
+        if (Object.keys(emotionCount).length > 0) {
+            // Limpar chart existente se houver
+            const existingSegmentChart = Chart.getChart('segmentEmotionChart');
+            if (existingSegmentChart) {
+                existingSegmentChart.destroy();
+            }
+            
+            const segmentCtx = document.getElementById('segmentEmotionChart').getContext('2d');
+            const segmentEmotionChart = new Chart(segmentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(emotionCount).map(e => e.charAt(0).toUpperCase() + e.slice(1)),
+                    datasets: [{
+                        label: 'Segmentos',
+                        data: Object.values(emotionCount),
+                        backgroundColor: Object.keys(emotionCount).map(e => globalEmotionColors[e.toLowerCase()] || '#808080'),
+                        borderColor: '#2b3e50',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1000 },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                color: '#ffffff', 
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} segmentos (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+        
+        // Gráfico Consolidado de Emoções SER
+        {% if transcription_data.segments and transcription_data.segments[0].emotion_scores %}
+        const segmentDataForConsolidation = {{ transcription_data.segments | tojson | safe }};
+        
+        // Consolidar scores de todas as emoções de todos os segmentos
+        const consolidatedEmotions = {};
+        segmentDataForConsolidation.forEach(segment => {
+            if (segment.emotion_scores) {
+                Object.keys(segment.emotion_scores).forEach(emotion => {
+                    if (!consolidatedEmotions[emotion]) {
+                        consolidatedEmotions[emotion] = 0;
+                    }
+                    consolidatedEmotions[emotion] += segment.emotion_scores[emotion];
+                });
+            }
+        });
+        
+        // Calcular médias
+        const totalSegments = segmentDataForConsolidation.length;
+        Object.keys(consolidatedEmotions).forEach(emotion => {
+            consolidatedEmotions[emotion] = consolidatedEmotions[emotion] / totalSegments;
+        });
+        
+        // Filtrar emoções com scores relevantes (> 5%)
+        const relevantEmotions = Object.keys(consolidatedEmotions).filter(emotion => 
+            consolidatedEmotions[emotion] > 5
+        );
+        
+        if (relevantEmotions.length > 0) {
+            const consolidatedCtx = document.getElementById('consolidatedEmotionChart').getContext('2d');
+            const consolidatedChart = new Chart(consolidatedCtx, {
+                type: 'bar',
+                data: {
+                    labels: relevantEmotions.map(e => e.charAt(0).toUpperCase() + e.slice(1)),
+                    datasets: [{
+                        label: 'Média de Intensidade (%)',
+                        data: relevantEmotions.map(e => consolidatedEmotions[e]),
+                        backgroundColor: relevantEmotions.map(e => globalEmotionColors[e.toLowerCase()] || '#808080'),
+                        borderColor: relevantEmotions.map(e => globalEmotionColors[e.toLowerCase()] || '#808080'),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1200 },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#ffffff',
+                                callback: function(value) {
+                                    return value.toFixed(0) + '%';
+                                }
+                            },
+                            grid: { color: 'rgba(224, 224, 224, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#ffffff' },
+                            grid: { color: 'rgba(224, 224, 224, 0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+        
+        // Funções de exportação
+        function exportTranscript(format) {
+            const transcriptId = '{{ transcript_id if transcript_id else "" }}';
+            
+            if (!transcriptId) {
+                alert('ID da transcrição não encontrado');
+                return;
+            }
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/transcricao-audio/export/${format}`;
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'transcript_id';
+            input.value = transcriptId;
+            form.appendChild(input);
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function copyToClipboard() {
+            const transcriptElements = document.querySelectorAll('.speaker-segment');
+            let fullText = '';
+            
+            transcriptElements.forEach(segment => {
+                const speaker = segment.querySelector('.speaker-header').textContent.trim();
+                const text = segment.querySelector('div:last-child').textContent.trim();
+                fullText += `${speaker}\n${text}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(fullText).then(() => {
+                // Feedback visual
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }).catch(() => {
+                alert('Erro ao copiar. Tente novamente.');
+            });
+        }
+    </script>
+    </script>
+</body>
+</html>

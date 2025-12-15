@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ agente.nome }} - Sistema Multi-Agente</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Sistema de 135 Logos Únicos -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/135-unique-logos.css') }}">
+    
+    <style>
+        /* Tema Escuro com Cores das Áreas Jurídicas */
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #1f1f1f;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #333;
+            
+            /* Cores das Áreas Jurídicas */
+            --direito-penal: #3291d1;
+            --direito-bancario: #fd7e14;
+            --direito-empresarial: #0d6efd;
+            --direito-agrario: #1f5981;
+            --direito-trabalhista: #ffc107;
+            --direito-consumidor: #e83e8c;
+            --recuperacao-credito: #20c997;
+            --direito-digital: #6f42c1;
+            --direito-previdenciario: #17a2b8;
+            --direito-securitario: #3f51b5;
+            --direito-imobiliario: #795548;
+            --direito-tributario: #ff5722;
+            --direito-administrativo: #607d8b;
+            --direito-familia: #e91e63;
+            --direito-sucessoes: #9c27b0;
+            --direito-internacional: #009688;
+            --direito-ambiental: #4caf50;
+            --negociacao-conflitos: #ff9800;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .agent-header {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+
+
+        .agent-title {
+            color: var(--text-primary);
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .agent-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .info-card h5 {
+            color: var(--area-color, #3291d1);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .specialty-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .specialty-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .specialty-list li:last-child {
+            border-bottom: none;
+        }
+
+        .specialty-list li i {
+            color: var(--area-color, #3291d1);
+            margin-right: 10px;
+            width: 16px;
+        }
+
+        .chat-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 0;
+            overflow: hidden;
+            height: 700px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chat-header {
+            background: var(--area-color, #3291d1);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: var(--area-color, #3291d1);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 5px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-group input {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .input-group input:focus {
+            background: var(--bg-secondary);
+            border-color: var(--area-color, #3291d1);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--area-color-rgb, 220, 53, 69), 0.25);
+        }
+
+        .btn-send {
+            background: var(--area-color, #3291d1);
+            border: 1px solid var(--area-color, #3291d1);
+            color: white;
+        }
+
+        .btn-send:hover {
+            background: #a1bacb;
+            border-color: #a1bacb;
+            color: white;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background: #a1bacb;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .knowledge-item {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            padding: 10px 16px;
+            color: var(--text-secondary);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+            margin-left: 10px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Estilos para Upload de Documentos */
+        .upload-section {
+            background: rgba(248, 249, 250, 0.8);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #3291d1;
+            background: rgba(50, 145, 209, 0.05);
+        }
+
+        .upload-progress .progress {
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .upload-progress .progress-bar {
+            background: linear-gradient(90deg, var(--accent-red), #e74c3c);
+            transition: width 0.3s ease;
+        }
+
+        .upload-status.success {
+            background: rgba(31, 89, 129, 0.1);
+            border: 1px solid rgba(31, 89, 129, 0.3);
+            color: #1f5981;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .upload-status.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: var(--accent-red);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .documents-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .document-item {
+            background: rgba(248, 249, 250, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: between;
+        }
+
+        .document-item .document-info {
+            flex: 1;
+        }
+
+        .document-item .document-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .document-item .document-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .document-item .document-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-doc-action {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-doc-remove {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--accent-red);
+        }
+
+        .btn-doc-remove:hover {
+            background: #a1bacb;
+            color: white;
+        }
+
+        /* Estilos para as configurações de IA */
+        .ai-config-select {
+            background: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px;
+            font-size: 14px;
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .ai-config-select:focus {
+            background: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--area-color, #3291d1) !important;
+            box-shadow: 0 0 0 0.2rem rgba(var(--area-color-rgb, 50, 145, 209), 0.25);
+        }
+
+        .ai-config-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .ai-config-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary) !important;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toggle-switch {
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 10px;
+        }
+
+        .toggle-switch:checked {
+            background: var(--area-color, #3291d1) !important;
+            border-color: var(--area-color, #3291d1) !important;
+        }
+
+        .toggle-switch:focus {
+            box-shadow: 0 0 0 0.2rem rgba(var(--area-color-rgb, 50, 145, 209), 0.25);
+        }
+
+        /* Melhor distribuição de colunas */
+        .col-config {
+            min-height: 300px;
+        }
+        
+        .col-capacidades {
+            min-height: 300px;
+        }
+        
+        .col-chat {
+            min-height: 700px;
+        }
+        
+        /* Responsividade otimizada */
+        @media (max-width: 1200px) {
+            .chat-container {
+                height: 650px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .chat-container {
+                height: 600px;
+            }
+            
+            .info-card {
+                margin-bottom: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .agent-title {
+                font-size: 1.8rem;
+            }
+            
+            .chat-container {
+                height: 500px;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            /* Em mobile, empilhar as colunas */
+            .col-lg-3, .col-lg-6 {
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .chat-container {
+                height: 400px;
+            }
+            
+            .info-card {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header do Agente -->
+        <div class="agent-header">
+            <!-- Botões de Navegação - Posicionados no topo -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex gap-2">
+                        <a href="/" class="btn-back">
+                            <i class="fas fa-home me-2"></i>
+                            Home
+                        </a>
+                        <a href="{{ url_for('juridico_especialistas_init_app') }}" class="btn-back">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar aos Especialistas
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="agent-logo logo-{{ agente.classe|replace('_', '-') }}" style="width: 80px; height: 80px; border-radius: 20px; font-size: 32px; margin-bottom: 20px;">
+                        <i class="{{ agente.icone }}"></i>
+                    </div>
+                    
+                    <h1 class="agent-title">{{ agente.nome }}</h1>
+                    <p class="agent-description">{{ agente.descricao }}</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-card">
+                        <h5><i class="fas fa-info-circle me-2"></i>Informações</h5>
+                        <p><strong>Área:</strong> {{ agente.categoria }}</p>
+                        <p><strong>Status:</strong> <span class="text-success">Ativo</span></p>
+                        <p><strong>Tipo:</strong> Especialista IA</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layout reorganizado: Chat à esquerda, Capacidades à direita -->
+        <div class="row g-4">
+            <!-- Coluna 1: Chat Principal (à esquerda) -->
+            <div class="col-lg-6 col-chat">
+                <div class="chat-container">
+                    <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <i class="fas fa-robot me-2"></i>
+                            Conversando com {{ agente.nome }}
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.2); border: none; color: white;" 
+                                    onclick="chat.clearConversation()" title="Limpar Conversa">
+                                <i class="fas fa-broom"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.2); border: none; color: white;" 
+                                    onclick="chat.saveConversation()" title="Salvar Conversa">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.2); border: none; color: white;" 
+                                    onclick="chat.exportConversation()" title="Exportar Conversa">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message assistant">
+                            <div class="message-content">
+                                <strong>{{ agente.nome }}</strong>
+                                <br><br>
+                                Olá! Sou um especialista em {{ agente.categoria.nome.lower() if agente.categoria else agente.base_vetorial.replace('embeddings_', '').replace('_', ' ') }} com foco em:
+                                <div style="margin-top: 10px; margin-bottom: 0;">
+                                    {{ agente.descricao }}
+                                </div>
+                                <br>
+                                Como posso ajudá-lo hoje? Sinta-se à vontade para fazer perguntas específicas ou enviar documentos para análise.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typingIndicator">
+                        <i class="fas fa-robot"></i>
+                        <span>{{ agente.nome }} está digitando</span>
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <!-- Preview do arquivo anexado -->
+                        <div id="filePreview" style="display: none; padding: 10px; margin-bottom: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i id="fileIcon" class="fas fa-file fa-2x me-3" style="color: var(--area-color);"></i>
+                                    <div>
+                                        <div id="fileName" style="color: var(--text-primary); font-weight: 500;"></div>
+                                        <small id="fileSize" style="color: var(--text-secondary);"></small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="chat.removeFile()" title="Remover arquivo">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Drag and Drop Zone -->
+                        <div id="dropZone" style="display: none; padding: 20px; text-align: center; background: var(--bg-secondary); border: 2px dashed var(--border-color); border-radius: 8px; margin-bottom: 10px; transition: all 0.3s ease;">
+                            <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color: var(--area-color);"></i>
+                            <p style="color: var(--text-secondary); margin: 0;">Solte o arquivo aqui ou clique para selecionar</p>
+                            <small style="color: var(--text-secondary);">PDF, DOCX, DOC, TXT (máx. 10MB)</small>
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="messageInput" 
+                                   placeholder="Arraste para esta área seu arquivo" maxlength="1000">
+                            <button class="btn btn-send" type="button" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <input type="file" class="form-control" id="fileInput" 
+                                   accept=".pdf,.docx,.txt,.doc" style="display: none;">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-paperclip me-1"></i>
+                                Anexar Arquivo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna 2: Capacidades Especializadas (à direita do chat) -->
+            <div class="col-lg-3 col-md-6 col-capacidades">
+                <!-- Capacidades Especializadas -->
+                <div class="info-card">
+                    <h5><i class="fas fa-star me-2"></i>Capacidades Especializadas</h5>
+                    <ul class="specialty-list">
+                        {% if agente.capacidades %}
+                            {% set capacidades_list = agente.capacidades|from_json %}
+                            {% for capacidade in capacidades_list %}
+                            <li>
+                                <i class="fas fa-check"></i>
+                                {{ capacidade }}
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li>
+                                <i class="fas fa-cog"></i>
+                                Capacidades sendo configuradas...
+                            </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <!-- Upload de Documentos para Especialização -->
+                    {% if not agente.capacidades %}
+                    <div class="mt-4">
+                        <h6 style="color: white;"><i class="fas fa-upload me-2"></i>Especializar Agente</h6>
+                        <p style="color: white;" class="mb-3">Adicione documentos específicos para personalizar a base de conhecimento deste agente:</p>
+                        
+                        <div class="upload-section">
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="documentFile" class="form-label">
+                                        <i class="fas fa-file-alt me-1"></i>Selecionar Documento
+                                    </label>
+                                    <input type="file" class="form-control" id="documentFile" name="document" 
+                                           accept=".pdf,.docx,.doc,.txt" required>
+                                    <div class="form-text">
+                                        Formatos aceitos: PDF, DOCX, DOC, TXT (máx. 10MB)
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="documentDescription" class="form-label">
+                                        <i class="fas fa-tag me-1"></i>Descrição (opcional)
+                                    </label>
+                                    <input type="text" class="form-control" id="documentDescription" 
+                                           name="description" placeholder="Ex: Legislação específica, jurisprudência, contrato modelo...">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100" id="uploadBtn">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    Processar e Integrar Documento
+                                </button>
+                            </form>
+                            
+                            <!-- Progress Bar -->
+                            <div class="upload-progress mt-3" id="uploadProgress" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted mt-1" id="progressText">Preparando documento...</small>
+                            </div>
+                            
+                            <!-- Upload Status -->
+                            <div class="upload-status mt-3" id="uploadStatus" style="display: none;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Histórico de Conversas -->
+                <div class="info-card mt-3" id="historicoConversasCard">
+                    <h5><i class="fas fa-history me-2"></i>Histórico de Conversas</h5>
+                    <div id="historicoConversasList">
+                        <p class="text-muted small">Carregando histórico...</p>
+                    </div>
+                </div>
+
+                <!-- Base de Conhecimento -->
+                {% if agente.conhecimentos %}
+                <div class="info-card">
+                    <h5><i class="fas fa-book me-2"></i>Base de Conhecimento</h5>
+                    {% for conhecimento in agente.conhecimentos %}
+                    <div class="knowledge-item">
+                        <i class="fas fa-database me-2"></i>
+                        {{ conhecimento }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Coluna 3: Configurações e Controles -->
+            <div class="col-lg-3 col-md-6 col-config">
+                <!-- Configurações de IA -->
+                <div class="info-card">
+                    <h5><i class="fas fa-cogs me-2"></i>Configurações de IA</h5>
+                    
+                    <!-- Provedor de IA -->
+                    <div class="mb-3">
+                        <label class="ai-config-label" for="providerSelect">
+                            <i class="fas fa-server"></i>Provedor de IA
+                        </label>
+                        <select id="providerSelect" class="form-control ai-config-select">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google Gemini</option>
+                            <option value="deepseek">DeepSeek</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Modelo de IA -->
+                    <div class="mb-3">
+                        <label class="ai-config-label" for="modelSelect">
+                            <i class="fas fa-brain"></i>Modelo de IA
+                        </label>
+                        <select id="modelSelect" class="form-control ai-config-select">
+                            <!-- OpenAI Models - 2025 -->
+                            <optgroup label="OpenAI" data-provider="openai">
+                                <option value="gpt-5" data-provider="openai">GPT-5 🚀 (Mais Avançado)</option>
+                                <option value="gpt-5-mini" data-provider="openai">GPT-5 Mini ⚡ (Rápido)</option>
+                                <option value="gpt-4.1" data-provider="openai">GPT-4.1 (Principal)</option>
+                                <option value="gpt-4.1-mini" data-provider="openai">GPT-4.1 Mini (Custo-benefício)</option>
+                                <option value="gpt-4o" data-provider="openai">GPT-4o (Multimodal)</option>
+                                <option value="gpt-4o-mini" data-provider="openai">GPT-4o Mini</option>
+                                <option value="o1-preview" data-provider="openai">o1-preview (Raciocínio)</option>
+                                <option value="o1-mini" data-provider="openai">o1-mini</option>
+                            </optgroup>
+                            
+                            <!-- Anthropic Models - 2025 -->
+                            <optgroup label="Anthropic" data-provider="anthropic" style="display: none;">
+                                <option value="claude-haiku-4-5" data-provider="anthropic">Claude Haiku 4.5 ⚡ (Rápido & Econômico)</option>
+                                <option value="claude-sonnet-4-5" data-provider="anthropic">Claude Sonnet 4.5 💎 (Melhor Código)</option>
+                                <option value="claude-opus-4-1" data-provider="anthropic">Claude Opus 4.1 👑 (Máxima Capacidade)</option>
+                                <option value="claude-sonnet-4" data-provider="anthropic">Claude Sonnet 4 (Equilíbrio)</option>
+                                <option value="claude-opus-4" data-provider="anthropic">Claude Opus 4 (Alta Performance)</option>
+                                <option value="claude-3-5-sonnet-20241022" data-provider="anthropic">Claude 3.5 Sonnet (Legacy)</option>
+                                <option value="claude-3-5-haiku-20241022" data-provider="anthropic">Claude 3.5 Haiku (Legacy)</option>
+                            </optgroup>
+                            
+                            <!-- Google Models - 2025 -->
+                            <optgroup label="Google" data-provider="google" style="display: none;">
+                                <option value="gemini-2.5-flash" data-provider="google">Gemini 2.5 Flash 🔥 (Otimizado)</option>
+                                <option value="gemini-2.5-flash-lite" data-provider="google">Gemini 2.5 Flash Lite ⚡</option>
+                                <option value="gemini-2.5-pro" data-provider="google">Gemini 2.5 Pro (Máxima capacidade)</option>
+                                <option value="gemini-1.5-pro" data-provider="google">Gemini 1.5 Pro (Contexto longo)</option>
+                                <option value="gemini-1.5-flash" data-provider="google">Gemini 1.5 Flash (Velocidade)</option>
+                                <option value="gemini-2.0-flash-preview-image-generation" data-provider="google">Gemini 2.0 Flash (Image Gen)</option>
+                            </optgroup>
+                            
+                            <!-- DeepSeek Models -->
+                            <optgroup label="DeepSeek" data-provider="deepseek" style="display: none;">
+                                <option value="deepseek-chat" data-provider="deepseek">DeepSeek Chat (Geral)</option>
+                                <option value="deepseek-reasoner" data-provider="deepseek">DeepSeek Reasoner (Raciocínio)</option>
+                                <option value="deepseek-coder" data-provider="deepseek">DeepSeek Coder (Programação)</option>
+                            </optgroup>
+                            
+                            <!-- xAI Grok Models - Igual aos orquestradores -->
+                            <optgroup label="xAI Grok" data-provider="grok" style="display: none;">
+                                <option value="grok-4-fast-reasoning" data-provider="grok">Grok 4 Fast Reasoning 🧠 (2M contexto)</option>
+                                <option value="grok-4-fast-non-reasoning" data-provider="grok">Grok 4 Fast ⚡ (2M contexto)</option>
+                                <option value="grok-4-latest" data-provider="grok">Grok 4 Latest 💎 (256K)</option>
+                                <option value="grok-4-0709" data-provider="grok">Grok 4-0709 (Premium - 256K)</option>
+                                <option value="grok-3" data-provider="grok">Grok 3 (131K)</option>
+                                <option value="grok-3-mini" data-provider="grok">Grok 3 Mini (131K)</option>
+                                <option value="grok-code-fast-1" data-provider="grok">Grok Code Fast 💻 (256K)</option>
+                                <option value="grok-2-vision-1212-us" data-provider="grok">Grok 2 Vision US 👁️ (32K)</option>
+                                <option value="grok-2-vision-1212-eu" data-provider="grok">Grok 2 Vision EU 👁️ (32K)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <!-- Configurações de Tokens -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="ai-config-label" for="tokensEntradaSelect">
+                                <i class="fas fa-sign-in-alt"></i>Tokens Entrada
+                            </label>
+                            <input type="number" id="tokensEntradaSelect" class="form-control ai-config-select" 
+                                   value="{{ agente.get_detalhes_tecnicos().get('tokens_entrada_max', 128000) }}" 
+                                   min="1000" max="2097152" step="1000" 
+                                   title="Clique para editar o número de tokens de entrada">
+                            <small class="text-muted" id="help-entrada-detalhe">Limite: 128k tokens</small>
+                        </div>
+                        <div class="col-6">
+                            <label class="ai-config-label" for="tokensSaidaSelect">
+                                <i class="fas fa-sign-out-alt"></i>Tokens Saída
+                            </label>
+                            <input type="number" id="tokensSaidaSelect" class="form-control ai-config-select" 
+                                   value="{{ agente.get_detalhes_tecnicos().get('tokens_saida_max', 4096) }}" 
+                                   min="100" max="65536" step="100" 
+                                   title="Clique para editar o número de tokens de saída">
+                            <small class="text-muted" id="help-saida-detalhe">Limite: 4k tokens</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ajuste Rápido -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="ajustarTokensRapido('maximo')">
+                                    <i class="fas fa-arrow-up"></i> Máximo
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="ajustarTokensRapido('otimo')">
+                                    <i class="fas fa-balance-scale"></i> Otimizado
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="ajustarTokensRapido('economico')">
+                                    <i class="fas fa-dollar-sign"></i> Econômico
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="salvarConfiguracaoTokens()">
+                                    <i class="fas fa-save"></i> Salvar
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1">Clique nos campos acima para editar manualmente ou use os presets</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Toggles para funcionalidades -->
+                    <div class="mb-2">
+                        <div class="form-check form-switch" style="margin-bottom: 12px;">
+                            <input class="form-check-input toggle-switch" type="checkbox" id="useDocumentsToggle" checked>
+                            <label class="form-check-label" for="useDocumentsToggle" style="font-size: 14px; font-weight: 500; color: var(--text-primary);">
+                                <i class="fas fa-database me-2"></i>Base de Conhecimento
+                            </label>
+                            <small class="d-block" style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Acessa base especializada do agente</small>
+                        </div>
+                        
+                        <div class="form-check form-switch">
+                            <input class="form-check-input toggle-switch" type="checkbox" id="webSearchToggle">
+                            <label class="form-check-label" for="webSearchToggle" style="font-size: 14px; font-weight: 500; color: var(--text-primary);">
+                                <i class="fas fa-search me-2"></i>Pesquisa Web
+                            </label>
+                            <small class="d-block" style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Busca informações atualizadas na internet</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Como Usar -->
+                <div class="info-card">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Como Usar</h5>
+                    <ul class="specialty-list">
+                        <li><i class="fas fa-comment"></i>Digite sua pergunta no chat</li>
+                        <li><i class="fas fa-file-upload"></i>Anexe documentos se necessário</li>
+                        <li><i class="fas fa-brain"></i>Receba análise especializada</li>
+                        <li><i class="fas fa-download"></i>Baixe relatórios gerados</li>
+                    </ul>
+                </div>
+
+                <!-- Documentos Carregados -->
+                <div class="info-card" id="loadedDocuments" style="display: none;">
+                    <h5><i class="fas fa-folder-open me-2"></i>Documentos Integrados</h5>
+                    <div id="documentsList" class="documents-list">
+                        <!-- Lista será preenchida dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configurações de limites de tokens por modelo - ATUALIZADO 2025
+        const TOKEN_LIMITS_DETALHE = {
+            'openai': {
+                'gpt-5': { contexto: 272000, saida: 128000 },
+                'gpt-5-mini': { contexto: 272000, saida: 128000 },
+                'gpt-4.1': { contexto: 1000000, saida: 32768 },
+                'gpt-4.1-mini': { contexto: 1000000, saida: 16384 },
+                'gpt-4o': { contexto: 128000, saida: 4096 },
+                'gpt-4o-mini': { contexto: 128000, saida: 16384 },
+                'o1-preview': { contexto: 128000, saida: 32768 },
+                'o1-mini': { contexto: 128000, saida: 65536 }
+            },
+            'anthropic': {
+                'claude-haiku-4-5': { contexto: 200000, saida: 64000 },
+                'claude-sonnet-4-5': { contexto: 200000, saida: 8192 },
+                'claude-opus-4-1': { contexto: 200000, saida: 8192 },
+                'claude-sonnet-4': { contexto: 200000, saida: 8192 },
+                'claude-opus-4': { contexto: 200000, saida: 8192 },
+                'claude-3-5-sonnet-20241022': { contexto: 200000, saida: 8192 },
+                'claude-3-5-haiku-20241022': { contexto: 200000, saida: 8192 }
+            },
+            'google': {
+                'gemini-2.5-flash': { contexto: 1048576, saida: 65535 },
+                'gemini-2.5-flash-lite': { contexto: 1048576, saida: 65535 },
+                'gemini-2.5-pro': { contexto: 1048576, saida: 65535 },
+                'gemini-1.5-pro': { contexto: 2097152, saida: 65535 },
+                'gemini-1.5-flash': { contexto: 1048576, saida: 65535 },
+                'gemini-2.0-flash-preview-image-generation': { contexto: 1048576, saida: 65535 }
+            },
+            'deepseek': {
+                'deepseek-chat': { contexto: 64000, saida: 8000 },
+                'deepseek-reasoner': { contexto: 64000, saida: 999999 },
+                'deepseek-coder': { contexto: 128000, saida: 8000 }
+            },
+            'grok': {
+                'grok-4-fast-reasoning': { contexto: 2000000, saida: 4000000 },
+                'grok-4-fast-non-reasoning': { contexto: 2000000, saida: 4000000 },
+                'grok-4-latest': { contexto: 256000, saida: 2000000 },
+                'grok-4-0709': { contexto: 256000, saida: 2000000 },
+                'grok-3': { contexto: 131072, saida: 65536 },
+                'grok-3-mini': { contexto: 131072, saida: 65536 },
+                'grok-code-fast-1': { contexto: 256000, saida: 2000000 },
+                'grok-2-vision-1212-us': { contexto: 32768, saida: 8192 },
+                'grok-2-vision-1212-eu': { contexto: 32768, saida: 8192 }
+            }
+        };
+        
+        // Configuração dos provedores e modelos - ATUALIZADA NOVEMBRO 2025
+        const modelosDisponiveis = {
+            'openai': [
+                { value: 'gpt-5', label: 'GPT-5 🚀', description: 'Modelo mais avançado - 272K contexto' },
+                { value: 'gpt-5-mini', label: 'GPT-5 Mini ⚡', description: 'Versão rápida e econômica' },
+                { value: 'gpt-4.1', label: 'GPT-4.1', description: 'Modelo principal anterior' },
+                { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', description: 'Custo-benefício otimizado' },
+                { value: 'gpt-4o', label: 'GPT-4o', description: 'Modelo avançado multimodal' },
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Versão otimizada e rápida' },
+                { value: 'o1-preview', label: 'o1-preview', description: 'Modelo de raciocínio avançado' },
+                { value: 'o1-mini', label: 'o1-mini', description: 'Versão compacta do o1' }
+            ],
+            'anthropic': [
+                { value: 'claude-haiku-4-5', label: 'Claude Haiku 4.5 ⚡', description: 'Rápido e econômico - 73.3% SWE-bench' },
+                { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5 💎', description: 'Melhor para código - 77.2% SWE-bench' },
+                { value: 'claude-opus-4-1', label: 'Claude Opus 4.1 👑', description: 'Máxima capacidade e raciocínio' },
+                { value: 'claude-sonnet-4', label: 'Claude Sonnet 4', description: 'Equilíbrio entre capacidade e velocidade' },
+                { value: 'claude-opus-4', label: 'Claude Opus 4', description: 'Alta performance e raciocínio' },
+                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', description: 'Modelo anterior equilibrado' },
+                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Modelo anterior rápido' }
+            ],
+            'google': [
+                { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash 🔥', description: 'Otimizado - 1M contexto' },
+                { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite ⚡', description: 'Ultra-rápido e econômico' },
+                { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Máxima capacidade e performance' },
+                { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'Modelo avançado com contexto longo' },
+                { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Versão otimizada para velocidade' },
+                { value: 'gemini-2.0-flash-preview-image-generation', label: 'Gemini 2.0 Flash (Image Gen)', description: 'Com geração de imagens' }
+            ],
+            'deepseek': [
+                { value: 'deepseek-chat', label: 'DeepSeek Chat', description: 'Modelo geral conversacional' },
+                { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner', description: 'Especializado em raciocínio complexo' },
+                { value: 'deepseek-coder', label: 'DeepSeek Coder', description: 'Especializado em programação' }
+            ],
+            'grok': [
+                { value: 'grok-4-fast-reasoning', label: 'Grok 4 Fast Reasoning 🧠', description: 'Raciocínio rápido - 2M contexto / 4M saída' },
+                { value: 'grok-4-fast-non-reasoning', label: 'Grok 4 Fast ⚡', description: 'Velocidade máxima - 2M contexto / 4M saída' },
+                { value: 'grok-4-latest', label: 'Grok 4 Latest 💎', description: 'Versão mais recente - 256K contexto / 2M saída' },
+                { value: 'grok-4-0709', label: 'Grok 4-0709', description: 'Premium - 256K contexto / 2M saída' },
+                { value: 'grok-3', label: 'Grok 3', description: 'Modelo estável - 131K contexto' },
+                { value: 'grok-3-mini', label: 'Grok 3 Mini', description: 'Econômico - 131K contexto' },
+                { value: 'grok-code-fast-1', label: 'Grok Code Fast 💻', description: 'Especializado em código - 256K' },
+                { value: 'grok-2-vision-1212-us', label: 'Grok 2 Vision US 👁️', description: 'Multimodal US - 32K contexto' },
+                { value: 'grok-2-vision-1212-eu', label: 'Grok 2 Vision EU 👁️', description: 'Multimodal EU - 32K contexto' }
+            ]
+        };
+
+        // Função para atualizar limites de tokens baseado no modelo selecionado
+        function atualizarLimitesTokensDetalhe() {
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const tokensEntradaInput = document.getElementById('tokensEntradaSelect');
+            const tokensSaidaInput = document.getElementById('tokensSaidaSelect');
+            const helpEntrada = document.getElementById('help-entrada-detalhe');
+            const helpSaida = document.getElementById('help-saida-detalhe');
+            
+            if (!providerSelect || !modelSelect || !tokensEntradaInput || !tokensSaidaInput) {
+                console.warn('⚠️ Elementos de tokens não encontrados no DOM');
+                return;
+            }
+            
+            const providerSelecionado = providerSelect.value;
+            const modeloSelecionado = modelSelect.value;
+            
+            const limites = TOKEN_LIMITS_DETALHE[providerSelecionado]?.[modeloSelecionado];
+            
+            if (limites) {
+                // Atualizar limites máximos dos inputs
+                tokensEntradaInput.max = limites.contexto;
+                tokensSaidaInput.max = limites.saida;
+                
+                // Verificar se valores atuais excedem os limites
+                const entradaAtual = parseInt(tokensEntradaInput.value);
+                const saidaAtual = parseInt(tokensSaidaInput.value);
+                
+                // Ajustar valores se necessário e dar feedback visual
+                if (entradaAtual > limites.contexto) {
+                    tokensEntradaInput.value = limites.contexto;
+                    tokensEntradaInput.style.borderColor = '#ffc107';
+                    setTimeout(() => { tokensEntradaInput.style.borderColor = ''; }, 2000);
+                }
+                
+                if (saidaAtual > limites.saida) {
+                    tokensSaidaInput.value = limites.saida;
+                    tokensSaidaInput.style.borderColor = '#ffc107';
+                    setTimeout(() => { tokensSaidaInput.style.borderColor = ''; }, 2000);
+                }
+                
+                // Atualizar textos de ajuda
+                if (helpEntrada) {
+                    helpEntrada.innerHTML = `Limite: <strong>${limites.contexto.toLocaleString()}</strong> tokens para ${modeloSelecionado}`;
+                }
+                if (helpSaida) {
+                    helpSaida.innerHTML = `Limite: <strong>${limites.saida.toLocaleString()}</strong> tokens para ${modeloSelecionado}`;
+                }
+                
+                console.log(`🔧 Limites atualizados no detalhe: Entrada=${limites.contexto}, Saída=${limites.saida}`);
+            } else {
+                console.warn(`⚠️ Limites não encontrados para ${providerSelecionado}/${modeloSelecionado}`);
+            }
+        }
+        
+        // Função para ajustar tokens com presets rápidos
+        function ajustarTokensRapido(preset) {
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const tokensEntradaInput = document.getElementById('tokensEntradaSelect');
+            const tokensSaidaInput = document.getElementById('tokensSaidaSelect');
+            const helpEntrada = document.getElementById('help-entrada-detalhe');
+            const helpSaida = document.getElementById('help-saida-detalhe');
+            
+            const providerSelecionado = providerSelect.value;
+            const modeloSelecionado = modelSelect.value;
+            const limites = TOKEN_LIMITS_DETALHE[providerSelecionado]?.[modeloSelecionado];
+            
+            if (!limites) {
+                console.warn('⚠️ Limites não encontrados');
+                return;
+            }
+            
+            let entradaValue, saidaValue, presetNome;
+            
+            switch(preset) {
+                case 'maximo':
+                    entradaValue = limites.contexto;
+                    saidaValue = limites.saida;
+                    presetNome = 'Máximo';
+                    console.log(`🚀 Preset Máximo aplicado: ${entradaValue}/${saidaValue} tokens`);
+                    break;
+                case 'otimo':
+                    entradaValue = Math.floor(limites.contexto * 0.75);
+                    saidaValue = Math.floor(limites.saida * 0.75);
+                    presetNome = 'Otimizado';
+                    console.log(`⚖️ Preset Otimizado aplicado: ${entradaValue}/${saidaValue} tokens`);
+                    break;
+                case 'economico':
+                    entradaValue = Math.floor(limites.contexto * 0.5);
+                    saidaValue = Math.floor(limites.saida * 0.5);
+                    presetNome = 'Econômico';
+                    console.log(`💰 Preset Econômico aplicado: ${entradaValue}/${saidaValue} tokens`);
+                    break;
+                default:
+                    console.warn('Preset desconhecido:', preset);
+                    return;
+            }
+            
+            tokensEntradaInput.value = entradaValue;
+            tokensSaidaInput.value = saidaValue;
+            
+            // Aplicar cores baseadas no preset (não na validação)
+            if (preset === 'maximo') {
+                // Vermelho para máximo (maior custo)
+                tokensEntradaInput.style.borderColor = '#dc3545';
+                tokensEntradaInput.style.borderWidth = '2px';
+                tokensSaidaInput.style.borderColor = '#dc3545';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpEntrada) helpEntrada.textContent = `🔴 Máximo: ${entradaValue.toLocaleString()} tokens`;
+                if (helpSaida) helpSaida.textContent = `🔴 Máximo: ${saidaValue.toLocaleString()} tokens`;
+            } else if (preset === 'otimo') {
+                // Amarelo para otimizado (custo médio)
+                tokensEntradaInput.style.borderColor = '#ffc107';
+                tokensEntradaInput.style.borderWidth = '2px';
+                tokensSaidaInput.style.borderColor = '#ffc107';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpEntrada) helpEntrada.textContent = `🟡 Otimizado: ${entradaValue.toLocaleString()} tokens`;
+                if (helpSaida) helpSaida.textContent = `🟡 Otimizado: ${saidaValue.toLocaleString()} tokens`;
+            } else if (preset === 'economico') {
+                // Verde para econômico (menor custo)
+                tokensEntradaInput.style.borderColor = '#28a745';
+                tokensEntradaInput.style.borderWidth = '2px';
+                tokensSaidaInput.style.borderColor = '#28a745';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpEntrada) helpEntrada.textContent = `🟢 Econômico: ${entradaValue.toLocaleString()} tokens`;
+                if (helpSaida) helpSaida.textContent = `🟢 Econômico: ${saidaValue.toLocaleString()} tokens`;
+            }
+            
+            if (helpEntrada) helpEntrada.style.color = '#ffffff';
+            if (helpSaida) helpSaida.style.color = '#ffffff';
+            
+            // Feedback visual nos botões
+            const buttons = document.querySelectorAll('[onclick*="ajustarTokensRapido"]');
+            buttons.forEach(btn => {
+                if (btn.onclick.toString().includes(`'${preset}'`)) {
+                    btn.classList.add('btn-success');
+                    btn.classList.remove('btn-outline-info', 'btn-outline-warning', 'btn-outline-success');
+                    setTimeout(() => {
+                        btn.classList.remove('btn-success');
+                        btn.classList.add(preset === 'maximo' ? 'btn-outline-info' : 
+                                        preset === 'otimo' ? 'btn-outline-warning' : 'btn-outline-success');
+                    }, 1000);
+                }
+            });
+        }
+        
+        // Função para salvar configuração de tokens
+        function salvarConfiguracaoTokens() {
+            const tokensEntradaInput = document.getElementById('tokensEntradaSelect');
+            const tokensSaidaInput = document.getElementById('tokensSaidaSelect');
+            
+            const configuracao = {
+                tokens_entrada_max: parseInt(tokensEntradaInput.value),
+                tokens_saida_max: parseInt(tokensSaidaInput.value),
+                agente_id: '{{ agente.id }}'
+            };
+            
+            // Simular salvamento (aqui você faria a requisição AJAX real)
+            console.log('💾 Configuração salva:', configuracao);
+            
+            // Feedback visual
+            const feedback = document.createElement('div');
+            feedback.className = 'alert alert-success alert-dismissible fade show mt-2';
+            feedback.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                Configuração de tokens salva com sucesso!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = tokensEntradaInput.closest('.info-card');
+            container.appendChild(feedback);
+            
+            // Remover feedback após 3 segundos
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.remove();
+                }
+            }, 3000);
+        }
+        
+        // Validação em tempo real para os campos de token
+        function validarTokensEmTempoReal() {
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const tokensEntradaInput = document.getElementById('tokensEntradaSelect');
+            const tokensSaidaInput = document.getElementById('tokensSaidaSelect');
+            const helpEntrada = document.getElementById('help-entrada-detalhe');
+            const helpSaida = document.getElementById('help-saida-detalhe');
+            
+            if (!providerSelect || !modelSelect) return;
+            
+            const provider = providerSelect.value;
+            const modelo = modelSelect.value;
+            const limits = TOKEN_LIMITS_DETALHE[provider]?.[modelo];
+            
+            if (!limits) return;
+            
+            const entradaValue = parseInt(tokensEntradaInput.value) || 0;
+            const saidaValue = parseInt(tokensSaidaInput.value) || 0;
+            
+            // Validar entrada
+            if (entradaValue > limits.contexto) {
+                tokensEntradaInput.style.borderColor = '#dc3545';
+                tokensEntradaInput.style.borderWidth = '2px';
+                if (helpEntrada) {
+                    helpEntrada.textContent = `❌ Máximo: ${limits.contexto.toLocaleString()} tokens`;
+                    helpEntrada.style.color = '#ffffff';
+                }
+            } else if (entradaValue < 1000) {
+                tokensEntradaInput.style.borderColor = '#ffc107';
+                tokensEntradaInput.style.borderWidth = '2px';
+                if (helpEntrada) {
+                    helpEntrada.textContent = `⚠️ Mínimo recomendado: 1000 tokens`;
+                    helpEntrada.style.color = '#ffffff';
+                }
+            } else {
+                tokensEntradaInput.style.borderColor = '#28a745';
+                tokensEntradaInput.style.borderWidth = '2px';
+                if (helpEntrada) {
+                    helpEntrada.textContent = `✅ Limite: ${limits.contexto.toLocaleString()} tokens`;
+                    helpEntrada.style.color = '#ffffff';
+                }
+            }
+            
+            // Validar saída
+            if (saidaValue > limits.saida) {
+                tokensSaidaInput.style.borderColor = '#dc3545';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpSaida) {
+                    helpSaida.textContent = `❌ Máximo: ${limits.saida === 999999 ? 'Ilimitado' : limits.saida.toLocaleString()} tokens`;
+                    helpSaida.style.color = '#ffffff';
+                }
+            } else if (saidaValue < 100) {
+                tokensSaidaInput.style.borderColor = '#ffc107';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpSaida) {
+                    helpSaida.textContent = `⚠️ Mínimo recomendado: 100 tokens`;
+                    helpSaida.style.color = '#ffffff';
+                }
+            } else {
+                tokensSaidaInput.style.borderColor = '#28a745';
+                tokensSaidaInput.style.borderWidth = '2px';
+                if (helpSaida) {
+                    helpSaida.textContent = `✅ Limite: ${limits.saida === 999999 ? 'Ilimitado' : limits.saida.toLocaleString()} tokens`;
+                    helpSaida.style.color = '#ffffff';
+                }
+            }
+        }
+
+        // Função para atualizar modelos baseado no provedor selecionado
+        function atualizarModelos() {
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            
+            if (!providerSelect || !modelSelect) {
+                console.warn('⚠️ Elementos de provedor/modelo não encontrados');
+                return;
+            }
+            
+            const providerSelecionado = providerSelect.value;
+            console.log(`🔍 Atualizando modelos para provedor: ${providerSelecionado}`);
+            
+            const modelos = modelosDisponiveis[providerSelecionado] || [];
+            
+            // Mostrar/esconder optgroups baseado no provedor
+            const optgroups = modelSelect.querySelectorAll('optgroup');
+            let firstVisibleOption = null;
+            
+            console.log(`📋 Total de optgroups encontrados: ${optgroups.length}`);
+            
+            optgroups.forEach(optgroup => {
+                const isProviderMatch = optgroup.getAttribute('data-provider') === providerSelecionado;
+                
+                if (isProviderMatch) {
+                    // Remover completamente o atributo style para mostrar
+                    optgroup.removeAttribute('style');
+                    
+                    // Capturar primeira opção visível
+                    if (!firstVisibleOption) {
+                        firstVisibleOption = optgroup.querySelector('option');
+                        console.log(`✅ Primeira opção visível encontrada: ${firstVisibleOption?.value}`);
+                    }
+                } else {
+                    // Esconder optgroup
+                    optgroup.style.display = 'none';
+                }
+            });
+            
+            // Selecionar primeira opção disponível e forçar atualização visual
+            if (firstVisibleOption) {
+                console.log(`🎯 Tentando selecionar modelo: ${firstVisibleOption.value}`);
+                // Resetar seleção atual
+                modelSelect.selectedIndex = -1;
+                
+                // Forçar reflow do DOM lendo uma propriedade
+                void modelSelect.offsetHeight;
+                
+                // Usar requestAnimationFrame duplo para garantir renderização completa
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // Encontrar o índice da opção no select (incluindo todas as opções, mesmo as escondidas)
+                        const options = Array.from(modelSelect.options);
+                        const optionIndex = options.findIndex(opt => opt.value === firstVisibleOption.value);
+                        
+                        if (optionIndex >= 0) {
+                            // Selecionar por índice (mais confiável que por value)
+                            modelSelect.selectedIndex = optionIndex;
+                            
+                            // Forçar outro reflow
+                            void modelSelect.offsetHeight;
+                            
+                            // Disparar evento de mudança
+                            const event = new Event('change', { bubbles: true });
+                            modelSelect.dispatchEvent(event);
+                            
+                            console.log(`✅ Modelo selecionado automaticamente: ${firstVisibleOption.value}`);
+                            console.log(`🤖 Provedor alterado para: ${providerSelecionado}, modelo: ${modelSelect.value}`);
+                        } else {
+                            console.warn(`⚠️ Não foi possível encontrar o índice da opção: ${firstVisibleOption.value}`);
+                        }
+                    });
+                });
+            } else {
+                console.warn(`⚠️ Nenhuma opção visível encontrada para o provedor: ${providerSelecionado}`);
+            }
+        }
+
+        // Event listeners para configurações
+        document.addEventListener('DOMContentLoaded', function() {
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const useDocumentsToggle = document.getElementById('useDocumentsToggle');
+            const webSearchToggle = document.getElementById('webSearchToggle');
+            
+            // Event listener para mudança de provedor
+            providerSelect.addEventListener('change', function() {
+                atualizarModelos();
+                // Atualizar limites após mudança de provedor
+                setTimeout(() => {
+                    atualizarLimitesTokensDetalhe();
+                }, 100);
+            });
+            
+            // Event listener para mudança de modelo
+            modelSelect.addEventListener('change', function() {
+                console.log(`🤖 Modelo selecionado: ${this.value}`);
+                // Atualizar limites de tokens quando modelo mudar
+                atualizarLimitesTokensDetalhe();
+            });
+            
+            // Event listeners para toggles
+            useDocumentsToggle.addEventListener('change', function() {
+                console.log(`📚 Base de conhecimento: ${this.checked ? 'ativada' : 'desativada'}`);
+            });
+            
+            webSearchToggle.addEventListener('change', function() {
+                console.log(`🔍 Pesquisa web: ${this.checked ? 'ativada' : 'desativada'}`);
+            });
+            
+            // Configurar agente baseado nos dados existentes PRIMEIRO
+            // (isso já chama atualizarModelos() internamente)
+            configurarAgenteAtual();
+            
+            // Event listeners para validação em tempo real nos campos de tokens
+            const tokensEntradaInput = document.getElementById('tokensEntradaSelect');
+            const tokensSaidaInput = document.getElementById('tokensSaidaSelect');
+            
+            if (tokensEntradaInput) {
+                tokensEntradaInput.addEventListener('input', validarTokensEmTempoReal);
+            }
+            
+            if (tokensSaidaInput) {
+                tokensSaidaInput.addEventListener('input', validarTokensEmTempoReal);
+            }
+            
+            // Inicializar limites de tokens após um tempo
+            setTimeout(() => {
+                atualizarLimitesTokensDetalhe();
+                validarTokensEmTempoReal(); // Ativar validação em tempo real
+            }, 200); // Aguardar elementos carregarem e modelos serem configurados
+        });
+        
+        // Função para configurar o agente com os dados atuais
+        function configurarAgenteAtual() {
+            console.log('🚀 Iniciando configurarAgenteAtual()');
+            
+            // Configurar provedor baseado no modelo do agente
+            const modeloAtual = '{{ agente.modelo_ai }}';
+            console.log(`📝 Modelo atual do agente: "${modeloAtual}"`);
+            
+            const providerSelect = document.getElementById('providerSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            
+            console.log(`🔍 Elementos encontrados - Provider: ${!!providerSelect}, Model: ${!!modelSelect}`);
+            
+            if (modeloAtual && providerSelect && modelSelect) {
+                // Detectar provedor baseado no modelo
+                let providerDetectado = 'openai';
+                if (modeloAtual.includes('claude')) {
+                    providerDetectado = 'anthropic';
+                } else if (modeloAtual.includes('gemini')) {
+                    providerDetectado = 'google';
+                } else if (modeloAtual.includes('deepseek')) {
+                    providerDetectado = 'deepseek';
+                }
+                
+                // Configurar diretamente (sem setTimeout que pode não executar)
+                console.log(`🎯 Provedor detectado: ${providerDetectado}`);
+                
+                try {
+                    // Configurar provedor
+                    providerSelect.value = providerDetectado;
+                    console.log(`✅ Provedor configurado: ${providerSelect.value}`);
+                    
+                    // Forçar reflow
+                    void providerSelect.offsetHeight;
+                    
+                    // Atualizar modelos imediatamente
+                    console.log('🔄 Chamando atualizarModelos()...');
+                    atualizarModelos();
+                    
+                    console.log(`⚙️ Agente configurado: ${providerDetectado}/${modeloAtual}`);
+                } catch (error) {
+                    console.error('❌ Erro ao configurar agente:', error);
+                }
+            } else {
+                console.warn('⚠️ Configuração cancelada - Condição não atendida:', {
+                    modeloAtual: !!modeloAtual,
+                    providerSelect: !!providerSelect,
+                    modelSelect: !!modelSelect
+                });
+            }
+        }
+
+        // Sistema de Chat
+        class ChatSystem {
+            constructor() {
+                this.messagesContainer = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.agentId = '{{ agente.id }}';
+                this.attachedFile = null;
+                this.filePreview = document.getElementById('filePreview');
+                this.dropZone = document.getElementById('dropZone');
+                
+                this.initializeEventListeners();
+                this.initializeDragAndDrop();
+            }
+
+            initializeEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Upload de arquivos
+                document.getElementById('fileInput').addEventListener('change', (e) => {
+                    this.handleFileSelection(e.target.files[0]);
+                });
+            }
+
+            initializeDragAndDrop() {
+                const chatInput = document.querySelector('.chat-input');
+                
+                // Prevenir comportamento padrão
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    chatInput.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+
+                // Highlight ao arrastar
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    chatInput.addEventListener(eventName, () => {
+                        if (this.dropZone) {
+                            this.dropZone.style.display = 'block';
+                            this.dropZone.style.borderColor = 'var(--area-color)';
+                            this.dropZone.style.background = 'rgba(var(--area-color-rgb, 50, 145, 209), 0.1)';
+                        }
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    chatInput.addEventListener(eventName, () => {
+                        if (this.dropZone) {
+                            setTimeout(() => {
+                                this.dropZone.style.display = 'none';
+                            }, 100);
+                        }
+                    }, false);
+                });
+
+                // Lidar com drop
+                chatInput.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFileSelection(files[0]);
+                    }
+                }, false);
+
+                // Click na drop zone
+                if (this.dropZone) {
+                    this.dropZone.addEventListener('click', () => {
+                        document.getElementById('fileInput').click();
+                    });
+                }
+            }
+
+            removeFile() {
+                this.attachedFile = null;
+                document.getElementById('fileInput').value = '';
+                if (this.filePreview) {
+                    this.filePreview.style.display = 'none';
+                }
+                console.log('🗑️ Arquivo removido');
+            }
+
+            showFilePreview(file) {
+                if (!this.filePreview) return;
+
+                // Atualizar informações do arquivo
+                const fileName = document.getElementById('fileName');
+                const fileSize = document.getElementById('fileSize');
+                const fileIcon = document.getElementById('fileIcon');
+
+                if (fileName) fileName.textContent = file.name;
+                if (fileSize) fileSize.textContent = this.formatFileSize(file.size);
+
+                // Atualizar ícone baseado no tipo
+                if (fileIcon) {
+                    if (file.type.includes('pdf')) {
+                        fileIcon.className = 'fas fa-file-pdf fa-2x me-3';
+                        fileIcon.style.color = '#dc3545';
+                    } else if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+                        fileIcon.className = 'fas fa-file-word fa-2x me-3';
+                        fileIcon.style.color = '#007bff';
+                    } else {
+                        fileIcon.className = 'fas fa-file-alt fa-2x me-3';
+                        fileIcon.style.color = 'var(--area-color)';
+                    }
+                }
+
+                // Mostrar preview
+                this.filePreview.style.display = 'block';
+                console.log(`✅ Preview exibido: ${file.name}`);
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message) return;
+
+                // Armazenar informações do arquivo ANTES de limpar
+                const fileInfo = this.attachedFile ? {
+                    name: this.attachedFile.name,
+                    size: this.formatFileSize(this.attachedFile.size),
+                    type: this.attachedFile.type
+                } : null;
+
+                // Adicionar mensagem do usuário COM indicador de arquivo se houver
+                this.addMessage('user', message, fileInfo);
+                
+                this.messageInput.value = '';
+                this.showTyping();
+                this.sendButton.disabled = true;
+
+                try {
+                    // Preparar FormData
+                    const formData = new FormData();
+                    formData.append('mensagem', message);
+                    
+                    if (this.attachedFile) {
+                        formData.append('arquivo', this.attachedFile);
+                        console.log(`📎 Enviando arquivo: ${this.attachedFile.name}`);
+                    }
+
+                    // Enviar para o backend
+                    const response = await fetch(`/agentes/${this.agentId}/chat`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // Verificar se a resposta é válida
+                    if (!response.ok) {
+                        console.error(`❌ Erro HTTP: ${response.status} ${response.statusText}`);
+                        const errorText = await response.text();
+                        console.error(`Resposta: ${errorText.substring(0, 200)}`);
+                        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Tentar fazer parse do JSON com tratamento de erro
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('❌ Erro ao fazer parse do JSON:', parseError);
+                        const responseText = await response.text();
+                        console.error(`Resposta recebida: ${responseText.substring(0, 500)}`);
+                        throw new Error('Resposta inválida do servidor. Verifique se você está autenticado.');
+                    }
+
+                    this.hideTyping();
+
+                    if (data.success) {
+                        this.addMessage('assistant', data.resposta);
+                        
+                        // Mostrar informações adicionais se disponíveis
+                        if (data.docs_rag_consultados > 0) {
+                            console.log(`✅ Consultados ${data.docs_rag_consultados} documentos RAG`);
+                        }
+                        console.log(`🤖 Modelo: ${data.modelo_usado} (${data.provider})`);
+                    } else {
+                        console.error(`❌ Erro retornado: ${data.error}`);
+                        this.addMessage('assistant', `⚠️ Erro: ${data.error || 'Não foi possível processar sua mensagem.'}`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao enviar mensagem:', error);
+                    this.hideTyping();
+                    this.addMessage('assistant', '⚠️ Erro ao se comunicar com o agente. Por favor, tente novamente.');
+                } finally {
+                    this.sendButton.disabled = false;
+                    // Limpar arquivo após envio
+                    this.removeFile();
+                }
+            }
+
+            addMessage(sender, content, fileInfo = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                // Se for mensagem do assistente, formatar como Markdown
+                if (sender === 'assistant') {
+                    messageContent.innerHTML = this.formatMarkdown(content);
+                } else {
+                    messageContent.innerHTML = this.escapeHtml(content);
+                }
+                
+                messageDiv.appendChild(messageContent);
+                
+                // Se houver arquivo anexado, adicionar indicador visual
+                if (fileInfo) {
+                    const fileIndicator = document.createElement('div');
+                    fileIndicator.style.cssText = 'margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.85em; display: flex; align-items: center; gap: 8px;';
+                    
+                    // Determinar ícone baseado no tipo
+                    let iconClass = 'fas fa-file-alt';
+                    let iconColor = 'var(--area-color)';
+                    if (fileInfo.type.includes('pdf')) {
+                        iconClass = 'fas fa-file-pdf';
+                        iconColor = '#dc3545';
+                    } else if (fileInfo.type.includes('word') || fileInfo.name.endsWith('.docx')) {
+                        iconClass = 'fas fa-file-word';
+                        iconColor = '#007bff';
+                    }
+                    
+                    fileIndicator.innerHTML = `
+                        <i class="${iconClass}" style="color: ${iconColor};"></i>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${this.escapeHtml(fileInfo.name)}</div>
+                            <div style="opacity: 0.8; font-size: 0.9em;">${fileInfo.size}</div>
+                        </div>
+                    `;
+                    messageDiv.appendChild(fileIndicator);
+                }
+                
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            formatMarkdown(text) {
+                if (!text) return '';
+                
+                // Escapar HTML primeiro
+                let formatted = this.escapeHtml(text);
+                
+                // Formatar código em blocos (```code```)
+                formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; overflow-x: auto; margin: 10px 0;"><code>$1</code></pre>');
+                
+                // Formatar código inline (`code`)
+                formatted = formatted.replace(/`([^`]+)`/g, '<code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px; font-family: monospace;">$1</code>');
+                
+                // Formatar títulos (## Título)
+                formatted = formatted.replace(/^### (.+)$/gm, '<h4 style="color: var(--area-color); margin: 15px 0 8px 0; font-weight: 600;">$1</h4>');
+                formatted = formatted.replace(/^## (.+)$/gm, '<h3 style="color: var(--area-color); margin: 20px 0 10px 0; font-weight: 700;">$1</h3>');
+                formatted = formatted.replace(/^# (.+)$/gm, '<h2 style="color: var(--area-color); margin: 25px 0 12px 0; font-weight: 700;">$1</h2>');
+                
+                // Formatar negrito (**texto**)
+                formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: 700;">$1</strong>');
+                
+                // Formatar itálico (*texto*)
+                formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                
+                // Formatar listas não ordenadas (- item ou * item)
+                formatted = formatted.replace(/^[*-] (.+)$/gm, '<li style="margin-left: 20px;">$1</li>');
+                formatted = formatted.replace(/(<li.*<\/li>\n?)+/g, '<ul style="margin: 10px 0; padding-left: 20px;">$&</ul>');
+                
+                // Formatar listas ordenadas (1. item)
+                formatted = formatted.replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px;">$1</li>');
+                
+                // Formatar quebras de linha
+                formatted = formatted.replace(/\n\n/g, '<br><br>');
+                formatted = formatted.replace(/\n/g, '<br>');
+                
+                return formatted;
+            }
+            
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showTyping() {
+                this.typingIndicator.style.display = 'flex';
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            handleFileSelection(file) {
+                if (!file) return;
+
+                // Validar tipo de arquivo
+                const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Tipo de arquivo não suportado. Use: PDF, DOCX, DOC ou TXT');
+                    document.getElementById('fileInput').value = '';
+                    return;
+                }
+
+                // Validar tamanho (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Arquivo muito grande. Máximo: 10MB');
+                    document.getElementById('fileInput').value = '';
+                    return;
+                }
+
+                // Armazenar arquivo e mostrar preview imediatamente
+                this.attachedFile = file;
+                this.showFilePreview(file);
+                console.log(`📎 Arquivo anexado: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+            }
+            
+            // Função para limpar conversa
+            clearConversation() {
+                if (!confirm('Tem certeza que deseja limpar toda a conversa? Esta ação não pode ser desfeita.')) {
+                    return;
+                }
+                
+                // Limpar todas as mensagens exceto a inicial do assistente
+                const messages = this.messagesContainer.querySelectorAll('.message');
+                messages.forEach((msg, index) => {
+                    if (index > 0) { // Manter apenas a primeira mensagem
+                        msg.remove();
+                    }
+                });
+                
+                console.log('🧹 Conversa limpa');
+            }
+            
+            // Função para salvar conversa no banco
+            async saveConversation() {
+                const titulo = prompt('Digite um título para esta conversa:');
+                if (!titulo || titulo.trim() === '') {
+                    return;
+                }
+                
+                // Coletar todas as mensagens
+                const messages = this.messagesContainer.querySelectorAll('.message');
+                const conversationData = [];
+                
+                messages.forEach(msg => {
+                    const sender = msg.classList.contains('user') ? 'user' : 'assistant';
+                    const content = msg.querySelector('.message-content').textContent.trim();
+                    conversationData.push({
+                        sender: sender,
+                        content: content,
+                        timestamp: new Date().toISOString()
+                    });
+                });
+                
+                try {
+                    const response = await fetch(`/agentes/${this.agentId}/salvar-conversa`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            titulo: titulo.trim(),
+                            mensagens: conversationData
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('✅ Conversa salva com sucesso!');
+                        // Recarregar histórico se existir
+                        if (window.loadConversationHistory) {
+                            window.loadConversationHistory();
+                        }
+                    } else {
+                        alert('❌ Erro ao salvar conversa: ' + (data.error || 'Erro desconhecido'));
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar conversa:', error);
+                    alert('❌ Erro ao salvar conversa. Tente novamente.');
+                }
+            }
+            
+            // Função para exportar conversa
+            exportConversation() {
+                // Coletar todas as mensagens
+                const messages = this.messagesContainer.querySelectorAll('.message');
+                let conversationText = `CONVERSA COM ${document.querySelector('.chat-header div').textContent.trim()}\n`;
+                conversationText += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+                conversationText += `${'='.repeat(80)}\n\n`;
+                
+                messages.forEach(msg => {
+                    const sender = msg.classList.contains('user') ? 'VOCÊ' : 'ASSISTENTE';
+                    const content = msg.querySelector('.message-content').textContent.trim();
+                    conversationText += `${sender}:\n${content}\n\n${'-'.repeat(80)}\n\n`;
+                });
+                
+                // Criar arquivo para download
+                const blob = new Blob([conversationText], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `conversa_${this.agentId}_${new Date().getTime()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('💾 Conversa exportada');
+            }
+        }
+
+        // Sistema de Upload de Documentos
+        class DocumentUploadSystem {
+            constructor() {
+                this.agentId = '{{ agente.id }}';
+                this.agentVectorBase = '{{ agente.base_vetorial }}';
+                this.uploadForm = document.getElementById('uploadForm');
+                this.uploadProgress = document.getElementById('uploadProgress');
+                this.uploadStatus = document.getElementById('uploadStatus');
+                this.progressBar = this.uploadProgress ? this.uploadProgress.querySelector('.progress-bar') : null;
+                this.progressText = document.getElementById('progressText');
+                this.documentsList = document.getElementById('documentsList');
+                this.loadedDocuments = document.getElementById('loadedDocuments');
+                
+                // Só inicializar se os elementos existem
+                if (this.uploadForm) {
+                    this.initializeUpload();
+                }
+                this.loadExistingDocuments();
+            }
+
+            initializeUpload() {
+                if (this.uploadForm) {
+                    this.uploadForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleUpload();
+                    });
+                }
+            }
+
+            async handleUpload() {
+                const fileInput = document.getElementById('documentFile');
+                const descriptionInput = document.getElementById('documentDescription');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    this.showStatus('error', 'Por favor, selecione um arquivo.');
+                    return;
+                }
+
+                // Validações básicas
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    this.showStatus('error', 'Arquivo muito grande. Máximo permitido: 10MB');
+                    return;
+                }
+
+                const allowedTypes = ['.pdf', '.docx', '.doc', '.txt'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowedTypes.includes(fileExtension)) {
+                    this.showStatus('error', 'Tipo de arquivo não permitido. Use: PDF, DOCX, DOC ou TXT');
+                    return;
+                }
+
+                // Preparar formulário
+                const formData = new FormData();
+                formData.append('document', file);
+                formData.append('description', descriptionInput.value);
+                formData.append('agent_id', this.agentId);
+                formData.append('vector_base', this.agentVectorBase);
+
+                // Mostrar progresso
+                this.showProgress();
+                this.updateProgress(10, 'Validando documento...');
+
+                try {
+                    // Enviar arquivo
+                    const response = await fetch('/agentes/upload-document', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.updateProgress(100, 'Documento processado com sucesso!');
+                        setTimeout(() => {
+                            this.hideProgress();
+                            this.showStatus('success', `
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Documento integrado com sucesso!</strong><br>
+                                <small>
+                                    • ${result.chunks_created} chunks gerados<br>
+                                    • ${result.embeddings_created} embeddings criados<br>
+                                    • Base de conhecimento atualizada
+                                </small>
+                            `);
+                            this.resetForm();
+                            this.loadExistingDocuments();
+                        }, 1000);
+                    } else {
+                        throw new Error(result.message || 'Erro no processamento');
+                    }
+
+                } catch (error) {
+                    console.error('Erro no upload:', error);
+                    this.hideProgress();
+                    this.showStatus('error', `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Erro no processamento:</strong><br>
+                        ${error.message}
+                    `);
+                }
+            }
+
+            showProgress() {
+                this.uploadProgress.style.display = 'block';
+                this.uploadStatus.style.display = 'none';
+                document.getElementById('uploadBtn').disabled = true;
+            }
+
+            hideProgress() {
+                this.uploadProgress.style.display = 'none';
+                document.getElementById('uploadBtn').disabled = false;
+            }
+
+            updateProgress(percent, text) {
+                this.progressBar.style.width = `${percent}%`;
+                this.progressText.textContent = text;
+            }
+
+            showStatus(type, message) {
+                this.uploadStatus.className = `upload-status ${type}`;
+                this.uploadStatus.innerHTML = message;
+                this.uploadStatus.style.display = 'block';
+            }
+
+            resetForm() {
+                this.uploadForm.reset();
+                setTimeout(() => {
+                    this.uploadStatus.style.display = 'none';
+                }, 5000);
+            }
+
+            async loadExistingDocuments() {
+                try {
+                    const response = await fetch(`/agentes/${this.agentId}/documents`);
+                    if (response.ok) {
+                        const documents = await response.json();
+                        this.displayDocuments(documents);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar documentos:', error);
+                }
+            }
+
+            displayDocuments(documents) {
+                if (!documents || documents.length === 0) {
+                    this.loadedDocuments.style.display = 'none';
+                    return;
+                }
+
+                this.loadedDocuments.style.display = 'block';
+                this.documentsList.innerHTML = documents.map(doc => `
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">
+                                <i class="fas fa-file-alt me-2"></i>
+                                ${doc.filename}
+                            </div>
+                            <div class="document-meta">
+                                ${doc.description || 'Sem descrição'} • 
+                                ${doc.chunks_count} chunks • 
+                                Adicionado em ${new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <button class="btn-doc-action btn-doc-remove" 
+                                    onclick="documentUpload.removeDocument(${doc.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async removeDocument(documentId) {
+                if (!confirm('Tem certeza que deseja remover este documento da base de conhecimento?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/agentes/documents/${documentId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        this.showStatus('success', 'Documento removido com sucesso!');
+                        this.loadExistingDocuments();
+                    } else {
+                        throw new Error('Erro ao remover documento');
+                    }
+                } catch (error) {
+                    this.showStatus('error', 'Erro ao remover documento: ' + error.message);
+                }
+            }
+        }
+
+        // Inicializar sistemas
+        document.addEventListener('DOMContentLoaded', function() {
+            // Definir cores das áreas jurídicas
+            const areaColors = {
+                'direito_civil': '#007bff',
+                'direito_penal': '#3291d1',
+                'direito_trabalhista': '#1f5981',
+                'direito_tributario': '#fd7e14',
+                'direito_administrativo': '#6f42c1',
+                'direito_constitucional': '#20c997',
+                'direito_empresarial': '#ffc107',
+                'direito_imobiliario': '#17a2b8',
+                'direito_familia': '#e83e8c',
+                'direito_consumidor': '#6c757d',
+                'direito_ambiental': '#1f5981',
+                'direito_previdenciario': '#0d6efd',
+                'direito_internacional': '#6610f2',
+                'direito_securitario': '#fd7e14',
+                'negociacao_conflitos': '#795548'
+            };
+
+            // Obter área do agente e definir cor
+            const areaAgente = '{{ agente.area_juridica }}';
+            const corArea = areaColors[areaAgente] || '#3291d1';
+            
+            // Aplicar cor dinamicamente
+            document.documentElement.style.setProperty('--area-color', corArea);
+            
+            // Converter hex para RGB para uso em rgba()
+            const hexToRgb = (hex) => {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? 
+                    `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+                    '220, 53, 69';
+            };
+            
+            document.documentElement.style.setProperty('--area-color-rgb', hexToRgb(corArea));
+
+            // Inicializar sistemas e tornar chat global para acesso do botão de remoção
+            window.chat = new ChatSystem();
+            window.documentUpload = new DocumentUploadSystem();
+            
+            // Função para carregar histórico de conversas
+            window.loadConversationHistory = async function() {
+                try {
+                    const agentId = {{ agente.id }};
+                    const response = await fetch(`/agentes/${agentId}/conversas`);
+                    const data = await response.json();
+                    
+                    const historicoDiv = document.getElementById('historicoConversasList');
+                    
+                    if (data.success && data.conversas && data.conversas.length > 0) {
+                        historicoDiv.innerHTML = data.conversas.map(conv => `
+                            <div class="conversa-item mb-2" style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1; cursor: pointer;" onclick="carregarConversa(${conv.id})">
+                                    <div style="font-weight: bold; color: white; margin-bottom: 5px;">
+                                        <i class="fas fa-comment-dots me-2"></i>${conv.titulo}
+                                    </div>
+                                    <div style="font-size: 0.8em; color: rgba(255,255,255,0.6);">
+                                        <i class="fas fa-calendar me-1"></i>${conv.data_criacao}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-danger" style="padding: 5px 10px;" 
+                                        onclick="event.stopPropagation(); excluirConversa(${conv.id})" 
+                                        title="Excluir conversa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `).join('');
+                    } else {
+                        historicoDiv.innerHTML = '<p class="text-muted small"><i class="fas fa-inbox me-1"></i>Nenhuma conversa salva ainda</p>';
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar histórico:', error);
+                    document.getElementById('historicoConversasList').innerHTML = 
+                        '<p class="text-danger small">Erro ao carregar histórico</p>';
+                }
+            };
+            
+            // Função para carregar uma conversa específica
+            window.carregarConversa = async function(conversaId) {
+                try {
+                    const agentId = {{ agente.id }};
+                    const response = await fetch(`/agentes/${agentId}/conversa/${conversaId}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.conversa) {
+                        const messagesContainer = document.getElementById('chatMessages');
+                        
+                        // Limpar mensagens atuais (exceto a primeira)
+                        const messages = messagesContainer.querySelectorAll('.message');
+                        messages.forEach((msg, index) => {
+                            if (index > 0) {
+                                msg.remove();
+                            }
+                        });
+                        
+                        // Adicionar mensagens da conversa carregada
+                        data.conversa.mensagens.forEach(msg => {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = `message ${msg.sender}`;
+                            
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'message-content';
+                            
+                            if (msg.sender === 'assistant') {
+                                // Aplicar formatação Markdown para respostas do assistente
+                                contentDiv.innerHTML = window.formatMarkdown(msg.content);
+                            } else {
+                                contentDiv.textContent = msg.content;
+                            }
+                            
+                            messageDiv.appendChild(contentDiv);
+                            messagesContainer.appendChild(messageDiv);
+                        });
+                        
+                        // Scroll para o fim
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        
+                        alert(`✅ Conversa "${data.conversa.titulo}" carregada com sucesso!`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar conversa:', error);
+                    alert('❌ Erro ao carregar conversa');
+                }
+            };
+            
+            // Função para excluir uma conversa
+            window.excluirConversa = async function(conversaId) {
+                if (!confirm('🗑️ Tem certeza que deseja excluir esta conversa?\n\nEsta ação não pode ser desfeita.')) {
+                    return;
+                }
+                
+                try {
+                    const agentId = {{ agente.id }};
+                    const response = await fetch(`/agentes/${agentId}/conversa/${conversaId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Recarregar histórico
+                        await window.loadConversationHistory();
+                        alert('✅ Conversa excluída com sucesso!');
+                    } else {
+                        alert('❌ Erro ao excluir conversa: ' + (data.error || 'Erro desconhecido'));
+                    }
+                } catch (error) {
+                    console.error('Erro ao excluir conversa:', error);
+                    alert('❌ Erro ao excluir conversa');
+                }
+            };
+            
+            // Carregar histórico ao iniciar
+            window.loadConversationHistory();
+            
+            // Efeitos visuais
+            const infoCards = document.querySelectorAll('.info-card');
+            infoCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Analytics Avançado</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <!-- Energia Theme -->
+    <link rel="stylesheet" href="/static/css/cpfl-theme.css">
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid #3a3a3a;
+            margin-bottom: 2rem;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #b0b0b0 !important;
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: #0089CF !important;
+            border-bottom-color: #0089CF;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #0089CF !important;
+            background-color: transparent;
+            border-bottom-color: #0089CF;
+        }
+        
+        .chart-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            min-height: 400px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        
+        .stat-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0089CF;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            min-height: 500px;
+        }
+        
+        /* Força textos brancos */
+        h1, h2, h3, h4, h5, h6, p, span, div, label {
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item active">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-file-pdf"></i>
+            Exportar PDF
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-chart-line me-2"></i>Analytics Avançado</h2>
+            <p class="mb-0 mt-2">Análise detalhada dos 3.216 processos jurídicos Setor de Energia</p>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="analyticsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="visao-geral-tab" data-bs-toggle="tab" data-bs-target="#visao-geral" type="button">
+                    <i class="fas fa-th-large me-2"></i>Visão Geral
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="causa-raiz-tab" data-bs-toggle="tab" data-bs-target="#causa-raiz" type="button">
+                    <i class="fas fa-sitemap me-2"></i>Causa-Raiz
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="comarcas-tab" data-bs-toggle="tab" data-bs-target="#comarcas" type="button">
+                    <i class="fas fa-map-marked-alt me-2"></i>Comarcas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sobrestados-tab" data-bs-toggle="tab" data-bs-target="#sobrestados" type="button">
+                    <i class="fas fa-pause-circle me-2"></i>Sobrestados
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="analyticsTabContent">
+            
+            <!-- Visão Geral -->
+            <div class="tab-pane fade show active" id="visao-geral" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Total de Processos</div>
+                            <div class="stat-value" id="total-processos">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Valor em Risco</div>
+                            <div class="stat-value text-danger" id="valor-risco">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Taxa de Sucesso</div>
+                            <div class="stat-value text-success" id="taxa-sucesso">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-label">Processos Sobrestados</div>
+                            <div class="stat-value text-warning" id="total-sobrestados">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Distribuição por Fase</h5>
+                            <div class="chart-container">
+                                <canvas id="chartFaseGeral"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <h5 class="mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Distribuição de Risco</h5>
+                            <div class="chart-container">
+                                <canvas id="chartRiscoGeral"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Causa-Raiz -->
+            <div class="tab-pane fade" id="causa-raiz" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="chart-card" style="min-height: 600px;">
+                            <h5 class="mb-3"><i class="fas fa-sitemap me-2"></i>Top 20 Causas-Raiz</h5>
+                            <div class="chart-container" style="height: 520px;">
+                                <canvas id="chartCausaRaiz"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comarcas -->
+            <div class="tab-pane fade" id="comarcas" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="chart-card" style="min-height: 600px;">
+                            <h5 class="mb-3"><i class="fas fa-map-marked-alt me-2"></i>Top 20 Comarcas</h5>
+                            <div class="chart-container" style="height: 520px;">
+                                <canvas id="chartComarcas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sobrestados -->
+            <div class="tab-pane fade" id="sobrestados" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Sobrestados</div>
+                            <div class="stat-value text-warning" id="sob-total">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-label">Valor Total</div>
+                            <div class="stat-value text-danger" id="sob-valor">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-label">% do Portfolio</div>
+                            <div class="stat-value" id="sob-percentual">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <h5 class="mb-3"><i class="fas fa-list me-2"></i>Principais Causas de Sobrestamento</h5>
+                            <div class="chart-container">
+                                <canvas id="chartSobCausas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <h5 class="mb-3"><i class="fas fa-map-marker-alt me-2"></i>Comarcas com Mais Sobrestados</h5>
+                            <div class="chart-container">
+                                <canvas id="chartSobComarcas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Configuração global Chart.js
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = '#3a3a3a';
+        
+        // Cores Energia
+        const COLORS = {
+            blue: '#0089CF',
+            green: '#8DC63F',
+            red: '#E30613',
+            orange: '#F89728',
+            gray: '#808080'
+        };
+        
+        // Variáveis globais dos gráficos
+        let chartFaseGeral = null;
+        let chartRiscoGeral = null;
+        let chartCausaRaiz = null;
+        let chartComarcas = null;
+        let chartSobCausas = null;
+        let chartSobComarcas = null;
+        
+        // Carregar dados
+        async function loadAnalytics() {
+            try {
+                // KPIs Gerais
+                const kpisRes = await fetch('/setorenergia/api/kpis');
+                const kpisData = await kpisRes.json();
+                
+                if (kpisData.success) {
+                    const kpis = kpisData.data;
+                    document.getElementById('total-processos').textContent = kpis.total_processos.value.toLocaleString('pt-BR');
+                    document.getElementById('valor-risco').textContent = kpis.valor_risco.formatted;
+                    document.getElementById('taxa-sucesso').textContent = kpis.taxa_sucesso.formatted;
+                    document.getElementById('total-sobrestados').textContent = kpis.sobrestados.value.toLocaleString('pt-BR');
+                }
+                
+                // Gráficos Gerais
+                const chartsRes = await fetch('/setorenergia/api/charts/all');
+                const chartsData = await chartsRes.json();
+                
+                if (chartsData.success) {
+                    const charts = chartsData.data;
+                    createChartFaseGeral(charts.fase_processual);
+                    createChartRiscoGeral(charts.risco_distribuicao);
+                    createChartCausaRaiz(charts.causa_raiz_top10);
+                    createChartComarcas(charts.comarcas_top10);
+                }
+                
+                // Sobrestados
+                const sobRes = await fetch('/setorenergia/api/sobrestados');
+                const sobData = await sobRes.json();
+                
+                if (sobData.success) {
+                    const stats = sobData.stats;
+                    document.getElementById('sob-total').textContent = stats.total.toLocaleString('pt-BR');
+                    document.getElementById('sob-valor').textContent = formatarMoeda(stats.valor_total);
+                    document.getElementById('sob-percentual').textContent = `${stats.percentual_portfolio}%`;
+                    
+                    createChartSobCausas(stats.causas_principais);
+                    
+                    // Top comarcas de sobrestados
+                    const sobComarcas = {};
+                    sobData.data.slice(0, 10).forEach(p => {
+                        const comarca = p['Comarca Desdobramento'] || 'Não informado';
+                        sobComarcas[comarca] = (sobComarcas[comarca] || 0) + 1;
+                    });
+                    createChartSobComarcas(sobComarcas);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar analytics:', error);
+            }
+        }
+        
+        function createChartFaseGeral(data) {
+            const ctx = document.getElementById('chartFaseGeral').getContext('2d');
+            if (chartFaseGeral) chartFaseGeral.destroy();
+            
+            chartFaseGeral = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.map(item => item.fase),
+                    datasets: [{
+                        data: data.map(item => item.total),
+                        backgroundColor: [COLORS.blue, COLORS.orange, COLORS.green, COLORS.red, COLORS.gray, '#666', '#999', '#CCC']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 10 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createChartRiscoGeral(data) {
+            const ctx = document.getElementById('chartRiscoGeral').getContext('2d');
+            if (chartRiscoGeral) chartRiscoGeral.destroy();
+            
+            chartRiscoGeral = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(item => item.classificacao),
+                    datasets: [{
+                        data: data.map(item => item.total),
+                        backgroundColor: [COLORS.green, COLORS.orange, COLORS.red]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 12 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 14 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createChartCausaRaiz(dataObj) {
+            const ctx = document.getElementById('chartCausaRaiz').getContext('2d');
+            if (chartCausaRaiz) chartCausaRaiz.destroy();
+            
+            const entries = Object.entries(dataObj).slice(0, 20);
+            const labels = entries.map(([key]) => key.length > 40 ? key.substring(0, 40) + '...' : key);
+            const values = entries.map(([, value]) => value);
+            
+            chartCausaRaiz = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Processos',
+                        data: values,
+                        backgroundColor: COLORS.blue
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 10 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function createChartComarcas(dataObj) {
+            const ctx = document.getElementById('chartComarcas').getContext('2d');
+            if (chartComarcas) chartComarcas.destroy();
+            
+            const entries = Object.entries(dataObj).slice(0, 20);
+            const labels = entries.map(([key]) => key);
+            const values = entries.map(([, value]) => value);
+            
+            chartComarcas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Processos',
+                        data: values,
+                        backgroundColor: COLORS.green
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 10 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function createChartSobCausas(dataObj) {
+            const ctx = document.getElementById('chartSobCausas').getContext('2d');
+            if (chartSobCausas) chartSobCausas.destroy();
+            
+            const entries = Object.entries(dataObj).slice(0, 5);
+            const labels = entries.map(([key]) => key.length > 30 ? key.substring(0, 30) + '...' : key);
+            const values = entries.map(([, value]) => value);
+            
+            chartSobCausas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sobrestados',
+                        data: values,
+                        backgroundColor: COLORS.orange
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 11 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function createChartSobComarcas(dataObj) {
+            const ctx = document.getElementById('chartSobComarcas').getContext('2d');
+            if (chartSobComarcas) chartSobComarcas.destroy();
+            
+            const entries = Object.entries(dataObj).slice(0, 10);
+            const labels = entries.map(([key]) => key);
+            const values = entries.map(([, value]) => value);
+            
+            chartSobComarcas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sobrestados',
+                        data: values,
+                        backgroundColor: COLORS.red
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 11 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function formatarMoeda(valor) {
+            if (!valor) return 'R$ 0,00';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', loadAnalytics);
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas Mensais - Legal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='ars-logo.png') }}">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #2c4151;
+            --accent-color: #4a8eb8;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --text-primary: #ffffff;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --border-color: #404040;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .meta-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .meta-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        
+        .meta-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent-color);
+        }
+        
+        .meta-card.success::before { background: var(--success-color); }
+        .meta-card.warning::before { background: var(--warning-color); }
+        .meta-card.danger::before { background: var(--danger-color); }
+        
+        .meta-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .meta-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .meta-description {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 1rem;
+        }
+        
+        .progress-container {
+            position: relative;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease;
+            position: relative;
+        }
+        
+        .progress-bar.success { background: linear-gradient(90deg, var(--success-color), #20c997); }
+        .progress-bar.warning { background: linear-gradient(90deg, var(--warning-color), #fd7e14); }
+        .progress-bar.danger { background: linear-gradient(90deg, var(--danger-color), #e74c3c); }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .qualidade-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .qualidade-valor {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .qualidade-label {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 0.5rem;
+        }
+        
+        .qualidade-variacao {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .variacao-positiva {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+        }
+        
+        .variacao-negativa {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .disclaimer {
+            background: linear-gradient(135deg, rgba(255,193,7,0.2) 0%, rgba(255,193,7,0.1) 100%);
+            border: 1px solid rgba(255,193,7,0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            color: #fff3cd;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .nav-pills .nav-link {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: rgba(255,255,255,0.8);
+            margin-right: 0.5rem;
+            border-radius: 8px;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">🎯 Metas Mensais</h1>
+                    <p class="mb-0 opacity-75">Acompanhamento e indicadores de qualidade</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{{ url_for('estatisticas_detalhadas') }}" class="btn btn-outline-light">
+                        ← Voltar às Estatísticas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="container mt-4">
+        <ul class="nav nav-pills justify-content-center">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('estatisticas_detalhadas') }}">📊 Visão Geral</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('metas_mensais') }}">🎯 Metas Mensais</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('performance') }}">⚡ Performance</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('gestao_financeira') }}">💰 Gestão Financeira</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Metas Mensais -->
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">🎯 Metas Mensais</h2>
+        <div class="row">
+            <!-- Novos Processos -->
+            <div class="col-lg-4">
+                <div class="meta-card warning">
+                    <div class="meta-title">📝 Novos Processos</div>
+                    <div class="meta-value" style="color: var(--warning-color);">38 / 50</div>
+                    <div class="meta-description">75% da meta mensal (50 processos)</div>
+                    <div class="progress-container">
+                        <div class="progress-bar warning" style="width: 75%;">
+                            <div class="progress-text">75%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Processos Encerrados -->
+            <div class="col-lg-4">
+                <div class="meta-card success">
+                    <div class="meta-title">✅ Processos Encerrados</div>
+                    <div class="meta-value" style="color: var(--success-color);">23 / 25</div>
+                    <div class="meta-description">90% da meta mensal (25 processos)</div>
+                    <div class="progress-container">
+                        <div class="progress-bar success" style="width: 90%;">
+                            <div class="progress-text">90%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Valores Recuperados -->
+            <div class="col-lg-4">
+                <div class="meta-card danger">
+                    <div class="meta-title">💰 Valores Recuperados</div>
+                    <div class="meta-value" style="color: var(--danger-color);">R$ 300k / R$ 500k</div>
+                    <div class="meta-description">60% da meta mensal (R$ 500.000)</div>
+                    <div class="progress-container">
+                        <div class="progress-bar danger" style="width: 60%;">
+                            <div class="progress-text">60%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores de Qualidade -->
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">📊 Indicadores de Qualidade</h2>
+        <div class="row">
+            <!-- Taxa de Êxito -->
+            <div class="col-lg-4">
+                <div class="qualidade-card">
+                    <div class="qualidade-valor">75.5%</div>
+                    <div class="qualidade-label">Taxa de Êxito</div>
+                    <div class="qualidade-variacao variacao-positiva">+2.3% vs mês anterior</div>
+                </div>
+            </div>
+            
+            <!-- Satisfação do Cliente -->
+            <div class="col-lg-4">
+                <div class="qualidade-card">
+                    <div class="qualidade-valor">4.7/5.0</div>
+                    <div class="qualidade-label">Satisfação do Cliente</div>
+                    <div class="qualidade-variacao variacao-positiva">Baseado em avaliações</div>
+                </div>
+            </div>
+            
+            <!-- Prazo Médio -->
+            <div class="col-lg-4">
+                <div class="qualidade-card">
+                    <div class="qualidade-valor">145 dias</div>
+                    <div class="qualidade-label">Prazo Médio</div>
+                    <div class="qualidade-variacao variacao-positiva">-5 dias vs mês anterior</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Gráfico de Metas -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">🎯 Progresso das Metas Mensais</div>
+                    <div id="metasChart"></div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Qualidade -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">⭐ Indicadores de Qualidade</div>
+                    <div id="qualidadeChart"></div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Tendência -->
+            <div class="col-lg-12">
+                <div class="chart-container">
+                    <div class="chart-title">📈 Evolução dos Indicadores (Últimos 6 Meses)</div>
+                    <div id="tendenciaChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="container">
+        <div class="disclaimer">
+            ⚠️ <strong>Dados Sintéticos:</strong> Esta demonstração utiliza dados sintéticos para fins educacionais e de demonstração do sistema. 
+            Em um ambiente de produção, todos os dados seriam extraídos de fontes reais do escritório.
+        </div>
+    </div>
+
+    <script>
+        // Dados das metas mensais
+        const metas = {
+            novos_processos: { atual: 38, meta: 50, percentual: 75 },
+            processos_encerrados: { atual: 23, meta: 25, percentual: 90 },
+            valores_recuperados: { atual: 300000, meta: 500000, percentual: 60 }
+        };
+        
+        const qualidade = {
+            taxa_exito: { valor: 75.5, variacao: 2.3 },
+            satisfacao_cliente: { valor: 4.7, maximo: 5.0 },
+            prazo_medio: { valor: 145, variacao: -5 }
+        };
+
+        // 1. Gráfico de Metas Mensais
+        const metasOptions = {
+            series: [{
+                name: 'Atual',
+                data: [metas.novos_processos.atual, metas.processos_encerrados.atual, metas.valores_recuperados.atual / 1000]
+            }, {
+                name: 'Meta',
+                data: [metas.novos_processos.meta, metas.processos_encerrados.meta, metas.valores_recuperados.meta / 1000]
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: 'dark' },
+            colors: ['#4a8eb8', '#28a745'],
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    borderRadius: 5
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { colors: ['#ffffff'] }
+            },
+            xaxis: {
+                categories: ['Novos Processos', 'Encerrados', 'Valores (K)'],
+                labels: { style: { colors: '#ffffff' } }
+            },
+            yaxis: {
+                labels: { style: { colors: '#ffffff' } }
+            },
+            grid: {
+                borderColor: '#404040',
+                strokeDashArray: 5
+            },
+            tooltip: {
+                theme: 'dark'
+            },
+            legend: {
+                labels: { colors: '#ffffff' }
+            }
+        };
+        
+        const metasChart = new ApexCharts(document.querySelector("#metasChart"), metasOptions);
+        metasChart.render();
+
+        // 2. Gráfico de Qualidade
+        const qualidadeOptions = {
+            series: [
+                qualidade.taxa_exito.valor,
+                (qualidade.satisfacao_cliente.valor / qualidade.satisfacao_cliente.maximo) * 100,
+                100 - ((qualidade.prazo_medio.valor - 100) / 100) * 100
+            ],
+            chart: {
+                type: 'radialBar',
+                height: 350,
+                background: 'transparent'
+            },
+            theme: { mode: 'dark' },
+            colors: ['#28a745', '#4a8eb8', '#ffc107'],
+            plotOptions: {
+                radialBar: {
+                    hollow: {
+                        margin: 15,
+                        size: '35%'
+                    },
+                    dataLabels: {
+                        name: {
+                            fontSize: '16px',
+                            color: '#ffffff'
+                        },
+                        value: {
+                            fontSize: '14px',
+                            color: '#ffffff'
+                        },
+                        total: {
+                            show: true,
+                            label: 'Qualidade Geral',
+                            color: '#ffffff',
+                            formatter: function () {
+                                return 'Excelente';
+                            }
+                        }
+                    }
+                }
+            },
+            labels: ['Taxa Êxito', 'Satisfação', 'Prazo'],
+            legend: {
+                labels: { colors: '#ffffff' }
+            }
+        };
+        
+        const qualidadeChart = new ApexCharts(document.querySelector("#qualidadeChart"), qualidadeOptions);
+        qualidadeChart.render();
+
+        // 3. Gráfico de Tendência (últimos 6 meses)
+        const tendenciaOptions = {
+            series: [{
+                name: 'Taxa de Êxito (%)',
+                data: [71.2, 72.8, 74.1, 73.5, 75.2, 75.5]
+            }, {
+                name: 'Satisfação Cliente',
+                data: [4.4, 4.5, 4.6, 4.5, 4.6, 4.7]
+            }, {
+                name: 'Prazo Médio (dias)',
+                data: [160, 155, 152, 148, 150, 145]
+            }],
+            chart: {
+                type: 'line',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: 'dark' },
+            colors: ['#28a745', '#4a8eb8', '#ffc107'],
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            markers: {
+                size: 6,
+                strokeColors: '#fff',
+                strokeWidth: 2
+            },
+            xaxis: {
+                categories: ['Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan'],
+                labels: { style: { colors: '#ffffff' } }
+            },
+            yaxis: [{
+                title: {
+                    text: 'Taxa de Êxito (%)',
+                    style: { color: '#ffffff' }
+                },
+                labels: { style: { colors: '#ffffff' } }
+            }, {
+                opposite: true,
+                title: {
+                    text: 'Satisfação / Prazo',
+                    style: { color: '#ffffff' }
+                },
+                labels: { style: { colors: '#ffffff' } }
+            }],
+            grid: {
+                borderColor: '#404040',
+                strokeDashArray: 5
+            },
+            tooltip: {
+                theme: 'dark'
+            },
+            legend: {
+                labels: { colors: '#ffffff' }
+            }
+        };
+        
+        const tendenciaChart = new ApexCharts(document.querySelector("#tendenciaChart"), tendenciaOptions);
+        tendenciaChart.render();
+
+        console.log("✅ Gráficos de metas mensais inicializados");
+    </script>
+</body>
+</html>

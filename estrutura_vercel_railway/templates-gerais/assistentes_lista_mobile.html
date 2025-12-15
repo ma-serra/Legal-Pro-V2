@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}Assistentes Jurídicos{% endblock %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background-color: #0a0e1a;
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    /* Header mobile simplificado */
+    .header-mobile {
+        background: #1a202c;
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid #2d3748;
+    }
+
+    .header-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        text-align: center;
+    }
+
+    /* Container principal */
+    .container-mobile {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+
+    /* Grid de assistentes super compacto */
+    .assistentes-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        margin-bottom: 5rem;
+    }
+
+    .assistente-card {
+        background: #1e2531;
+        border: 1px solid #2d3748;
+        border-radius: 8px;
+        padding: 0.75rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        min-height: 60px;
+    }
+
+    .assistente-card:hover {
+        background: #242b3d;
+        border-color: #0066cc;
+        text-decoration: none;
+        color: inherit;
+        transform: translateX(2px);
+    }
+
+    .assistente-card:active {
+        transform: scale(0.98);
+        background: #2a3441;
+    }
+
+    .card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: var(--icon-bg, rgba(0, 102, 204, 0.1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .card-icon i {
+        font-size: 1rem;
+        color: var(--icon-color, #0066cc);
+    }
+
+    .card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0 0 0.2rem 0;
+        color: #ffffff;
+        line-height: 1.2;
+    }
+
+    .card-subtitle {
+        font-size: 0.75rem;
+        color: #a0aec0;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .card-arrow {
+        color: #64748b;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+    }
+
+    /* Seções organizadas */
+    .secao {
+        margin-bottom: 1.5rem;
+    }
+
+    .secao-titulo {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #a0aec0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 0.5rem 0.5rem;
+        padding-bottom: 0.25rem;
+        border-bottom: 1px solid #2d3748;
+    }
+
+    /* Cores específicas por área */
+    .penal { --icon-bg: rgba(220, 53, 69, 0.1); --icon-color: #dc3545; }
+    .bancario { --icon-bg: rgba(253, 126, 20, 0.1); --icon-color: #fd7e14; }
+    .empresarial { --icon-bg: rgba(0, 123, 255, 0.1); --icon-color: #007bff; }
+    .trabalhista { --icon-bg: rgba(255, 193, 7, 0.1); --icon-color: #ffc107; }
+    .tributario { --icon-bg: rgba(23, 162, 184, 0.1); --icon-color: #17a2b8; }
+    .consumidor { --icon-bg: rgba(232, 62, 140, 0.1); --icon-color: #e83e8c; }
+    .imobiliario { --icon-bg: rgba(111, 66, 193, 0.1); --icon-color: #6f42c1; }
+    .agrario { --icon-bg: rgba(31, 89, 129, 0.1); --icon-color: #1f5981; }
+    .securitario { --icon-bg: rgba(32, 201, 151, 0.1); --icon-color: #20c997; }
+    .credito { --icon-bg: rgba(253, 126, 20, 0.1); --icon-color: #fd7e14; }
+    .negociacao { --icon-bg: rgba(102, 16, 242, 0.1); --icon-color: #6610f2; }
+
+    /* Botão flutuante de busca */
+    .fab-search {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        background: #0066cc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(0, 102, 204, 0.4);
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    .fab-search:hover {
+        background: #0052a3;
+        transform: scale(1.1);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Otimizações para telas pequenas */
+    @media (max-width: 360px) {
+        .container-mobile {
+            padding: 0.25rem;
+        }
+        
+        .assistente-card {
+            padding: 0.5rem;
+            min-height: 56px;
+        }
+        
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 0.5rem;
+        }
+        
+        .card-title {
+            font-size: 0.85rem;
+        }
+        
+        .card-subtitle {
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Grid alternativo para 2 colunas em telas médias */
+    @media (min-width: 400px) and (max-width: 768px) {
+        .assistentes-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .assistente-card {
+            flex-direction: column;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            min-height: 80px;
+        }
+        
+        .card-icon {
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .card-arrow {
+            display: none;
+        }
+    }
+
+    /* Animações de entrada */
+    .assistente-card {
+        animation: slideInLeft 0.3s ease-out;
+    }
+
+    .assistente-card:nth-child(odd) { animation-delay: 0.1s; }
+    .assistente-card:nth-child(even) { animation-delay: 0.2s; }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Estado loading */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #0066cc;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-mobile">
+    <h1 class="header-title">
+        <i class="fas fa-balance-scale me-2"></i>Assistentes Jurídicos
+    </h1>
+</div>
+
+<div class="container-mobile">
+    <!-- Áreas Principais -->
+    <div class="secao">
+        <h2 class="secao-titulo">Áreas Principais</h2>
+        <div class="assistentes-grid">
+            <a href="/assistentes/area/direito_penal" class="assistente-card penal">
+                <div class="card-icon">
+                    <i class="fas fa-gavel"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Penal</div>
+                    <div class="card-subtitle">Defesas e recursos</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_empresarial" class="assistente-card empresarial">
+                <div class="card-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Empresarial</div>
+                    <div class="card-subtitle">Sociedades e contratos</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_trabalhista" class="assistente-card trabalhista">
+                <div class="card-icon">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Trabalhista</div>
+                    <div class="card-subtitle">Relações de trabalho</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_tributario" class="assistente-card tributario">
+                <div class="card-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Tributário</div>
+                    <div class="card-subtitle">Tributos e planejamento</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Áreas Especializadas -->
+    <div class="secao">
+        <h2 class="secao-titulo">Áreas Especializadas</h2>
+        <div class="assistentes-grid">
+            <a href="/assistentes/area/direito_bancario" class="assistente-card bancario">
+                <div class="card-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Bancário</div>
+                    <div class="card-subtitle">Sistema financeiro</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_consumidor" class="assistente-card consumidor">
+                <div class="card-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito do Consumidor</div>
+                    <div class="card-subtitle">Defesa do consumidor</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_imobiliario" class="assistente-card imobiliario">
+                <div class="card-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Imobiliário</div>
+                    <div class="card-subtitle">Propriedade e locação</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/direito_agrario" class="assistente-card agrario">
+                <div class="card-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Agrário</div>
+                    <div class="card-subtitle">Propriedade rural</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Serviços Jurídicos -->
+    <div class="secao">
+        <h2 class="secao-titulo">Serviços Jurídicos</h2>
+        <div class="assistentes-grid">
+            <a href="/assistentes/area/direito_securitario" class="assistente-card securitario">
+                <div class="card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Direito Securitário</div>
+                    <div class="card-subtitle">Seguros e resseguros</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/recuperacao_credito" class="assistente-card credito">
+                <div class="card-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Recuperação de Crédito</div>
+                    <div class="card-subtitle">Cobrança e execução</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+
+            <a href="/assistentes/area/negociacao_conflitos" class="assistente-card negociacao">
+                <div class="card-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="card-content">
+                    <div class="card-title">Negociação e Conflitos</div>
+                    <div class="card-subtitle">Mediação e arbitragem</div>
+                </div>
+                <i class="fas fa-chevron-right card-arrow"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Botão flutuante para assistente geral -->
+<a href="/assistente" class="fab-search" title="Assistente Geral">
+    <i class="fas fa-comments"></i>
+</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.assistente-card');
+    
+    // Feedback tátil para mobile
+    cards.forEach(card => {
+        card.addEventListener('touchstart', function(e) {
+            this.style.transform = 'scale(0.98)';
+        }, { passive: true });
+        
+        card.addEventListener('touchend', function(e) {
+            this.style.transform = '';
+        }, { passive: true });
+        
+        card.addEventListener('touchcancel', function(e) {
+            this.style.transform = '';
+        }, { passive: true });
+
+        // Loading state
+        card.addEventListener('click', function() {
+            this.classList.add('loading');
+            this.style.position = 'relative';
+            
+            setTimeout(() => {
+                this.classList.remove('loading');
+            }, 3000);
+        });
+    });
+
+    // Otimizar scroll performance
+    let ticking = false;
+    
+    function updateScrollState() {
+        const scrollTop = window.pageYOffset;
+        const header = document.querySelector('.header-mobile');
+        
+        if (scrollTop > 10) {
+            header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+        } else {
+            header.style.boxShadow = 'none';
+        }
+        
+        ticking = false;
+    }
+    
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollState);
+            ticking = true;
+        }
+    }, { passive: true });
+
+    // Prevenção zoom duplo toque iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+
+    // Haptic feedback para iOS se disponível
+    cards.forEach(card => {
+        card.addEventListener('touchstart', function() {
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(10);
+            }
+        }, { passive: true });
+    });
+});
+</script>
+{% endblock %}

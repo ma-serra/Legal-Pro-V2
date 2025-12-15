@@ -1,0 +1,380 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block title %}Administração - Sistema{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+  <div class="col-12">
+    <h2><i class="fas fa-server me-2"></i> Informações do Sistema</h2>
+    <p class="lead">Detalhes técnicos sobre o sistema operacional, hardware e processo atual.</p>
+  </div>
+</div>
+
+<!-- Informações do sistema operacional -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-desktop me-2"></i> Sistema Operacional
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <th scope="row">Sistema</th>
+                  <td>{{ system_info.system }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Versão</th>
+                  <td>{{ system_info.version }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Release</th>
+                  <td>{{ system_info.release }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Hostname</th>
+                  <td>{{ system_info.node }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <th scope="row">Arquitetura</th>
+                  <td>{{ system_info.machine }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Processador</th>
+                  <td>{{ system_info.processor }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Python</th>
+                  <td>{{ system_info.python_version }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Uptime</th>
+                  <td>
+                    {{ system_info.uptime.days }} dias, 
+                    {{ system_info.uptime.hours }} horas, 
+                    {{ system_info.uptime.minutes }} minutos
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informações de hardware -->
+<div class="row mb-4">
+  <div class="col-md-4 mb-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-microchip me-2"></i> CPU
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Utilização:</span>
+            <span id="cpu-usage-text" class="badge bg-info">{{ system_info.cpu.usage_percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="cpu-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.cpu.usage_percent }}%;" 
+                aria-valuenow="{{ system_info.cpu.usage_percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <th scope="row">Núcleos Físicos</th>
+              <td>{{ system_info.cpu.physical_cores }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Núcleos Lógicos</th>
+              <td>{{ system_info.cpu.total_cores }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4 mb-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-memory me-2"></i> Memória
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Utilização:</span>
+            <span id="memory-usage-text" class="badge bg-info">{{ system_info.memory.percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="memory-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.memory.percent }}%;" 
+                aria-valuenow="{{ system_info.memory.percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <th scope="row">Total</th>
+              <td>{{ (system_info.memory.total / (1024**3))|round(2) }} GB</td>
+            </tr>
+            <tr>
+              <th scope="row">Disponível</th>
+              <td>{{ (system_info.memory.available / (1024**3))|round(2) }} GB</td>
+            </tr>
+            <tr>
+              <th scope="row">Utilizada</th>
+              <td>{{ (system_info.memory.used / (1024**3))|round(2) }} GB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4 mb-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-hdd me-2"></i> Disco
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>Utilização:</span>
+            <span id="disk-usage-text" class="badge bg-info">{{ system_info.disk.percent }}%</span>
+          </div>
+          <div class="progress">
+            <div id="disk-usage-bar" class="progress-bar bg-info" role="progressbar" 
+                style="width: {{ system_info.disk.percent }}%;" 
+                aria-valuenow="{{ system_info.disk.percent }}" aria-valuemin="0" aria-valuemax="100">
+            </div>
+          </div>
+        </div>
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <th scope="row">Total</th>
+              <td>{{ (system_info.disk.total / (1024**3))|round(2) }} GB</td>
+            </tr>
+            <tr>
+              <th scope="row">Livre</th>
+              <td>{{ (system_info.disk.free / (1024**3))|round(2) }} GB</td>
+            </tr>
+            <tr>
+              <th scope="row">Utilizado</th>
+              <td>{{ (system_info.disk.used / (1024**3))|round(2) }} GB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Informações do processo -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-tasks me-2"></i> Processo Atual
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <th scope="row">ID do Processo (PID)</th>
+                  <td id="process-pid">{{ process_info.pid }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Nome</th>
+                  <td id="process-name">{{ process_info.name }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Status</th>
+                  <td>
+                    <span id="process-status" class="badge {% if process_info.status == 'running' %}bg-success{% else %}bg-warning{% endif %}">
+                      {{ process_info.status }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Criado em</th>
+                  <td id="process-created">{{ process_info.created }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <th scope="row">CPU</th>
+                  <td id="process-cpu-percent">{{ process_info.cpu.percent }}%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Memória</th>
+                  <td id="process-memory-percent">{{ process_info.memory.percent }}%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Memória Residente</th>
+                  <td id="process-memory-rss">{{ (process_info.memory.rss / (1024**2))|round(2) }} MB</td>
+                </tr>
+                <tr>
+                  <th scope="row">Threads</th>
+                  <td id="process-threads">{{ process_info.cpu.threads }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Módulos Python instalados -->
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-puzzle-piece me-2"></i> Módulos Python
+        </h5>
+        <div class="input-group" style="max-width: 300px;">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" class="form-control" id="moduleSearch" placeholder="Buscar módulo...">
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover mb-0" id="modulesTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Versão</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for module in modules %}
+                <tr class="module-row">
+                  <td>{{ module.name }}</td>
+                  <td>{{ module.version }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Filtro de busca para módulos
+    const moduleSearch = document.getElementById('moduleSearch');
+    const modulesTable = document.getElementById('modulesTable');
+    const moduleRows = modulesTable.querySelectorAll('.module-row');
+    
+    moduleSearch.addEventListener('keyup', function() {
+      const searchTerm = moduleSearch.value.toLowerCase();
+      
+      moduleRows.forEach(row => {
+        const moduleName = row.cells[0].textContent.toLowerCase();
+        if (moduleName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+    
+    // Atualização automática das informações do sistema
+    function updateSystemInfo() {
+      fetch('/admin/api/system')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const systemInfo = data.system_info;
+            
+            // Atualiza CPU
+            document.getElementById('cpu-usage-text').textContent = systemInfo.cpu.usage_percent + '%';
+            document.getElementById('cpu-usage-bar').style.width = systemInfo.cpu.usage_percent + '%';
+            document.getElementById('cpu-usage-bar').setAttribute('aria-valuenow', systemInfo.cpu.usage_percent);
+            
+            // Atualiza Memória
+            document.getElementById('memory-usage-text').textContent = systemInfo.memory.percent + '%';
+            document.getElementById('memory-usage-bar').style.width = systemInfo.memory.percent + '%';
+            document.getElementById('memory-usage-bar').setAttribute('aria-valuenow', systemInfo.memory.percent);
+            
+            // Atualiza Disco
+            document.getElementById('disk-usage-text').textContent = systemInfo.disk.percent + '%';
+            document.getElementById('disk-usage-bar').style.width = systemInfo.disk.percent + '%';
+            document.getElementById('disk-usage-bar').setAttribute('aria-valuenow', systemInfo.disk.percent);
+          }
+        })
+        .catch(error => console.error('Erro ao atualizar informações do sistema:', error));
+      
+      // Atualiza informações do processo
+      fetch('/admin/api/process')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const processInfo = data.process_info;
+            
+            document.getElementById('process-cpu-percent').textContent = processInfo.cpu.percent + '%';
+            document.getElementById('process-memory-percent').textContent = processInfo.memory.percent + '%';
+            document.getElementById('process-memory-rss').textContent = 
+              (processInfo.memory.rss / (1024**2)).toFixed(2) + ' MB';
+            document.getElementById('process-status').textContent = processInfo.status;
+            
+            // Atualiza a cor do status
+            const statusBadge = document.getElementById('process-status');
+            if (processInfo.status === 'running') {
+              statusBadge.className = 'badge bg-success';
+            } else {
+              statusBadge.className = 'badge bg-warning';
+            }
+            
+            document.getElementById('process-threads').textContent = processInfo.cpu.threads;
+          }
+        })
+        .catch(error => console.error('Erro ao atualizar informações do processo:', error));
+    }
+    
+    // Inicializa atualização automática
+    updateSystemInfo();
+    setInterval(updateSystemInfo, 5000);
+  });
+</script>
+{% endblock %}

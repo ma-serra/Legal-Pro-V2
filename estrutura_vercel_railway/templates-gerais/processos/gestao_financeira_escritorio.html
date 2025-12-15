@@ -1,0 +1,1341 @@
+{% extends "layout.html" %}
+
+{% block title %}Visões Financeiras - Escritório - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    .chart-container {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        min-height: 480px;
+    }
+    
+    .chart-title {
+        color: #f6ad55;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid #404040;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        text-align: center;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .filter-card {
+        background: linear-gradient(135deg, rgba(246,173,85,0.1) 0%, rgba(246,173,85,0.05) 100%);
+        border: 1px solid #f6ad55;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-select.bg-dark {
+        background: #433c34 !important;
+        border: 1px solid #f6ad55 !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+    }
+    
+    .form-label {
+        font-weight: 600 !important;
+        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .form-label.text-info { color: #4a8eb8 !important; }
+    .form-label.text-warning { color: #f6ad55 !important; }
+    .form-label.text-success { color: #28a745 !important; }
+    .form-label.text-danger { color: #dc3545 !important; }
+    
+    .metric-card {
+        background: linear-gradient(135deg, rgba(246,173,85,0.15) 0%, rgba(246,173,85,0.08) 100%);
+        border: 1px solid #f6ad55;
+        border-radius: 10px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(246,173,85,0.3);
+    }
+    
+    .performance-card {
+        background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
+        border: 1px solid #505050;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .performance-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        border-color: #f6ad55;
+    }
+    
+    .kpi-section {
+        background: linear-gradient(135deg, rgba(246,173,85,0.08) 0%, rgba(246,173,85,0.04) 100%);
+        border: 1px solid #f6ad55;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- Aviso sobre Dados Sintéticos -->
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Aviso:</strong> Os processos são criados de forma sintética e aleatoria, apenas para fins visuais e para demonstração das funcionalidades do sistema e não refletem em sua totalidade cenários reais ou possuem informações de processos reais, incluindo os campos de dados pessoais e empresariais. Toda e qualquer informação contida no sistema é meramente ilustrativa para fins técnico/comerciais.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">🏢 Visões Financeiras - Escritório</h1>
+                    <p class="text-muted">Gestão de provisões globais, cash flow operacional e indicadores estratégicos</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('gestao_financeira') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar à Gestão Financeira
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Obrigatórios -->
+    <div class="filter-card">
+        <form method="GET" id="filtroForm">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="filtro_cliente" class="form-label text-info">
+                        <i class="fas fa-user me-1"></i>Cliente
+                    </label>
+                    <select id="filtro_cliente" name="filtro_cliente" class="form-select bg-dark">
+                        <option value="todos">📋 Todos os Clientes</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente }}" {% if filtros.cliente == cliente %}selected{% endif %}>{{ cliente }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_advogado" class="form-label text-warning">
+                        <i class="fas fa-user-tie me-1"></i>Advogado
+                    </label>
+                    <select id="filtro_advogado" name="filtro_advogado" class="form-select bg-dark">
+                        <option value="todos">👨‍💼 Todos os Advogados</option>
+                        {% for advogado in advogados %}
+                        <option value="{{ advogado }}" {% if filtros.advogado == advogado %}selected{% endif %}>{{ advogado }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_area" class="form-label text-success">
+                        <i class="fas fa-balance-scale me-1"></i>Área Jurídica
+                    </label>
+                    <select id="filtro_area" name="filtro_area" class="form-select bg-dark">
+                        <option value="todos">⚖️ Todas as Áreas</option>
+                        {% for area in areas %}
+                        <option value="{{ area }}" {% if filtros.area == area %}selected{% endif %}>{{ area }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_polo" class="form-label text-danger">
+                        <i class="fas fa-users me-1"></i>Polo
+                    </label>
+                    <select id="filtro_polo" name="filtro_polo" class="form-select bg-dark">
+                        <option value="todos">👥 Todos os Polos</option>
+                        {% for polo in polos %}
+                        <option value="{{ polo }}" {% if filtros.polo == polo %}selected{% endif %}>{{ polo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_risco" class="form-label text-info">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Risco
+                    </label>
+                    <select id="filtro_risco" name="filtro_risco" class="form-select bg-dark">
+                        <option value="todos">📊 Todos os Riscos</option>
+                        <option value="Alto" {% if filtros.risco == 'Alto' %}selected{% endif %}>🔴 Alto</option>
+                        <option value="Médio" {% if filtros.risco == 'Médio' %}selected{% endif %}>🟡 Médio</option>
+                        <option value="Baixo" {% if filtros.risco == 'Baixo' %}selected{% endif %}>🟢 Baixo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtro_numero" class="form-label text-warning">
+                        <i class="fas fa-hashtag me-1"></i>Nº Processo
+                    </label>
+                    <input type="text" id="filtro_numero" name="filtro_numero" class="form-control bg-dark text-white" placeholder="CNJ..." value="{{ filtros.numero }}">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-warning me-2">
+                        <i class="fas fa-search me-2"></i>Aplicar Filtros
+                    </button>
+                    <a href="{{ url_for('gestao_financeira_escritorio') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Limpar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Gestão de Provisões Globais -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">📈 Gestão de Provisões Globais</h3>
+                <div id="chartProvisoesGlobais" class="chart-wrapper"></div>
+                
+                <!-- Métricas-chave para Provisões -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="kpi-section">
+                            <h5 class="text-warning mb-3">🎯 Métricas-Chave para Provisões</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Área Jurídica</th>
+                                            <th>Provisão Total</th>
+                                            <th>Pagamento Realizado</th>
+                                            <th>Taxa de Realização</th>
+                                            <th>Desvio Médio</th>
+                                            <th>Processos</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in provisoes_globais %}
+                                        <tr>
+                                            <td><span class="badge bg-primary">{{ item.area_juridica }}</span></td>
+                                            <td>R$ {{ "{:,.0f}".format(item.provisao_total or 0).replace(',', '.') }}</td>
+                                            <td>R$ {{ "{:,.0f}".format(item.pagamento_realizado or 0).replace(',', '.') }}</td>
+                                            <td>
+                                                <span class="badge {% if (item.taxa_realizacao or 0) > 80 %}bg-danger{% elif (item.taxa_realizacao or 0) > 50 %}bg-warning{% else %}bg-success{% endif %}">
+                                                    {{ "{:.1f}%".format(item.taxa_realizacao or 0) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% set desvio = ((item.provisao_total or 0) - (item.pagamento_realizado or 0)) / (item.provisao_total or 1) * 100 %}
+                                                {{ "{:.1f}%".format(desvio) }}
+                                            </td>
+                                            <td>{{ item.quantidade }}</td>
+                                            <td>
+                                                {% if (item.taxa_realizacao or 0) > 80 %}
+                                                    <span class="badge bg-danger">🚨 Crítico</span>
+                                                {% elif (item.taxa_realizacao or 0) > 50 %}
+                                                    <span class="badge bg-warning">⚠️ Atenção</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">🎯 Excelente</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Flow Operacional -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">💰 Cash Flow Operacional (Últimos 12 Meses)</h3>
+                <p class="text-center text-muted mb-3">
+                    <small><strong>Entradas:</strong> Honorários de Processos + Consultorias + Due Diligence + Pareceres + Contratos Especiais<br>
+                    <strong>Saídas:</strong> Custos Processuais + Despesas Operacionais + Pagamento de Colaboradores</small>
+                </p>
+                <div id="chartCashFlow" class="chart-wrapper"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores de Fluxo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">📊 Indicadores de Fluxo</h3>
+                <p class="text-center text-muted mb-3">
+                    <small><strong>Entrada:</strong> Apenas Honorários de Processos e Repasse de Pagamentos de Custas Processuais<br>
+                    <strong>Saída:</strong> Apenas Custos Operacionais dos Processos</small>
+                </p>
+                <div class="row">
+                    {% for flow in cash_flow %}
+                    {% set month_names = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'] %}
+                    {% set saldo = (flow.entrada or 0) - (flow.saida or 0) %}
+                    {% set percentual_diferenca = ((flow.entrada or 0) - (flow.saida or 0)) / (flow.entrada or 1) * 100 %}
+                    <div class="col-md-6 col-lg-4 col-xl-3">
+                        <div class="metric-card">
+                            <h6 class="text-warning">{{ month_names[flow.mes|int] if flow.mes|int <= 12 else 'Mês ' + flow.mes|string }} {{ flow.ano|int }}</h6>
+                            <p class="text-success">Entrada: R$ {{ "{:,.0f}".format(flow.entrada or 0).replace(',', '.') }}</p>
+                            <p class="text-danger">Saída: R$ {{ "{:,.0f}".format(flow.saida or 0).replace(',', '.') }}</p>
+                            <p class="text-info">Processos: {{ flow.processos }}</p>
+                            <hr>
+                            <p class="text-white">
+                                <strong>Saldo: R$ {{ "{:,.0f}".format(saldo).replace(',', '.') }}</strong>
+                            </p>
+                            <p class="{% if percentual_diferenca > 0 %}text-success{% else %}text-danger{% endif %}" style="font-size: 0.85rem;">
+                                <strong>{{ "{:+.1f}%".format(percentual_diferenca) }} margem</strong>
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Financeira por Advogado -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="chart-container">
+                <h3 class="chart-title">👨‍💼 Performance Financeira por Advogado</h3>
+                <div class="row">
+                    {% for adv in performance_advogados %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="performance-card">
+                            <h5 class="text-warning mb-3">{{ adv.advogado_do_caso }}</h5>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <p class="text-info mb-1">Total de Casos</p>
+                                    <h4 class="text-white">{{ adv.total_casos }}</h4>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-success mb-1">Eficiência</p>
+                                    <h4 class="text-white">{{ "{:.1f}%".format(adv.eficiencia_media or 0) }}</h4>
+                                </div>
+                            </div>
+                            <hr>
+                            <!-- Métricas Financeiras Básicas -->
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <p class="text-muted mb-1">Carteira Total</p>
+                                    <p class="text-warning"><strong>R$ {{ "{:,.0f}".format(adv.carteira_total or 0).replace(',', '.') }}</strong></p>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-1">Remuneração</p>
+                                    <p class="text-success"><strong>R$ {{ "{:,.0f}".format(adv.honorarios_recebidos or 0).replace(',', '.') }}</strong></p>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-1">Produtividade Financeira</p>
+                                    <p class="text-info"><strong>{{ "{:.1f}%".format(adv.produtividade_financeira or 0) }}</strong></p>
+                                </div>
+                            </div>
+                            
+                            <!-- Métricas de Produtividade Detalhadas -->
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">Margem Média</p>
+                                    <span class="badge {% if (adv.margem_media or 0) > 30 %}bg-success{% elif (adv.margem_media or 0) > 10 %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.65rem;">
+                                        {{ "{:.1f}%".format(adv.margem_media or 0) }}
+                                    </span>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">Produtividade Técnica</p>
+                                    <span class="badge bg-info" style="font-size: 0.65rem;">{{ "{:.1f}%".format(adv.eficiencia_media or 0) }}</span>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">ROI Individual</p>
+                                    {% set roi_individual = ((adv.honorarios_recebidos or 0)|float / (adv.carteira_total or 1)|float) * 100 %}
+                                    <span class="badge {% if roi_individual > 15 %}bg-success{% elif roi_individual > 8 %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.65rem;">
+                                        {{ "{:.1f}%".format(roi_individual) }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Indicadores de Performance -->
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">Casos por Milhão</p>
+                                    {% set carteira_val = (adv.carteira_total or 0)|float %}
+                                    {% if carteira_val > 0 %}
+                                        {% set casos_por_milhao = (adv.total_casos|float / (carteira_val / 1000000)) %}
+                                    {% else %}
+                                        {% set casos_por_milhao = 0 %}
+                                    {% endif %}
+                                    <span class="badge {% if casos_por_milhao > 50 %}bg-success{% elif casos_por_milhao > 25 %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.65rem;">
+                                        {{ "{:.1f}".format(casos_por_milhao) }}
+                                    </span>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-muted mb-1" style="font-size: 0.75rem;">Eficiência Geral</p>
+                                    {% set eficiencia_geral = (((adv.produtividade_financeira or 0)|float * 7) + ((adv.eficiencia_media or 0)|float * 3)) / 10 %}
+                                    <span class="badge {% if eficiencia_geral > 70 %}bg-success{% elif eficiencia_geral > 40 %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.65rem;">
+                                        {{ "{:.1f}%".format(eficiencia_geral) }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Capital de Giro Necessário -->
+                            <div class="mb-3">
+                                <p class="text-muted mb-1">Capital de Giro Necessário</p>
+                                <p class="text-info"><strong>R$ {{ "{:,.0f}".format(adv.capital_giro_necessario or 0).replace(',', '.') }}</strong></p>
+                            </div>
+                            
+                            <!-- Provisão vs Pagamento -->
+                            <p class="text-muted mb-1">Provisão vs Pagamento</p>
+                            {% set provisao_val = (adv.provisao_total or 0)|float %}
+                            {% set pagamento_val = (adv.pagamento_total or 0)|float %}
+                            {% if provisao_val > 100 %}
+                                {% set taxa_conv = (pagamento_val / provisao_val) * 100 %}
+                                {% if taxa_conv > 100 %}
+                                    {% set taxa_conv_display = 100 %}
+                                    {% set taxa_display = 100 %}
+                                {% else %}
+                                    {% set taxa_conv_display = taxa_conv %}
+                                    {% set taxa_display = taxa_conv %}
+                                {% endif %}
+                            {% else %}
+                                {% set taxa_conv_display = 0 %}
+                                {% set taxa_display = 0 %}
+                            {% endif %}
+                            <div class="progress mb-2">
+                                <div class="progress-bar {% if taxa_conv_display > 80 %}bg-success{% elif taxa_conv_display > 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                     style="width: {{ taxa_display }}%"></div>
+                            </div>
+                            <small class="text-white">{{ "{:.1f}%".format(taxa_conv_display) }} de conversão</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores Estratégicos -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h3 class="chart-title">📈 ROI por Área</h3>
+                <div id="chartROI" class="chart-wrapper"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h3 class="chart-title">🎫 Ticket Médio</h3>
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Área Jurídica</th>
+                                <th>Ticket Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in indicadores.ticket_medio %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ item.area_juridica }}</span></td>
+                                <td>R$ {{ "{:,.0f}".format(item.ticket_medio or 0).replace(',', '.') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h3 class="chart-title">⏱️ Tempo de Retorno</h3>
+                <div id="chartTempoRetorno" class="chart-wrapper"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Indicadores Estratégicos Expandidos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">🚨 Análise de Inadimplência</h3>
+                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> 
+                    Processos inadimplentes são aqueles <strong>sem acordo e sem pagamento</strong> registrados no sistema.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Área Jurídica</th>
+                                <th>Casos Inadimplentes</th>
+                                <th>Total de Casos</th>
+                                <th>Taxa de Inadimplência</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in indicadores.inadimplencia %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ item.area_juridica }}</span></td>
+                                <td>{{ item.casos_inadimplentes }}</td>
+                                <td>{{ item.total_casos }}</td>
+                                {% set taxa_inadim = (item.casos_inadimplentes / item.total_casos * 100) if item.total_casos > 0 else 0 %}
+                                <td>{{ "{:.1f}%".format(taxa_inadim) }}</td>
+                                <td>
+                                    {% if taxa_inadim < 10 %}
+                                        <span class="badge bg-success">✅ Baixa</span>
+                                    {% elif taxa_inadim < 25 %}
+                                        <span class="badge bg-warning">⚠️ Moderada</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">🔴 Alta</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="chart-title">📊 Sazonalidade de Casos</h3>
+                <div id="chartSazonalidade" class="chart-wrapper"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Métricas de Cash Flow Detalhadas -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h3 class="chart-title">💰 Métricas de Cash Flow Detalhadas</h3>
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mês</th>
+                                <th>Recebimentos Honorários</th>
+                                <th>Custos Diretos</th>
+                                <th>Margem Operacional</th>
+                                <th>Ciclo Médio (Dias)</th>
+                                <th>Processos</th>
+                                <th>Fluxo Líquido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for flow in cash_flow %}
+                            <tr>
+                                <td><span class="badge bg-info">{% set month_names = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'] %}{{ month_names[flow.mes|int] if flow.mes|int <= 12 else 'M' + flow.mes|string }}/{{ flow.ano|int }}</span></td>
+                                <td>R$ {{ "{:,.0f}".format(flow.recebimentos_honorarios or 0).replace(',', '.') }}</td>
+                                <td>R$ {{ "{:,.0f}".format(flow.custos_diretos or 0).replace(',', '.') }}</td>
+                                <td>
+                                    <span class="badge {% if (flow.margem_operacional or 0) > 20 %}bg-success{% elif (flow.margem_operacional or 0) > 10 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ "{:.1f}%".format(flow.margem_operacional or 0) }}
+                                    </span>
+                                </td>
+                                <td>{{ (flow.ciclo_medio_dias or 0)|int }} dias</td>
+                                <td>{{ flow.processos }}</td>
+                                <td>
+                                    {% set fluxo_liquido = (flow.entrada or 0) - (flow.saida or 0) %}
+                                    <strong class="{% if fluxo_liquido > 0 %}text-success{% else %}text-danger{% endif %}">
+                                        R$ {{ "{:,.0f}".format(fluxo_liquido).replace(',', '.') }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Concentração de Risco -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h3 class="chart-title">⚠️ Concentração de Risco por Área</h3>
+                <div id="chartConcentracaoRisco" class="chart-wrapper"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // CORREÇÃO CRÍTICA: Serializar dados do backend para JavaScript
+    var estatisticas = {{ estatisticas|tojson|safe }};
+    
+    // Dados específicos que estavam chegando como null:
+    var evolucao_mensal = {{ evolucao_mensal|tojson|safe }};
+    var dados_entrantes_2025 = {{ dados_entrantes_2025|tojson|safe }};
+    var dados_baixados_2025 = {{ dados_baixados_2025|tojson|safe }};
+    var polo_por_estado = {{ polo_por_estado|tojson|safe }};
+    var bloqueios_por_area = {{ bloqueios_por_area|tojson|safe }};
+    var cash_flow_operacional = {{ cash_flow_operacional|tojson|safe }};
+    var performance_advogados = {{ performance_advogados|tojson|safe }};
+    
+    // Debug: Verificar se dados chegaram corretamente
+    console.log('🔍 Verificando dados para evolução mensal:', evolucao_mensal);
+    console.log('🔍 Dados entrantes 2025:', dados_entrantes_2025);  
+    console.log('🔍 Dados baixados 2025:', dados_baixados_2025);
+    console.log('🔍 Verificando dados para polo por estado:', polo_por_estado);
+    console.log('📊 Dados das estatísticas:', estatisticas);
+    
+    // Gráfico de Provisões Globais
+    var provisoesOptions = {
+        series: [{
+            name: 'Provisão',
+            data: [{% for item in provisoes_globais %}{{ item.provisao_total or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }, {
+            name: 'Pagamento Realizado',
+            data: [{% for item in provisoes_globais %}{{ item.pagamento_realizado or 0 }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }],
+        chart: {
+            type: 'bar',
+            height: 450,
+            background: 'transparent',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            },
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '50%',
+                endingShape: 'rounded',
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        xaxis: {
+            categories: [{% for item in provisoes_globais %}'{{ item.area_juridica }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                rotate: -45
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        yaxis: {
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                rotate: -45,
+                formatter: function(value) {
+                    return value.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    });
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        dataLabels: { 
+            enabled: true,
+            offsetY: -12,
+            style: {
+                fontSize: '10px',
+                fontWeight: 'bold',
+                colors: ['#FFFFFF']
+            },
+            background: {
+                enabled: false,
+                foreColor: '#FFFFFF',
+                borderRadius: 4,
+                padding: 4,
+                opacity: 0.8,
+                borderWidth: 1,
+                borderColor: '#404040'
+            },
+            formatter: function(val, opts) {
+                // Supressão condicional para valores pequenos (< 5% do máximo)
+                const seriesMax = Math.max(...opts.w.config.series[opts.seriesIndex].data);
+                const threshold = seriesMax * 0.05; // 5% do valor máximo
+                
+                if (val < threshold) {
+                    return ''; // Esconder label para valores muito pequenos
+                }
+                
+                if (val >= 1000000) {
+                    return 'R$ ' + (val/1000000).toFixed(1) + 'M';
+                } else if (val >= 1000) {
+                    return 'R$ ' + (val/1000).toFixed(0) + 'K';
+                } else {
+                    return 'R$ ' + val.toFixed(0);
+                }
+            }
+        },
+        tooltip: {
+            theme: 'dark',
+            style: {
+                fontSize: '13px',
+                fontFamily: 'Inter, system-ui, sans-serif'
+            },
+            y: {
+                formatter: function (val) {
+                    return val.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    })
+                }
+            }
+        },
+        colors: ['#B8860B', '#2E5266', '#1B4332', '#8B1538', '#D69E2E', '#81C784', '#4A90E2', '#FF6B6B', '#9B59B6', '#E67E22', '#1ABC9C', '#34495E', '#95A5A6', '#FF8C00', '#32CD32', '#FF1493', '#4169E1', '#DC143C', '#9932CC', '#228B22'],
+        theme: { 
+            mode: 'dark',
+            palette: 'palette2'
+        },
+        grid: {
+            borderColor: '#404040',
+            strokeDashArray: 3,
+            padding: {
+                top: 30
+            }
+        },
+        legend: {
+            labels: {
+                colors: '#E5E7EB',
+                fontSize: '13px'
+            }
+        },
+        responsive: [{
+            breakpoint: 768,
+            options: {
+                chart: {
+                    height: 350
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '70%'
+                    }
+                },
+                xaxis: {
+                    labels: {
+                        rotate: -90,
+                        style: {
+                            fontSize: '9px'
+                        }
+                    }
+                },
+                dataLabels: {
+                    offsetY: -8,
+                    style: {
+                        fontSize: '8px'
+                    }
+                },
+                grid: {
+                    padding: {
+                        top: 25
+                    }
+                }
+            }
+        }, {
+            breakpoint: 480,
+            options: {
+                chart: {
+                    height: 300
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '80%'
+                    }
+                },
+                xaxis: {
+                    labels: {
+                        rotate: -90,
+                        style: {
+                            fontSize: '8px'
+                        }
+                    }
+                },
+                dataLabels: {
+                    offsetY: -6,
+                    style: {
+                        fontSize: '7px'
+                    }
+                },
+                grid: {
+                    padding: {
+                        top: 20
+                    }
+                }
+            }
+        }]
+    };
+
+    var provisoesChart = new ApexCharts(document.querySelector("#chartProvisoesGlobais"), provisoesOptions);
+    provisoesChart.render();
+
+    // Gráfico de Cash Flow - DADOS DINÂMICOS REAIS (ENTRADA E SAÍDA INVERTIDAS)
+    var cashFlowOptions = {
+        series: [
+            {
+                name: 'Entrada Total',
+                data: [{% for flow in cash_flow_operacional %}{{ flow.entrada|round|int }}{% if not loop.last %},{% endif %}{% endfor %}]
+            },
+            {
+                name: 'Saída Total', 
+                data: [{% for flow in cash_flow_operacional %}{{ flow.saida|round|int }}{% if not loop.last %},{% endif %}{% endfor %}]
+            }
+        ],
+        chart: {
+            type: 'area',
+            height: 600,
+            background: 'transparent',
+            stacked: false,
+            toolbar: { show: true }
+        },
+        stroke: {
+            width: 2,
+            curve: 'smooth'
+        },
+        fill: {
+            type: 'solid',
+            opacity: [0.3, 0.6]
+        },
+        colors: ['#1B4332', '#8B1538'],
+        xaxis: {
+            categories: ['Set 2024', 'Out 2024', 'Nov 2024', 'Dez 2024', 'Jan 2025', 'Fev 2025', 'Mar 2025', 'Abr 2025', 'Mai 2025', 'Jun 2025', 'Jul 2025', 'Ago 2025']
+        },
+        yaxis: {
+            labels: {
+                formatter: function(val) {
+                    return 'R$ ' + (val/1000).toFixed(0) + 'K';
+                },
+                style: {
+                    colors: '#E5E7EB',
+                    fontSize: '12px'
+                }
+            }
+        },
+        grid: {
+            show: true,
+            borderColor: '#374151',
+            strokeDashArray: 0,
+            position: 'back',
+            xaxis: {
+                lines: {
+                    show: false
+                }
+            },
+            yaxis: {
+                lines: {
+                    show: true
+                }
+            },
+            padding: {
+                top: 30,
+                right: 30,
+                bottom: 10,
+                left: 20
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return 'R$ ' + (val/1000).toFixed(0) + ' mil';
+                }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return 'R$ ' + (val/1000).toFixed(0) + 'K';
+            },
+            style: {
+                fontSize: '12px',
+                fontWeight: 'bold',
+                colors: ['#FFFFFF']
+            },
+            offsetY: -8,
+            dropShadow: {
+                enabled: true,
+                top: 1,
+                left: 1,
+                blur: 1,
+                opacity: 0.8
+            }
+        },
+        theme: {
+            mode: 'dark'
+        }
+    };
+
+    var cashFlowChart = new ApexCharts(document.querySelector("#chartCashFlow"), cashFlowOptions);
+    cashFlowChart.render();
+
+    // Gráfico de ROI
+    var roiOptions = {
+        series: [{% for item in indicadores.roi_por_area %}{{ item.roi or 0 }}{% if not loop.last %},{% endif %}{% endfor %}],
+        chart: {
+            type: 'donut',
+            height: 350,
+            background: 'transparent',
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        labels: [{% for item in indicadores.roi_por_area %}'{{ item.area_juridica }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        colors: ['#B8860B', '#2E5266', '#1B4332', '#8B1538', '#D69E2E', '#81C784', '#4A90E2', '#FF6B6B', '#9B59B6', '#E67E22', '#1ABC9C', '#34495E', '#95A5A6', '#FF8C00', '#32CD32', '#FF1493', '#4169E1', '#DC143C', '#9932CC', '#228B22'],
+        theme: { 
+            mode: 'dark',
+            palette: 'palette2'
+        },
+        legend: {
+            labels: { 
+                colors: '#E5E7EB',
+                fontSize: '13px',
+                fontWeight: 500
+            },
+            position: 'bottom',
+            horizontalAlign: 'center'
+        }
+    };
+
+    var roiChart = new ApexCharts(document.querySelector("#chartROI"), roiOptions);
+    roiChart.render();
+
+
+    // Gráfico de Tempo de Retorno
+    var tempoOptions = {
+        series: [{
+            name: 'Tempo de Retorno',
+            data: [{% for item in indicadores.tempo_retorno %}{
+                x: '{{ item.area_juridica }}',
+                y: {{ (item.dias_medio or 0)|int }}
+            }{% if not loop.last %},{% endif %}{% endfor %}]
+        }],
+        chart: {
+            type: 'bar',
+            height: 350,
+            background: 'transparent',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            },
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                barHeight: '70%'
+            }
+        },
+        xaxis: {
+            title: {
+                text: 'Tempo de Retorno (Dias)',
+                style: {
+                    color: '#E5E7EB',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                formatter: function(val) {
+                    return Math.round(val) + ' dias';
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Áreas Jurídicas',
+                style: {
+                    color: '#E5E7EB',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '11px',
+                    fontWeight: 500
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        colors: ['#B8860B', '#2E5266', '#1B4332', '#8B1538', '#D69E2E', '#81C784', '#4A90E2', '#FF6B6B', '#9B59B6', '#E67E22', '#1ABC9C', '#34495E', '#95A5A6', '#FF8C00', '#32CD32', '#FF1493', '#4169E1', '#DC143C', '#9932CC', '#228B22'],
+        theme: { 
+            mode: 'dark',
+            palette: 'palette2'
+        },
+        grid: {
+            borderColor: '#404040',
+            strokeDashArray: 3
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return Math.round(val) + ' dias'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return Math.round(val) + ' dias'
+            },
+            style: {
+                colors: ['#fff'],
+                fontSize: '11px',
+                fontWeight: 'bold'
+            }
+        }
+    };
+
+    var tempoChart = new ApexCharts(document.querySelector("#chartTempoRetorno"), tempoOptions);
+    tempoChart.render();
+
+    // Gráfico de Sazonalidade - DADOS REAIS DO BANCO
+    console.log('🔍 Verificando dados para evolução mensal:', {{ evolucao_mensal|tojson }});
+    
+    var sazonalidade_categorias = [];
+    var sazonalidade_quantidade = [];
+    var sazonalidade_valor = [];
+    
+    {% for item in evolucao_mensal %}
+    sazonalidade_categorias.push('{% set month_names = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"] %}{{ month_names[item.mes|int] }}/{{ (item.ano|int) % 100 }}');
+    sazonalidade_quantidade.push({{ item.quantidade or 0 }});
+    sazonalidade_valor.push({{ ((item.valor_total or 0) / 1000000)|round(1) }});
+    {% endfor %}
+    
+    var sazonalidadeOptions = {
+        series: [{
+            name: 'Número de Casos',
+            data: sazonalidade_quantidade
+        }, {
+            name: 'Valor Total (R$ M)',
+            data: sazonalidade_valor
+        }],
+        chart: {
+            type: 'line',
+            height: 350,
+            background: 'transparent',
+            toolbar: { 
+                show: true,
+                tools: {
+                    download: true,
+                    selection: false,
+                    zoom: false,
+                    zoomin: false,
+                    zoomout: false,
+                    pan: false,
+                    reset: false
+                }
+            },
+            fontFamily: 'Inter, system-ui, sans-serif'
+        },
+        stroke: {
+            width: 3,
+            curve: 'smooth'
+        },
+        markers: {
+            size: 6,
+            strokeWidth: 2,
+            hover: {
+                size: 8
+            }
+        },
+        xaxis: {
+            categories: sazonalidade_categorias,
+            title: {
+                text: 'Meses do Ano',
+                style: {
+                    color: '#E5E7EB',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        yaxis: [{
+            title: {
+                text: 'Número de Casos',
+                style: {
+                    color: '#B8860B',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#B8860B',
+                    fontSize: '12px',
+                    fontWeight: 500
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            }
+        }, {
+            opposite: true,
+            title: {
+                text: 'Valor Total (R$ M)',
+                style: {
+                    color: '#2E5266',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#2E5266',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                formatter: function(val) {
+                    return val.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + 'M';
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            }
+        }],
+        colors: ['#B8860B', '#2E5266'],
+        theme: { 
+            mode: 'dark',
+            palette: 'palette2'
+        },
+        grid: {
+            borderColor: '#404040',
+            strokeDashArray: 3
+        },
+        legend: {
+            labels: {
+                colors: '#E5E7EB',
+                fontSize: '13px'
+            },
+            position: 'top'
+        },
+        tooltip: {
+            theme: 'dark',
+            x: {
+                formatter: function(val) {
+                    return 'Mês: ' + val;
+                }
+            },
+            y: [{
+                formatter: function(val) {
+                    return val + ' casos';
+                }
+            }, {
+                formatter: function(val) {
+                    return val.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + 'M';
+                }
+            }]
+        }
+    };
+    
+    var sazonalidadeChart = new ApexCharts(document.querySelector("#chartSazonalidade"), sazonalidadeOptions);
+    sazonalidadeChart.render();
+    
+    // Gráfico de Concentração de Risco
+    var concentracaoOptions = {
+        series: [{
+            name: 'Risco de Concentração (%)',
+            data: [{% for item in indicadores.concentracao_risco %}{{ (item.risco_concentracao_medio or 0)|int }}{% if not loop.last %},{% endif %}{% endfor %}]
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            background: 'transparent'
+        },
+        plotOptions: {
+            bar: {
+                colors: {
+                    ranges: [{
+                        from: 0,
+                        to: 30,
+                        color: '#28a745'
+                    }, {
+                        from: 31,
+                        to: 60,
+                        color: '#ffc107'
+                    }, {
+                        from: 61,
+                        to: 100,
+                        color: '#dc3545'
+                    }]
+                }
+            }
+        },
+        xaxis: {
+            categories: [{% for item in indicadores.concentracao_risco %}'{{ item.area_juridica }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                rotate: -45
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Percentual de Concentração (%)',
+                style: {
+                    color: '#E5E7EB',
+                    fontSize: '13px',
+                    fontWeight: 600
+                }
+            },
+            labels: { 
+                style: { 
+                    colors: '#E5E7EB',
+                    fontSize: '12px',
+                    fontWeight: 500
+                },
+                formatter: function(val) {
+                    return Math.round(val) + '%';
+                }
+            },
+            axisBorder: {
+                show: true,
+                color: '#404040'
+            },
+            axisTicks: {
+                show: true,
+                color: '#404040'
+            }
+        },
+        theme: { mode: 'dark' }
+    };
+    
+    var concentracaoChart = new ApexCharts(document.querySelector("#chartConcentracaoRisco"), concentracaoOptions);
+    concentracaoChart.render();
+
+    // Auto-submit form on filter change
+    document.querySelectorAll('#filtroForm select, #filtroForm input').forEach(element => {
+        element.addEventListener('change', function() {
+            document.getElementById('filtroForm').submit();
+        });
+    });
+});
+</script>
+{% endblock %}

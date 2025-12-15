@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        background: linear-gradient(135deg, #355d6c 0%, #4a6f7a 100%) !important;
+        min-height: 100vh;
+        color: white !important;
+    }
+    
+    .card {
+        background: rgba(74, 111, 122, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .card-header {
+        background: rgba(53, 93, 108, 0.9) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    .btn-primary, .btn[style*="#355d6c"] {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 25px !important;
+        color: white !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-primary:hover, .btn[style*="#355d6c"]:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        color: white !important;
+        transform: translateY(-2px);
+    }
+    
+    .table {
+        color: white !important;
+    }
+    
+    .table th, .table td {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .alert-info {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Comparação de Versões de Documentos</h2>
+                    {% if current_user.has_permission('comparacao_documentos.create') %}
+                    <a href="{{ url_for('comparacao_documentos.novo') }}" class="btn" style="background-color: #355d6c; border-color: #355d6c; color: white;">
+                        <i class="fas fa-plus me-2"></i> Nova Comparação
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if comparacoes %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Área</th>
+                                    <th>Cliente</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for comparacao in comparacoes %}
+                                <tr>
+                                    <td>{{ comparacao.titulo }}</td>
+                                    <td>{{ comparacao.area_nome }}</td>
+                                    <td>{{ comparacao.documento_cliente }}</td>
+                                    <td>{{ comparacao.data_comparacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('comparacao_documentos.visualizar', id=comparacao.id) }}" 
+                                               class="btn btn-sm" style="background-color: #355d6c; border-color: #355d6c; color: white;" title="Visualizar">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <!-- Funcionalidade de edição integrada na visualização -->
+                                            {% if current_user.has_permission('comparacao_documentos.delete') %}
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalExcluir{{ comparacao.id }}"
+                                                    onclick="this.setAttribute('data-fallback-id', '{{ comparacao.id }}'); this.setAttribute('data-fallback-titulo', '{{ comparacao.titulo|e }}');"
+                                                    title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Modal de confirmação de exclusão -->
+                                        <div class="modal fade" id="modalExcluir{{ comparacao.id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Confirmar Exclusão</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Tem certeza que deseja excluir a comparação "<strong>{{ comparacao.titulo }}</strong>"?</p>
+                                                        <p class="text-danger">Esta ação não pode ser desfeita.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <form action="{{ url_for('comparacao_documentos.excluir', id=comparacao.id) }}" method="POST" style="display: inline;">
+                                                            <button type="submit" class="btn btn-danger" onclick="this.disabled=true; this.innerHTML='Excluindo...'; this.form.submit();">Excluir</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Nenhuma comparação de documentos encontrada.
+                        {% if current_user.has_permission('comparacao_documentos.create') %}
+                        <a href="{{ url_for('comparacao_documentos.novo') }}" class="alert-link">Criar nova comparação</a>.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Sistema de logging detalhado para debugar problema de exclusão
+    function logDebug(message, data = null) {
+        console.log('🔍 [DEBUG EXCLUSÃO]', message, data);
+        
+        // Adicionar ao DOM para visualização
+        const logDiv = document.getElementById('debug-log') || (() => {
+            const div = document.createElement('div');
+            div.id = 'debug-log';
+            div.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #000; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-width: 400px; max-height: 300px; overflow-y: auto; z-index: 9999; border: 1px solid #00ff00;';
+            document.body.appendChild(div);
+            return div;
+        })();
+        
+        const timestamp = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        logDebug('🚀 Sistema iniciado - procurando por problemas');
+        
+        // Verificar se Bootstrap está disponível
+        logDebug('Bootstrap disponível?', typeof bootstrap !== 'undefined');
+        
+        // Ativar DataTables para a tabela
+        if (document.querySelector('table')) {
+            logDebug('✅ Tabela encontrada, inicializando DataTables');
+            $('table').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+                },
+                "order": [[3, "desc"]] // Ordenar por data (coluna 3) decrescente
+            });
+        }
+        
+        // Contar botões de exclusão
+        const botoesExclusao = document.querySelectorAll('[data-bs-toggle="modal"]');
+        logDebug(`🔢 Encontrados ${botoesExclusao.length} botões de exclusão`);
+        
+        // Configurar cada botão de exclusão com logging detalhado
+        botoesExclusao.forEach(function(button, index) {
+            logDebug(`⚙️ Configurando botão ${index + 1}`, {
+                target: button.getAttribute('data-bs-target'),
+                id: button.getAttribute('data-fallback-id')
+            });
+            
+            button.addEventListener('click', function(e) {
+                logDebug(`🖱️ CLIQUE DETECTADO no botão ${index + 1}`);
+                
+                const targetModalId = this.getAttribute('data-bs-target');
+                logDebug('🎯 Target modal:', targetModalId);
+                
+                const targetModal = document.querySelector(targetModalId);
+                logDebug('📋 Modal encontrado?', !!targetModal);
+                
+                if (targetModal && typeof bootstrap !== 'undefined') {
+                    logDebug('✅ Tentando abrir modal via Bootstrap');
+                    try {
+                        const modal = new bootstrap.Modal(targetModal);
+                        logDebug('✅ Modal instanciado com sucesso');
+                        modal.show();
+                        logDebug('✅ Modal.show() executado');
+                    } catch (error) {
+                        logDebug('❌ ERRO ao abrir modal Bootstrap:', error.message);
+                        usarFallbackExclusao(this);
+                    }
+                } else {
+                    logDebug('⚠️ Bootstrap indisponível ou modal não encontrado, usando fallback');
+                    usarFallbackExclusao(this);
+                }
+            });
+        });
+        
+        function usarFallbackExclusao(button) {
+            logDebug('🔄 Executando fallback de exclusão');
+            const id = button.getAttribute('data-fallback-id');
+            const titulo = button.getAttribute('data-fallback-titulo');
+            logDebug('📝 Dados para fallback:', { id, titulo });
+            
+            if (id && titulo) {
+                confirmarExclusao(id, titulo);
+            } else {
+                logDebug('❌ Dados insuficientes para fallback');
+            }
+        }
+        
+        // Monitorar formulários de exclusão
+        document.querySelectorAll('form').forEach(function(form, index) {
+            if (form.action.includes('/excluir/')) {
+                logDebug(`📝 Formulário de exclusão ${index + 1} encontrado:`, form.action);
+                
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.addEventListener('click', function(e) {
+                        logDebug('🚀 SUBMIT de exclusão detectado');
+                        setTimeout(() => {
+                            this.disabled = true;
+                            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+                            logDebug('🔄 Botão desabilitado e spinner ativado');
+                        }, 100);
+                    });
+                }
+            }
+        });
+        
+        logDebug('🏁 Configuração inicial completa');
+    });
+    
+    // Função para confirmar exclusão (fallback se o modal não funcionar)
+    function confirmarExclusao(id, titulo) {
+        logDebug('❓ Solicitando confirmação de exclusão via prompt nativo');
+        
+        if (confirm(`Tem certeza que deseja excluir a comparação "${titulo}"?\n\nEsta ação não pode ser desfeita.`)) {
+            logDebug('✅ Confirmação aceita, criando formulário');
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/comparacao-documentos/excluir/${id}`;
+            
+            logDebug('📝 Formulário criado:', form.action);
+            
+            document.body.appendChild(form);
+            logDebug('➕ Formulário adicionado ao DOM');
+            
+            form.submit();
+            logDebug('🚀 Formulário submetido');
+        } else {
+            logDebug('❌ Confirmação cancelada pelo usuário');
+        }
+    }
+    
+    // Detectar erros JavaScript globais
+    window.addEventListener('error', function(e) {
+        logDebug('🚨 ERRO JAVASCRIPT DETECTADO:', {
+            message: e.message,
+            source: e.filename,
+            line: e.lineno,
+            column: e.colno
+        });
+    });
+    
+    // Detectar erros de recursos não carregados
+    window.addEventListener('load', function() {
+        logDebug('📦 Página totalmente carregada');
+    });
+</script>
+{% endblock %}

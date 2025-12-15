@@ -1,0 +1,919 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico de Análises IA - Processo {{ processo_id }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --primary-dark: #2c3e50;
+    --primary-blue: #34495e;
+    --accent-teal: #16a085;
+    --accent-green: #27ae60;
+    --accent-light-blue: #3498db;
+    --neutral-dark: #1a1a1a;
+    --neutral-gray: #7f8c8d;
+    --neutral-light: #ecf0f1;
+    
+    --bg-primary: var(--primary-dark);
+    --bg-secondary: var(--primary-blue);
+    --bg-card: var(--neutral-dark);
+    --text-primary: #ffffff;
+    --text-secondary: var(--neutral-light);
+    --accent-main: var(--accent-teal);
+    --accent-secondary: var(--accent-light-blue);
+    --border-color: var(--neutral-gray);
+  }
+
+  body {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    min-height: 100vh;
+    color: var(--text-primary);
+  }
+
+  .card-advanced {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+  }
+
+  .card-advanced:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  .analise-card {
+    background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
+    border: 1px solid #4a5568;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+  }
+
+  .analise-card:hover {
+    border-color: var(--accent-teal);
+    box-shadow: 0 8px 25px rgba(22, 160, 133, 0.2);
+  }
+
+  .badge-custom {
+    background: linear-gradient(45deg, var(--accent-teal), var(--accent-light-blue));
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+  }
+
+  .badge-estrategica {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+  }
+
+  .badge-tecnica {
+    background: linear-gradient(45deg, #f093fb, #f5576c);
+  }
+
+  .badge-estatistica {
+    background: linear-gradient(45deg, #4facfe, #00f2fe);
+  }
+
+  .badge-preditiva {
+    background: linear-gradient(45deg, #43e97b, #38f9d7);
+  }
+
+  /* Estilos DOCX para modal */
+  .docx-document {
+    font-family: 'Times New Roman', Times, serif;
+    line-height: 1.6;
+    color: #000;
+    background: #fff;
+    padding: 30px;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .docx-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+  }
+
+  .docx-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .docx-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 5px 0;
+    font-style: italic;
+  }
+
+  .docx-metadata {
+    font-size: 12px;
+    color: #666;
+    margin: 15px 0 0 0;
+  }
+
+  .docx-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 20px 0;
+  }
+
+  .docx-content {
+    text-align: left;
+    margin: 25px 0;
+  }
+
+  .docx-section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #000;
+    margin: 25px 0 15px 0;
+    text-transform: uppercase;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+  }
+
+  .docx-subsection-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    margin: 20px 0 10px 0;
+    text-transform: capitalize;
+  }
+
+  .docx-paragraph {
+    font-size: 12px;
+    color: #000;
+    margin: 12px 0;
+    text-align: justify;
+    line-height: 1.8;
+    text-indent: 20px;
+  }
+
+  .docx-list {
+    margin: 15px 0;
+    padding-left: 0;
+  }
+
+  .docx-list-item {
+    margin: 8px 0;
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .docx-bullet {
+    font-weight: bold;
+    color: #000;
+    margin-right: 8px;
+    min-width: 20px;
+  }
+
+  .docx-list-text {
+    font-size: 12px;
+    color: #000;
+    text-align: justify;
+    flex: 1;
+  }
+
+  .docx-subsections {
+    margin: 15px 0;
+    padding-left: 20px;
+  }
+
+  .docx-subsection {
+    margin: 15px 0;
+  }
+
+  .docx-footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+  }
+
+  .docx-footer-text {
+    font-size: 10px;
+    color: #666;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .btn-custom {
+    background: linear-gradient(45deg, var(--accent-teal), var(--accent-light-blue));
+    border: none;
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .btn-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(22, 160, 133, 0.3);
+    color: white;
+  }
+
+  .confianca-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .confianca-indicator {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-left: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-teal);
+    border-radius: 50%;
+  }
+
+  .timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1.2rem;
+    width: 2px;
+    height: calc(100% + 1rem);
+    background: var(--border-color);
+  }
+
+  .timeline-item:last-child::after {
+    display: none;
+  }
+
+  .modal-dark .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .modal-dark .modal-header {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .modal-dark .modal-footer {
+    border-top: 1px solid var(--border-color);
+  }
+
+  .json-viewer {
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  .stats-mini {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .tempo-processamento {
+    font-size: 0.8rem;
+    color: var(--neutral-gray);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="text-white mb-2">
+            <i class="fas fa-history me-3" style="color: var(--accent-teal);"></i>
+            Histórico de Análises IA
+          </h1>
+          <p class="text-muted mb-0">Processo ID: <span class="text-white">#{{ processo_id }}</span></p>
+        </div>
+        <div>
+          <a href="/processos/lista" class="btn btn-outline-light me-2">
+            <i class="fas fa-arrow-left me-2"></i>Voltar aos Processos
+          </a>
+          <button class="btn btn-custom" onclick="atualizarHistorico()">
+            <i class="fas fa-sync-alt me-2"></i>Atualizar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estatísticas -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stats-mini">
+        <h4 id="total-analises" class="mb-1">-</h4>
+        <p class="mb-0">Total de Análises</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-mini" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <h4 id="media-confianca" class="mb-1">-</h4>
+        <p class="mb-0">Confiança Média</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-mini" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+        <h4 id="analises-hoje" class="mb-1">-</h4>
+        <p class="mb-0">Análises Hoje</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-mini" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+        <h4 id="tipos-analises" class="mb-1">-</h4>
+        <p class="mb-0">Tipos Utilizados</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Análises -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card-advanced">
+        <div class="card-header bg-transparent border-bottom border-secondary">
+          <h5 class="mb-0 text-white">
+            <i class="fas fa-list me-2"></i>
+            Análises Realizadas
+            <span id="total-resultados" class="badge badge-custom ms-2">0</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <div id="loading-container" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="text-muted mt-2">Carregando histórico de análises...</p>
+          </div>
+          
+          <div id="analises-container" style="display: none;">
+            <!-- Análises serão carregadas aqui -->
+          </div>
+
+          <div id="empty-container" style="display: none;" class="text-center py-5">
+            <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+            <h5 class="text-white">Nenhuma análise encontrada</h5>
+            <p class="text-muted">Este processo ainda não possui análises de IA realizadas.</p>
+            <button class="btn btn-custom" onclick="window.history.back()">
+              <i class="fas fa-arrow-left me-2"></i>Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal fade modal-dark" id="detalhesModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt me-2"></i>
+          Detalhes da Análise IA
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-content">
+          <!-- Conteúdo será carregado aqui -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-success" onclick="exportarAnaliseDOCX()">
+          <i class="fas fa-file-word me-2"></i>Exportar DOCX
+        </button>
+        <button type="button" class="btn btn-custom" onclick="exportarAnalise()">
+          <i class="fas fa-download me-2"></i>Exportar JSON
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let analisesData = [];
+let currentAnaliseId = null;
+const processoId = {{ processo_id }};
+
+// Carregar histórico ao inicializar página
+document.addEventListener('DOMContentLoaded', function() {
+  carregarHistorico();
+});
+
+// Função para carregar histórico de análises
+async function carregarHistorico() {
+  try {
+    console.log('Carregando histórico de análises do processo:', processoId);
+    
+    const response = await fetch(`/processos-juridicos/historico-analises/${processoId}`);
+    const resultado = await response.json();
+    
+    if (resultado.success) {
+      analisesData = resultado.analises;
+      
+      // Atualizar estatísticas
+      atualizarEstatisticas();
+      
+      // Renderizar análises
+      renderizarAnalises();
+      
+      // Ocultar loading
+      document.getElementById('loading-container').style.display = 'none';
+      
+      if (analisesData.length > 0) {
+        document.getElementById('analises-container').style.display = 'block';
+      } else {
+        document.getElementById('empty-container').style.display = 'block';
+      }
+    } else {
+      throw new Error(resultado.error || 'Erro ao carregar histórico');
+    }
+  } catch (error) {
+    console.error('Erro ao carregar histórico:', error);
+    document.getElementById('loading-container').innerHTML = `
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Erro ao carregar histórico: ${error.message}
+      </div>
+    `;
+  }
+}
+
+// Função para atualizar estatísticas
+function atualizarEstatisticas() {
+  const total = analisesData.length;
+  const mediaConfianca = total > 0 ? 
+    (analisesData.reduce((sum, a) => sum + (a.confianca || 0), 0) / total * 100).toFixed(1) + '%' : '0%';
+  
+  const hoje = new Date().toISOString().split('T')[0];
+  const analisesHoje = analisesData.filter(a => {
+    const dataAnalise = new Date(a.criado_em).toISOString().split('T')[0];
+    return dataAnalise === hoje;
+  }).length;
+  
+  const tiposUnicos = new Set(analisesData.map(a => a.tipo_analise)).size;
+  
+  document.getElementById('total-analises').textContent = total;
+  document.getElementById('media-confianca').textContent = mediaConfianca;
+  document.getElementById('analises-hoje').textContent = analisesHoje;
+  document.getElementById('tipos-analises').textContent = tiposUnicos;
+  document.getElementById('total-resultados').textContent = total;
+}
+
+// Função para renderizar análises
+function renderizarAnalises() {
+  const container = document.getElementById('analises-container');
+  
+  if (analisesData.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4">
+        <i class="fas fa-robot fa-2x text-muted mb-3"></i>
+        <h5 class="text-white">Nenhuma análise encontrada</h5>
+        <p class="text-muted">Este processo ainda não possui análises de IA.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Ordenar por data mais recente
+  const analisesOrdenadas = analisesData.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+  
+  container.innerHTML = analisesOrdenadas.map(analise => `
+    <div class="timeline-item">
+      <div class="analise-card p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center mb-2">
+              <h5 class="text-white mb-0 me-3">
+                <i class="fas fa-brain me-2"></i>
+                Análise ${getTipoAnaliseLabel(analise.tipo_analise)}
+              </h5>
+              <span class="badge badge-${analise.tipo_analise}">${analise.tipo_analise?.toUpperCase() || 'N/A'}</span>
+            </div>
+            
+            <div class="row text-muted small">
+              <div class="col-md-6">
+                <i class="fas fa-calendar me-2"></i>
+                <strong>Data:</strong> ${formatarData(analise.criado_em)}
+              </div>
+              <div class="col-md-6">
+                <i class="fas fa-cogs me-2"></i>
+                <strong>Modelo:</strong> ${analise.modelo_ia || 'N/A'}
+              </div>
+            </div>
+            
+            <div class="row mt-2">
+              <div class="col-md-6">
+                <small class="text-muted">Confiança:</small>
+                <div class="confianca-bar mt-1">
+                  <div class="confianca-indicator" style="width: ${(analise.confianca || 0) * 100}%"></div>
+                </div>
+                <small class="text-white">${((analise.confianca || 0) * 100).toFixed(1)}%</small>
+              </div>
+              <div class="col-md-6">
+                ${analise.tempo_processamento ? `
+                  <small class="tempo-processamento">
+                    <i class="fas fa-clock me-1"></i>
+                    Processado em ${analise.tempo_processamento}s
+                  </small>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 text-end">
+            <button class="btn btn-custom btn-sm me-2" onclick="verDetalhes(${analise.id})">
+              <i class="fas fa-eye me-2"></i>Ver Detalhes
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="excluirAnalise(${analise.id})">
+              <i class="fas fa-trash me-2"></i>Excluir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Função para obter label do tipo de análise
+function getTipoAnaliseLabel(tipo) {
+  const labels = {
+    'estrategica': 'Estratégica',
+    'tecnica': 'Técnica',
+    'estatistica': 'Estatística',
+    'preditiva': 'Preditiva'
+  };
+  return labels[tipo] || tipo;
+}
+
+// Função para formatar resultado no estilo DOCX
+function formatarResultadoTexto(dados) {
+  if (!dados) {
+    return `<div class="docx-document">
+      <div class="docx-header">
+        <h2 class="docx-title">RELATÓRIO DE ANÁLISE JURÍDICA</h2>
+        <p class="docx-subtitle">Sistema de Inteligência Artificial Legal</p>
+        <hr class="docx-divider">
+      </div>
+      <p class="docx-paragraph">Nenhum resultado disponível para exibição.</p>
+    </div>`;
+  }
+  
+  let html = `
+    <div class="docx-document">
+      <div class="docx-header">
+        <h2 class="docx-title">RELATÓRIO DE ANÁLISE JURÍDICA</h2>
+        <p class="docx-subtitle">Sistema de Inteligência Artificial Legal</p>
+        <div class="docx-metadata">
+          <span><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR', { 
+            year: 'numeric', month: 'long', day: 'numeric' 
+          })}</span>
+          <span style="margin-left: 30px;"><strong>Hora:</strong> ${new Date().toLocaleTimeString('pt-BR')}</span>
+        </div>
+        <hr class="docx-divider">
+      </div>
+      <div class="docx-content">
+  `;
+  
+  if (typeof dados === 'string') {
+    // Texto como documento estruturado
+    const paragrafos = dados.split(/\n\n|\. (?=[A-Z])/).filter(p => p.trim().length > 0);
+    
+    html += '<h3 class="docx-section-title">1. ANÁLISE PRINCIPAL</h3>';
+    paragrafos.forEach((paragrafo, index) => {
+      html += `<p class="docx-paragraph">${paragrafo.trim()}</p>`;
+    });
+    
+  } else if (typeof dados === 'object') {
+    let sectionIndex = 1;
+    
+    for (const [chave, valor] of Object.entries(dados)) {
+      const titulo = chave.charAt(0).toUpperCase() + chave.slice(1)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+      
+      html += `<h3 class="docx-section-title">${sectionIndex}. ${titulo.toUpperCase()}</h3>`;
+      
+      if (Array.isArray(valor)) {
+        html += '<div class="docx-list">';
+        valor.forEach((item, index) => {
+          html += `<div class="docx-list-item">
+            <span class="docx-bullet">${String.fromCharCode(97 + index)}) </span>
+            <span class="docx-list-text">${String(item)}</span>
+          </div>`;
+        });
+        html += '</div>';
+        
+      } else if (typeof valor === 'object' && valor !== null) {
+        html += '<div class="docx-subsections">';
+        for (const [subChave, subValor] of Object.entries(valor)) {
+          const subTitulo = subChave.charAt(0).toUpperCase() + subChave.slice(1)
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          
+          html += `<div class="docx-subsection">
+            <h4 class="docx-subsection-title">${sectionIndex}.${Object.keys(valor).indexOf(subChave) + 1} ${subTitulo}</h4>
+            <p class="docx-paragraph">${String(subValor)}</p>
+          </div>`;
+        }
+        html += '</div>';
+        
+      } else {
+        const texto = String(valor);
+        if (texto.length > 200) {
+          // Texto longo - quebrar em parágrafos
+          const paragrafos = texto.split(/\n\n|\. (?=[A-Z][a-z])/).filter(p => p.trim().length > 0);
+          paragrafos.forEach(paragrafo => {
+            html += `<p class="docx-paragraph">${paragrafo.trim()}</p>`;
+          });
+        } else {
+          html += `<p class="docx-paragraph">${texto}</p>`;
+        }
+      }
+      
+      sectionIndex++;
+    }
+  } else {
+    html += `<h3 class="docx-section-title">1. RESULTADO</h3>
+             <p class="docx-paragraph">${String(dados)}</p>`;
+  }
+  
+  html += `
+      </div>
+      <div class="docx-footer">
+        <hr class="docx-divider">
+        <p class="docx-footer-text">
+          <em>Documento gerado automaticamente pelo Sistema de Análise Jurídica com IA</em><br>
+          <small>Este relatório contém análise baseada em inteligência artificial e deve ser revisado por profissional jurídico qualificado.</small>
+        </p>
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Função para alternar visualização no modal
+function toggleVisualizacaoModal() {
+  const btnToggle = document.getElementById('btn-toggle-modal');
+  const resultadoFormatado = document.getElementById('resultado-formatado-modal');
+  const resultadoJson = document.getElementById('resultado-json-modal');
+  
+  if (resultadoFormatado.style.display !== 'none') {
+    // Mostrar JSON
+    resultadoFormatado.style.display = 'none';
+    resultadoJson.style.display = 'block';
+    btnToggle.innerHTML = '<i class="fas fa-eye me-1"></i>Ver Texto';
+  } else {
+    // Mostrar formatado
+    resultadoFormatado.style.display = 'block';
+    resultadoJson.style.display = 'none';
+    btnToggle.innerHTML = '<i class="fas fa-code me-1"></i>Ver JSON';
+  }
+}
+
+// Função para ver detalhes de uma análise
+async function verDetalhes(analiseId) {
+  currentAnaliseId = analiseId;
+  const analise = analisesData.find(a => a.id === analiseId);
+  
+  if (!analise) {
+    alert('Análise não encontrada');
+    return;
+  }
+  
+  let resultado = '';
+  try {
+    if (typeof analise.resultado === 'string') {
+      resultado = JSON.parse(analise.resultado);
+    } else {
+      resultado = analise.resultado;
+    }
+  } catch (e) {
+    resultado = analise.resultado;
+  }
+  
+  document.getElementById('modal-content').innerHTML = `
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-white mb-3">Informações da Análise</h6>
+        <table class="table table-dark table-striped">
+          <tr><td><strong>ID:</strong></td><td>${analise.id}</td></tr>
+          <tr><td><strong>Tipo:</strong></td><td><span class="badge badge-${analise.tipo_analise}">${getTipoAnaliseLabel(analise.tipo_analise)}</span></td></tr>
+          <tr><td><strong>Modelo IA:</strong></td><td>${analise.modelo_ia || 'N/A'}</td></tr>
+          <tr><td><strong>Confiança:</strong></td><td>${((analise.confianca || 0) * 100).toFixed(1)}%</td></tr>
+          <tr><td><strong>Data:</strong></td><td>${formatarData(analise.criado_em)}</td></tr>
+          ${analise.tempo_processamento ? `<tr><td><strong>Tempo:</strong></td><td>${analise.tempo_processamento}s</td></tr>` : ''}
+        </table>
+      </div>
+      
+      <div class="col-md-6">
+        <h6 class="text-white mb-3">Métricas de Qualidade</h6>
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            <span>Confiança</span>
+            <span>${((analise.confianca || 0) * 100).toFixed(1)}%</span>
+          </div>
+          <div class="confianca-bar mt-1">
+            <div class="confianca-indicator" style="width: ${(analise.confianca || 0) * 100}%"></div>
+          </div>
+        </div>
+        
+        <div class="stats-mini" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <h6 class="mb-1">Análise ${getTipoAnaliseLabel(analise.tipo_analise)}</h6>
+          <p class="mb-0 small">Modelo: ${analise.modelo_ia || 'N/A'}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="text-white mb-0">Resultado da Análise</h6>
+          <button class="btn btn-outline-light btn-sm" onclick="toggleVisualizacaoModal()" id="btn-toggle-modal">
+            <i class="fas fa-code me-1"></i>Ver JSON
+          </button>
+        </div>
+        <div id="resultado-formatado-modal" class="resultado-viewer" style="background: #f8f9fa; color: #333; padding: 20px; border-radius: 8px; line-height: 1.8;">
+          ${formatarResultadoTexto(resultado)}
+        </div>
+        <div id="resultado-json-modal" class="json-viewer" style="display: none; background: #1a1a1a; color: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; font-size: 13px;">
+          ${typeof resultado === 'object' ? JSON.stringify(resultado, null, 2) : resultado}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  new bootstrap.Modal(document.getElementById('detalhesModal')).show();
+}
+
+// Função para exportar análise em JSON
+function exportarAnalise() {
+  if (!currentAnaliseId) return;
+  
+  const analise = analisesData.find(a => a.id === currentAnaliseId);
+  if (!analise) return;
+  
+  const dados = {
+    processo_id: processoId,
+    analise: analise,
+    timestamp: new Date().toISOString()
+  };
+  
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `analise_ia_${processoId}_${analise.id}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Função para exportar análise em DOCX
+async function exportarAnaliseDOCX() {
+  if (!currentAnaliseId) {
+    alert('Nenhuma análise selecionada');
+    return;
+  }
+  
+  try {
+    const analise = analisesData.find(a => a.id === currentAnaliseId);
+    if (!analise) {
+      alert('Análise não encontrada');
+      return;
+    }
+    
+    // Preparar dados para exportação
+    let resultado = analise.resultado;
+    if (typeof resultado === 'string') {
+      try {
+        resultado = JSON.parse(resultado);
+      } catch (e) {
+        // Manter como string se não for JSON
+      }
+    }
+    
+    const dadosExportacao = {
+      tipo_analise: analise.tipo_analise,
+      resultado: resultado,
+      modelo_ia: analise.modelo_ia,
+      confianca: analise.confianca,
+      data_criacao: analise.criado_em
+    };
+    
+    // Fazer requisição ao backend
+    const response = await fetch(`/processos-juridicos/historico-analises/${currentAnaliseId}/exportar-docx`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dadosExportacao)
+    });
+    
+    if (!response.ok) {
+      throw new Error('Erro ao exportar DOCX');
+    }
+    
+    // Download do arquivo
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Analise_IA_${getTipoAnaliseLabel(analise.tipo_analise)}_${currentAnaliseId}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    alert('Análise exportada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao exportar DOCX:', error);
+    alert('Erro ao exportar análise: ' + error.message);
+  }
+}
+
+// Função para excluir análise
+async function excluirAnalise(analiseId) {
+  if (!confirm('Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/processos-juridicos/historico-analises/${analiseId}/excluir`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const resultado = await response.json();
+    
+    if (resultado.success) {
+      alert('Análise excluída com sucesso!');
+      // Recarregar histórico
+      atualizarHistorico();
+    } else {
+      throw new Error(resultado.error || 'Erro ao excluir análise');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir análise:', error);
+    alert('Erro ao excluir análise: ' + error.message);
+  }
+}
+
+// Função para atualizar histórico
+function atualizarHistorico() {
+  document.getElementById('loading-container').style.display = 'block';
+  document.getElementById('analises-container').style.display = 'none';
+  document.getElementById('empty-container').style.display = 'none';
+  carregarHistorico();
+}
+
+// Função para formatar data
+function formatarData(dataString) {
+  const data = new Date(dataString);
+  return data.toLocaleString('pt-BR');
+}
+</script>
+{% endblock %}

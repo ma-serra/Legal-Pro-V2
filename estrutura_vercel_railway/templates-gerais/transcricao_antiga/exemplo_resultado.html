@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block title %}Exemplo de Resultado da Transcrição{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico de sentimento
+    var ctx = document.getElementById('sentimentChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Positivo', 'Neutro', 'Negativo'],
+            datasets: [{
+                data: [0.65, 0.25, 0.10],
+                backgroundColor: [
+                    'rgba(31, 89, 129, 0.8)',  // Verde para positivo
+                    'rgba(255, 193, 7, 0.8)',  // Amarelo para neutro
+                    'rgba(220, 53, 69, 0.8)'   // Vermelho para negativo
+                ],
+                borderColor: [
+                    'rgba(31, 89, 129, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#e0e0e0'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            var value = tooltipItem.parsed;
+                            var percent = Math.round(value * 100);
+                            return tooltipItem.label + ': ' + percent + '%';
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Análise de Sentimento',
+                    color: '#e0e0e0'
+                }
+            },
+            cutout: '60%'
+        }
+    });
+});
+</script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Exemplo de Resultado da Transcrição</h1>
+            
+            <div class="mb-3">
+                <a href="#" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+                <a href="#" class="btn btn-outline-primary ms-2" download>
+                    <i class="bi bi-download"></i> Baixar JSON
+                </a>
+            </div>
+            
+            <!-- TEXTO TRANSCRITO COM IDENTIFICAÇÃO DE FALANTES -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary bg-opacity-75 text-white">
+                    <h5 class="card-title mb-0">Texto Transcrito com Identificação de Falantes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 border rounded" style="background-color: #424242; color: white;">
+                        <div class="mb-3">
+                            <div class="badge bg-primary mb-1">Falante 1</div>
+                            <p style="white-space: pre-wrap; margin-left: 15px;">Olá, poderia me explicar um pouco sobre como funciona esse processo de transcrição automática? Tenho interesse em utilizar para reuniões da empresa.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="badge bg-primary mb-1">Falante 2</div>
+                            <p style="white-space: pre-wrap; margin-left: 15px;">Claro, o sistema utiliza inteligência artificial para converter o áudio em texto. Basicamente, enviamos o arquivo de áudio para a API, que processa e retorna a transcrição.</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="badge bg-primary mb-1">Falante 1</div>
+                            <p style="white-space: pre-wrap; margin-left: 15px;">E qual é a precisão desse sistema? Tenho preocupação com termos técnicos da minha área.</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="badge bg-primary mb-1">Falante 2</div>
+                            <p style="white-space: pre-wrap; margin-left: 15px;">A precisão é bastante alta, especialmente para o português. Os modelos mais recentes conseguem reconhecer inclusive terminologias específicas. O sistema também oferece recursos adicionais como análise de sentimento, resumo e identificação de falantes.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Informações:</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Idioma
+                                <span class="badge bg-primary rounded-pill">pt</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Duração
+                                <span class="badge bg-primary rounded-pill">45 segundos</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Confiança
+                                <span class="badge bg-primary rounded-pill">92%</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ANÁLISE DE SENTIMENTO COM GRÁFICO -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info bg-opacity-75 text-white">
+                    <h5 class="card-title mb-0">Análise de Sentimento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Distribuição de Sentimentos</h6>
+                            <canvas id="sentimentChart" width="400" height="300"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Detalhes</h6>
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Conclusão geral: <strong>Positivo</strong></h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Positivo
+                                            <div class="w-50">
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-success" 
+                                                         role="progressbar" 
+                                                         style="width: 65%">
+                                                        65%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Neutro
+                                            <div class="w-50">
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-warning" 
+                                                         role="progressbar" 
+                                                         style="width: 25%">
+                                                        25%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Negativo
+                                            <div class="w-50">
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-danger" 
+                                                         role="progressbar" 
+                                                         style="width: 10%">
+                                                        10%
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RESUMO DO CONTEÚDO -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success bg-opacity-75 text-white">
+                    <h5 class="card-title mb-0">Resumo do Conteúdo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success mb-3">
+                        <h6 class="alert-heading"><i class="fas fa-lightbulb me-2"></i> Resumo gerado por IA</h6>
+                        <p class="mb-0 small">Tipo: bullets | Modelo: gpt</p>
+                    </div>
+                    <div class="p-3 border rounded bg-light">
+                        <p style="white-space: pre-wrap;">• O sistema utiliza inteligência artificial para converter áudio em texto.
+• O processo envolve o envio do arquivo de áudio para processamento por uma API.
+• A precisão do sistema é considerada alta, inclusive para o português e terminologias específicas.
+• Entre os recursos adicionais oferecidos estão análise de sentimento, resumo e identificação de falantes.
+• O usuário demonstrou interesse em utilizar a solução para transcrever reuniões empresariais.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

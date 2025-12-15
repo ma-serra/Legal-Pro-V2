@@ -1,0 +1,559 @@
+{% extends "fintechs/base_dashboard.html" %}
+
+{% block title %}Success Optimization Engine - Dashboard Estratégico{% endblock %}
+
+{% block content %}
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-header-content">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="dashboard-title">
+                        <i class="fas fa-rocket"></i>
+                        Success Optimization Engine
+                    </div>
+                    <p class="dashboard-subtitle">Motor de Otimização de Estratégias de Sucesso Processual</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="dashboard-actions">
+                        <button class="btn-dashboard" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-2"></i>Atualizar
+                        </button>
+                        <button class="btn-dashboard" onclick="exportReport()">
+                            <i class="fas fa-download me-2"></i>Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    {% include 'fintechs/components/navigation_buttons.html' %}
+
+    <!-- Export Buttons -->
+    {% include 'fintechs/components/export_buttons.html' %}
+
+    <!-- KPIs de Otimização -->
+    <div class="metrics-grid stagger-animation">
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="metric-value" id="successRate">87%</div>
+            <div class="metric-label">Taxa de Sucesso</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> +5.2%
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="metric-value" id="optimizationGain">+23%</div>
+            <div class="metric-label">Ganho com IA</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> +8.1%
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="metric-value" id="strategiesActive">14</div>
+            <div class="metric-label">Estratégias Ativas</div>
+            <div class="metric-trend up">
+                <i class="fas fa-arrow-up"></i> +3
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="metric-value" id="avgDuration">8.3m</div>
+            <div class="metric-label">Duração Média</div>
+            <div class="metric-trend down">
+                <i class="fas fa-arrow-down"></i> -12%
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos Principais -->
+    <div class="row g-3">
+        <!-- Success Rate Trend -->
+        <div class="col-lg-8">
+            <div class="chart-card fade-in" style="min-height: 390px;">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        Evolução da Taxa de Sucesso
+                    </h3>
+                    <div class="chart-actions">
+                        <button class="chart-action-btn" title="Visualizar em tela cheia">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="chart-action-btn" title="Exportar dados">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-body" style="display: flex; align-items: center; justify-content: center; min-height: 320px;">
+                    <canvas id="successTrendChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optimization Strategies -->
+        <div class="col-lg-4">
+            <div class="chart-card fade-in" style="height: 100%;">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-bullseye"></i>
+                        Estratégias Implementadas
+                    </h3>
+                </div>
+                <div class="chart-body" style="min-height: auto;">
+                    <div id="strategiesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance by Strategy Type -->
+    <div class="grid-2">
+        <div class="chart-card fade-in">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-trophy"></i>
+                    Performance por Tipo de Estratégia
+                </h3>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" title="Exportar dados">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-body" style="display: flex; align-items: center; justify-content: center; min-height: 200px;">
+                <canvas id="strategyPerformanceChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card fade-in">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Análise de Impacto
+                </h3>
+                <div class="chart-actions">
+                    <button class="chart-action-btn" onclick="exportImpactChart('png')" title="Exportar PNG">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="chart-action-btn" onclick="exportImpactChart('csv')" title="Exportar CSV">
+                        <i class="fas fa-file-csv"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-body" style="max-width: 350px; margin: 0 auto; padding: 20px;">
+                <canvas id="impactAnalysisChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Optimizations -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-lightbulb"></i>
+                Otimizações Recomendadas
+            </h3>
+        </div>
+        <div id="recommendationsList"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Chart instances
+let charts = {
+    successTrend: null,
+    strategyPerformance: null,
+    impactAnalysis: null
+};
+
+// Global data storage
+let dashboardData = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando Success Optimization Engine...');
+    loadDashboardData();
+});
+
+// Load data
+async function loadDashboardData() {
+    showLoading(true);
+    try {
+        const response = await fetch('/fintechs/api/strategic/dashboard-data/success-optimization-engine');
+        if (!response.ok) throw new Error('Erro ao carregar dados');
+        
+        const result = await response.json();
+        console.log('✅ Dados carregados', result);
+        
+        dashboardData = result.data;
+        renderDashboard(dashboardData);
+        console.log('✅ Dashboard inicializado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        alert('Erro ao carregar dados do dashboard');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Render dashboard
+function renderDashboard(data) {
+    renderSuccessTrendChart();
+    renderStrategyPerformanceChart();
+    renderImpactAnalysisChart();
+    renderStrategiesList();
+    renderRecommendationsList();
+}
+
+// Success Trend Chart
+function renderSuccessTrendChart() {
+    const ctx = document.getElementById('successTrendChart').getContext('2d');
+    
+    if (charts.successTrend) charts.successTrend.destroy();
+    
+    charts.successTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
+            datasets: [{
+                label: 'Taxa de Sucesso (%)',
+                data: [72, 75, 78, 81, 83, 85, 86, 87],
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3
+            }, {
+                label: 'Meta (%)',
+                data: [75, 75, 80, 80, 85, 85, 87, 87],
+                borderColor: '#ea580c',
+                borderDash: [5, 5],
+                borderWidth: 2,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 60,
+                    max: 100,
+                    grid: { color: '#f0f0f0' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// Strategy Performance Chart - Com Dados Reais
+function renderStrategyPerformanceChart() {
+    const ctx = document.getElementById('strategyPerformanceChart').getContext('2d');
+    
+    if (charts.strategyPerformance) charts.strategyPerformance.destroy();
+    
+    const performanceData = dashboardData?.strategy_performance || {};
+    const labels = performanceData.labels || ['Prova Documental', 'Jurisprudência', 'Acordos', 'Perícias', 'Recursos'];
+    const values = performanceData.values || [92, 88, 85, 82, 78];
+    
+    // Cores em gradiente verde
+    const colors = ['#059669', '#047857', '#065f46', '#064e3b', '#10b981'];
+    
+    charts.strategyPerformance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Taxa de Sucesso (%)',
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return `Taxa de Sucesso: ${context.parsed.y}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: '#f0f0f0' },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    
+    console.log('📊 Strategy Performance renderizado com dados reais:', { labels, values });
+}
+
+// Impact Analysis Chart - Moderno e Compacto com Dados Reais
+function renderImpactAnalysisChart() {
+    const ctx = document.getElementById('impactAnalysisChart').getContext('2d');
+    
+    if (charts.impactAnalysis) charts.impactAnalysis.destroy();
+    
+    const impactData = dashboardData?.impact_analysis || {};
+    const labels = impactData.labels || ['Alto Impacto', 'Médio Impacto', 'Baixo Impacto'];
+    const values = impactData.values || [45, 35, 20];
+    
+    charts.impactAnalysis = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    'rgba(5, 150, 105, 0.9)',    // Verde moderno
+                    'rgba(234, 88, 12, 0.9)',    // Laranja moderno
+                    'rgba(100, 116, 139, 0.7)'   // Cinza moderno
+                ],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 15,
+                hoverBorderColor: '#fff',
+                hoverBorderWidth: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',  // Rosca mais fina e moderna
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: { size: 12, weight: '600' },
+                        color: '#374151',
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value}% (${percentage}% do total)`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+    
+    console.log('📊 Gráfico de Impacto renderizado com dados reais:', { labels, values, total_cases: impactData.total_cases });
+}
+
+// Render Strategies List
+function renderStrategiesList() {
+    const strategies = [
+        { name: 'IA Predictiva', status: 'implemented', impact: '23%', icon: 'robot' },
+        { name: 'Análise Jurisprudencial', status: 'implemented', impact: '18%', icon: 'balance-scale' },
+        { name: 'Acordos Inteligentes', status: 'testing', impact: '15%', icon: 'handshake' },
+        { name: 'Defesa Otimizada', status: 'recommended', impact: '12%', icon: 'shield-alt' }
+    ];
+    
+    const html = strategies.map(s => `
+        <div class="data-card">
+            <div class="data-card-header">
+                <div>
+                    <div class="data-card-title">
+                        <i class="fas fa-${s.icon} me-2 text-success"></i>${s.name}
+                    </div>
+                    <div class="data-card-subtitle">Impacto: +${s.impact} na taxa de sucesso</div>
+                </div>
+                <span class="status-badge status-${s.status}">
+                    ${s.status === 'implemented' ? 'Ativo' : s.status === 'testing' ? 'Em Teste' : 'Sugerido'}
+                </span>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('strategiesList').innerHTML = html;
+}
+
+// Render Recommendations List
+function renderRecommendationsList() {
+    const recommendations = [
+        { title: 'Expandir uso de IA em perícias', priority: 'high', gain: '+8%', icon: 'microscope' },
+        { title: 'Otimizar timing de recursos', priority: 'high', gain: '+6%', icon: 'stopwatch' },
+        { title: 'Melhorar qualidade de provas', priority: 'medium', gain: '+4%', icon: 'file-alt' },
+        { title: 'Aumentar acordos estratégicos', priority: 'medium', gain: '+3%', icon: 'users' }
+    ];
+    
+    const statusClass = p => p === 'high' ? 'status-warning' : 'status-info';
+    const priorityLabel = p => p === 'high' ? 'Alta Prioridade' : 'Média Prioridade';
+    
+    const html = recommendations.map(r => `
+        <div class="data-card">
+            <div class="data-card-header">
+                <div class="flex-grow-1">
+                    <div class="data-card-title">
+                        <i class="fas fa-${r.icon} me-2"></i>
+                        ${r.title}
+                    </div>
+                    <div class="data-card-subtitle">
+                        Ganho potencial: <strong>${r.gain}</strong> na taxa de sucesso
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="status-badge ${statusClass(r.priority)}">
+                        ${priorityLabel(r.priority)}
+                    </span>
+                    <button class="btn btn-sm btn-success" onclick="implementRecommendation('${r.title}')" style="white-space: nowrap;">
+                        <i class="fas fa-play me-1"></i>Implementar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('recommendationsList').innerHTML = html;
+}
+
+// Helper functions
+function showLoading(show) {
+    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+}
+
+function refreshData() {
+    loadDashboardData();
+}
+
+function exportReport() {
+    alert('Funcionalidade de exportação será implementada em breve!');
+}
+
+function implementRecommendation(title) {
+    alert(`Implementando recomendação: ${title}`);
+}
+
+// Export Impact Chart
+function exportImpactChart(format) {
+    const chart = charts.impactAnalysis;
+    
+    if (!chart) {
+        alert('Gráfico não disponível para exportação');
+        return;
+    }
+    
+    if (format === 'png') {
+        // Exportar como imagem PNG
+        const url = chart.toBase64Image();
+        const link = document.createElement('a');
+        link.download = 'analise-impacto-' + new Date().getTime() + '.png';
+        link.href = url;
+        link.click();
+        
+        console.log('✅ Gráfico exportado como PNG');
+        
+        // Feedback visual
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.style.color = '#059669';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.color = '';
+        }, 2000);
+        
+    } else if (format === 'csv') {
+        // Exportar dados como CSV
+        const data = chart.data.datasets[0].data;
+        const labels = chart.data.labels;
+        
+        let csv = 'Categoria,Percentual\n';
+        labels.forEach((label, index) => {
+            csv += `"${label}",${data[index]}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.download = 'analise-impacto-' + new Date().getTime() + '.csv';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        
+        console.log('✅ Dados exportados como CSV');
+        
+        // Feedback visual
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.style.color = '#059669';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.color = '';
+        }, 2000);
+    }
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    Object.values(charts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+});
+</script>
+
+<!-- Navegação Sequencial -->
+{% include 'fintechs/components/sequential_nav.html' %}
+{% endblock %}

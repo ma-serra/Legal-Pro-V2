@@ -1,0 +1,243 @@
+{% extends "layout.html" %}
+
+{% block title %}Configuração da Integração Taskade{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('taskade.index') }}">Taskade</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Configurações</li>
+                </ol>
+            </nav>
+            
+            <h2 class="mb-4">Configuração da Integração com Taskade</h2>
+            
+            <!-- Tabs para escolher método de autenticação -->
+            <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="token-tab" data-bs-toggle="tab" data-bs-target="#token-tab-pane" 
+                            type="button" role="tab" aria-controls="token-tab-pane" aria-selected="true">
+                        <i class="fas fa-key me-1"></i> Token de API
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if not oauth_ativo %}disabled{% endif %}" id="oauth-tab" data-bs-toggle="tab" data-bs-target="#oauth-tab-pane" 
+                            type="button" role="tab" aria-controls="oauth-tab-pane" aria-selected="false"
+                            {% if not oauth_ativo %}title="Configuração OAuth não disponível"{% endif %}>
+                        <i class="fas fa-lock me-1"></i> OAuth 2.0
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="authTabsContent">
+                <!-- Método 1: Token de API Pessoal -->
+                <div class="tab-pane fade show active" id="token-tab-pane" role="tabpanel" aria-labelledby="token-tab" tabindex="0">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Token de API do Taskade</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text mb-3">
+                                Forneça seu token de API do Taskade para configurar a integração. Você pode obter esse token no 
+                                <a href="https://www.taskade.com/settings/developer" target="_blank">painel de desenvolvedor do Taskade</a>.
+                            </p>
+                            
+                            <form method="POST" action="{{ url_for('taskade.config') }}">
+                                <div class="mb-3">
+                                    <label for="api_token" class="form-label">Token de API</label>
+                                    <input type="text" class="form-control" id="api_token" name="api_token" 
+                                           placeholder="Digite seu token de API do Taskade" required>
+                                    <div class="form-text">Exemplo: tskdp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Salvar Configurações
+                                    </button>
+                                    <button type="button" id="btn-testar-conexao" class="btn btn-info">
+                                        <i class="fas fa-plug me-1"></i> Testar Conexão
+                                    </button>
+                                    <a href="{{ url_for('taskade.index') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i> Voltar
+                                    </a>
+                                </div>
+                                
+                                <!-- Alerta de resultado do teste de conexão -->
+                                <div id="alerta-conexao" class="mt-3" style="display: none;"></div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Como obter um token de API do Taskade</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li class="mb-2">Faça login na sua conta do <a href="https://www.taskade.com" target="_blank">Taskade</a>.</li>
+                                <li class="mb-2">Acesse as configurações da sua conta no canto superior direito.</li>
+                                <li class="mb-2">Navegue até a seção "Developer" ou "API".</li>
+                                <li class="mb-2">Gere um novo token de API e copie-o.</li>
+                                <li>Cole o token no campo acima e clique em "Salvar Configurações".</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Método 2: OAuth 2.0 -->
+                <div class="tab-pane fade" id="oauth-tab-pane" role="tabpanel" aria-labelledby="oauth-tab" tabindex="0">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Autenticação OAuth 2.0</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if oauth_ativo %}
+                                <p class="card-text mb-3">
+                                    Autentique-se no Taskade usando o protocolo OAuth 2.0. Isso permite acesso mais seguro e 
+                                    limitado às funcionalidades específicas do Taskade que nossa aplicação precisa.
+                                </p>
+                                
+                                <div class="d-flex gap-2 mb-4">
+                                    <a href="{{ url_for('taskade.oauth_authorize') }}" class="btn btn-primary">
+                                        <i class="fas fa-lock me-1"></i> Autorizar com Taskade
+                                    </a>
+                                    <a href="{{ url_for('taskade.oauth_logout') }}" class="btn btn-outline-danger">
+                                        <i class="fas fa-sign-out-alt me-1"></i> Revogar Acesso
+                                    </a>
+                                    <a href="{{ url_for('taskade.index') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i> Voltar
+                                    </a>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <h6 class="alert-heading"><i class="fas fa-info-circle me-1"></i> Como funciona o OAuth 2.0</h6>
+                                    <p class="mb-0">
+                                        Ao clicar em "Autorizar com Taskade", você será redirecionado para o site do Taskade 
+                                        para autorizar nossa aplicação a acessar seus dados. Após a autorização, você será 
+                                        redirecionado de volta para nossa aplicação.
+                                    </p>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-1"></i> Configuração OAuth Incompleta</h6>
+                                    <p>
+                                        A configuração OAuth 2.0 para o Taskade não está completa. Para ativar este método 
+                                        de autenticação, é necessário configurar as variáveis de ambiente:
+                                    </p>
+                                    <ul>
+                                        <li><code>TASKADE_CLIENT_ID</code>: ID do cliente OAuth</li>
+                                        <li><code>TASKADE_CLIENT_SECRET</code>: Segredo do cliente OAuth</li>
+                                    </ul>
+                                    <p class="mb-0">
+                                        Essas credenciais podem ser obtidas registrando um aplicativo OAuth no 
+                                        <a href="https://taskade.com/settings/password" target="_blank">painel de configurações do Taskade</a>.
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Vantagens do OAuth 2.0</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li class="mb-2"><strong>Segurança aprimorada:</strong> Você não precisa compartilhar suas credenciais do Taskade com nossa aplicação.</li>
+                                <li class="mb-2"><strong>Acesso limitado:</strong> Você controla exatamente quais permissões nossa aplicação tem.</li>
+                                <li class="mb-2"><strong>Revogação fácil:</strong> Você pode revogar o acesso a qualquer momento diretamente no Taskade.</li>
+                                <li><strong>Experiência de usuário melhor:</strong> Não é necessário copiar e colar tokens de API.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnTestarConexao = document.getElementById('btn-testar-conexao');
+        const alertaConexao = document.getElementById('alerta-conexao');
+        const inputToken = document.getElementById('api_token');
+        
+        btnTestarConexao.addEventListener('click', function() {
+            // Verificar se um token foi inserido
+            const tokenValue = inputToken.value.trim();
+            if (!tokenValue) {
+                mostrarAlerta('warning', 'Por favor, insira um token de API para testar a conexão.');
+                return;
+            }
+            
+            // Substituir o texto do botão por um spinner durante o teste
+            const btnTextoOriginal = btnTestarConexao.innerHTML;
+            btnTestarConexao.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Testando...';
+            btnTestarConexao.disabled = true;
+            
+            // Primeiro, configurar o token temporariamente para o teste
+            fetch('/taskade/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({
+                    'api_token': tokenValue
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Falha ao configurar o token para teste');
+                }
+                
+                // Agora testar a conexão com o novo token
+                return fetch('/taskade/api/test-connection');
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Restaurar o botão
+                btnTestarConexao.innerHTML = btnTextoOriginal;
+                btnTestarConexao.disabled = false;
+                
+                if (data.status === 'success') {
+                    mostrarAlerta('success', `
+                        <strong>Conexão estabelecida com sucesso!</strong><br>
+                        ${data.message}
+                        ${data.data && data.data.workspaces_count ? 
+                          `<br>Workspaces encontrados: ${data.data.workspaces_count}` : ''}
+                    `);
+                } else {
+                    mostrarAlerta('danger', `
+                        <strong>Falha na conexão!</strong><br>
+                        ${data.message || 'Não foi possível conectar à API Taskade.'}
+                    `);
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                btnTestarConexao.innerHTML = btnTextoOriginal;
+                btnTestarConexao.disabled = false;
+                mostrarAlerta('danger', `
+                    <strong>Erro ao testar conexão!</strong><br>
+                    ${error.message || 'Ocorreu um erro inesperado ao testar a conexão.'}
+                `);
+            });
+        });
+        
+        function mostrarAlerta(tipo, mensagem) {
+            alertaConexao.className = `alert alert-${tipo} mt-3`;
+            alertaConexao.innerHTML = mensagem;
+            alertaConexao.style.display = 'block';
+            
+            // Scroll para o alerta
+            alertaConexao.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+</script>
+{% endblock %}

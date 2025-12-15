@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Análise IA - Legal Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: #2d3748;
+        border: 1px solid #4a5568;
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        border-color: #667eea;
+    }
+    
+    .result-container {
+        background: #1a202c;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .badge-analysis {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+    }
+    
+    .confidence-meter {
+        height: 25px;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #2d3748;
+    }
+    
+    .json-viewer {
+        background: #1a1a1a;
+        border-radius: 8px;
+        padding: 1rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.875rem;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #4a5568;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header da Análise -->
+    <div class="analysis-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-brain me-2"></i>Detalhes da Análise IA
+                </h2>
+                <p class="mb-1">
+                    <strong>Processo:</strong> {{ analise.numero_cnj }}
+                </p>
+                <p class="mb-0">
+                    <strong>Cliente:</strong> {{ analise.cliente }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="badge-analysis bg-primary">
+                    {{ analise.tipo_analise.title() }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas da Análise -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-robot fa-2x text-info mb-2"></i>
+                    <h6 class="text-white">Modelo IA</h6>
+                    <p class="mb-0 text-uppercase">{{ analise.modelo_ia }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x text-success mb-2"></i>
+                    <h6 class="text-white">Confiança</h6>
+                    <div class="confidence-meter">
+                        <div class="progress-bar 
+                            {% if analise.confianca >= 0.8 %}bg-success
+                            {% elif analise.confianca >= 0.6 %}bg-warning
+                            {% else %}bg-danger{% endif %}"
+                            style="width: {{ analise.confianca * 100 }}%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            {{ "%.0f"|format(analise.confianca * 100) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h6 class="text-white">Tempo</h6>
+                    <p class="mb-0">
+                        {% if analise.tempo_processamento is not none and analise.tempo_processamento >= 0 %}
+                            {{ analise.tempo_processamento }}s
+                        {% else %}
+                            < 1s
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar fa-2x text-primary mb-2"></i>
+                    <h6 class="text-white">Data</h6>
+                    <p class="mb-0">
+                        {{ analise.criado_em.strftime('%d/%m/%Y') if analise.criado_em else 'N/A' }}
+                    </p>
+                    <small class="text-muted">
+                        {{ analise.criado_em.strftime('%H:%M') if analise.criado_em else '' }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações do Processo -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-folder me-2"></i>Informações do Processo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Área Jurídica:</strong><br>
+                            <span class="badge bg-secondary">{{ analise.area_juridica }}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Estado:</strong><br>
+                            {{ analise.tribunal or 'Não informado' }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Responsável:</strong><br>
+                            {{ analise.username }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultado da Análise -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Resultado da Análise
+                    </h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="copiarResultado()">
+                            <i class="fas fa-copy me-1"></i>Copiar
+                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportarJSON()">
+                                    <i class="fas fa-code me-2"></i>JSON Original
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportarDOCX()">
+                                    <i class="fas fa-file-word me-2"></i>DOCX Organizado
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportarPDF()">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF Completo
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="resultado-formatado" class="p-3" style="min-height: 200px;">
+                        <!-- Resultado formatado será inserido aqui via JavaScript -->
+                        <div class="d-flex justify-content-center align-items-center" style="min-height: 150px;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando resultado...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleVisualizacao()" id="btn-toggle">
+                            <i class="fas fa-code me-1"></i>Ver JSON Original
+                        </button>
+                    </div>
+                    <div id="resultado-json" class="mt-3" style="display: none;">
+                        {% if analise.resultado_json %}
+                        <pre class="bg-light p-3 rounded" style="white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; line-height: 1.6;">{{ analise.resultado_json|safe }}</pre>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h5>Resultado não disponível</h5>
+                            <p class="text-muted">O resultado desta análise não está disponível.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('historico_analises_geral') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i>Voltar ao Histórico
+            </a>
+            <button class="btn btn-danger" onclick="excluirAnalise({{ analise.id }}, '{{ analise.numero_cnj }}')">
+                <i class="fas fa-trash me-1"></i>Excluir Análise
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados do resultado (com proteção anti-erro)
+let resultadoData;
+try {
+    resultadoData = {{ analise.resultado | tojson | safe }};
+    if (!resultadoData || resultadoData === null || resultadoData === 'undefined') {
+        resultadoData = {erro: 'Dados não disponíveis'};
+    }
+} catch (e) {
+    console.error('Erro ao carregar dados:', e);
+    resultadoData = {erro: 'Erro ao carregar resultado'};
+}
+let visualizacaoAtual = 'formatado'; // 'formatado' ou 'json'
+
+// Função para formatar o resultado em texto organizado
+function formatarResultado(data) {
+    let html = '';
+    
+    if (typeof data === 'object' && data !== null) {
+        if (Array.isArray(data)) {
+            data.forEach((item, index) => {
+                html += `<div class="mb-4">
+                    <h4 class="text-primary border-bottom pb-2"><i class="fas fa-list-ol me-2"></i>Item ${index + 1}</h4>
+                    <div class="ps-3">${formatarConteudo(item)}</div>
+                </div>`;
+            });
+        } else {
+            for (const [key, value] of Object.entries(data)) {
+                const titulo = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                html += `<div class="mb-4">
+                    <h4 class="text-primary border-bottom pb-2">
+                        <i class="fas fa-bookmark me-2"></i>${titulo}
+                    </h4>
+                    <div class="ps-3">${formatarConteudo(value)}</div>
+                </div>`;
+            }
+        }
+    } else {
+        html = `<div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            ${String(data)}
+        </div>`;
+    }
+    
+    return html;
+}
+
+function formatarConteudo(conteudo) {
+    if (typeof conteudo === 'object' && conteudo !== null) {
+        if (Array.isArray(conteudo)) {
+            return conteudo.map(item => 
+                `<div class="mb-2 p-2 bg-light rounded">
+                    <i class="fas fa-chevron-right me-2 text-primary"></i>
+                    ${String(item)}
+                </div>`
+            ).join('');
+        } else {
+            let subHtml = '';
+            for (const [subKey, subValue] of Object.entries(conteudo)) {
+                const subTitulo = subKey.charAt(0).toUpperCase() + subKey.slice(1).replace(/_/g, ' ');
+                subHtml += `<div class="mb-4 border-start border-primary border-3 ps-3">
+                    <h6 class="text-primary fw-bold mb-2">
+                        <i class="fas fa-info-circle me-2"></i>${subTitulo}
+                    </h6>
+                    <div class="text-dark">${formatarConteudo(subValue)}</div>
+                </div>`;
+            }
+            return subHtml;
+        }
+    }
+    
+    // Para texto simples, melhor formatação
+    const texto = String(conteudo);
+    
+    // Se o texto tem quebras de linha, preservar a formatação
+    if (texto.includes('\n')) {
+        return `<div class="bg-light p-3 rounded" style="white-space: pre-line; line-height: 1.8;">${texto}</div>`;
+    }
+    
+    // Para textos longos, quebrar em parágrafos inteligentemente
+    if (texto.length > 200) {
+        const paragrafos = texto.split(/\n\n|\. (?=[A-Z][a-z])|\d+\.\s+/)
+            .filter(paragrafo => paragrafo.trim().length > 10)
+            .map(paragrafo => paragrafo.trim());
+            
+        if (paragrafos.length > 1) {
+            return paragrafos
+                .map(paragrafo => `<p class="mb-3 text-justify bg-light p-2 rounded">${paragrafo}</p>`)
+                .join('');
+        }
+    }
+    
+    return `<div class="p-3 bg-light rounded mb-2" style="line-height: 1.7;">${texto}</div>`;
+}
+
+// Inicializar a visualização formatada com segurança
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Iniciando carregamento do resultado formatado...');
+    const container = document.getElementById('resultado-formatado');
+    
+    if (container) {
+        try {
+            console.log('📊 Dados recebidos:', resultadoData);
+            
+            if (resultadoData && typeof resultadoData === 'object' && Object.keys(resultadoData).length > 0) {
+                const resultadoFormatado = formatarResultado(resultadoData);
+                container.innerHTML = resultadoFormatado;
+                console.log('✅ Resultado formatado com sucesso');
+            } else {
+                // Tentar usar o conteúdo JSON se disponível
+                const jsonContent = document.querySelector('#resultado-json pre');
+                if (jsonContent && jsonContent.textContent.trim()) {
+                    try {
+                        const parsedJson = JSON.parse(jsonContent.textContent);
+                        container.innerHTML = formatarResultado(parsedJson);
+                        console.log('✅ Resultado formatado a partir do JSON');
+                    } catch (parseError) {
+                        container.innerHTML = `<div class="alert alert-info">
+                            <i class="fas fa-file-text me-2"></i>
+                            <h5>Resultado da Análise</h5>
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${jsonContent.textContent}</div>
+                        </div>`;
+                        console.log('✅ Resultado exibido como texto');
+                    }
+                } else {
+                    container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Dados não disponíveis para formatação</div>';
+                }
+            }
+        } catch (e) {
+            console.error('❌ Erro ao formatar resultado:', e);
+            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Erro ao carregar resultado: ' + e.message + '</div>';
+        }
+    }
+});
+
+function toggleVisualizacao() {
+    const btnToggle = document.getElementById('btn-toggle');
+    const resultadoFormatado = document.getElementById('resultado-formatado');
+    const resultadoJson = document.getElementById('resultado-json');
+    
+    if (visualizacaoAtual === 'formatado') {
+        // Mostrar JSON
+        resultadoFormatado.style.display = 'none';
+        resultadoJson.style.display = 'block';
+        btnToggle.innerHTML = '<i class="fas fa-eye me-1"></i>Ver Formatado';
+        visualizacaoAtual = 'json';
+    } else {
+        // Mostrar formatado
+        resultadoFormatado.style.display = 'block';
+        resultadoJson.style.display = 'none';
+        btnToggle.innerHTML = '<i class="fas fa-code me-1"></i>Ver JSON Original';
+        visualizacaoAtual = 'formatado';
+    }
+}
+
+function copiarResultado() {
+    let texto = '';
+    if (visualizacaoAtual === 'formatado') {
+        texto = document.getElementById('resultado-formatado').innerText;
+    } else {
+        texto = document.getElementById('resultado-json').innerText;
+    }
+    
+    navigator.clipboard.writeText(texto).then(() => {
+        showNotification('Resultado copiado para a área de transferência!', 'success');
+    }).catch(() => {
+        showNotification('Erro ao copiar resultado', 'error');
+    });
+}
+
+function exportarJSON() {
+    window.location.href = `/processos-juridicos/analise-ia/{{ analise.id }}/exportar/json`;
+}
+
+function exportarDOCX() {
+    showNotification('Gerando documento DOCX organizado...', 'info');
+    window.location.href = `/processos-juridicos/analise-ia/{{ analise.id }}/exportar/docx`;
+}
+
+function exportarPDF() {
+    showNotification('Gerando relatório PDF completo...', 'info');
+    window.location.href = `/processos-juridicos/analise-ia/{{ analise.id }}/exportar/pdf`;
+}
+
+function excluirAnalise(analiseId, numeroProcesso) {
+    if (confirm(`Tem certeza que deseja excluir a análise do processo ${numeroProcesso}?\n\nEsta ação não pode ser desfeita.`)) {
+        fetch(`/processos-juridicos/analise-ia/${analiseId}/excluir`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Análise excluída com sucesso!', 'success');
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("historico_analises_geral") }}';
+                }, 1000);
+            } else {
+                showNotification('Erro ao excluir análise: ' + (data.message || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showNotification('Erro ao excluir análise', 'error');
+        });
+    }
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Formatar JSON se existir
+document.addEventListener('DOMContentLoaded', function() {
+    const jsonViewer = document.getElementById('resultado-formatado');
+    if (jsonViewer) {
+        try {
+            const content = jsonViewer.textContent;
+            if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+                const parsed = JSON.parse(content);
+                jsonViewer.innerHTML = '<pre>' + JSON.stringify(parsed, null, 2) + '</pre>';
+            }
+        } catch (e) {
+            // Manter conteúdo original se não for JSON válido
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends "layout.html" %}
+
+{% block title %}Criar Novo Agente{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('listar_agentes') }}">Agentes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Criar Novo</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="border-bottom pb-2">Criar Novo Agente</h2>
+            <p class="text-muted">
+                Configure um novo agente personalizado baseado em templates predefinidos.
+                Personalize prompts, configurações de processamento e comportamento do agente.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> Configuração do Agente</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('criar_agente') }}">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome do Agente <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                            <div class="form-text">Escolha um nome descritivo para identificar este agente.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                            <div class="form-text">Descreva brevemente o propósito e funcionalidades deste agente.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="template_id" class="form-label">Template Base <span class="text-danger">*</span></label>
+                            <select class="form-select" id="template_id" name="template_id" required>
+                                <option value="" selected disabled>Selecione um template...</option>
+                                {% for categoria, templates in templates_por_categoria.items() %}
+                                <optgroup label="{{ categoria }}">
+                                    {% for template in templates %}
+                                    <option value="{{ template.id }}">{{ template.nome }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                O template define o comportamento base do agente.
+                                <a href="{{ url_for('listar_templates') }}" target="_blank">Ver todos templates</a>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prompt_sistema" class="form-label">Prompt do Sistema</label>
+                            <textarea class="form-control" id="prompt_sistema" name="prompt_sistema" rows="5"></textarea>
+                            <div class="form-text">
+                                Instruções para o modelo de IA que definem como o agente deve se comportar.
+                                Deixe em branco para usar o padrão do template.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prompt_usuario" class="form-label">Prompt do Usuário</label>
+                            <textarea class="form-control" id="prompt_usuario" name="prompt_usuario" rows="5"></textarea>
+                            <div class="form-text">
+                                Instruções adicionais que serão enviadas como parte da mensagem do usuário.
+                                Deixe em branco para usar o padrão do template.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ativo" name="ativo" checked>
+                                <label class="form-check-label" for="ativo">Ativar Agente</label>
+                            </div>
+                            <div class="form-text">Agentes inativos não estarão disponíveis para uso.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('listar_agentes') }}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Salvar Agente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4 sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Informações do Template</h5>
+                </div>
+                <div class="card-body" id="templateInfo">
+                    <div class="alert alert-info">
+                        Selecione um template para ver suas informações aqui.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Dicas</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong><i class="fas fa-check-circle text-success me-2"></i> Nomes claros:</strong> 
+                            Use nomes descritivos que indiquem a função do agente.
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="fas fa-check-circle text-success me-2"></i> Prompts personalizados:</strong> 
+                            Adicione contexto específico nos prompts para melhorar o desempenho.
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="fas fa-check-circle text-success me-2"></i> Configurações avançadas:</strong> 
+                            Ajuste parâmetros como temperatura para controlar criatividade vs. precisão.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateSelect = document.getElementById('template_id');
+    const templateInfo = document.getElementById('templateInfo');
+    
+    // Dados dos templates (seriam carregados do servidor)
+    const templatesData = {
+        {% for template in todos_templates %}
+        "{{ template.id }}": {
+            "nome": "{{ template.nome }}",
+            "descricao": "{{ template.descricao }}",
+            "categoria": "{{ template.categoria }}",
+            "prompt_sistema": `{{ template.prompt_sistema|e }}`,  <!-- Alterado: |safe removido por segurança -->
+            "prompt_usuario": `{{ template.prompt_usuario|e }}`  <!-- Alterado: |safe removido por segurança -->
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    templateSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        
+        if (selectedId && templatesData[selectedId]) {
+            const template = templatesData[selectedId];
+            
+            // Preencher informações do template no painel lateral
+            templateInfo.innerHTML = `
+                <h5>${template.nome}</h5>
+                <div class="mb-3">
+                    <span class="badge bg-primary">${template.categoria}</span>
+                </div>
+                <p>${template.descricao}</p>
+                <hr>
+                <div class="mb-3">
+                    <strong>Prompt do Sistema:</strong>
+                    <div class="alert alert-secondary mt-2">
+                        <pre style="white-space: pre-wrap;">${template.prompt_sistema || 'Não definido'}</pre>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong>Prompt do Usuário:</strong>
+                    <div class="alert alert-secondary mt-2">
+                        <pre style="white-space: pre-wrap;">${template.prompt_usuario || 'Não definido'}</pre>
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnUseTemplate">
+                        <i class="fas fa-sync-alt me-1"></i> Usar Prompts do Template
+                    </button>
+                </div>
+            `;
+            
+            // Adicionar evento para o botão de usar prompts do template
+            document.getElementById('btnUseTemplate').addEventListener('click', function() {
+                document.getElementById('prompt_sistema').value = template.prompt_sistema || '';
+                document.getElementById('prompt_usuario').value = template.prompt_usuario || '';
+            });
+        } else {
+            templateInfo.innerHTML = `
+                <div class="alert alert-info">
+                    Selecione um template para ver suas informações aqui.
+                </div>
+            `;
+        }
+    });
+});
+</script>
+{% endblock %}

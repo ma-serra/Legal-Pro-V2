@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+
+{% block title %}Legal Design Pro - Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .legal-design-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .template-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .template-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 5px 15px rgba(0,123,255,0.15);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+    
+    .ai-provider-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .visual-element-preview {
+        display: inline-block;
+        padding: 8px 16px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        margin: 5px;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    
+    .legal-design-icon {
+        font-size: 3rem;
+        color: #007bff;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #007bff, #28a745);
+    }
+    
+    .piece-status {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-rascunho { background: #fff3cd; color: #856404; }
+    .status-revisao { background: #cce5ff; color: #004085; }
+    .status-concluida { background: #d1edff; color: #155724; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Header Principal -->
+    <div class="legal-design-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-palette me-3"></i>Legal Design Pro
+                </h1>
+                <p class="lead mb-4">
+                    Sistema completo de criação de peças jurídicas com Legal Design, Legal UX e Acessibilidade Jurídica
+                </p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="visual-element-preview">
+                            <i class="fas fa-brain me-2"></i>IA Jurídica Integrada
+                        </div>
+                        <div class="visual-element-preview">
+                            <i class="fas fa-eye me-2"></i>Legal UX
+                        </div>
+                        <div class="visual-element-preview">
+                            <i class="fas fa-universal-access me-2"></i>Acessibilidade
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="visual-element-preview">
+                            <i class="fas fa-paint-brush me-2"></i>Design Visual
+                        </div>
+                        <div class="visual-element-preview">
+                            <i class="fas fa-file-export me-2"></i>Multi-formato
+                        </div>
+                        <div class="visual-element-preview">
+                            <i class="fas fa-users me-2"></i>Personas Jurídicas
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="legal-design-icon fas fa-gavel"></i>
+                <div class="mt-3">
+                    <a href="{{ url_for('legal_design_pro_v2.editor') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>Nova Peça Jurídica
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_pieces }}</div>
+            <div class="text-muted">Peças Criadas</div>
+            <div class="progress mt-2">
+                <div class="progress-bar-custom" style="width: 100%"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.completed_pieces }}</div>
+            <div class="text-muted">Peças Concluídas</div>
+            <div class="progress mt-2">
+                <div class="progress-bar bg-success" style="width: {% if stats.total_pieces > 0 %}{{ (stats.completed_pieces / stats.total_pieces * 100)|round }}{% else %}0{% endif %}%"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.recent_pieces }}</div>
+            <div class="text-muted">Esta Semana</div>
+            <div class="progress mt-2">
+                <div class="progress-bar bg-info" style="width: 85%"></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">99</div>
+            <div class="text-muted">Templates Disponíveis</div>
+            <div class="progress mt-2">
+                <div class="progress-bar bg-warning" style="width: 95%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Ações Rápidas -->
+        <div class="col-lg-4">
+            <div class="feature-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-magic text-primary me-2"></i>Criação Rápida
+                </h5>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('legal_design_pro_v2.editor') }}" class="btn btn-primary">
+                        <i class="fas fa-paint-brush me-2"></i>Editor Visual Avançado
+                    </a>
+                    
+                    <button class="btn btn-outline-primary" onclick="openAIGenerator()">
+                        <i class="fas fa-robot me-2"></i>Geração com IA
+                    </button>
+                    
+                    <a href="{{ url_for('legal_design_pro_v2.templates_library') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-layer-group me-2"></i>Biblioteca de Templates
+                    </a>
+                </div>
+
+                <h6 class="mt-4 mb-3">Provedores de IA Disponíveis:</h6>
+                {% for provider in ai_providers %}
+                <div class="ai-provider-card mb-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-brain me-2"></i>
+                        <div>
+                            <strong>{{ provider.name }}</strong>
+                            <br><small>{{ provider.description }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Nenhum provedor de IA configurado
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Templates por Área -->
+        <div class="col-lg-5">
+            <div class="feature-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-layer-group text-success me-2"></i>Templates Especializados
+                </h5>
+                
+                <div class="row">
+                    {% for area, templates in templates_por_area.items() %}
+                    <div class="col-12 mb-3">
+                        <div class="template-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ area }}</h6>
+                                    <small class="text-muted">{{ templates|length }} templates disponíveis</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showAreaTemplates('{{ area }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-2">
+                                {% for template in templates[:3] %}
+                                <span class="badge bg-light text-dark me-1">{{ template.tipo_documento }}</span>
+                                {% endfor %}
+                                {% if templates|length > 3 %}
+                                <span class="badge bg-secondary">+{{ templates|length - 3 }} mais</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Peças Recentes -->
+        <div class="col-lg-3">
+            <div class="feature-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-clock text-info me-2"></i>Peças Recentes
+                </h5>
+                
+                {% for piece in user_pieces %}
+                <div class="template-card">
+                    <h6 class="mb-1">{{ piece.titulo }}</h6>
+                    <small class="text-muted">{{ piece.area_juridica }}</small>
+                    <div class="mt-2">
+                        <span class="piece-status status-{{ piece.status }}">
+                            {{ piece.status.title() }}
+                        </span>
+                        <small class="text-muted ms-2">
+                            {{ piece.updated_at.strftime('%d/%m/%Y') if piece.updated_at else '' }}
+                        </small>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ url_for('legal_design_pro_v2.editor', piece_id=piece.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-file-plus fa-3x mb-3"></i>
+                    <p>Nenhuma peça criada ainda</p>
+                    <a href="{{ url_for('legal_design_pro_v2.editor') }}" class="btn btn-sm btn-primary">
+                        Criar primeira peça
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Features do Legal Design -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-star text-warning me-2"></i>Recursos Avançados do Legal Design Pro
+            </h3>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="feature-card text-center">
+                <i class="fas fa-mouse-pointer text-primary" style="font-size: 2.5rem;"></i>
+                <h5 class="mt-3">Drag & Drop</h5>
+                <p class="text-muted">Editor visual com arrastar e soltar elementos jurídicos</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="feature-card text-center">
+                <i class="fas fa-users text-success" style="font-size: 2.5rem;"></i>
+                <h5 class="mt-3">Personas Jurídicas</h5>
+                <p class="text-muted">Adaptação visual para Juiz, Cliente e Advogado</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="feature-card text-center">
+                <i class="fas fa-file-export text-info" style="font-size: 2.5rem;"></i>
+                <h5 class="mt-3">Multi-formato</h5>
+                <p class="text-muted">Exportação em DOCX, PDF e HTML otimizados</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="feature-card text-center">
+                <i class="fas fa-universal-access text-warning" style="font-size: 2.5rem;"></i>
+                <h5 class="mt-3">Acessibilidade</h5>
+                <p class="text-muted">Contraste elevado e linguagem simplificada</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Geração com IA -->
+<div class="modal fade" id="aiGeneratorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2"></i>Geração Automática com IA
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="aiGeneratorForm">
+                    <div class="mb-3">
+                        <label for="aiProvider" class="form-label">Provedor de IA</label>
+                        <select class="form-control" id="aiProvider" required>
+                            {% for provider in ai_providers %}
+                            <option value="{{ provider.id }}" data-model="{{ provider.model }}">
+                                {{ provider.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="templateType" class="form-label">Tipo de Peça</label>
+                        <select class="form-control" id="templateType" required>
+                            <option value="Petição Inicial">Petição Inicial</option>
+                            <option value="Contestação">Contestação</option>
+                            <option value="Recurso">Recurso</option>
+                            <option value="Acordo">Acordo</option>
+                            <option value="Contrato">Contrato</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="areaJuridica" class="form-label">Área Jurídica</label>
+                        <select class="form-control" id="areaJuridica" required>
+                            {% for area in templates_por_area.keys() %}
+                            <option value="{{ area }}">{{ area }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="caseDescription" class="form-label">Descrição do Caso</label>
+                        <textarea class="form-control" id="caseDescription" rows="5" 
+                                  placeholder="Descreva o caso em linguagem natural..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="parties" class="form-label">Partes Envolvidas</label>
+                        <input type="text" class="form-control" id="parties" 
+                               placeholder="Ex: João Silva vs. Empresa XYZ">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="generateWithAI()">
+                    <i class="fas fa-magic me-2"></i>Gerar Peça
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Templates por Área -->
+<div class="modal fade" id="areaTemplatesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="areaTemplatesTitle">Templates da Área</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="areaTemplatesContent">
+                <!-- Conteúdo carregado dinamicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openAIGenerator() {
+    {% if ai_providers %}
+    const modal = new bootstrap.Modal(document.getElementById('aiGeneratorModal'));
+    modal.show();
+    {% else %}
+    alert('Nenhum provedor de IA está configurado. Configure as chaves de API necessárias.');
+    {% endif %}
+}
+
+function generateWithAI() {
+    const form = document.getElementById('aiGeneratorForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const provider = document.getElementById('aiProvider').value;
+    const model = document.getElementById('aiProvider').selectedOptions[0].dataset.model;
+    const templateType = document.getElementById('templateType').value;
+    const areaJuridica = document.getElementById('areaJuridica').value;
+    const caseDescription = document.getElementById('caseDescription').value;
+    const parties = document.getElementById('parties').value;
+    
+    const caseData = {
+        area_juridica: areaJuridica,
+        descricao_caso: caseDescription,
+        partes: parties,
+        tipo_documento: templateType
+    };
+    
+    // Mostrar loading
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando...';
+    button.disabled = true;
+    
+    fetch('/legal-design-pro/generate-ai', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            provider: provider,
+            model: model,
+            case_data: caseData,
+            template_type: templateType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        if (data.success) {
+            // Fechar modal e redirecionar para editor
+            bootstrap.Modal.getInstance(document.getElementById('aiGeneratorModal')).hide();
+            window.location.href = `/legal-design-pro/editor?piece_id=${data.piece_id}`;
+        } else {
+            alert('Erro na geração: ' + data.error);
+        }
+    })
+    .catch(error => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        alert('Erro na requisição: ' + error);
+    });
+}
+
+function showAreaTemplates(area) {
+    const templates = {{ templates_por_area|tojson }};
+    const areaTemplates = templates[area] || [];
+    
+    document.getElementById('areaTemplatesTitle').textContent = `Templates - ${area}`;
+    
+    let content = '';
+    areaTemplates.forEach(template => {
+        content += `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">${template.nome}</h6>
+                    <p class="card-text">${template.descricao}</p>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">${template.tipo_documento}</span>
+                        <span class="badge bg-secondary">Nível ${template.nivel_complexidade}</span>
+                    </div>
+                    <a href="/legal-design-pro/editor?template_id=${template.id}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit me-1"></i>Usar Template
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (content === '') {
+        content = '<p class="text-muted text-center">Nenhum template encontrado para esta área.</p>';
+    }
+    
+    document.getElementById('areaTemplatesContent').innerHTML = content;
+    
+    const modal = new bootstrap.Modal(document.getElementById('areaTemplatesModal'));
+    modal.show();
+}
+
+// Animações de entrada
+document.addEventListener('DOMContentLoaded', function() {
+    // Animar estatísticas
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = finalValue / 50;
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                stat.textContent = finalValue;
+                clearInterval(timer);
+            } else {
+                stat.textContent = Math.floor(currentValue);
+            }
+        }, 30);
+    });
+});
+</script>
+{% endblock %}

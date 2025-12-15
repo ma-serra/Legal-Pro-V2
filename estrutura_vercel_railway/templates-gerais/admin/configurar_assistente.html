@@ -1,0 +1,526 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurar Assistente Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark text-light border-0 shadow-lg">
+                <div class="card-header bg-primary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Configurar Assistente: {{ assistente.nome }}
+                        </h4>
+                        <a href="{{ url_for('juridico_especialistas_init_app') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" id="assistenteForm">
+                        {{ csrf_token() }}
+                        
+                        <!-- Seção 1: Informações Básicas -->
+                        <div class="section-header">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Informações Básicas
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="nome" class="form-label text-light">Nome do Assistente</label>
+                                <input type="text" class="form-control bg-secondary text-light border-0" 
+                                       id="nome" name="nome" value="{{ assistente.nome or '' }}" required>
+                                <small class="text-muted">Nome público do assistente</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="area_juridica" class="form-label text-light">Área Jurídica</label>
+                                <select class="form-select bg-secondary text-light border-0" id="area_juridica" name="area_juridica" required>
+                                    <option value="">Selecione uma área</option>
+                                    <option value="criminal" {% if assistente.area_juridica == 'criminal' %}selected{% endif %}>Direito Penal</option>
+                                    <option value="civil" {% if assistente.area_juridica == 'civil' %}selected{% endif %}>Direito Civil</option>
+                                    <option value="trabalhista" {% if assistente.area_juridica == 'trabalhista' %}selected{% endif %}>Direito Trabalhista</option>
+                                    <option value="empresarial" {% if assistente.area_juridica == 'empresarial' %}selected{% endif %}>Direito Empresarial</option>
+                                    <option value="tributario" {% if assistente.area_juridica == 'tributario' %}selected{% endif %}>Direito Tributário</option>
+                                    <option value="consumidor" {% if assistente.area_juridica == 'consumidor' %}selected{% endif %}>Direito do Consumidor</option>
+                                    <option value="previdenciario" {% if assistente.area_juridica == 'previdenciario' %}selected{% endif %}>Direito Previdenciário</option>
+                                </select>
+                                <small class="text-muted">Especialidade principal</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="descricao" class="form-label text-light">Descrição Detalhada</label>
+                                <textarea class="form-control bg-secondary text-light border-0" 
+                                          id="descricao" name="descricao" rows="3" required>{{ assistente.descricao or '' }}</textarea>
+                                <small class="text-muted">Descrição completa das funcionalidades e expertise</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 2: Configurações de IA -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-robot me-2"></i>
+                                Configurações de IA
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="modelo_ai" class="form-label text-light">Modelo de IA</label>
+                                <select class="form-select bg-secondary text-light border-0" id="modelo_ai" name="modelo_ai" required>
+                                    <option value="">Selecione um modelo</option>
+                                    {% for modelo in modelos_disponiveis %}
+                                    <option value="{{ modelo }}" {% if assistente.modelo_ai == modelo %}selected{% endif %}>{{ modelo }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Modelo base para processamento</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="temperatura" class="form-label text-light">Temperatura</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="temperatura" name="temperatura" step="0.1" min="0" max="2" 
+                                       value="{{ assistente.temperatura or 0.7 }}" required>
+                                <small class="text-muted">0.0-2.0: Criatividade das respostas</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="max_tokens" class="form-label text-light">Máximo de Tokens</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="max_tokens" name="max_tokens" min="100" max="8000" step="100" 
+                                       value="{{ assistente.max_tokens or 2000 }}" required>
+                                <small class="text-muted">100-8000: Tamanho da resposta</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="top_p" class="form-label text-light">Top-P (Nucleus Sampling)</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="top_p" name="top_p" step="0.01" min="0" max="1" 
+                                       value="{{ assistente.top_p or 0.95 }}" required>
+                                <small class="text-muted">0.0-1.0: Diversidade vocabular</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="top_k" class="form-label text-light">Top-K</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="top_k" name="top_k" min="1" max="100" 
+                                       value="{{ assistente.top_k or 50 }}" required>
+                                <small class="text-muted">1-100: Limitação de vocabulário</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 3: Configurações de Fragmentação -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-info mb-3">
+                                <i class="fas fa-puzzle-piece me-2"></i>
+                                Configurações de Fragmentação
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="modo_fragmentacao" class="form-label text-light">Modo de Fragmentação</label>
+                                <select class="form-select bg-secondary text-light border-0" id="modo_fragmentacao" name="modo_fragmentacao" required>
+                                    <option value="geral" {% if assistente.modo_fragmentacao == 'geral' %}selected{% endif %}>Geral</option>
+                                    <option value="paragrafo" {% if assistente.modo_fragmentacao == 'paragrafo' %}selected{% endif %}>Parágrafo</option>
+                                    <option value="doc_completo" {% if assistente.modo_fragmentacao == 'doc_completo' %}selected{% endif %}>Documento Completo</option>
+                                </select>
+                                <small class="text-muted">Estratégia de divisão do texto</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="identificador_segmento" class="form-label text-light">Identificador de Segmento</label>
+                                <input type="text" class="form-control bg-secondary text-light border-0" 
+                                       id="identificador_segmento" name="identificador_segmento" 
+                                       value="{{ assistente.identificador_segmento or '\n\n' }}" required>
+                                <small class="text-muted">Delimitador para divisão</small>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="comprimento_max_fragmento" class="form-label text-light">Tamanho Máximo (chars)</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="comprimento_max_fragmento" name="comprimento_max_fragmento" 
+                                       value="{{ assistente.comprimento_max_fragmento or 1024 }}" 
+                                       min="256" max="4096" step="64" required>
+                                <small class="text-muted">256-4096: Tamanho do fragmento</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label for="sobreposicao_blocos" class="form-label text-light">Sobreposição (chars)</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="sobreposicao_blocos" name="sobreposicao_blocos" 
+                                       value="{{ assistente.sobreposicao_blocos or 50 }}" 
+                                       min="0" max="200" step="10" required>
+                                <small class="text-muted">0-200: Sobreposição entre blocos</small>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="comprimento_fragmento_filho" class="form-label text-light">Fragmento Filho (chars)</label>
+                                <input type="number" class="form-control bg-secondary text-light border-0" 
+                                       id="comprimento_fragmento_filho" name="comprimento_fragmento_filho" 
+                                       value="{{ assistente.comprimento_fragmento_filho or 512 }}" 
+                                       min="128" max="1024" step="32" required>
+                                <small class="text-muted">128-1024: Para modo doc completo</small>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="filho_pedaco_recuperacao" class="form-label text-light">Filho-pedaço para recuperação</label>
+                                <input type="text" class="form-control bg-secondary text-light border-0" 
+                                       id="filho_pedaco_recuperacao" name="filho_pedaco_recuperacao" 
+                                       value="{{ assistente.filho_pedaco_recuperacao or '\n' }}" required>
+                                <small class="text-muted">Delimitador para recuperação</small>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="preprocessamento_texto" name="preprocessamento_texto" 
+                                           {% if assistente.preprocessamento_texto %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="preprocessamento_texto">
+                                        Pré-processamento de Texto
+                                    </label>
+                                    <small class="d-block text-muted">Remove espaços, URLs e emails</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 4: Personalidades Jurídicas -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-warning mb-3">
+                                <i class="fas fa-user-tie me-2"></i>
+                                Personalidades Jurídicas
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="personalidade_advogado" name="personalidades" value="advogado"
+                                           {% if 'advogado' in (assistente.personalidades_ativas or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="personalidade_advogado">
+                                        <i class="fas fa-briefcase me-2"></i>Advogado(a)
+                                    </label>
+                                    <small class="d-block text-muted">Combativo, estratégico, focado em defender interesses</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="personalidade_juiz" name="personalidades" value="juiz"
+                                           {% if 'juiz' in (assistente.personalidades_ativas or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="personalidade_juiz">
+                                        <i class="fas fa-gavel me-2"></i>Juiz(a)
+                                    </label>
+                                    <small class="d-block text-muted">Imparcial, técnico, neutro</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="personalidade_professor" name="personalidades" value="professor"
+                                           {% if 'professor' in (assistente.personalidades_ativas or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="personalidade_professor">
+                                        <i class="fas fa-chalkboard-teacher me-2"></i>Professor(a)
+                                    </label>
+                                    <small class="d-block text-muted">Didático, explicativo, reflexivo</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="personalidade_promotor" name="personalidades" value="promotor"
+                                           {% if 'promotor' in (assistente.personalidades_ativas or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="personalidade_promotor">
+                                        <i class="fas fa-balance-scale me-2"></i>Promotor(a)
+                                    </label>
+                                    <small class="d-block text-muted">Técnico, protetor do interesse público</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 5: Tons de Voz -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-cyan mb-3">
+                                <i class="fas fa-volume-up me-2"></i>
+                                Tons de Voz
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="tom_objetivo" name="tons_voz" value="objetivo"
+                                           {% if 'objetivo' in (assistente.tons_voz_ativos or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="tom_objetivo">
+                                        <i class="fas fa-bullseye me-2"></i>Tom Objetivo
+                                    </label>
+                                    <small class="d-block text-muted">Direto, sem rodeios, funcional</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="tom_sistematico" name="tons_voz" value="sistematico"
+                                           {% if 'sistematico' in (assistente.tons_voz_ativos or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="tom_sistematico">
+                                        <i class="fas fa-list-ol me-2"></i>Tom Sistemático
+                                    </label>
+                                    <small class="d-block text-muted">Estruturado, formal, técnico</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="tom_didatico" name="tons_voz" value="didatico"
+                                           {% if 'didatico' in (assistente.tons_voz_ativos or []) %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="tom_didatico">
+                                        <i class="fas fa-graduation-cap me-2"></i>Tom Didático
+                                    </label>
+                                    <small class="d-block text-muted">Educativo, explicativo, acessível</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 6: Template de Prompt -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-purple mb-3">
+                                <i class="fas fa-file-code me-2"></i>
+                                Template de Prompt
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="template_prompt" class="form-label text-light">Prompt do Sistema</label>
+                                <textarea class="form-control bg-secondary text-light border-0" 
+                                          id="template_prompt" name="template_prompt" rows="8">{{ assistente.template_prompt or '' }}</textarea>
+                                <small class="text-muted">Instruções específicas para o comportamento do assistente</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 7: Campos Visuais -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-secondary mb-3">
+                                <i class="fas fa-palette me-2"></i>
+                                Configurações Visuais
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="icone" class="form-label text-light">Ícone (FontAwesome)</label>
+                                <input type="text" class="form-control bg-secondary text-light border-0" 
+                                       id="icone" name="icone" value="{{ assistente.icone or 'fas fa-robot' }}" 
+                                       placeholder="fas fa-robot">
+                                <small class="text-muted">Classe CSS do ícone FontAwesome</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="cor_destaque" class="form-label text-light">Cor de Destaque</label>
+                                <input type="color" class="form-control bg-secondary border-0" 
+                                       id="cor_destaque" name="cor_destaque" 
+                                       value="{{ assistente.cor_destaque or '#0d6efd' }}">
+                                <small class="text-muted">Cor principal do assistente</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Seção 8: Status -->
+                        <div class="section-header mt-5">
+                            <h5 class="text-info mb-3">
+                                <i class="fas fa-toggle-on me-2"></i>
+                                Status e Ativação
+                            </h5>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="ativo" name="ativo" 
+                                           {% if assistente.ativo %}checked{% endif %}>
+                                    <label class="form-check-label text-light" for="ativo">
+                                        Assistente Ativo
+                                    </label>
+                                    <small class="d-block text-muted">Define se o assistente está disponível para uso</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="nivel_especializacao" class="form-label text-light">Nível de Especialização</label>
+                                <select class="form-select bg-secondary text-light border-0" id="nivel_especializacao" name="nivel_especializacao" required>
+                                    <option value="1" {% if assistente.nivel_especializacao == 1 %}selected{% endif %}>1 - Básico</option>
+                                    <option value="2" {% if assistente.nivel_especializacao == 2 %}selected{% endif %}>2 - Intermediário</option>
+                                    <option value="3" {% if assistente.nivel_especializacao == 3 %}selected{% endif %}>3 - Avançado</option>
+                                    <option value="4" {% if assistente.nivel_especializacao == 4 %}selected{% endif %}>4 - Especialista</option>
+                                    <option value="5" {% if assistente.nivel_especializacao == 5 %}selected{% endif %}>5 - Expert</option>
+                                </select>
+                                <small class="text-muted">Complexidade de análise do assistente</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Botões de Ação -->
+                        <div class="d-flex justify-content-between mt-5">
+                            <a href="{{ url_for('juridico_especialistas_init_app') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            
+                            <div>
+                                <button type="button" class="btn btn-warning me-2" id="testarConfiguracao">
+                                    <i class="fas fa-flask me-2"></i>Testar Configuração
+                                </button>
+                                
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Salvar Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Teste -->
+<div class="modal fade" id="testeModal" tabindex="-1" aria-labelledby="testeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="testeModalLabel">
+                    <i class="fas fa-flask me-2"></i>Teste de Configuração
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="perguntaTeste" class="form-label">Pergunta de Teste</label>
+                    <textarea class="form-control bg-secondary text-light border-0" 
+                              id="perguntaTeste" rows="3" 
+                              placeholder="Digite uma pergunta para testar o assistente..."></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" id="executarTeste">
+                        <i class="fas fa-play me-2"></i>Executar Teste
+                    </button>
+                </div>
+                
+                <div id="resultadoTeste" class="border rounded p-3 bg-secondary d-none">
+                    <h6 class="text-warning">Resposta do Assistente:</h6>
+                    <div id="respostaTeste"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Teste de configuração
+    document.getElementById('testarConfiguracao').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('testeModal'));
+        modal.show();
+    });
+    
+    // Executar teste
+    document.getElementById('executarTeste').addEventListener('click', function() {
+        const pergunta = document.getElementById('perguntaTeste').value;
+        if (!pergunta.trim()) {
+            alert('Por favor, digite uma pergunta para testar.');
+            return;
+        }
+        
+        // Simular resposta (em implementação real, chamaria a API)
+        const resultadoDiv = document.getElementById('resultadoTeste');
+        const respostaDiv = document.getElementById('respostaTeste');
+        
+        respostaDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando...';
+        resultadoDiv.classList.remove('d-none');
+        
+        // Simular delay da API
+        setTimeout(() => {
+            respostaDiv.innerHTML = `
+                <p><strong>Teste bem-sucedido!</strong></p>
+                <p>Configurações aplicadas corretamente. O assistente está respondendo conforme os parâmetros definidos:</p>
+                <ul>
+                    <li>Modelo: ${document.getElementById('modelo_ai').value}</li>
+                    <li>Temperatura: ${document.getElementById('temperatura').value}</li>
+                    <li>Modo de Fragmentação: ${document.getElementById('modo_fragmentacao').value}</li>
+                </ul>
+                <p class="text-success"><i class="fas fa-check me-2"></i>Teste concluído com sucesso!</p>
+            `;
+        }, 2000);
+    });
+    
+    // Validação de formulário
+    document.getElementById('assistenteForm').addEventListener('submit', function(e) {
+        const personalidades = document.querySelectorAll('input[name="personalidades"]:checked');
+        const tons = document.querySelectorAll('input[name="tons_voz"]:checked');
+        
+        if (personalidades.length === 0) {
+            e.preventDefault();
+            alert('Selecione pelo menos uma personalidade jurídica.');
+            return;
+        }
+        
+        if (tons.length === 0) {
+            e.preventDefault();
+            alert('Selecione pelo menos um tom de voz.');
+            return;
+        }
+    });
+});
+</script>
+
+<style>
+.section-header {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.text-cyan {
+    color: #17a2b8 !important;
+}
+
+.text-purple {
+    color: #c29e74 !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #495057;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+</style>
+{% endblock %}

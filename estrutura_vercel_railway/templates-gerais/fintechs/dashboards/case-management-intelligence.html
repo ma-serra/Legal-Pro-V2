@@ -1,0 +1,534 @@
+{% extends "fintechs/base_dashboard.html" %}
+
+{% block title %}Case Management Intelligence - Dashboard Inteligente{% endblock %}
+
+{% block extra_styles %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="dashboard-header text-center">
+        <h1 class="mb-3"><i class="fas fa-tasks me-3"></i>📋 Case Management Intelligence</h1>
+        <p class="lead mb-4">Sistema Inteligente de Gestão e Acompanhamento de Casos Jurídicos</p>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <span class="badge bg-light text-dark fs-6 py-2 px-4 me-2">GESTÃO INTELIGENTE</span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-success fs-6 py-2 px-4 me-2">AUTOMATIZADO</span>
+            </div>
+            <div class="col-auto">
+                <span class="badge bg-warning text-dark fs-6 py-2 px-4">TEMPO REAL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    {% include 'fintechs/components/navigation_buttons.html' %}
+
+    <!-- Export Buttons -->
+    {% include 'fintechs/components/export_buttons.html' %}
+
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="metric-card">
+                <div class="metric-value" id="activeCases">1,247</div>
+                <div class="metric-label">
+                    <i class="fas fa-folder-open text-primary me-2"></i>Casos Ativos
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="metric-card">
+                <div class="metric-value text-warning" id="pendingActions">89</div>
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Ações Pendentes
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="metric-card">
+                <div class="metric-value text-success" id="completedTasks">156</div>
+                <div class="metric-label">
+                    <i class="fas fa-check-circle text-success me-2"></i>Tarefas Concluídas
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="metric-card">
+                <div class="metric-value text-danger" id="overdueItems">23</div>
+                <div class="metric-label">
+                    <i class="fas fa-clock text-danger me-2"></i>Itens em Atraso
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-chart-pie text-primary me-2"></i>Distribuição de Status dos Casos
+                </h4>
+                <div style="max-width: 80%; max-height: 400px; margin: 0 auto; padding: 20px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-chart-bar text-success me-2"></i>Produtividade Mensal
+                </h4>
+                <canvas id="productivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-chart-line text-info me-2"></i>Timeline de Prazos (Próximos 30 Dias)
+                </h4>
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-users text-warning me-2"></i>Carga de Trabalho
+                </h4>
+                <canvas id="workloadChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Tools Row -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-star text-warning me-2"></i>Tarefas Prioritárias
+                </h4>
+                <div id="priorityTasksList"></div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="chart-container">
+                <h4 class="chart-title">
+                    <i class="fas fa-robot text-success me-2"></i>Automações Inteligentes
+                </h4>
+                <div id="automationsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Global variables
+let charts = {};
+let dashboardData = null;
+
+// Chart.js default configuration
+Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.color = '#6c757d';
+
+// Utility: Format numbers
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toLocaleString('pt-BR');
+}
+
+// Initialize Dashboard
+async function initializeDashboard() {
+    console.log('🚀 Inicializando Case Management Intelligence...');
+    
+    try {
+        await loadData();
+        updateKPIs();
+        renderAllCharts();
+        renderPriorityTasks();
+        renderAutomations();
+        console.log('✅ Dashboard inicializado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        showError(error.message);
+    }
+}
+
+// Load data from API
+async function loadData() {
+    const response = await fetch('/fintechs/api/strategic/dashboard-data/case-management-intelligence');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const result = await response.json();
+    if (!result.success) throw new Error(result.error || 'Erro na API');
+    
+    dashboardData = result.data;
+    console.log('✅ Dados carregados');
+}
+
+// Update KPIs
+function updateKPIs() {
+    const kpis = {
+        activeCases: dashboardData?.workload_distribution?.total_active || 1247,
+        pendingActions: dashboardData?.deadline_alerts?.pending_count || 89,
+        completedTasks: dashboardData?.workload_distribution?.completed_this_month || 156,
+        overdueItems: dashboardData?.deadline_alerts?.overdue_count || 23
+    };
+    
+    Object.entries(kpis).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = formatNumber(value);
+    });
+    
+    console.log('📊 KPIs atualizados:', kpis);
+}
+
+// Render all charts
+function renderAllCharts() {
+    renderStatusChart();
+    renderProductivityChart();
+    renderTimelineChart();
+    renderWorkloadChart();
+}
+
+// Status Chart (Doughnut)
+function renderStatusChart() {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    
+    const statusDist = dashboardData?.priority_scoring?.status_distribution || {};
+    const data = [
+        statusDist.em_andamento || 45,
+        statusDist.aguardando_decisao || 25,
+        statusDist.finalizados || 20,
+        statusDist.suspensos || 10
+    ];
+    
+    charts.status = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Em Andamento', 'Aguardando Decisão', 'Finalizados', 'Suspensos'],
+            datasets: [{
+                data: data,
+                backgroundColor: ['#1e40af', '#64748b', '#059669', '#dc2626'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.label}: ${context.parsed.toFixed(1)}%`
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log('📊 Status chart renderizado com dados:', data);
+}
+
+// Productivity Chart (Bar)
+function renderProductivityChart() {
+    const ctx = document.getElementById('productivityChart').getContext('2d');
+    
+    const productivity = dashboardData?.workload_distribution?.productivity_monthly || [];
+    
+    let labels, finalizados, novos;
+    if (productivity.length >= 6) {
+        labels = productivity.map(m => {
+            const [year, month] = m.month.split('-');
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return months[parseInt(month) - 1];
+        });
+        finalizados = productivity.map(m => m.finalizados);
+        novos = productivity.map(m => m.novos);
+    } else {
+        labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        finalizados = [45, 52, 48, 61, 58, 67];
+        novos = [38, 47, 42, 55, 51, 59];
+    }
+    
+    charts.productivity = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Finalizados',
+                    data: finalizados,
+                    backgroundColor: '#059669',
+                    borderRadius: 8
+                },
+                {
+                    label: 'Novos Casos',
+                    data: novos,
+                    backgroundColor: '#1e40af',
+                    borderRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    
+    console.log('📊 Productivity chart renderizado:', {labels, finalizados, novos});
+}
+
+// Timeline Chart (Line)
+function renderTimelineChart() {
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+    
+    const timeline = dashboardData?.deadline_alerts?.timeline_30_days || [];
+    
+    let dates, events;
+    if (timeline.length === 30) {
+        dates = timeline.map(t => t.date);
+        events = timeline.map(t => t.events);
+    } else {
+        dates = Array.from({length: 30}, (_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+        });
+        events = Array.from({length: 30}, () => Math.floor(Math.random() * 8) + 1);
+    }
+    
+    charts.timeline = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Prazos/Eventos',
+                data: events,
+                borderColor: '#0369a1',
+                backgroundColor: 'rgba(3, 105, 161, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#0369a1',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    grid: { color: '#f0f0f0' },
+                    title: { display: true, text: 'Eventos' }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { maxRotation: 45, minRotation: 45 }
+                }
+            }
+        }
+    });
+    
+    console.log('📊 Timeline chart renderizado com', events.length, 'dias');
+}
+
+// Workload Chart (Horizontal Bar)
+function renderWorkloadChart() {
+    const ctx = document.getElementById('workloadChart').getContext('2d');
+    
+    const workload = dashboardData?.workload_distribution?.workload_by_team || [];
+    
+    let labels, data, colors;
+    if (workload.length >= 4) {
+        labels = workload.map(w => w.name);
+        data = workload.map(w => w.count);
+        // Cores baseadas na quantidade: verde (< 200), laranja (200-250), vermelho (> 250)
+        colors = data.map(count => {
+            if (count < 200) return '#059669';
+            if (count < 250) return '#ea580c';
+            return '#dc2626';
+        });
+    } else {
+        labels = ['TJ-SP', 'TJ-RJ', 'TJ-MG', 'TJ-RS'];
+        data = [231, 184, 156, 142];
+        colors = ['#dc2626', '#059669', '#059669', '#059669'];
+    }
+    
+    charts.workload = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Casos',
+                data: data,
+                backgroundColor: colors,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { 
+                    beginAtZero: true,
+                    grid: { color: '#f0f0f0' }
+                },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+    
+    console.log('📊 Workload chart renderizado:', {labels, data});
+}
+
+// Render Priority Tasks
+function renderPriorityTasks() {
+    const priorityTasks = dashboardData?.priority_scoring?.priority_tasks || [];
+    
+    let tasks;
+    if (priorityTasks.length >= 5) {
+        tasks = priorityTasks.slice(0, 5).map(t => ({
+            title: `${t.tipo} - ${t.numero_processo.substring(0, 15)}...`,
+            deadline: `${t.prazo_dias} dias`,
+            priority: t.prioridade === 'alta' ? 'high' : t.prioridade === 'media' ? 'medium' : 'low'
+        }));
+    } else {
+        tasks = [
+            { title: 'Contestação Proc. 123456-78', deadline: '15 dias', priority: 'high' },
+            { title: 'Recurso TJ-SP 987654-32', deadline: '22 dias', priority: 'high' },
+            { title: 'Reunião cliente X', deadline: '18 dias', priority: 'medium' },
+            { title: 'Análise documentos Y', deadline: '25 dias', priority: 'low' },
+            { title: 'Audiência conciliação Z', deadline: '20 dias', priority: 'medium' }
+        ];
+    }
+    
+    const priorityText = { high: 'Alta', medium: 'Média', low: 'Baixa' };
+    
+    const html = tasks.map(task => `
+        <div class="task-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold mb-1">${task.title}</div>
+                    <small class="text-muted"><i class="fas fa-calendar me-1"></i>Prazo: ${task.deadline}</small>
+                </div>
+                <span class="priority-badge priority-${task.priority}">
+                    ${priorityText[task.priority]}
+                </span>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('priorityTasksList').innerHTML = html;
+    console.log('📋 Tarefas prioritárias renderizadas:', tasks.length);
+}
+
+// Render Automations
+function renderAutomations() {
+    const automations = [
+        {
+            icon: 'fa-bell',
+            title: 'Notificações de Prazo',
+            desc: 'Alertas automáticos 48h antes do vencimento',
+            status: 'active',
+            savings: '15h/semana'
+        },
+        {
+            icon: 'fa-file-alt',
+            title: 'Classificação de Documentos',
+            desc: 'IA para categorizar anexos automaticamente',
+            status: 'suggested',
+            savings: '8h/semana'
+        },
+        {
+            icon: 'fa-chart-bar',
+            title: 'Relatórios Automáticos',
+            desc: 'Geração mensal de relatórios de produtividade',
+            status: 'active',
+            savings: '4h/mês'
+        }
+    ];
+    
+    const html = automations.map(auto => `
+        <div class="automation-card">
+            <div class="d-flex align-items-start">
+                <div class="me-3">
+                    <i class="fas ${auto.icon} fa-2x"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-2">${auto.title}</h6>
+                    <p class="mb-2 small opacity-75">${auto.desc}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="status-badge status-${auto.status}">
+                            ${auto.status === 'active' ? 'Ativo' : 'Sugerido'}
+                        </span>
+                        <span class="small fw-bold">💰 ${auto.savings}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('automationsList').innerHTML = html;
+}
+
+// Show Error
+function showError(message) {
+    const errorHtml = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Erro:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.querySelector('.container-fluid').insertAdjacentHTML('afterbegin', errorHtml);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeDashboard);
+
+// Cleanup charts on page unload
+window.addEventListener('beforeunload', () => {
+    Object.values(charts).forEach(chart => chart.destroy());
+});
+</script>
+
+<!-- Navegação Sequencial -->
+{% include 'fintechs/components/sequential_nav.html' %}
+{% endblock %}

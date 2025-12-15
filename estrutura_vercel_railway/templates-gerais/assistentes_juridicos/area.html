@@ -1,0 +1,716 @@
+{% extends "base.html" %}
+
+{% block title %}{{ area_config.nome }} - Assistente Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center">
+                    <a href="/home" class="btn btn-outline-secondary mr-3">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <h1 class="h3 mb-0" style="color: {{ area_config.cor }};">
+                        <i class="{{ area_config.icone }} mr-2"></i>
+                        {{ area_config.nome }}
+                    </h1>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="novaConversa()">
+                        <i class="fas fa-plus"></i> Nova Conversa
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="mostrarConfiguracao()">
+                        <i class="fas fa-cog"></i> Configurações
+                    </button>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <a href="{{ url_for('admin_configurar_assistente', area_id=area_id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-edit"></i> Editar Assistente
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Painel Principal do Chat -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header" style="background-color: {{ area_config.cor }}15;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" style="color: {{ area_config.cor }};">
+                            <i class="fas fa-comments"></i> Assistente Especializado
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <span class="badge badge-success mr-2">Online</span>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="apiDropdown" data-toggle="dropdown">
+                                    <span id="apiAtual">OpenAI</span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="trocarAPI('openai')">OpenAI GPT-4</a>
+                                    <a class="dropdown-item" href="#" onclick="trocarAPI('anthropic')">Anthropic Claude</a>
+                                    <a class="dropdown-item" href="#" onclick="trocarAPI('gemini')">Google Gemini</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <!-- Area do Chat -->
+                    <div id="chatContainer" class="chat-container" style="height: 500px; overflow-y: auto; padding: 20px;">
+                        <div class="message-item assistant-message">
+                            <div class="d-flex align-items-start">
+                                <div class="avatar mr-3">
+                                    <i class="{{ area_config.icone }} fa-2x" style="color: {{ area_config.cor }};"></i>
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <strong>Assistente {{ area_config.nome }}</strong>
+                                        <small class="text-muted ml-2">Agora</small>
+                                    </div>
+                                    <div class="message-text">
+                                        Olá! Sou seu assistente especializado em <strong>{{ area_config.nome }}</strong>. 
+                                        <br><br>
+                                        Posso ajudar com:
+                                        <ul class="mt-2">
+                                            <li>Consultas jurídicas especializadas</li>
+                                            <li>Análise de documentos</li>
+                                            <li>Geração de peças processuais</li>
+                                            <li>Busca na base de conhecimento</li>
+                                        </ul>
+                                        Como posso ajudá-lo hoje?
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Area de Input -->
+                    <div class="card-footer">
+                        <form id="chatForm" onsubmit="enviarMensagem(event)">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="mostrarUpload()">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                </div>
+                                <textarea id="mensagemInput" class="form-control" rows="2" placeholder="Digite sua pergunta jurídica..." required></textarea>
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-primary" id="enviarBtn">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Lateral -->
+        <div class="col-lg-4">
+            <!-- Configurações -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-sliders-h"></i> Configurações</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="estiloSelect">Estilo de Resposta:</label>
+                        <select id="estiloSelect" class="form-control form-control-sm">
+                            {% for estilo_id, estilo_config in estilos.items() %}
+                            <option value="{{ estilo_id }}" {% if estilo_id == 'juridico_tecnico' %}selected{% endif %}>
+                                {{ estilo_config.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted" id="estiloDescricao">
+                            {{ estilos.juridico_tecnico.descricao }}
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="providerSelect"><i class="fas fa-server"></i> Provedor de IA:</label>
+                        <select id="providerSelect" class="form-control form-control-sm">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="google">Google</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="grok">Grok X.AI</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modelSelect"><i class="fas fa-brain"></i> Modelo de IA:</label>
+                        <select id="modelSelect" class="form-control form-control-sm">
+                            <!-- OpenAI Models - 2025 -->
+                            <optgroup label="OpenAI">
+                                <option value="gpt-5" selected>GPT-5 🚀 (Mais Avançado)</option>
+                                <option value="gpt-5-mini">GPT-5 Mini ⚡ (Rápido)</option>
+                                <option value="gpt-4.1">GPT-4.1 (Principal)</option>
+                                <option value="gpt-4.1-mini">GPT-4.1 Mini (Custo-benefício)</option>
+                                <option value="gpt-4o">GPT-4o (Multimodal)</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="o1-preview">o1-preview (Raciocínio)</option>
+                                <option value="o1-mini">o1-mini</option>
+                            </optgroup>
+                            
+                            <!-- Anthropic Models - 2025 -->
+                            <optgroup label="Anthropic">
+                                <option value="claude-haiku-4-5">Claude Haiku 4.5 ⚡ (Rápido & Preciso)</option>
+                                <option value="claude-sonnet-4-5">Claude Sonnet 4.5 💎 (Melhor Código)</option>
+                                <option value="claude-opus-4">Claude Opus 4 (Máxima capacidade)</option>
+                                <option value="claude-sonnet-4">Claude Sonnet 4 (Equilíbrio)</option>
+                                <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Legacy)</option>
+                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                            </optgroup>
+                            
+                            <!-- Google Models - 2025 -->
+                            <optgroup label="Google">
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash 🔥 (Otimizado)</option>
+                                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite ⚡</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Máxima capacidade)</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Contexto longo)</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Velocidade)</option>
+                                <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash (Image Gen)</option>
+                            </optgroup>
+                            
+                            <!-- DeepSeek Models - 2025 -->
+                            <optgroup label="DeepSeek">
+                                <option value="deepseek-r1">DeepSeek R1 🧠 (Raciocínio Avançado - 128K)</option>
+                                <option value="deepseek-v3">DeepSeek V3 💎 (Principal - 128K)</option>
+                                <option value="deepseek-v3.1">DeepSeek V3.1 ⚡ (Híbrido Otimizado)</option>
+                                <option value="deepseek-v3.2-exp">DeepSeek V3.2 Experimental 🚀</option>
+                                <option value="deepseek-chat">DeepSeek Chat (Conversacional)</option>
+                                <option value="deepseek-coder">DeepSeek Coder (Programação)</option>
+                            </optgroup>
+                            
+                            <!-- Grok X.AI Models - 2025 -->
+                            <optgroup label="Grok X.AI">
+                                <option value="grok-4-fast-reasoning">Grok 4 Fast Reasoning 🧠 (2M contexto)</option>
+                                <option value="grok-4-fast-non-reasoning">Grok 4 Fast ⚡ (2M contexto)</option>
+                                <option value="grok-4-latest">Grok 4 Latest 💎 (256K)</option>
+                                <option value="grok-4-0709">Grok 4-0709 (Premium - 256K)</option>
+                                <option value="grok-3">Grok 3 (131K)</option>
+                                <option value="grok-3-mini">Grok 3 Mini (131K)</option>
+                                <option value="grok-code-fast-1">Grok Code Fast 💻 (256K)</option>
+                                <option value="grok-2-vision-1212-us">Grok 2 Vision US 👁️ (32K)</option>
+                                <option value="grok-2-vision-1212-eu">Grok 2 Vision EU 👁️ (32K)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="usarBaseVetorial" checked>
+                        <label class="form-check-label" for="usarBaseVetorial">
+                            Consultar Base Vetorial
+                        </label>
+                        <small class="form-text text-muted">
+                            Busca semântica na base de conhecimento especializada
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Busca Rápida -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-search"></i> Busca Semântica</h6>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="buscaInput" class="form-control form-control-sm" placeholder="Buscar na base...">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="buscarSemantica()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="resultadosBusca" class="small"></div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Ações Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-outline-primary btn-sm btn-block mb-2" onclick="gerarDocumento()">
+                        <i class="fas fa-file-alt"></i> Gerar Documento
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm btn-block mb-2" onclick="analisarCaso()">
+                        <i class="fas fa-search-plus"></i> Análise de Caso
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm btn-block" onclick="consultarJurisprudencia()">
+                        <i class="fas fa-gavel"></i> Jurisprudência
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Upload -->
+<div class="modal fade" id="modalUpload" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload de Documento</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="arquivoInput">Selecionar Arquivo:</label>
+                        <input type="file" id="arquivoInput" name="arquivo" class="form-control-file" accept=".pdf,.docx,.jpg,.jpeg,.png">
+                        <small class="form-text text-muted">
+                            Formatos aceitos: PDF, DOCX, JPG, PNG
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoAnaliseSelect">Tipo de Análise:</label>
+                        <select id="tipoAnaliseSelect" name="tipo_analise" class="form-control">
+                            <option value="geral">Análise Geral</option>
+                            <option value="tipificacao">Tipificação Legal</option>
+                            <option value="defesa">Estratégia de Defesa</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="processarUpload()">
+                    <i class="fas fa-upload"></i> Processar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-container {
+    background-color: #f8f9fa;
+}
+
+.message-item {
+    margin-bottom: 20px;
+}
+
+.assistant-message .avatar {
+    width: 40px;
+    text-align: center;
+}
+
+.user-message {
+    text-align: right;
+}
+
+.user-message .message-content {
+    background-color: {{ area_config.cor }};
+    color: white;
+    padding: 10px 15px;
+    border-radius: 15px 15px 5px 15px;
+    display: inline-block;
+    max-width: 70%;
+}
+
+.assistant-message .message-content {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.message-header {
+    margin-bottom: 5px;
+}
+
+.message-text {
+    line-height: 1.5;
+}
+
+#mensagemInput {
+    resize: none;
+}
+
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+</style>
+
+<script>
+const areaId = '{{ area_id }}';
+let apiAtual = 'openai';
+let conversaAtual = [];
+let carregandoPreferencias = true; // FLAG para bloquear salvamentos durante carregamento
+
+// Carregar preferências salvas do backend
+async function carregarPreferencias() {
+    carregandoPreferencias = true; // BLOQUEAR salvamentos automáticos
+    
+    try {
+        const response = await fetch(`/api/assistentes/preferencias?area=${areaId}`);
+        const prefs = await response.json();
+        
+        // Aplicar preferências aos selects
+        if (prefs.provider) {
+            document.getElementById('providerSelect').value = prefs.provider;
+            apiAtual = prefs.provider;
+        }
+        if (prefs.estilo) {
+            document.getElementById('estiloSelect').value = prefs.estilo;
+            // Atualizar descrição do estilo
+            const descricoes = {
+                'juridico_tecnico': '{{ estilos.juridico_tecnico.descricao }}',
+                'informal': '{{ estilos.informal.descricao }}',
+                'estrategico': '{{ estilos.estrategico.descricao }}',
+                'pedagogico': '{{ estilos.pedagogico.descricao }}'
+            };
+            document.getElementById('estiloDescricao').textContent = descricoes[prefs.estilo] || '';
+        }
+        
+        // Definir o modelo FORÇANDO a seleção
+        const modelSelect = document.getElementById('modelSelect');
+        const modelo = prefs.modelo || 'gpt-5';
+        
+        // MÉTODO 1: Setar o value
+        modelSelect.value = modelo;
+        
+        // MÉTODO 2: Se não funcionou, forçar via selectedIndex
+        if (!modelSelect.value || modelSelect.value !== modelo) {
+            console.warn('⚠️ Forçando seleção via selectedIndex');
+            const opcoes = Array.from(modelSelect.options);
+            const indice = opcoes.findIndex(opt => opt.value === modelo);
+            if (indice >= 0) {
+                modelSelect.selectedIndex = indice;
+            }
+        }
+        
+        console.log('✅ Preferências carregadas e aplicadas:', prefs);
+        console.log('🔍 Modelo final selecionado:', modelSelect.value);
+        console.log('🔍 selectedIndex:', modelSelect.selectedIndex);
+        
+        // LIBERAR salvamentos após 150ms
+        setTimeout(() => {
+            carregandoPreferencias = false;
+            console.log('🔓 Event listeners LIBERADOS para salvamento');
+        }, 150);
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar preferências:', error);
+        // Usar padrão GPT-5
+        document.getElementById('modelSelect').value = 'gpt-5';
+        setTimeout(() => {
+            carregandoPreferencias = false;
+        }, 150);
+    }
+}
+
+// Salvar preferências no backend
+async function salvarPreferencias() {
+    // BLOQUEAR salvamento se estiver carregando preferências
+    if (carregandoPreferencias) {
+        console.log('🚫 Salvamento bloqueado - carregando preferências');
+        return;
+    }
+    
+    try {
+        const prefs = {
+            area: areaId,
+            provider: document.getElementById('providerSelect').value,
+            modelo: document.getElementById('modelSelect').value,
+            estilo: document.getElementById('estiloSelect').value
+        };
+        
+        const response = await fetch('/api/assistentes/preferencias', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(prefs)
+        });
+        
+        const result = await response.json();
+        if (result.sucesso) {
+            console.log('✅ Preferências salvas:', result.preferencias);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao salvar preferências:', error);
+    }
+}
+
+// Event listeners para salvar preferências quando mudar
+document.getElementById('providerSelect').addEventListener('change', function() {
+    apiAtual = this.value;
+    salvarPreferencias();
+});
+
+document.getElementById('modelSelect').addEventListener('change', function() {
+    salvarPreferencias();
+});
+
+document.getElementById('estiloSelect').addEventListener('change', function() {
+    const estilo = this.value;
+    const descricoes = {
+        'juridico_tecnico': '{{ estilos.juridico_tecnico.descricao }}',
+        'informal': '{{ estilos.informal.descricao }}',
+        'estrategico': '{{ estilos.estrategico.descricao }}',
+        'pedagogico': '{{ estilos.pedagogico.descricao }}'
+    };
+    document.getElementById('estiloDescricao').textContent = descricoes[estilo] || '';
+    salvarPreferencias();
+});
+
+// Inicializar ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    carregarPreferencias();
+});
+
+function trocarAPI(api) {
+    apiAtual = api;
+    const nomes = {
+        'openai': 'OpenAI',
+        'anthropic': 'Anthropic',
+        'gemini': 'Gemini'
+    };
+    document.getElementById('apiAtual').textContent = nomes[api];
+}
+
+function novaConversa() {
+    conversaAtual = [];
+    document.getElementById('chatContainer').innerHTML = `
+        <div class="message-item assistant-message">
+            <div class="d-flex align-items-start">
+                <div class="avatar mr-3">
+                    <i class="{{ area_config.icone }} fa-2x" style="color: {{ area_config.cor }};"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <strong>Assistente {{ area_config.nome }}</strong>
+                        <small class="text-muted ml-2">Agora</small>
+                    </div>
+                    <div class="message-text">
+                        Nova conversa iniciada. Como posso ajudá-lo?
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function enviarMensagem(event) {
+    event.preventDefault();
+    
+    const mensagem = document.getElementById('mensagemInput').value.trim();
+    if (!mensagem) return;
+    
+    // Adicionar mensagem do usuário
+    adicionarMensagem(mensagem, 'user');
+    
+    // Limpar input
+    document.getElementById('mensagemInput').value = '';
+    
+    // Mostrar loading
+    mostrarLoading();
+    
+    // Enviar para API
+    const dados = {
+        area_id: areaId,
+        pergunta: mensagem,
+        api: document.getElementById('providerSelect').value,
+        modelo: document.getElementById('modelSelect').value,
+        estilo: document.getElementById('estiloSelect').value,
+        usar_base_vetorial: document.getElementById('usarBaseVetorial').checked
+    };
+    
+    fetch('/assistentes/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => response.json())
+    .then(data => {
+        esconderLoading();
+        if (data.erro) {
+            adicionarMensagem('Erro: ' + data.erro, 'assistant');
+        } else {
+            adicionarMensagem(data.resposta, 'assistant');
+        }
+    })
+    .catch(error => {
+        esconderLoading();
+        adicionarMensagem('Erro de conexão. Tente novamente.', 'assistant');
+    });
+}
+
+function adicionarMensagem(texto, tipo) {
+    const container = document.getElementById('chatContainer');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    let mensagemHtml;
+    
+    if (tipo === 'user') {
+        mensagemHtml = `
+            <div class="message-item user-message">
+                <div class="message-content">
+                    ${texto}
+                    <div style="font-size: 0.8em; margin-top: 5px; opacity: 0.8;">
+                        ${timestamp}
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        mensagemHtml = `
+            <div class="message-item assistant-message">
+                <div class="d-flex align-items-start">
+                    <div class="avatar mr-3">
+                        <i class="{{ area_config.icone }} fa-2x" style="color: {{ area_config.cor }};"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <strong>Assistente {{ area_config.nome }}</strong>
+                            <small class="text-muted ml-2">${timestamp}</small>
+                        </div>
+                        <div class="message-text">
+                            ${texto.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.insertAdjacentHTML('beforeend', mensagemHtml);
+    container.scrollTop = container.scrollHeight;
+}
+
+function mostrarLoading() {
+    document.getElementById('enviarBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('chatForm').classList.add('loading');
+}
+
+function esconderLoading() {
+    document.getElementById('enviarBtn').innerHTML = '<i class="fas fa-paper-plane"></i>';
+    document.getElementById('chatForm').classList.remove('loading');
+}
+
+function mostrarUpload() {
+    $('#modalUpload').modal('show');
+}
+
+function processarUpload() {
+    const arquivo = document.getElementById('arquivoInput').files[0];
+    if (!arquivo) {
+        alert('Selecione um arquivo');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    formData.append('area_id', areaId);
+    formData.append('tipo_analise', document.getElementById('tipoAnaliseSelect').value);
+    
+    $('#modalUpload').modal('hide');
+    mostrarLoading();
+    
+    fetch('/assistentes/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        esconderLoading();
+        if (data.erro) {
+            adicionarMensagem('Erro no upload: ' + data.erro, 'assistant');
+        } else {
+            adicionarMensagem(`Arquivo processado com sucesso!\n\n${data.resposta}`, 'assistant');
+        }
+    })
+    .catch(error => {
+        esconderLoading();
+        adicionarMensagem('Erro ao processar arquivo', 'assistant');
+    });
+}
+
+function buscarSemantica() {
+    const consulta = document.getElementById('buscaInput').value.trim();
+    if (!consulta) return;
+    
+    fetch('/assistentes/busca-semantica', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            area_id: areaId,
+            consulta: consulta,
+            limite: 3
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        let html = '';
+        if (data.resultados && data.resultados.length > 0) {
+            html = '<div class="mb-2"><strong>Resultados encontrados:</strong></div>';
+            data.resultados.forEach(resultado => {
+                html += `
+                    <div class="border-left pl-2 mb-2" style="border-color: {{ area_config.cor }} !important;">
+                        <div class="small font-weight-bold">${resultado.referencia}</div>
+                        <div class="small text-muted">${resultado.conteudo.substring(0, 100)}...</div>
+                        <div class="small">Relevância: ${Math.round(resultado.relevancia * 100)}%</div>
+                    </div>
+                `;
+            });
+        } else {
+            html = '<div class="text-muted">Nenhum resultado encontrado</div>';
+        }
+        document.getElementById('resultadosBusca').innerHTML = html;
+    })
+    .catch(error => {
+        document.getElementById('resultadosBusca').innerHTML = '<div class="text-danger">Erro na busca</div>';
+    });
+}
+
+// Ações rápidas
+function gerarDocumento() {
+    const pergunta = 'Quais tipos de documentos jurídicos você pode gerar para a área de {{ area_config.nome }}?';
+    document.getElementById('mensagemInput').value = pergunta;
+}
+
+function analisarCaso() {
+    const pergunta = 'Como posso enviar um caso para análise jurídica especializada?';
+    document.getElementById('mensagemInput').value = pergunta;
+}
+
+function consultarJurisprudencia() {
+    const pergunta = 'Mostre jurisprudências relevantes recentes em {{ area_config.nome }}.';
+    document.getElementById('mensagemInput').value = pergunta;
+}
+
+// Auto-resize textarea
+document.getElementById('mensagemInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+// Enter para enviar (Shift+Enter para nova linha)
+document.getElementById('mensagemInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    }
+});
+</script>
+{% endblock %}

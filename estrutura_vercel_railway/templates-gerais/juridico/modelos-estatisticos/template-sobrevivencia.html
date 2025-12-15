@@ -1,0 +1,2316 @@
+{% extends "base.html" %}
+
+{% block title %}Modelo de Análise de Sobrevivência - Legal Pro{% endblock %}
+
+{% block head %}
+<style>
+    body { 
+        background: #3b576f !important;
+        min-height: 100vh !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        color: white !important;
+    }
+    .card {
+        background: rgba(46, 93, 133, 0.3) !important;
+        border: 1px solid rgba(78, 205, 196, 0.3) !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(10px) !important;
+        color: white !important;
+    }
+    .card-header {
+        background: #3b576f !important;
+        border-bottom: none !important;
+        color: white !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-secondary .card-header {
+        background: #3b576f !important;
+    }
+
+    .card.border-primary .card-header {
+        background: #3b576f !important;
+    }
+    .btn-danger { background: #3b576f !important; border: #3b576f !important; }
+    .btn-danger:hover { background: #2a4050 !important; border: #2a4050 !important; }
+    .form-control {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+    
+    .form-select {
+        background: #7b8c93 !important;
+        background-image: none !important;
+        color: white !important;
+    }
+    
+    .form-select option {
+        background: #7b8c93 !important;
+        color: white !important;
+    }
+    .form-control:focus {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: #3b576f !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.2rem rgba(59, 87, 111, 0.25) !important;
+    }
+    .form-select:focus {
+        background: #7b8c93 !important;
+        background-image: none !important;
+        border-color: #3b576f !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.2rem rgba(59, 87, 111, 0.25) !important;
+    }
+    
+    .form-control::placeholder,
+    .form-select::placeholder,
+    input::placeholder,
+    textarea::placeholder {
+        color: white !important;
+    }
+    .form-label {
+        color: white !important;
+        font-weight: 500 !important;
+    }
+
+    /* Força todos os textos para branco */
+    .card-body, .card-body p, .card-body h1, .card-body h2, .card-body h3, 
+    .card-body h4, .card-body h5, .card-body h6, .card-body span, 
+    .card-body div, .card-body li, .card-body strong, .card-body em,
+    .text-white, .text-primary, .text-secondary, .text-success, 
+    .text-danger, .text-warning, .text-info, .text-light, .text-muted,
+    .form-label, .control-group label, .control-group p, .control-group div,
+    .fine-tuning-section h6, .fine-tuning-section p, .fine-tuning-section span {
+        color: white !important;
+    }
+
+    /* Sobrescrever cores do Bootstrap */
+    .bg-primary,
+    .card-header.bg-primary,
+    .bg-success,
+    .card-header.bg-success,
+    .bg-warning,
+    .card-header.bg-warning,
+    .bg-danger,
+    .card-header.bg-danger,
+    .bg-info,
+    .card-header.bg-info {
+        background-color: #3b576f !important;
+        background: #3b576f !important;
+    }
+
+    .border-primary,
+    .border-success,
+    .border-warning,
+    .border-danger,
+    .border-info {
+        border-color: #3b576f !important;
+    }
+
+    /* Sobrescrever cores dos alerts Bootstrap */
+    .alert-info,
+    .alert-success,
+    .alert-warning,
+    .alert-danger {
+        background-color: rgba(59, 87, 111, 0.2) !important;
+        border-color: #3b576f !important;
+        color: white !important;
+    }
+
+    /* Placeholder branco - Força máxima */
+    .form-control::placeholder,
+    .form-select::placeholder,
+    input::placeholder,
+    textarea::placeholder,
+    .form-control::-webkit-input-placeholder,
+    .form-control::-moz-placeholder,
+    .form-control:-ms-input-placeholder,
+    .form-control:-moz-placeholder,
+    input::-webkit-input-placeholder,
+    input::-moz-placeholder,
+    input:-ms-input-placeholder,
+    input:-moz-placeholder,
+    select::-webkit-input-placeholder,
+    select::-moz-placeholder,
+    select:-ms-input-placeholder,
+    select:-moz-placeholder,
+    textarea::-webkit-input-placeholder,
+    textarea::-moz-placeholder,
+    textarea:-ms-input-placeholder,
+    textarea:-moz-placeholder {
+        color: white !important;
+        opacity: 0.9 !important;
+        font-weight: normal !important;
+    }
+    
+    /* Força adicional para diferentes navegadores */
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="number"]::placeholder,
+    input[type="date"]::placeholder,
+    input[type="tel"]::placeholder,
+    input[type="url"]::placeholder,
+    input[type="search"]::placeholder {
+        color: white !important;
+        opacity: 0.9 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Botão Voltar -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="/juridico/analise-estatistica-preditiva" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Voltar para Modelos Estatísticos
+            </a>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-hourglass-half me-2"></i>Modelo de Análise de Sobrevivência - Configuração Avançada
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Seção Explicativa do Modelo -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Análise de Sobrevivência - Sobre o Modelo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-danger"><i class="fas fa-hourglass-half me-2"></i>O que entrega:</h6>
+                                            <p class="mb-3">Probabilidades precisas sobre duração de processos e marcos temporais críticos.</p>
+                                            
+                                            <h6 class="text-primary"><i class="fas fa-chess me-2"></i>Poder estratégico:</h6>
+                                            <p class="mb-3">Permite calcular exatamente quando um processo tem maior probabilidade de ser julgado, facilitando o planejamento de recursos e estratégias processuais.</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success"><i class="fas fa-target me-2"></i>Resultado prático:</h6>
+                                            <p class="mb-3">Otimiza o fluxo de caixa do escritório e do cliente ao prever com precisão quando recursos serão necessários. Melhora o atendimento ao cliente com previsões realistas de prazos. Permite identificar processos que estão demorando além do normal, justificando medidas de aceleração.</p>
+                                            
+                                            <h6 class="text-info"><i class="fas fa-layer-group me-2"></i>Classificação por Níveis de Certeza:</h6>
+                                            <ul class="mb-0">
+                                                <li><strong>Alta Precisão (>92%):</strong> Processos em varas com padrões bem estabelecidos e baixa complexidade</li>
+                                                <li><strong>Precisão Moderada (80-92%):</strong> Casos de complexidade média em tribunais com histórico consistente</li>
+                                                <li><strong>Baixa Precisão (<80%):</strong> Processos complexos, recursos em tribunais superiores ou casos pioneiros</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="formEditarSobrevivencia">
+                    <!-- Configurações Base do Modelo -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-primary">
+                                    <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Configurações Base do Modelo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nome do Modelo</label>
+                                            <input type="text" class="form-control" id="nomeModeloSobrevivencia" 
+                                                   placeholder="Ex: Tempo até Sentença Civil" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Área Jurídica Principal</label>
+                                            <select class="form-select" id="areaJuridicaModeloSobrevivencia" onchange="atualizarParametrosSobrevivencia()">
+                                                <option value="civil" selected>Direito Civil</option>
+                                                <option value="trabalhista">Direito Trabalhista</option>
+                                                <option value="tributario">Direito Tributário</option>
+                                                <option value="empresarial">Direito Empresarial</option>
+                                                <option value="consumidor">Direito do Consumidor</option>
+                                                <option value="familia">Direito de Família</option>
+                                                <option value="agrario">Direito Agrário</option>
+                                                <option value="penal">Direito Penal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Descrição do Modelo</label>
+                                            <textarea class="form-control" id="descricaoModeloSobrevivencia" rows="3" 
+                                                      placeholder="Descreva os objetivos e aplicações desta análise de sobrevivência..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos Universais Obrigatórios -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Campos Universais Obrigatórios (Todas as Áreas)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Número do Processo (CNJ) <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="numeroProcessoCnjSobrevivencia" 
+                                                   placeholder="Ex: 1234567-89.2024.8.26.0100" required>
+                                            <div class="form-text">Autocomplete com processos da base</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Cliente/Autor <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="clienteAutorSobrevivencia" 
+                                                   placeholder="Nome do cliente ou autor" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">CNPJ/CPF <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="cnpjCpfClienteSobrevivencia" 
+                                                   placeholder="Ex: 12.345.678/0001-90 ou 123.456.789-10" required>
+                                            <div class="form-text">Preenchimento automático baseado no processo</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tipo de Pessoa</label>
+                                            <select class="form-select" id="tipoPessoaSobrevivencia">
+                                                <option value="">Selecione...</option>
+                                                <option value="fisica">Pessoa Física</option>
+                                                <option value="juridica">Pessoa Jurídica</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Estado <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="estadoProcessoSobrevivencia" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="SP">São Paulo</option>
+                                                <option value="RJ">Rio de Janeiro</option>
+                                                <option value="MG">Minas Gerais</option>
+                                                <option value="RS">Rio Grande do Sul</option>
+                                                <option value="PR">Paraná</option>
+                                                <option value="SC">Santa Catarina</option>
+                                                <option value="GO">Goiás</option>
+                                                <option value="BA">Bahia</option>
+                                                <option value="PE">Pernambuco</option>
+                                                <option value="CE">Ceará</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Comarca <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="comarcaProcessoSobrevivencia" required>
+                                                <option value="">Selecione a cidade...</option>
+                                                <optgroup label="São Paulo (SP)">
+                                                    <option value="São Paulo">São Paulo</option>
+                                                    <option value="Guarulhos">Guarulhos</option>
+                                                    <option value="Santo André">Santo André</option>
+                                                    <option value="São Bernardo do Campo">São Bernardo do Campo</option>
+                                                    <option value="Osasco">Osasco</option>
+                                                    <option value="Campinas">Campinas</option>
+                                                    <option value="Ribeirão Preto">Ribeirão Preto</option>
+                                                    <option value="Sorocaba">Sorocaba</option>
+                                                    <option value="Santos">Santos</option>
+                                                    <option value="São José dos Campos">São José dos Campos</option>
+                                                    <option value="Bauru">Bauru</option>
+                                                    <option value="Piracicaba">Piracicaba</option>
+                                                    <option value="Jundiaí">Jundiaí</option>
+                                                    <option value="Taubaté">Taubaté</option>
+                                                    <option value="Franca">Franca</option>
+                                                    <option value="Araraquara">Araraquara</option>
+                                                    <option value="Presidente Prudente">Presidente Prudente</option>
+                                                    <option value="Marília">Marília</option>
+                                                    <option value="Americana">Americana</option>
+                                                    <option value="São Carlos">São Carlos</option>
+                                                </optgroup>
+                                                <optgroup label="Rio de Janeiro (RJ)">
+                                                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                                                    <option value="Niterói">Niterói</option>
+                                                    <option value="Duque de Caxias">Duque de Caxias</option>
+                                                    <option value="São Gonçalo">São Gonçalo</option>
+                                                    <option value="Nova Iguaçu">Nova Iguaçu</option>
+                                                    <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+                                                    <option value="Volta Redonda">Volta Redonda</option>
+                                                    <option value="Petrópolis">Petrópolis</option>
+                                                    <option value="Nova Friburgo">Nova Friburgo</option>
+                                                    <option value="Cabo Frio">Cabo Frio</option>
+                                                </optgroup>
+                                                <optgroup label="Minas Gerais (MG)">
+                                                    <option value="Belo Horizonte">Belo Horizonte</option>
+                                                    <option value="Contagem">Contagem</option>
+                                                    <option value="Betim">Betim</option>
+                                                    <option value="Juiz de Fora">Juiz de Fora</option>
+                                                    <option value="Uberlândia">Uberlândia</option>
+                                                    <option value="Montes Claros">Montes Claros</option>
+                                                    <option value="Uberaba">Uberaba</option>
+                                                    <option value="Divinópolis">Divinópolis</option>
+                                                    <option value="Ipatinga">Ipatinga</option>
+                                                    <option value="Governador Valadares">Governador Valadares</option>
+                                                </optgroup>
+                                                <optgroup label="Distrito Federal (DF)">
+                                                    <option value="Brasília">Brasília</option>
+                                                    <option value="Taguatinga">Taguatinga</option>
+                                                    <option value="Ceilândia">Ceilândia</option>
+                                                    <option value="Águas Claras">Águas Claras</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Juízo <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="juizoProcessoSobrevivencia" required>
+                                                <option value="">Selecione a vara...</option>
+                                                <optgroup label="Varas Cíveis - São Paulo SP">
+                                                    <option value="1ª Vara Cível São Paulo SP">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível São Paulo SP">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível São Paulo SP">3ª Vara Cível</option>
+                                                    <option value="4ª Vara Cível São Paulo SP">4ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível São Paulo SP">5ª Vara Cível</option>
+                                                    <option value="6ª Vara Cível São Paulo SP">6ª Vara Cível</option>
+                                                    <option value="7ª Vara Cível São Paulo SP">7ª Vara Cível</option>
+                                                    <option value="8ª Vara Cível São Paulo SP">8ª Vara Cível</option>
+                                                    <option value="9ª Vara Cível São Paulo SP">9ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível São Paulo SP">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível São Paulo SP">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível São Paulo SP">20ª Vara Cível</option>
+                                                    <option value="25ª Vara Cível São Paulo SP">25ª Vara Cível</option>
+                                                    <option value="30ª Vara Cível São Paulo SP">30ª Vara Cível</option>
+                                                    <option value="35ª Vara Cível São Paulo SP">35ª Vara Cível</option>
+                                                    <option value="40ª Vara Cível São Paulo SP">40ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Rio de Janeiro RJ">
+                                                    <option value="1ª Vara Cível Rio de Janeiro RJ">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Rio de Janeiro RJ">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível Rio de Janeiro RJ">3ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Rio de Janeiro RJ">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Rio de Janeiro RJ">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível Rio de Janeiro RJ">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível Rio de Janeiro RJ">20ª Vara Cível</option>
+                                                    <option value="25ª Vara Cível Rio de Janeiro RJ">25ª Vara Cível</option>
+                                                    <option value="30ª Vara Cível Rio de Janeiro RJ">30ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Belo Horizonte MG">
+                                                    <option value="1ª Vara Cível Belo Horizonte MG">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Belo Horizonte MG">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível Belo Horizonte MG">3ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Belo Horizonte MG">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Belo Horizonte MG">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível Belo Horizonte MG">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível Belo Horizonte MG">20ª Vara Cível</option>
+                                                    <option value="25ª Vara Cível Belo Horizonte MG">25ª Vara Cível</option>
+                                                </optgroup>
+                                                <optgroup label="Varas Cíveis - Brasília DF">
+                                                    <option value="1ª Vara Cível Brasília DF">1ª Vara Cível</option>
+                                                    <option value="2ª Vara Cível Brasília DF">2ª Vara Cível</option>
+                                                    <option value="3ª Vara Cível Brasília DF">3ª Vara Cível</option>
+                                                    <option value="5ª Vara Cível Brasília DF">5ª Vara Cível</option>
+                                                    <option value="10ª Vara Cível Brasília DF">10ª Vara Cível</option>
+                                                    <option value="15ª Vara Cível Brasília DF">15ª Vara Cível</option>
+                                                    <option value="20ª Vara Cível Brasília DF">20ª Vara Cível</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Instância <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="instanciaProcessoSobrevivencia" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="1">1ª Instância</option>
+                                                <option value="2">2ª Instância</option>
+                                                <option value="superior">Superior</option>
+                                                <option value="suprema">Suprema</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Valor da Causa <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control money-input" id="valorDaCausaSobrevivencia" 
+                                                   placeholder="R$ 0,00" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Data Distribuição <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="dataDistribuicaoSobrevivencia" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Status/Resultado <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="statusResultadoSobrevivencia" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="procedente">Procedente</option>
+                                                <option value="improcedente">Improcedente</option>
+                                                <option value="procedente_parcial">Parcialmente Procedente</option>
+                                                <option value="acordo">Acordo</option>
+                                                <option value="extincao">Extinção</option>
+                                                <option value="andamento">Em Andamento</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos Específicos da Área Jurídica -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Campos Específicos da Área Jurídica</h6>
+                                    <small>Campos serão atualizados automaticamente conforme a área selecionada</small>
+                                </div>
+                                <div class="card-body" id="camposEspecificosAreaSobrevivencia">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-arrow-up fa-2x mb-2"></i>
+                                        <p>Selecione uma área jurídica acima para ver os campos específicos</p>
+                                    </div>
+                                    
+                                    <!-- Campos Direito Trabalhista -->
+                                    <div id="camposTrabalhistaSobrevivencia" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="horasExtrasReflexosSobrevivencia">
+                                                    <label class="form-check-label" for="horasExtrasReflexosSobrevivencia">Horas Extras e Reflexos</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="indenizacaoDanosMoraisSobrevivencia">
+                                                    <label class="form-check-label" for="indenizacaoDanosMoraisSobrevivencia">Indenização por Danos Morais</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="fgtsMulta40Sobrevivencia">
+                                                    <label class="form-check-label" for="fgtsMulta40Sobrevivencia">FGTS e Multa de 40%</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="verbasRescisoriaSobrevivencia">
+                                                    <label class="form-check-label" for="verbasRescisoriaSobrevivencia">Verbas Rescisórias</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="adicionalNoturnoSobrevivencia">
+                                                    <label class="form-check-label" for="adicionalNoturnoSobrevivencia">Adicional Noturno e Reflexos</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="feriasEmDobroSobrevivencia">
+                                                    <label class="form-check-label" for="feriasEmDobroSobrevivencia">Férias em Dobro</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Campos Direito de Família -->
+                                    <div id="camposFamiliaSobrevivencia" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="pensaoAlimenticiaSobrevivencia">
+                                                    <label class="form-check-label" for="pensaoAlimenticiaSobrevivencia">Pensão Alimentícia</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="guardaCompartilhadaSobrevivencia">
+                                                    <label class="form-check-label" for="guardaCompartilhadaSobrevivencia">Guarda Compartilhada</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="partilhaBensSobrevivencia">
+                                                    <label class="form-check-label" for="partilhaBensSobrevivencia">Partilha de Bens</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="divorcioConsensualSobrevivencia">
+                                                    <label class="form-check-label" for="divorcioConsensualSobrevivencia">Divórcio Consensual</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="regulamentacaoVisitasSobrevivencia">
+                                                    <label class="form-check-label" for="regulamentacaoVisitasSobrevivencia">Regulamentação de Visitas</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="revisaoAlimentosSobrevivencia">
+                                                    <label class="form-check-label" for="revisaoAlimentosSobrevivencia">Revisão de Alimentos</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Regime de Bens</label>
+                                                <select class="form-select" id="regimeBensSobrevivencia">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="comunhao_parcial">Comunhão Parcial de Bens</option>
+                                                    <option value="comunhao_universal">Comunhão Universal de Bens</option>
+                                                    <option value="separacao_total">Separação Total de Bens</option>
+                                                    <option value="participacao_final">Participação Final nos Aquestos</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Filhos Menores</label>
+                                                <select class="form-select" id="filhosMenoresSobrevivencia">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="sim">Sim</option>
+                                                    <option value="nao">Não</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validação de Eventos Observados (Crítico para Análise de Sobrevivência) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-hourglass-half me-2"></i>Validação de Eventos (Crítico para Sobrevivência)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Atenção:</strong> Análise de sobrevivência requer <strong>eventos observados</strong> e <strong>tempos de seguimento</strong> adequados para estimativas confiáveis.
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="alert alert-info mb-0">
+                                                <h6><i class="fas fa-bullseye me-2"></i>Eventos Observados</h6>
+                                                <div id="eventosObservadosSobrevivencia" class="h4 mb-1">0</div>
+                                                <small class="text-muted">eventos confirmados</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="alert alert-warning mb-0">
+                                                <h6><i class="fas fa-eye-slash me-2"></i>Censurados</h6>
+                                                <div id="eventosCensuradosSobrevivencia" class="h4 mb-1">0</div>
+                                                <small class="text-muted">eventos censurados</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="alert mb-0" id="alertStatusEventosSobrevivencia">
+                                                <h6><i class="fas fa-percent me-2"></i>Taxa de Eventos</h6>
+                                                <div id="taxaEventosSobrevivencia" class="h6 mb-1">0%</div>
+                                                <small class="text-muted" id="precisaoEsperadaTextoSobrevivencia">Calculando...</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="progress" style="height: 30px;">
+                                                <div class="progress-bar progress-bar-striped bg-primary" id="progressoEventosObservadosSobrevivencia" 
+                                                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                    0% Eventos Observados
+                                                </div>
+                                                <div class="progress-bar progress-bar-striped bg-primary" id="progressoEventosCensuradosSobrevivencia" 
+                                                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                    0% Censurados
+                                                </div>
+                                            </div>
+                                            <div class="form-text mt-2">
+                                                <i class="fas fa-chart-line text-danger"></i> 
+                                                <strong>Impacto na Confiabilidade:</strong> 
+                                                <span id="impactoConfiabilidadeSobrevivencia">Taxa baixa de eventos reduz poder estatístico</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuração do Evento -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-bullseye me-2"></i>Evento de Interesse</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Evento de Interesse Específico</label>
+                                        <select class="form-select" id="eventoInteresseEdit">
+                                            <option value="">Selecione...</option>
+                                            <option value="sentenca_primeira_instancia">Sentença de 1ª Instância</option>
+                                            <option value="acorte_judicial">Acordo Judicial</option>
+                                            <option value="transito_julgado">Trânsito em Julgado</option>
+                                            <option value="execucao_iniciada">Início da Execução</option>
+                                            <option value="execucao_concluida">Execução Concluída</option>
+                                            <option value="prescricao_processo">Prescrição do Processo</option>
+                                            <option value="recurso_interposto">Recurso Interposto</option>
+                                            <option value="homologacao_acordo">Homologação de Acordo</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Unidade de Tempo</label>
+                                        <select class="form-select" id="unidadeTempo">
+                                            <option value="dias">Dias</option>
+                                            <option value="semanas">Semanas</option>
+                                            <option value="meses" selected>Meses</option>
+                                            <option value="anos">Anos</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo de Censura</label>
+                                        <select class="form-select" id="tipoCensura">
+                                            <option value="direita" selected>Censura à Direita</option>
+                                            <option value="esquerda">Censura à Esquerda</option>
+                                            <option value="intervalo">Censura por Intervalo</option>
+                                            <option value="nenhuma">Sem Censura</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Definição do Evento</label>
+                                        <textarea class="form-control" id="definicaoEvento" rows="3" 
+                                                  placeholder="Descreva precisamente quando o evento é considerado ocorrido..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Configuração Temporal</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tempo de Seguimento</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="tempoMinimo" 
+                                                       placeholder="Tempo Mínimo" min="0">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="tempoMaximo" 
+                                                       placeholder="Tempo Máximo" min="1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Instância</label>
+                                        <select class="form-select" id="instanciaProcesso">
+                                            <option value="primeira">1ª Instância</option>
+                                            <option value="segunda">2ª Instância</option>
+                                            <option value="superior">Tribunais Superiores</option>
+                                            <option value="supremo">Supremo Tribunal</option>
+                                            <option value="todas">Todas as Instâncias</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Período de Acompanhamento</label>
+                                        <select class="form-select" id="periodoAcompanhamento">
+                                            <option value="1_ano">1 Ano</option>
+                                            <option value="2_anos">2 Anos</option>
+                                            <option value="5_anos" selected>5 Anos</option>
+                                            <option value="completo">Período Completo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configurações Avançadas de Fine-Tuning para Análise de Sobrevivência -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Hiperparâmetros de Fine-Tuning</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Modelo Base</label>
+                                            <select class="form-select" id="modeloBaseSobrevivencia">
+                                                <option value="kaplan_meier">Kaplan-Meier</option>
+                                                <option value="cox" selected>Cox Proportional Hazards</option>
+                                                <option value="accelerated_failure">Accelerated Failure Time</option>
+                                                <option value="random_survival_forest">Random Survival Forest</option>
+                                                <option value="deep_survival">Deep Survival</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Alpha (Regularização)</label>
+                                            <input type="number" class="form-control" id="alphaSobrevivencia" 
+                                                   value="0.05" step="0.01" min="0.001" max="1">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Tie Method</label>
+                                            <select class="form-select" id="tieMethodSobrevivencia">
+                                                <option value="breslow" selected>Breslow</option>
+                                                <option value="efron">Efron</option>
+                                                <option value="exact">Exact</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Penalizer</label>
+                                            <input type="number" class="form-control" id="penalizerSobrevivencia" 
+                                                   value="0.1" step="0.01" min="0" max="10">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">L1 Ratio (Elastic Net)</label>
+                                            <input type="number" class="form-control" id="l1RatioSobrevivencia" 
+                                                   value="0.5" step="0.1" min="0" max="1">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Max Iterations</label>
+                                            <input type="number" class="form-control" id="maxIterSobrevivencia" 
+                                                   value="100" min="50" max="1000">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Tolerance</label>
+                                            <input type="number" class="form-control" id="toleranciaSobrevivencia" 
+                                                   value="0.0001" step="0.0001" min="0.0001" max="0.01">
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="robustVarianceSobrevivencia">
+                                                <label class="form-check-label" for="robustVarianceSobrevivencia">
+                                                    Robust Variance Estimation
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="stratifiedSobrevivencia">
+                                                <label class="form-check-label" for="stratifiedSobrevivencia">
+                                                    Stratified Analysis
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validação e Métricas de Sobrevivência -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Validação & Métricas de Sobrevivência</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Validation Method</label>
+                                            <select class="form-select" id="validationMethodSobrevivencia">
+                                                <optgroup label="Métodos de Validação">
+                                                    <option value="k_fold">K-Fold Cross Validation</option>
+                                                    <option value="time_dependent_cv">Time-Dependent Cross Validation</option>
+                                                    <option value="bootstrap" selected>Bootstrap Validation</option>
+                                                    <option value="stratified_k_fold">Stratified K-Fold</option>
+                                                    <option value="leave_one_out">Leave-One-Out</option>
+                                                    <option value="holdout_validation">Hold-out Validation</option>
+                                                    <option value="temporal_validation">Temporal Validation</option>
+                                                    <option value="nested_cv">Nested Cross Validation</option>
+                                                </optgroup>
+                                                <optgroup label="Número de Folds">
+                                                    <option value="k_3">K = 3</option>
+                                                    <option value="k_5">K = 5</option>
+                                                    <option value="k_10">K = 10</option>
+                                                    <option value="k_auto">K Automático</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">K-Fold Value</label>
+                                            <input type="number" class="form-control" id="kFoldSobrevivencia" 
+                                                   value="5" min="3" max="20">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Métrica Principal</label>
+                                            <select class="form-select" id="metricaPrincipalSobrevivencia">
+                                                <optgroup label="Métricas Principais">
+                                                    <option value="concordance_index" selected>Concordance Index (C-Index)</option>
+                                                    <option value="integrated_brier_score">Integrated Brier Score</option>
+                                                    <option value="time_dependent_auc">Time-Dependent AUC</option>
+                                                    <option value="log_likelihood">Log-Likelihood</option>
+                                                    <option value="partial_likelihood">Partial Likelihood</option>
+                                                    <option value="uno_c_index">Uno's C-Index</option>
+                                                    <option value="harrell_c_index">Harrell's C-Index</option>
+                                                    <option value="antolini_c_index">Antolini's C-Index</option>
+                                                </optgroup>
+                                                <optgroup label="Métricas Específicas">
+                                                    <option value="brier_score_temporal">Brier Score Temporal</option>
+                                                    <option value="cumulative_dynamic_auc">Cumulative Dynamic AUC</option>
+                                                    <option value="incident_dynamic_auc">Incident Dynamic AUC</option>
+                                                    <option value="integrated_discrimination">Integrated Discrimination</option>
+                                                    <option value="net_reclassification">Net Reclassification</option>
+                                                    <option value="calibration_slope">Calibration Slope</option>
+                                                    <option value="calibration_intercept">Calibration Intercept</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="hazardRatioSobrevivencia" checked>
+                                                <label class="form-check-label" for="hazardRatioSobrevivencia">
+                                                    Hazard Ratio Analysis
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="residualsSobrevivencia" checked>
+                                                <label class="form-check-label" for="residualsSobrevivencia">
+                                                    Schoenfeld Residuals
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="proportionalitySobrevivencia" checked>
+                                                <label class="form-check-label" for="proportionalitySobrevivencia">
+                                                    Proportionality Test
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                                        <label class="form-label">Período de Observação</label>
+                                        <select class="form-select" id="periodoObservacao">
+                                            <option value="1_ano">1 Ano</option>
+                                            <option value="2_anos">2 Anos</option>
+                                            <option value="5_anos" selected>5 Anos</option>
+                                            <option value="10_anos">10 Anos</option>
+                                            <option value="completo">Período Completo</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="ajustarFeriados" checked>
+                                        <label class="form-check-label" for="ajustarFeriados">
+                                            Ajustar para Feriados e Recessos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Covariáveis Jurídicas Especializadas -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Covariáveis Jurídicas Especializadas</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-info mb-3"><i class="fas fa-briefcase me-2"></i>Covariáveis Trabalhistas</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tempoServico">
+                                                        <label class="form-check-label" for="tempoServico">Tempo de Serviço</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="salarioEmpregado">
+                                                        <label class="form-check-label" for="salarioEmpregado">Salário do Empregado</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="categoriaProfissional">
+                                                        <label class="form-check-label" for="categoriaProfissional">Categoria Profissional</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="porteEmpresa">
+                                                        <label class="form-check-label" for="porteEmpresa">Porte da Empresa</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="setorEconomico">
+                                                        <label class="form-check-label" for="setorEconomico">Setor Econômico</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="sindicalizacao">
+                                                        <label class="form-check-label" for="sindicalizacao">Sindicalização</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tipoRescisao">
+                                                        <label class="form-check-label" for="tipoRescisao">Tipo de Rescisão</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="justaCausa">
+                                                        <label class="form-check-label" for="justaCausa">Justa Causa</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success mb-3"><i class="fas fa-landmark me-2"></i>Covariáveis Previdenciárias</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="idadeSegurado">
+                                                        <label class="form-check-label" for="idadeSegurado">Idade do Segurado</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tempoContribuicao">
+                                                        <label class="form-check-label" for="tempoContribuicao">Tempo de Contribuição</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="rendaMensal">
+                                                        <label class="form-check-label" for="rendaMensal">Renda Mensal</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tipoBeneficio">
+                                                        <label class="form-check-label" for="tipoBeneficio">Tipo de Benefício</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="carenciaCumprida">
+                                                        <label class="form-check-label" for="carenciaCumprida">Carência Cumprida</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="contribuicaoFacultativa">
+                                                        <label class="form-check-label" for="contribuicaoFacultativa">Contribuição Facultativa</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="periodoGraca">
+                                                        <label class="form-check-label" for="periodoGraca">Período de Graça</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="qualidadeSegurado">
+                                                        <label class="form-check-label" for="qualidadeSegurado">Qualidade de Segurado</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr class="my-3">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <h6 class="text-warning mb-3"><i class="fas fa-gavel me-2"></i>Covariáveis Processuais</h6>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="valorCausa">
+                                                        <label class="form-check-label" for="valorCausa">Valor da Causa</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="complexidadeCaso">
+                                                        <label class="form-check-label" for="complexidadeCaso">Complexidade do Caso</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tipoAcao">
+                                                        <label class="form-check-label" for="tipoAcao">Tipo de Ação</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="representacaoPartes">
+                                                        <label class="form-check-label" for="representacaoPartes">Representação das Partes</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="tribunalCompetente">
+                                                        <label class="form-check-label" for="tribunalCompetente">Tribunal Competente</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="varaEspecializada">
+                                                        <label class="form-check-label" for="varaEspecializada">Vara Especializada</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="juizRelator">
+                                                        <label class="form-check-label" for="juizRelator">Juiz/Relator</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="periodoDistribuicao">
+                                                        <label class="form-check-label" for="periodoDistribuicao">Período de Distribuição</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Covariáveis -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-list-ul me-2"></i>Covariáveis (Fatores de Risco)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="covariaveisContainer">
+                                        <div class="covariavel mb-3">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <input type="text" class="form-control" placeholder="Nome da Covariável" 
+                                                           name="nomeCovariavel[]">
+                                                </div>
+                                                <div class="col-3">
+                                                    <select class="form-select" name="tipoCovariavel[]">
+                                                        <option value="categorica">Categórica</option>
+                                                        <option value="continua">Contínua</option>
+                                                        <option value="binaria">Binária</option>
+                                                        <option value="ordinal">Ordinal</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-3">
+                                                    <select class="form-select" name="efeito[]">
+                                                        <option value="fixo">Efeito Fixo</option>
+                                                        <option value="tempo_dependente">Tempo-Dependente</option>
+                                                        <option value="estratificado">Estratificado</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-1">
+                                                    <button type="button" class="btn btn-outline-success btn-sm" 
+                                                            onclick="configurarCovariavel(this)" title="Configurar">
+                                                        <i class="fas fa-cog"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="col-1">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                            onclick="removerCovariavel(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="adicionarCovariavel()">
+                                        <i class="fas fa-plus me-1"></i>Adicionar Covariável
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modelos de Sobrevivência -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Modelos Estatísticos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Modelo Principal</label>
+                                        <select class="form-select" id="modeloSobrevivencia" onchange="atualizarParametrosModeloSobrevivencia()">
+                                            <optgroup label="Métodos Não-Paramétricos">
+                                                <option value="kaplan_meier">Kaplan-Meier</option>
+                                                <option value="nelson_aalen">Nelson-Aalen</option>
+                                                <option value="fleming_harrington">Fleming-Harrington</option>
+                                                <option value="life_table">Life Table (Actuarial)</option>
+                                                <option value="breslow_nonparam">Breslow</option>
+                                                <option value="product_limit">Product-Limit</option>
+                                            </optgroup>
+                                            <optgroup label="Métodos Semi-Paramétricos">
+                                                <option value="cox" selected>Regressão de Cox</option>
+                                                <option value="cox_stratified">Cox Estratificado</option>
+                                                <option value="cox_time_varying">Cox com Covariáveis Tempo-Dependentes</option>
+                                                <option value="cox_frailty">Cox com Fragilidade</option>
+                                                <option value="cox_penalized">Cox Penalizado</option>
+                                                <option value="accelerated_failure">Modelo de Falha Acelerada</option>
+                                                <option value="additive_hazards">Modelos de Hazard Aditivo</option>
+                                                <option value="transformation_models">Modelos de Transformação</option>
+                                            </optgroup>
+                                            <optgroup label="Métodos Paramétricos">
+                                                <option value="weibull">Weibull</option>
+                                                <option value="exponencial">Exponencial</option>
+                                                <option value="log_normal">Log-Normal</option>
+                                                <option value="log_logistico">Log-Logístico</option>
+                                                <option value="gamma">Gamma</option>
+                                                <option value="gompertz">Gompertz</option>
+                                                <option value="generalized_gamma">Gamma Generalizada</option>
+                                                <option value="inverse_gaussian">Gaussiana Inversa</option>
+                                                <option value="piecewise_exponential">Exponencial por Partes</option>
+                                                <option value="rayleigh">Rayleigh</option>
+                                            </optgroup>
+                                            <optgroup label="Modelos Avançados">
+                                                <option value="mixture_models">Modelos de Mistura</option>
+                                                <option value="competing_risks">Riscos Competitivos</option>
+                                                <option value="multi_state">Multi-Estado</option>
+                                                <option value="joint_modeling">Modelagem Conjunta</option>
+                                                <option value="cure_models">Modelos de Cura</option>
+                                                <option value="bayesian_survival">Sobrevivência Bayesiana</option>
+                                                <option value="machine_learning">ML para Sobrevivência</option>
+                                                <option value="deep_learning">Deep Learning Survival</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="parametrosModeloSobrevivencia">
+                                        <!-- Parâmetros específicos do modelo selecionado -->
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Método de Estimação</label>
+                                        <select class="form-select" id="metodoEstimacaoSobrevivencia">
+                                            <optgroup label="Métodos de Estimação">
+                                                <option value="partial_likelihood" selected>Partial Likelihood</option>
+                                                <option value="maximum_likelihood">Maximum Likelihood</option>
+                                                <option value="penalized_likelihood">Penalized Likelihood</option>
+                                                <option value="bayesian_estimation">Estimação Bayesiana</option>
+                                                <option value="robust_estimation">Estimação Robusta</option>
+                                            </optgroup>
+                                            <optgroup label="Tratamento de Empates">
+                                                <option value="tie_breslow">Breslow</option>
+                                                <option value="tie_efron">Efron</option>
+                                                <option value="tie_exact">Exact</option>
+                                                <option value="tie_average">Average</option>
+                                            </optgroup>
+                                            <optgroup label="Parâmetros de Convergência">
+                                                <option value="penalizer_001">Penalizer 0.01</option>
+                                                <option value="penalizer_01">Penalizer 0.1</option>
+                                                <option value="penalizer_1">Penalizer 1.0</option>
+                                                <option value="max_iter_100">Max Iterations 100</option>
+                                                <option value="max_iter_500">Max Iterations 500</option>
+                                                <option value="max_iter_1000">Max Iterations 1000</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Análises Complementares</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="curvasSobrevivencia" checked>
+                                                <label class="form-check-label" for="curvasSobrevivencia">
+                                                    Curvas de Sobrevivência
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="analiseRisco" checked>
+                                                <label class="form-check-label" for="analiseRisco">
+                                                    Análise de Risco (Hazard)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="testesLogRank" checked>
+                                                <label class="form-check-label" for="testesLogRank">
+                                                    Testes Log-Rank
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="residuosCox">
+                                                <label class="form-check-label" for="residuosCox">
+                                                    Resíduos de Cox
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tabelaVida">
+                                                <label class="form-check-label" for="tabelaVida">
+                                                    Tabela de Vida
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="tempoMediano" checked>
+                                                <label class="form-check-label" for="tempoMediano">
+                                                    Tempo Mediano
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label class="form-label">Nível de Confiança</label>
+                                        <select class="form-select" id="nivelConfiancaSobrevivencia">
+                                            <option value="90">90%</option>
+                                            <option value="95" selected>95%</option>
+                                            <option value="99">99%</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validação e Estratificação -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Estratificação</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Estratificar por</label>
+                                        <select class="form-select" id="estratificarPor" multiple>
+                                            <option value="tribunal">Tribunal</option>
+                                            <option value="vara">Vara</option>
+                                            <option value="juiz">Juiz</option>
+                                            <option value="valor_causa">Valor da Causa</option>
+                                            <option value="complexidade">Complexidade</option>
+                                            <option value="tipo_acao">Tipo de Ação</option>
+                                            <option value="representacao">Representação</option>
+                                        </select>
+                                        <small class="form-text text-muted">Selecione múltiplas opções com Ctrl/Cmd</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Número de Estratos</label>
+                                        <input type="number" class="form-control" id="numeroEstratos" 
+                                               value="3" min="2" max="10">
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="testeHomogeneidade" checked>
+                                        <label class="form-check-label" for="testeHomogeneidade">
+                                            Teste de Homogeneidade entre Estratos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle me-2"></i>Validação e Diagnósticos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Método de Validação</label>
+                                        <select class="form-select" id="metodoValidacaoSobrevivencia">
+                                            <option value="bootstrap" selected>Bootstrap</option>
+                                            <option value="cross_validation">Cross-Validation</option>
+                                            <option value="holdout">Hold-out</option>
+                                            <option value="jackknife">Jackknife</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="concordance" checked>
+                                                <label class="form-check-label" for="concordance">
+                                                    C-Index
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="auc_survival">
+                                                <label class="form-check-label" for="auc_survival">
+                                                    AUC Temporal
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="brier_score">
+                                                <label class="form-check-label" for="brier_score">
+                                                    Brier Score
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="martingale_residuals" checked>
+                                                <label class="form-check-label" for="martingale_residuals">
+                                                    Resíduos Martingale
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label class="form-label">Número de Amostras Bootstrap</label>
+                                        <input type="number" class="form-control" id="numeroBootstrap" 
+                                               value="1000" min="100" max="10000">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualização e Relatórios -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header text-white" style="background-color: #3b576f;">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Visualização e Relatórios</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="graficoKaplanMeier" checked>
+                                                <label class="form-check-label" for="graficoKaplanMeier">
+                                                    Gráfico Kaplan-Meier
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="graficoHazard" checked>
+                                                <label class="form-check-label" for="graficoHazard">
+                                                    Gráfico de Hazard
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="forestPlot">
+                                                <label class="form-check-label" for="forestPlot">
+                                                    Forest Plot
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="nomogramaSobrevivencia">
+                                                <label class="form-check-label" for="nomogramaSobrevivencia">
+                                                    Nomograma
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Estilo de Gráfico</label>
+                                            <select class="form-select" id="estiloGrafico">
+                                                <option value="classico">Clássico</option>
+                                                <option value="moderno" selected>Moderno</option>
+                                                <option value="minimal">Minimal</option>
+                                                <option value="academico">Acadêmico</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Resolução</label>
+                                            <select class="form-select" id="resolucaoGrafico">
+                                                <option value="300">300 DPI</option>
+                                                <option value="600" selected>600 DPI</option>
+                                                <option value="1200">1200 DPI</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Formato de Saída</label>
+                                            <select class="form-select" id="formatoSaidaSobrevivencia">
+                                                <option value="pdf" selected>PDF</option>
+                                                <option value="html">HTML</option>
+                                                <option value="word">Word</option>
+                                                <option value="latex">LaTeX</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estratificação e Análise por Grupos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Estratificação e Análise por Grupos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary mb-3"><i class="fas fa-sitemap me-2"></i>Estratificação por Características Processuais</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarTribunal">
+                                                        <label class="form-check-label" for="estratificarTribunal">Tribunal</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarVara">
+                                                        <label class="form-check-label" for="estratificarVara">Vara</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarJuiz">
+                                                        <label class="form-check-label" for="estratificarJuiz">Juiz</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarValorCausa">
+                                                        <label class="form-check-label" for="estratificarValorCausa">Valor da Causa</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarComplexidade">
+                                                        <label class="form-check-label" for="estratificarComplexidade">Complexidade</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarTipoAcao">
+                                                        <label class="form-check-label" for="estratificarTipoAcao">Tipo de Ação</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarRepresentacao">
+                                                        <label class="form-check-label" for="estratificarRepresentacao">Representação</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarInstancia">
+                                                        <label class="form-check-label" for="estratificarInstancia">Instância</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success mb-3"><i class="fas fa-users me-2"></i>Estratificação por Características das Partes</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarPessoaFisicaJuridica">
+                                                        <label class="form-check-label" for="estratificarPessoaFisicaJuridica">Pessoa Física/Jurídica</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarPorteEmpresaEst">
+                                                        <label class="form-check-label" for="estratificarPorteEmpresaEst">Porte da Empresa</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarSetorAtividade">
+                                                        <label class="form-check-label" for="estratificarSetorAtividade">Setor de Atividade</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarLocalizacaoGeografica">
+                                                        <label class="form-check-label" for="estratificarLocalizacaoGeografica">Localização Geográfica</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarRepresentacaoSindical">
+                                                        <label class="form-check-label" for="estratificarRepresentacaoSindical">Representação Sindical</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="estratificarAssistenciaJudiciaria">
+                                                        <label class="form-check-label" for="estratificarAssistenciaJudiciaria">Assistência Judiciária</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr class="my-3">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Número de Estratos</label>
+                                            <select class="form-select" id="numeroEstratos">
+                                                <option value="estratos_2">2 Estratos</option>
+                                                <option value="estratos_3" selected>3 Estratos</option>
+                                                <option value="estratos_4">4 Estratos</option>
+                                                <option value="estratos_5">5 Estratos</option>
+                                                <option value="estratos_auto">Automático</option>
+                                                <option value="estratos_quartis">Por Quartis</option>
+                                                <option value="estratos_decis">Por Decis</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Testes de Homogeneidade</label>
+                                            <select class="form-select" id="testesHomogeneidade">
+                                                <option value="teste_log_rank" selected>Teste Log-Rank</option>
+                                                <option value="teste_wilcoxon">Teste de Wilcoxon</option>
+                                                <option value="teste_tarone_ware">Teste Tarone-Ware</option>
+                                                <option value="teste_fleming_harrington">Teste Fleming-Harrington</option>
+                                                <option value="teste_rho_family">Teste Rho Family</option>
+                                                <option value="teste_weighted_logrank">Weighted Log-rank Test</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Nível de Confiança</label>
+                                            <select class="form-select" id="nivelConfianca">
+                                                <option value="confianca_80">80%</option>
+                                                <option value="confianca_85">85%</option>
+                                                <option value="confianca_90">90%</option>
+                                                <option value="confianca_95" selected>95%</option>
+                                                <option value="confianca_99">99%</option>
+                                                <option value="confianca_995">99.5%</option>
+                                                <option value="confianca_999">99.9%</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagnósticos Avançados e Análise de Resíduos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Diagnósticos Avançados e Análise de Resíduos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-danger mb-3"><i class="fas fa-microscope me-2"></i>Tipos de Resíduos</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosMartingale" checked>
+                                                        <label class="form-check-label" for="residuosMartingale">Resíduos Martingale</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosDeviance" checked>
+                                                        <label class="form-check-label" for="residuosDeviance">Resíduos Deviance</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosSchoenfeld" checked>
+                                                        <label class="form-check-label" for="residuosSchoenfeld">Resíduos Schoenfeld</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosScaledSchoenfeld">
+                                                        <label class="form-check-label" for="residuosScaledSchoenfeld">Resíduos Schoenfeld Escalados</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosDfbeta">
+                                                        <label class="form-check-label" for="residuosDfbeta">Resíduos DFBeta</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosDfbetas">
+                                                        <label class="form-check-label" for="residuosDfbetas">Resíduos DFBetas</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosScore">
+                                                        <label class="form-check-label" for="residuosScore">Resíduos Score</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="residuosStandardized">
+                                                        <label class="form-check-label" for="residuosStandardized">Resíduos Padronizados</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-warning mb-3"><i class="fas fa-check-circle me-2"></i>Testes de Adequação do Modelo</h6>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeProporcionalidadeGlobal" checked>
+                                                        <label class="form-check-label" for="testeProporcionalidadeGlobal">Teste de Proporcionalidade Global</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeProporcionalidadeIndividual">
+                                                        <label class="form-check-label" for="testeProporcionalidadeIndividual">Teste de Proporcionalidade Individual</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeLinearidade">
+                                                        <label class="form-check-label" for="testeLinearidade">Teste de Linearidade</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeLogLinearidade">
+                                                        <label class="form-check-label" for="testeLogLinearidade">Teste de Log-Linearidade</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeBondadeAjuste">
+                                                        <label class="form-check-label" for="testeBondadeAjuste">Teste de Bondade de Ajuste</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeCoxSnell">
+                                                        <label class="form-check-label" for="testeCoxSnell">Teste Cox-Snell</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="testeArjas">
+                                                        <label class="form-check-label" for="testeArjas">Teste de Arjas</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="cookDistance">
+                                                        <label class="form-check-label" for="cookDistance">Cook's Distance</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Base PostgreSQL -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-table me-2"></i>Base PostgreSQL</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <label class="form-label">Tabela PostgreSQL</label>
+                                            <select class="form-select" id="tabelaPostgres">
+                                                <option value="">Carregando tabelas...</option>
+                                            </select>
+                                            <small class="text-muted">
+                                                Selecione uma das 79 tabelas disponíveis no banco PostgreSQL
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Ações</label>
+                                            <div>
+                                                <button type="button" class="btn btn-outline-success btn-sm" onclick="carregarTabelasPostgres()">
+                                                    <i class="fas fa-sync me-1"></i>Recarregar Tabelas
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="utilizarPostgres" checked>
+                                                <label class="form-check-label" for="utilizarPostgres">
+                                                    <strong>Utilizar dados PostgreSQL na análise</strong>
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">
+                                                Análise de dados relacionais para modelos de sobrevivência
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Base Vetorial Qdrant -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-vector-square me-2"></i>Base Vetorial Qdrant
+                                    </h6>
+                                    <small>Selecione uma collection vetorial para análise de sobrevivência</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="collectionQdrantSobrevivencia" class="form-label">
+                                                <i class="fas fa-database me-1"></i>Collection Qdrant
+                                            </label>
+                                            <select id="collectionQdrantSobrevivencia" class="form-select">
+                                                <option value="">📦 Selecione uma collection...</option>
+                                            </select>
+                                            <div class="form-text">Collection com dados vetoriais para análise</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">
+                                                <i class="fas fa-cogs me-1"></i>Configurações
+                                            </label>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <label for="limitePontosQdrant" class="form-label">Limite</label>
+                                                    <input type="number" id="limitePontosQdrant" class="form-control" value="1000" min="100" max="10000">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label for="similaridadeMinima" class="form-label">Similaridade</label>
+                                                    <input type="number" id="similaridadeMinima" class="form-control" value="0.7" min="0" max="1" step="0.1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </form>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-warning me-2" onclick="testarModeloAnaliseSobrevivencia()">
+                            <i class="fas fa-hourglass-half me-1"></i>Testar Análise de Sobrevivência
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="salvarModeloSobrevivencia()">
+                            <i class="fas fa-save me-1"></i>Salvar Modelo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates JavaScript -->
+<script src="/static/juridico/modelos-estatisticos/templates-javascript.js"></script>
+
+<script>
+// Função para atualizar parâmetros quando a área jurídica mudar
+function atualizarParametrosSobrevivencia() {
+    const selectElement = document.getElementById('areaJuridicaModeloSobrevivencia');
+    const area = selectElement ? selectElement.value : 'civil';
+    
+    console.log(`🔄 Área selecionada: ${area}`);
+    
+    // Atualizar campos específicos da área
+    atualizarCamposEspecificosAreaSobrevivencia(area);
+    
+    // Simular atualização de precisão esperada
+    const areaConfig = window.MATRIZ_AREAS_JURIDICAS?.[area];
+    if (areaConfig) {
+        const precisaoSobrevivencia = Math.min(areaConfig.precisao_media + 7, 99); // Sobrevivência tem +7% de precisão
+        // Atualizar algum elemento de precisão se existir
+        console.log(`✓ Campos específicos atualizados para área '${area}' no modelo 'sobrevivencia'`);
+    } else {
+        console.log(`✓ Campos específicos atualizados para área '${area}' no modelo 'sobrevivencia'`);
+    }
+}
+
+function atualizarCamposEspecificosAreaSobrevivencia(area) {
+    const container = document.getElementById('camposEspecificosAreaSobrevivencia');
+    if (!container) return;
+
+    // Mapear campos específicos por área
+    const camposAreas = {
+        'civil': [
+            'danos_morais', 'danos_materiais', 'lucros_cessantes', 'responsabilidade_civil', 
+            'contratos', 'posse_propriedade', 'direitos_reais', 'responsabilidade_aquiliana'
+        ],
+        'penal': [
+            'crime_doloso', 'crime_culposo', 'pena_privativa', 'pena_restritiva', 
+            'medida_seguranca', 'sursis', 'livramento_condicional', 'prescricao'
+        ],
+        'trabalhista': [
+            'horas_extras', 'indenizacao_moral', 'fgts', 'verbas_rescisoria', 
+            'adicional_insalubridade', 'adicional_periculosidade', 'equiparacao_salarial', 'estabilidade'
+        ],
+        'tributario': [
+            'restituicao_tributos', 'anulacao_debito', 'multa_fiscal', 'juros_tributos', 
+            'compensacao_tributaria', 'parcelamento', 'suspensao_exigibilidade', 'decadencia'
+        ],
+        'administrativo': [
+            'ato_administrativo', 'licitacao', 'servidor_publico', 'responsabilidade_estado', 
+            'improbidade_administrativa', 'mandado_seguranca', 'desapropriacao', 'servicos_publicos'
+        ],
+        'constitucional': [
+            'direitos_fundamentais', 'acao_constitucional', 'controle_constitucionalidade', 'federalismo', 
+            'separacao_poderes', 'processo_legislativo', 'emenda_constitucional', 'principios_constitucionais'
+        ],
+        'empresarial': [
+            'dissolucao_sociedade', 'recuperacao_judicial', 'responsabilidade_socios', 'contratos_comerciais', 
+            'propriedade_intelectual', 'concorrencia_desleal', 'titulos_credito', 'empresario_individual'
+        ],
+        'consumidor': [
+            'danos_morais_cdc', 'restituicao_dobro', 'vicio_produto', 'cobranca_indevida', 
+            'publicidade_enganosa', 'praticas_abusivas', 'garantia_legal', 'clausulas_abusivas'
+        ],
+        'ambiental': [
+            'dano_ambiental', 'licenciamento', 'areas_protegidas', 'recursos_hidricos', 
+            'poluicao', 'fauna_flora', 'residuos_solidos', 'responsabilidade_ambiental'
+        ],
+        'familia': [
+            'pensao_alimenticia', 'divisao_bens', 'guarda_filhos', 'visitas', 
+            'adocao', 'tutela_curatela', 'uniao_estavel', 'separacao_divorcio'
+        ],
+        'previdenciario': [
+            'aposentadoria', 'pensao_morte', 'auxilio_doenca', 'auxilio_acidente', 
+            'tempo_contribuicao', 'carencia', 'revisao_beneficio', 'beneficio_assistencial'
+        ],
+        'internacional': [
+            'arbitragem_internacional', 'contratos_internacionais', 'direito_comunitario', 'tratados', 
+            'nacionalidade', 'extradicao', 'cooperacao_juridica', 'organizacoes_internacionais'
+        ],
+        'propriedade_intelectual': [
+            'marca', 'patente', 'direito_autoral', 'desenho_industrial', 
+            'software', 'know_how', 'transferencia_tecnologia', 'violacao_propriedade'
+        ]
+    };
+
+    const camposArea = camposAreas[area] || camposAreas['civil'];
+    
+    let html = '<div class="row">';
+    camposArea.forEach((campo, index) => {
+        const nomeFormatado = campo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        html += `
+            <div class="col-md-6 mb-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" 
+                           id="campo_sobrevivencia_${campo}" name="campos_especificos[]" value="${campo}">
+                    <label class="form-check-label" for="campo_sobrevivencia_${campo}">
+                        ${nomeFormatado}
+                    </label>
+                </div>
+            </div>
+        `;
+        
+        // Quebra de linha a cada 2 campos
+        if ((index + 1) % 2 === 0 && index < camposArea.length - 1) {
+            html += '</div><div class="row">';
+        }
+    });
+    html += '</div>';
+    
+    // Adicionar nota explicativa
+    html += `
+        <div class="mt-3">
+            <div class="alert alert-info">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Dica:</strong> Os campos específicos de ${area.replace('_', ' ')} são utilizados como covariáveis 
+                na análise de sobrevivência. Selecione aqueles que podem influenciar o tempo até o evento de interesse.
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Verificar se está editando um modelo existente
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar campos específicos da área padrão
+    if (typeof atualizarParametrosSobrevivencia === 'function') {
+        atualizarParametrosSobrevivencia();
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const editModelId = urlParams.get('edit');
+    
+    if (editModelId) {
+        // Carregar dados do modelo do localStorage
+        const modeloData = localStorage.getItem('modeloParaEditar');
+        if (modeloData) {
+            try {
+                const modelo = JSON.parse(modeloData);
+                carregarDadosModeloSobrevivencia(modelo);
+                // Limpar localStorage após carregar
+                localStorage.removeItem('modeloParaEditar');
+                
+                // Mostrar notificação de modo de edição
+                mostrarNotificacaoEdicao(modelo.nome);
+            } catch (error) {
+                console.error('Erro ao carregar dados do modelo:', error);
+            }
+        }
+    }
+});
+
+function carregarDadosModeloSobrevivencia(modelo) {
+    const config = modelo.configuracao || {};
+    
+    // Carregar configurações básicas
+    if (config.modeloSobrevivencia) {
+        const selectModelo = document.getElementById('modeloSobrevivencia');
+        if (selectModelo) selectModelo.value = config.modeloSobrevivencia;
+    }
+    
+    if (config.metodoEstimacaoSobrevivencia) {
+        const selectMetodo = document.getElementById('metodoEstimacaoSobrevivencia');
+        if (selectMetodo) selectMetodo.value = config.metodoEstimacaoSobrevivencia;
+    }
+    
+    if (config.validationMethodSobrevivencia) {
+        const selectValidation = document.getElementById('validationMethodSobrevivencia');
+        if (selectValidation) selectValidation.value = config.validationMethodSobrevivencia;
+    }
+    
+    if (config.metricaPrincipalSobrevivencia) {
+        const selectMetrica = document.getElementById('metricaPrincipalSobrevivencia');
+        if (selectMetrica) selectMetrica.value = config.metricaPrincipalSobrevivencia;
+    }
+    
+    // Carregar configurações de Qdrant
+    if (config.colecaoQdrant) {
+        const selectQdrant = document.getElementById('colecaoQdrant');
+        if (selectQdrant) selectQdrant.value = config.colecaoQdrant;
+    }
+    
+    if (config.limiteDocumentosQdrant) {
+        const inputLimite = document.getElementById('limiteDocumentosQdrant');
+        if (inputLimite) inputLimite.value = config.limiteDocumentosQdrant;
+    }
+    
+    if (config.utilizarQdrant) {
+        const checkboxQdrant = document.getElementById('utilizarQdrant');
+        if (checkboxQdrant) checkboxQdrant.checked = config.utilizarQdrant;
+    }
+    
+    // Carregar todas as checkboxes de covariáveis
+    const checkboxes = [
+        'tempoServico', 'salarioEmpregado', 'categoriaProfissional', 'porteEmpresa',
+        'setorEconomico', 'sindicalizacao', 'tipoRescisao', 'justaCausa',
+        'idadeSegurado', 'tempoContribuicao', 'rendaMensal', 'tipoBeneficio',
+        'carenciaCumprida', 'contribuicaoFacultativa', 'periodoGraca', 'qualidadeSegurado',
+        'valorCausa', 'complexidadeCaso', 'tipoAcao', 'representacaoPartes',
+        'tribunalCompetente', 'varaEspecializada', 'juizRelator', 'periodoDistribuicao'
+    ];
+    
+    checkboxes.forEach(id => {
+        if (config[id]) {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = config[id];
+        }
+    });
+    
+    // Carregar configurações de estratificação
+    const estratificacaoCheckboxes = [
+        'estratificarTribunal', 'estratificarVara', 'estratificarJuiz', 'estratificarValorCausa',
+        'estratificarComplexidade', 'estratificarTipoAcao', 'estratificarRepresentacao', 'estratificarInstancia',
+        'estratificarPessoaFisicaJuridica', 'estratificarPorteEmpresaEst', 'estratificarSetorAtividade',
+        'estratificarLocalizacaoGeografica', 'estratificarRepresentacaoSindical', 'estratificarAssistenciaJudiciaria'
+    ];
+    
+    estratificacaoCheckboxes.forEach(id => {
+        if (config[id]) {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = config[id];
+        }
+    });
+    
+    // Carregar configurações de diagnósticos
+    const diagnosticoCheckboxes = [
+        'residuosMartingale', 'residuosDeviance', 'residuosSchoenfeld', 'residuosScaledSchoenfeld',
+        'residuosDfbeta', 'residuosDfbetas', 'residuosScore', 'residuosStandardized',
+        'testeProporcionalidadeGlobal', 'testeProporcionalidadeIndividual', 'testeLinearidade',
+        'testeLogLinearidade', 'testeBondadeAjuste', 'testeCoxSnell', 'testeArjas', 'cookDistance'
+    ];
+    
+    diagnosticoCheckboxes.forEach(id => {
+        if (config[id]) {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = config[id];
+        }
+    });
+    
+    // Carregar selects de configuração avançada
+    const selects = [
+        'numeroEstratos', 'testesHomogeneidade', 'nivelConfianca'
+    ];
+    
+    selects.forEach(id => {
+        if (config[id]) {
+            const select = document.getElementById(id);
+            if (select) select.value = config[id];
+        }
+    });
+}
+
+async function carregarTabelasPostgres() {
+    const select = document.getElementById('tabelaPostgres');
+    if (!select) return;
+    
+    try {
+        select.innerHTML = '<option value="">Carregando tabelas...</option>';
+        
+        const response = await fetch('/api/estatistica/listar-tabelas-postgres');
+        const resultado = await response.json();
+        
+        if (resultado.sucesso) {
+            select.innerHTML = '<option value="">Selecione uma tabela...</option>';
+            resultado.tabelas.forEach(tabela => {
+                const option = document.createElement('option');
+                option.value = tabela;
+                option.textContent = tabela;
+                select.appendChild(option);
+            });
+            
+            console.log(`✅ ${resultado.total} tabelas PostgreSQL carregadas`);
+        } else {
+            select.innerHTML = '<option value="">Erro ao carregar tabelas</option>';
+            console.error('Erro ao carregar tabelas:', resultado.erro);
+        }
+        
+    } catch (error) {
+        select.innerHTML = '<option value="">Erro na conexão</option>';
+        console.error('Erro ao carregar tabelas PostgreSQL:', error);
+    }
+}
+
+async function carregarCollectionsQdrant() {
+    const select = document.getElementById('colecaoQdrant');
+    if (!select) return;
+    
+    try {
+        select.innerHTML = '<option value="">Carregando coleções...</option>';
+        
+        const response = await fetch('/api/estatistica/listar-collections-qdrant');
+        const resultado = await response.json();
+        
+        if (resultado.sucesso) {
+            select.innerHTML = '<option value="">Selecione uma coleção...</option>';
+            resultado.collections.forEach(collection => {
+                const option = document.createElement('option');
+                option.value = collection.nome;
+                
+                // Mostrar status se offline
+                if (collection.status && collection.status.includes('offline')) {
+                    option.textContent = `${collection.nome} (${collection.status})`;
+                    option.style.color = '#dc3545'; // Vermelho para offline
+                } else {
+                    option.textContent = `${collection.nome} (${collection.vetores_count} vetores)`;
+                }
+                
+                select.appendChild(option);
+            });
+            
+            // Atualizar informações das coleções
+            const infoElement = document.getElementById('qdrantInfo');
+            if (infoElement) {
+                if (resultado.aviso) {
+                    infoElement.innerHTML = `<i class="fas fa-exclamation-triangle text-warning me-1"></i>${resultado.total} coleções disponíveis (modo offline)`;
+                    infoElement.className = 'text-warning';
+                } else {
+                    infoElement.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${resultado.total} coleções disponíveis online`;
+                    infoElement.className = 'text-success';
+                }
+            }
+            
+            if (resultado.aviso) {
+                console.log(`⚠️ ${resultado.aviso} - ${resultado.total} coleções listadas`);
+            } else {
+                console.log(`✅ ${resultado.total} coleções Qdrant carregadas`);
+            }
+        } else {
+            select.innerHTML = '<option value="">Erro ao carregar coleções</option>';
+            console.error('Erro ao carregar coleções:', resultado.erro);
+        }
+        
+    } catch (error) {
+        select.innerHTML = '<option value="">Erro na conexão</option>';
+        
+        // Atualizar informações de erro
+        const infoElement = document.getElementById('qdrantInfo');
+        if (infoElement) {
+            infoElement.innerHTML = '<i class="fas fa-times-circle text-danger me-1"></i>Erro na conexão com Qdrant';
+            infoElement.className = 'text-danger';
+        }
+        
+        console.error('Erro ao carregar coleções Qdrant:', error);
+    }
+}
+
+async function testarConexoesBancoDados() {
+    const botao = document.querySelector('button[onclick="testarConexoesBancoDados()"]');
+    const statusDiv = document.getElementById('statusConexoes');
+    
+    // Mostrar loading
+    botao.disabled = true;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testando conexões...';
+    statusDiv.innerHTML = '<div class="text-info"><i class="fas fa-hourglass-half me-1"></i>Verificando conectividade...</div>';
+    
+    try {
+        const response = await fetch('/api/estatistica/validar-conexoes');
+        const resultado = await response.json();
+        
+        let statusHtml = '<div class="row">';
+        
+        // Status PostgreSQL
+        const postgresIcon = resultado.postgres.disponivel ? 'fas fa-check-circle text-success' : 'fas fa-times-circle text-danger';
+        statusHtml += `
+            <div class="col-md-6">
+                <div class="alert ${resultado.postgres.disponivel ? 'alert-success' : 'alert-danger'} p-2 mb-2">
+                    <i class="${postgresIcon} me-2"></i>
+                    <strong>PostgreSQL:</strong> ${resultado.postgres.mensagem}
+                </div>
+            </div>
+        `;
+        
+        // Status Qdrant
+        const qdrantIcon = resultado.qdrant.disponivel ? 'fas fa-check-circle text-success' : 'fas fa-times-circle text-danger';
+        statusHtml += `
+            <div class="col-md-6">
+                <div class="alert ${resultado.qdrant.disponivel ? 'alert-success' : 'alert-danger'} p-2 mb-2">
+                    <i class="${qdrantIcon} me-2"></i>
+                    <strong>Qdrant:</strong> ${resultado.qdrant.mensagem}
+                </div>
+            </div>
+        `;
+        
+        statusHtml += '</div>';
+        
+        // Mostrar coleções Qdrant se disponível
+        if (resultado.qdrant.disponivel && resultado.qdrant.collections) {
+            statusHtml += `
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <strong>Coleções disponíveis:</strong> ${resultado.qdrant.collections.join(', ')}
+                    </small>
+                </div>
+            `;
+        }
+        
+        statusDiv.innerHTML = statusHtml;
+        
+        // Auto-carregar tabelas e coleções se as conexões estiverem funcionando
+        if (resultado.postgres.disponivel) {
+            carregarTabelasPostgres();
+        }
+        if (resultado.qdrant.disponivel) {
+            carregarCollectionsQdrant();
+        }
+        
+    } catch (error) {
+        console.error('Erro ao testar conexões:', error);
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger p-2">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Erro ao testar conexões: ${error.message}
+            </div>
+        `;
+    } finally {
+        // Restaurar botão
+        botao.disabled = false;
+        botao.innerHTML = '<i class="fas fa-plug me-1"></i>Testar Conexões (PostgreSQL + Qdrant)';
+    }
+}
+
+function mostrarNotificacaoEdicao(nomeModelo) {
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-bg-warning border-0';
+    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-edit me-2"></i>
+                <strong>Modo de Edição:</strong> Editando modelo "${nomeModelo}"
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+// Carregar dados automaticamente quando a página estiver pronta
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar tabelas PostgreSQL
+    carregarTabelasPostgres();
+    
+    // ==================== INICIALIZAÇÃO QDRANT SIMPLES ====================
+    console.log('🗃️ Inicializando seleção Qdrant para Análise de Sobrevivência...');
+    
+    // Carregar collections diretamente
+    carregarCollectionsQdrantSimples();
+    
+    console.log('✓ Sistema Qdrant configurado para análise de sobrevivência');
+    console.log('🔄 Carregando tabelas PostgreSQL e coleções Qdrant automaticamente...');
+});
+
+// ==================== FUNÇÃO QDRANT SIMPLES ====================
+function carregarCollectionsQdrantSimples() {
+    console.log('🔄 Carregando collections Qdrant...');
+    const select = document.getElementById('collectionQdrantSobrevivencia');
+    
+    if (!select) {
+        console.error('❌ Select não encontrado');
+        return;
+    }
+    
+    select.innerHTML = '<option value="">🔄 Carregando...</option>';
+    
+    fetch('/api/qdrant/collections')
+        .then(response => {
+            console.log('📡 Response:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Dados recebidos:', data);
+            
+            if (data.success && data.collections) {
+                select.innerHTML = '<option value="">📦 Selecione uma collection</option>';
+                
+                // Agrupar por área
+                const areas = {};
+                data.collections.forEach(col => {
+                    const area = col.area || 'Geral';
+                    if (!areas[area]) areas[area] = [];
+                    areas[area].push(col);
+                });
+                
+                // Adicionar optgroups
+                Object.keys(areas).sort().forEach(area => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = `${area} (${areas[area].length})`;
+                    
+                    areas[area].forEach(col => {
+                        const option = document.createElement('option');
+                        option.value = col.name;
+                        option.textContent = `📦 ${col.name} (${col.pontos} pontos)`;
+                        optgroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(optgroup);
+                });
+                
+                console.log('✅ Collections carregadas com sucesso');
+            } else {
+                select.innerHTML = '<option value="">❌ Erro ao carregar</option>';
+                console.error('❌ Erro nos dados:', data);
+            }
+        })
+        .catch(error => {
+            select.innerHTML = '<option value="">❌ Erro de conexão</option>';
+            console.error('❌ Erro fetch:', error);
+        });
+}
+
+</script>
+
+{% endblock %}

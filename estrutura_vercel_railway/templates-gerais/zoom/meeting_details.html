@@ -1,0 +1,104 @@
+{% extends 'layout.html' %}
+
+{% block title %}Detalhes da Reunião{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">
+            <i class="fas fa-info-circle me-2 text-primary"></i> Detalhes da Reunião
+        </h1>
+        <div class="btn-toolbar">
+            <a href="/" class="btn btn-sm btn-outline-light me-2">
+                <i class="fas fa-home me-1"></i> Home
+            </a>
+            <a href="/zoom_api/meetings" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    {% if meeting %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-header bg-dark border-secondary">
+                    <h4 class="mb-0">{{ meeting.topic }}</h4>
+                    <span class="badge bg-primary">ID: {{ meeting.id }}</span>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">Informações da Reunião</h6>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between">
+                            <span><i class="far fa-clock me-2"></i> Data e Hora:</span>
+                            <strong>{{ meeting.start_time[:16].replace('T', ' ') if meeting.start_time else 'N/A' }}</strong>
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between">
+                            <span><i class="fas fa-hourglass-half me-2"></i> Duração:</span>
+                            <strong>{{ meeting.duration }} minutos</strong>
+                        </li>
+                        <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between">
+                            <span><i class="fas fa-globe me-2"></i> Fuso Horário:</span>
+                            <strong>{{ meeting.timezone }}</strong>
+                        </li>
+                        {% if meeting.status %}
+                        <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between">
+                            <span><i class="fas fa-signal me-2"></i> Status:</span>
+                            <span class="badge {% if meeting.status == 'waiting' %}bg-warning{% elif meeting.status == 'started' %}bg-success{% else %}bg-info{% endif %}">
+                                {{ meeting.status }}
+                            </span>
+                        </li>
+                        {% endif %}
+                        {% if meeting.agenda %}
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <div><i class="fas fa-clipboard-list me-2"></i> <strong>Agenda:</strong></div>
+                            <p class="mt-2 mb-0">{{ meeting.agenda }}</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <h6 class="text-muted mb-3">Links de Acesso</h6>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-link me-2"></i> Link para Participantes:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-light border-secondary" value="{{ meeting.join_url }}" readonly id="joinUrl">
+                            <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText('{{ meeting.join_url }}'); alert('Link copiado!')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if meeting.start_url %}
+                    <div class="mb-4">
+                        <label class="form-label"><i class="fas fa-crown me-2"></i> Link do Anfitrião:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-light border-secondary" value="{{ meeting.start_url }}" readonly id="startUrl">
+                            <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText('{{ meeting.start_url }}'); alert('Link copiado!')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <a href="{{ meeting.join_url }}" target="_blank" class="btn btn-success btn-lg">
+                            <i class="fas fa-video me-2"></i> Entrar na Reunião
+                        </a>
+                        {% if meeting.start_url %}
+                        <a href="{{ meeting.start_url }}" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-crown me-2"></i> Iniciar como Anfitrião
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Reunião não encontrada.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

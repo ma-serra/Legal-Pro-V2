@@ -1,0 +1,193 @@
+<!-- Botões de Exportação de Relatórios -->
+<div class="dashboard-export-controls mb-4">
+    <div class="card" style="background: linear-gradient(135deg, #3b576f 0%, #2a4050 100%); border: none;">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="text-white mb-2 mb-md-0">
+                        <i class="fas fa-file-export me-2"></i>Exportar Relatório
+                    </h5>
+                    <small class="text-white-50">Gere relatórios profissionais com todos os dados deste dashboard</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button class="btn btn-light me-2" onclick="exportDashboardPDF('{{ dashboard_name }}')" data-testid="button-export-pdf">
+                        <i class="fas fa-file-pdf text-danger me-2"></i>Exportar PDF
+                    </button>
+                    <button class="btn btn-success" onclick="exportDashboardExcel('{{ dashboard_name }}')" data-testid="button-export-excel">
+                        <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para exportação -->
+<script>
+/**
+ * Captura todos os gráficos Chart.js da página como base64
+ */
+function captureAllCharts() {
+    const charts = {};
+    
+    // Encontrar todos os canvas que contêm gráficos Chart.js
+    const canvasElements = document.querySelectorAll('canvas');
+    
+    canvasElements.forEach((canvas, index) => {
+        try {
+            // Verificar se o canvas tem um gráfico Chart.js
+            const chartInstance = Chart.getChart(canvas);
+            if (chartInstance) {
+                // Capturar como base64
+                const base64Image = canvas.toDataURL('image/png');
+                
+                // Usar ID do canvas ou índice como chave
+                const chartId = canvas.id || `chart_${index}`;
+                charts[chartId] = base64Image;
+                
+                console.log(`✅ Gráfico capturado: ${chartId}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Erro ao capturar canvas ${index}:`, error);
+        }
+    });
+    
+    return charts;
+}
+
+async function exportDashboardPDF(dashboardName) {
+    const btn = event.target;
+    const originalHTML = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Capturando gráficos...';
+        
+        // Aguardar um momento para garantir que os gráficos estão renderizados
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Capturar todos os gráficos da página
+        const charts = captureAllCharts();
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando PDF...';
+        
+        // Fazer request POST com os gráficos
+        const url = `/fintechs/api/export/${dashboardName}/pdf`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ charts })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao gerar PDF');
+        }
+        
+        // Download do arquivo
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `fintech_${dashboardName}_${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+        
+        // Mostrar notificação de sucesso
+        const chartCount = Object.keys(charts).length;
+        showExportNotification(`PDF visual gerado com ${chartCount} gráfico(s)!`, 'success');
+        
+    } catch (error) {
+        console.error('Erro ao exportar PDF:', error);
+        showExportNotification('Erro ao gerar PDF. Tente novamente.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+async function exportDashboardExcel(dashboardName) {
+    const btn = event.target;
+    const originalHTML = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando Excel...';
+        
+        // Fazer request para API de exportação
+        const url = `/fintechs/api/export/${dashboardName}/excel`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Erro ao gerar Excel');
+        }
+        
+        // Download do arquivo
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `fintech_${dashboardName}_${new Date().getTime()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+        
+        // Mostrar notificação de sucesso
+        showExportNotification('Excel gerado com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('Erro ao exportar Excel:', error);
+        showExportNotification('Erro ao gerar Excel. Tente novamente.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+function showExportNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        <strong>${message}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 4000);
+}
+</script>
+
+<style>
+.dashboard-export-controls {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-export-controls .card {
+    border-radius: 8px;
+}
+
+.dashboard-export-controls .btn {
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.dashboard-export-controls .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>

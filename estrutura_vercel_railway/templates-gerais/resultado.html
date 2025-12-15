@@ -1,0 +1,316 @@
+{% extends "layout.html" %}
+
+{% block title %}Resultado da Análise{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-3">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Início</a></li>
+          <li class="breadcrumb-item active">Resultado da Análise</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2 class="card-title mb-0">Resultado da Análise</h2>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-copiar">
+              <i class="fas fa-copy me-1"></i> Copiar
+            </button>
+            <a href="/" class="btn btn-sm btn-outline-primary ms-2">
+              <i class="fas fa-home me-1"></i> Início
+            </a>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="card border-light mb-3">
+                <div class="card-header bg-primary text-white">
+                  <h5 class="card-title mb-0"><i class="fas fa-robot me-2"></i>Agente Utilizado</h5>
+                </div>
+                <div class="card-body">
+                  <h4 class="text-center">{{ agente_nome }}</h4>
+                  {% if modo == 'especializado' %}
+                    <p class="text-center"><span class="badge bg-info">Modo Especializado</span></p>
+                  {% else %}
+                    <p class="text-center"><span class="badge bg-warning">Modo Sequencial</span></p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card border-light mb-3">
+                <div class="card-header bg-secondary text-white">
+                  <h5 class="card-title mb-0"><i class="fas fa-file-alt me-2"></i>Texto Original</h5>
+                </div>
+                <div class="card-body">
+                  <div class="text-original-preview">
+                    <pre class="p-3 border rounded bg-light" style="max-height: 200px; overflow-y: auto; font-weight: 500; color: rgb(0, 0, 0);" data-color="dark">{{ texto_original }}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="resultado-conteudo" class="resultado-container mb-4">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h4 class="card-title mb-0"><i class="fas fa-check-circle me-2"></i>Resultado da Análise</h4>
+              </div>
+              <div class="card-body" style="color: #6c757d !important;">
+                {% if resultado.resultado %}
+                  <div class="resultado-text" style="color: #6c757d !important;">
+                    {{ resultado.resultado|e }}  <!-- Alterado: |safe removido por segurança -->
+                  </div>
+                {% elif resultado.analise %}
+                  <div class="resultado-text" style="color: #6c757d !important;">
+                    {{ resultado.analise|e }}  <!-- Alterado: |safe removido por segurança -->
+                  </div>
+                {% else %}
+                  <pre class="json-content bg-light p-3 rounded" style="color: #6c757d !important;" data-color="dark">{{ resultado|tojson(indent=2) }}</pre>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          {% if etapas and etapas|length > 0 %}
+          <div class="mt-4">
+            <h4><i class="fas fa-project-diagram me-2"></i>Etapas da Análise</h4>
+            <div class="etapas-timeline">
+              {% for etapa in etapas %}
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h5>{{ etapa.agente }}</h5>
+                </div>
+                <div class="card-body">
+                  <pre class="bg-light p-3 rounded" style="color: rgb(255, 255, 255);" data-color="dark">{{ etapa.resultado|tojson(indent=2) }}</pre>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#segundaOpiniaoModal">
+              <i class="fas fa-balance-scale me-1"></i> Segunda Opinião
+            </button>
+            <a href="/analisar" class="btn btn-primary">
+              <i class="fas fa-redo me-1"></i> Nova Análise
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Segunda Opinião -->
+<div class="modal fade" id="segundaOpiniaoModal" tabindex="-1" aria-labelledby="segundaOpiniaoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="segundaOpiniaoModalLabel">
+          <i class="fas fa-balance-scale me-2"></i> Solicitar Segunda Opinião
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="lead">Você está prestes a solicitar uma segunda opinião sobre esta análise jurídica.</p>
+        
+        <div class="mb-3">
+          <label for="areaJuridica" class="form-label">Área Jurídica</label>
+          <select class="form-select" id="areaJuridica" required>
+            <option value="" selected disabled>Selecione a área jurídica...</option>
+            
+            <!-- Áreas de Direito Civil -->
+            <optgroup label="Direito Civil">
+                <option value="consumidor">Direito do Consumidor</option>
+                <option value="imobiliario">Direito Imobiliário</option>
+                <option value="agrario">Direito Agrário</option>
+                <option value="contratos">Contratos Civis</option>
+                <option value="familia">Direito de Família</option>
+                <option value="sucessoes">Direito das Sucessões</option>
+                <option value="responsabilidade_civil">Responsabilidade Civil</option>
+                <option value="direitos_reais">Direitos Reais</option>
+                <option value="obrigacoes">Direito das Obrigações</option>
+                <option value="condominio">Direito Condominial</option>
+                <option value="terceiro_setor">Terceiro Setor</option>
+            </optgroup>
+            
+            <!-- Áreas de Direito Empresarial -->
+            <optgroup label="Direito Empresarial e Econômico">
+                <option value="empresarial">Direito Empresarial</option>
+                <option value="bancario">Direito Bancário</option>
+                <option value="securitario">Direito Securitário</option>
+                <option value="tributario">Direito Tributário</option>
+                <option value="recuperacao_credito">Recuperação de Crédito</option>
+                <option value="riscos">Análise de Riscos Jurídicos</option>
+                <option value="concorrencial">Direito Concorrencial</option>
+                <option value="falimentar">Falência e Recuperação</option>
+                <option value="propriedade_intelectual">Propriedade Intelectual</option>
+                <option value="contratos_empresariais">Contratos Empresariais</option>
+                <option value="sociedades">Direito Societário</option>
+                <option value="mercado_capitais">Mercado de Capitais</option>
+                <option value="compliance">Compliance e Governança</option>
+                <option value="cambio">Direito Cambial</option>
+                <option value="franchising">Franchising</option>
+                <option value="consumo_empresarial">Relações de Consumo Empresarial</option>
+            </optgroup>
+            
+            <!-- Áreas de Direito Penal -->
+            <optgroup label="Direito Penal">
+                <option value="penal">Direito Penal Geral</option>
+                <option value="penal_economico">Direito Penal Econômico</option>
+                <option value="tribunal_juri">Tribunal do Júri</option>
+                <option value="execucao_penal">Execução Penal</option>
+                <option value="penal_tributario">Direito Penal Tributário</option>
+                <option value="penal_ambiental">Direito Penal Ambiental</option>
+                <option value="penal_digital">Direito Penal Digital</option>
+                <option value="processo_penal">Processo Penal</option>
+                <option value="crimes_dolosos">Crimes Dolosos contra a Vida</option>
+                <option value="crimes_financeiros">Crimes Financeiros</option>
+                <option value="crimes_ciberneticos">Crimes Cibernéticos</option>
+                <option value="violencia_domestica">Violência Doméstica</option>
+                <option value="direito_penitenciario">Direito Penitenciário</option>
+            </optgroup>
+            
+            <!-- Áreas de Direito Público -->
+            <optgroup label="Direito Público">
+                <option value="administrativo">Direito Administrativo</option>
+                <option value="ambiental">Direito Ambiental</option>
+                <option value="constitucional">Direito Constitucional</option>
+                <option value="eleitoral">Direito Eleitoral</option>
+                <option value="municipal">Direito Municipal</option>
+                <option value="urbanistico">Direito Urbanístico</option>
+                <option value="licitacoes">Licitações e Contratos Administrativos</option>
+                <option value="regulatorio">Direito Regulatório</option>
+                <option value="improbidade">Improbidade Administrativa</option>
+                <option value="previdencia_publica">Previdência do Servidor Público</option>
+                <option value="direitos_humanos">Direitos Humanos</option>
+                <option value="direito_internacional_publico">Direito Internacional Público</option>
+            </optgroup>
+            
+            <!-- Áreas de Direito do Trabalho -->
+            <optgroup label="Direito do Trabalho">
+                <option value="trabalhista">Direito Trabalhista</option>
+                <option value="previdenciario">Direito Previdenciário</option>
+                <option value="sindical">Direito Sindical</option>
+                <option value="saude_trabalho">Saúde e Segurança do Trabalho</option>
+                <option value="processo_trabalhista">Processo Trabalhista</option>
+                <option value="trabalhista_empresarial">Direito Trabalhista Empresarial</option>
+                <option value="trabalhista_rural">Direito do Trabalho Rural</option>
+                <option value="terceirizacao">Terceirização</option>
+                <option value="acordos_coletivos">Acordos e Convenções Coletivas</option>
+                <option value="compliance_trabalhista">Compliance Trabalhista</option>
+            </optgroup>
+            
+            <!-- Áreas Especiais -->
+            <optgroup label="Áreas Especiais">
+                <option value="digital">Direito Digital</option>
+                <option value="internacional">Direito Internacional</option>
+                <option value="maritimo">Direito Marítimo</option>
+                <option value="desportivo">Direito Desportivo</option>
+                <option value="saude">Direito da Saúde</option>
+                <option value="educacional">Direito Educacional</option>
+                <option value="aeronautico">Direito Aeronáutico</option>
+                <option value="agronegocio">Direito do Agronegócio</option>
+                <option value="minerario">Direito Minerário</option>
+                <option value="energia">Direito da Energia</option>
+                <option value="startups">Direito das Startups</option>
+                <option value="arbitragem">Arbitragem e Mediação</option>
+                <option value="proteçao_dados">Proteção de Dados</option>
+                <option value="propriedade_intelectual">Propriedade Intelectual e Direitos Autorais</option>
+                <option value="biotecnologia">Direito da Biotecnologia</option>
+                <option value="consumo_eletronico">Direito do Consumidor Eletrônico</option>
+                <option value="minorias">Direito das Minorias</option>
+                <option value="idoso">Direito do Idoso</option>
+                <option value="refugiados">Direito dos Refugiados</option>
+                <option value="indigena">Direito Indígena</option>
+            </optgroup>
+          </select>
+          <div class="form-text">Selecione a área jurídica relacionada à análise para obter uma revisão especializada.</div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="contextoAdicional" class="form-label">Contexto Adicional (opcional)</label>
+          <textarea class="form-control" id="contextoAdicional" rows="3" placeholder="Informações adicionais que podem auxiliar na revisão..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnEnviarSegundaOpiniao">
+          <i class="fas fa-paper-plane me-1"></i> Solicitar Revisão
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Botão de copiar
+    document.getElementById('btn-copiar').addEventListener('click', function() {
+      const conteudo = document.getElementById('resultado-conteudo');
+      
+      // Cria uma área temporária
+      const textarea = document.createElement('textarea');
+      
+      // Verifica o formato atual
+      if (conteudo.querySelector('pre')) {
+        textarea.value = conteudo.querySelector('pre').textContent;
+      } else {
+        // Para HTML, pega o texto formatado
+        textarea.value = conteudo.textContent;
+      }
+      
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      // Altera temporariamente o texto do botão
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i class="fas fa-check me-1"></i> Copiado!';
+      setTimeout(() => {
+        this.innerHTML = originalText;
+      }, 2000);
+    });
+    
+    /* Comentando botões de formato para futura implementação
+    document.getElementById('btn-formato-html')?.addEventListener('click', function() {
+      window.location.href = `/resultado?formato=html`;
+    });
+    
+    document.getElementById('btn-formato-markdown')?.addEventListener('click', function() {
+      window.location.href = `/resultado?formato=markdown`;
+    });
+    
+    document.getElementById('btn-formato-json')?.addEventListener('click', function() {
+      window.location.href = `/resultado?formato=json`;
+    });
+    
+    document.getElementById('btn-formato-texto')?.addEventListener('click', function() {
+      window.location.href = `/resultado?formato=texto`;
+    });
+    */
+    
+    // Modal de segunda opinião foi removido
+    // const segundaOpiniaoModal = new bootstrap.Modal(document.getElementById('segundaOpiniaoModal'));
+    
+    // Código de segunda opinião removido
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Transcrições - Legal Design Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            padding: 2rem;
+            margin-top: 70px;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .transcricao-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .transcricao-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-concluido { background-color: #28a745; color: white; }
+        .status-processando { background-color: #ffc107; color: black; }
+        .status-erro { background-color: #dc3545; color: white; }
+        .status-pendente { background-color: #6c757d; color: white; }
+
+        .confidence-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+
+        .action-btn {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin: 0.2rem;
+            display: inline-block;
+        }
+
+        .action-btn:hover {
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+        }
+
+        .action-btn.btn-danger {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        .action-btn.btn-danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #adb5bd;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .filters-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1><i class="fas fa-history me-3"></i>Histórico de Transcrições</h1>
+            <p class="mb-0">Visualize e gerencie todas as suas transcrições de áudio e vídeo</p>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats.total }}</div>
+                    <div>Total</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats.concluidas }}</div>
+                    <div>Concluídas</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats.processando }}</div>
+                    <div>Processando</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats.duracao_total }}</div>
+                    <div>Duração Total (min)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-container">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos os status</option>
+                        <option value="concluido" {{ 'selected' if request.args.get('status') == 'concluido' }}>Concluído</option>
+                        <option value="processando" {{ 'selected' if request.args.get('status') == 'processando' }}>Processando</option>
+                        <option value="erro" {{ 'selected' if request.args.get('status') == 'erro' }}>Erro</option>
+                        <option value="pendente" {{ 'selected' if request.args.get('status') == 'pendente' }}>Pendente</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ordenar por</label>
+                    <select name="ordenar" class="form-select">
+                        <option value="recente" {{ 'selected' if request.args.get('ordenar') == 'recente' }}>Mais Recente</option>
+                        <option value="antigo" {{ 'selected' if request.args.get('ordenar') == 'antigo' }}>Mais Antigo</option>
+                        <option value="nome" {{ 'selected' if request.args.get('ordenar') == 'nome' }}>Nome</option>
+                        <option value="duracao" {{ 'selected' if request.args.get('ordenar') == 'duracao' }}>Duração</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-outline-light w-100">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lista de Transcrições -->
+        {% if transcricoes %}
+            {% for transcricao in transcricoes %}
+            <div class="transcricao-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-2">
+                            <i class="fas fa-file-audio me-2 text-info"></i>
+                            {{ transcricao.arquivo_nome }}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ transcricao.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {% if transcricao.arquivo_duracao %}
+                                        {{ (transcricao.arquivo_duracao // 60)|int }}:{{ '{:02d}'.format(transcricao.arquivo_duracao % 60) }}
+                                    {% else %}
+                                        --:--
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+
+                        {% if transcricao.confidence %}
+                        <div class="mt-2">
+                            <small class="text-muted">Confiança: {{ (transcricao.confidence * 100)|round(1) }}%</small>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: {{ (transcricao.confidence * 100)|round(1) }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if transcricao.transcript_text %}
+                        <div class="mt-2">
+                            <small class="text-muted">Prévia:</small>
+                            <p class="text-truncate mb-0" style="max-width: 100%;">
+                                {{ transcricao.transcript_text[:150] }}...
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4 text-end">
+                        <div class="mb-3">
+                            <span class="status-badge status-{{ transcricao.status }}">
+                                {% if transcricao.status == 'concluido' %}
+                                    <i class="fas fa-check-circle"></i> Concluído
+                                {% elif transcricao.status == 'processando' %}
+                                    <i class="fas fa-spinner fa-spin"></i> Processando
+                                {% elif transcricao.status == 'erro' %}
+                                    <i class="fas fa-exclamation-triangle"></i> Erro
+                                {% else %}
+                                    <i class="fas fa-clock"></i> Pendente
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            {% if transcricao.status == 'concluido' %}
+                            <a href="/transcricao/ver/{{ transcricao.id }}" class="action-btn">
+                                <i class="fas fa-eye"></i> Visualizar
+                            </a>
+                            <a href="/transcricao/exportar/{{ transcricao.id }}" class="action-btn">
+                                <i class="fas fa-download"></i> Exportar
+                            </a>
+                            {% endif %}
+                            <a href="/transcricao/excluir/{{ transcricao.id }}" class="action-btn btn-danger" 
+                               onclick="return confirm('Deseja excluir esta transcrição?')">
+                                <i class="fas fa-trash"></i> Excluir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Paginação -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Navegação de páginas">
+                <ul class="pagination justify-content-center">
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('historico_transcricoes_audio', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">…</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-microphone-slash"></i>
+                <h3>Nenhuma transcrição encontrada</h3>
+                <p>Você ainda não fez nenhuma transcrição de áudio.</p>
+                <a href="/transcription/" class="action-btn">
+                    <i class="fas fa-plus"></i> Nova Transcrição
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

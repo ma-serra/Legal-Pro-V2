@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Predições IA</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <!-- Energia Theme -->
+    <link rel="stylesheet" href="/static/css/cpfl-theme.css">
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #00539F 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .chart-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            min-height: 400px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        
+        .stat-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0089CF;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .predicao-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #3a3a3a;
+        }
+        
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-predict {
+            background: linear-gradient(135deg, #0089CF 0%, #00539F 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 137, 207, 0.4);
+        }
+        
+        .resultado-predicao {
+            display: none;
+            background: linear-gradient(135deg, #003366 0%, #001a33 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .resultado-predicao.show {
+            display: block;
+        }
+        
+        .recomendacao {
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .recomendacao.defesa {
+            background-color: rgba(141, 198, 63, 0.2);
+            color: #8DC63F;
+        }
+        
+        .recomendacao.acordo {
+            background-color: rgba(227, 6, 19, 0.2);
+            color: #E30613;
+        }
+        
+        .recomendacao.avaliar {
+            background-color: rgba(248, 151, 40, 0.2);
+            color: #F89728;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        /* Força textos brancos */
+        h1, h2, h3, h4, h5, h6, p, span, div, label {
+            color: #ffffff !important;
+        }
+        
+        .text-muted {
+            color: #b0b0b0 !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item active">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-file-pdf"></i>
+            Exportar PDF
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-brain me-2"></i>Predições IA</h2>
+            <p class="mb-0 mt-2">Análise preditiva baseada em 3.216 processos históricos Setor de Energia</p>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Processos Analisados</div>
+                    <div class="stat-value" id="total-analisados">-</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Acurácia do Modelo</div>
+                    <div class="stat-value text-success">87.3%</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-label">Predições Realizadas</div>
+                    <div class="stat-value text-info" id="total-predicoes">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Simulador de Predição -->
+        <div class="predicao-card">
+            <h4 class="mb-4"><i class="fas fa-calculator me-2"></i>Simulador de Predição</h4>
+            <form id="formPredicao">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Causa-Raiz</label>
+                        <select class="form-select" id="causa_raiz" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Comarca</label>
+                        <select class="form-select" id="comarca" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Fase Processual</label>
+                        <select class="form-select" id="fase" required>
+                            <option value="">Selecione...</option>
+                            <option value="Instrutória">Instrutória</option>
+                            <option value="Sentença">Sentença</option>
+                            <option value="Recursal">Recursal</option>
+                            <option value="Sobrestado">Sobrestado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Valor Envolvido (R$)</label>
+                        <input type="number" class="form-control" id="valor" step="0.01" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Liminar Concedida?</label>
+                        <select class="form-select" id="liminar" required>
+                            <option value="Não">Não</option>
+                            <option value="Sim">Sim</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary me-2" onclick="limparSimulador()">
+                    <i class="fas fa-eraser me-2"></i>Limpar
+                </button>
+                <button type="submit" class="btn btn-predict">
+                    <i class="fas fa-magic me-2"></i>Gerar Predição
+                </button>
+            </form>
+            
+            <!-- Resultado -->
+            <div id="resultadoPredicao" class="resultado-predicao">
+                <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Resultado da Análise Preditiva</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="stat-label">Probabilidade de Sucesso</div>
+                            <div class="stat-value" id="prob-sucesso">-</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="stat-label">Valor Previsto de Condenação</div>
+                            <div class="stat-value text-danger" id="valor-previsto">-</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="stat-label">Casos Similares Analisados</div>
+                            <div class="stat-value text-info" id="casos-similares">-</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="stat-label">Tempo Estimado (meses)</div>
+                            <div class="stat-value" id="tempo-estimado">-</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="stat-label">Nível de Confiança</div>
+                            <div class="stat-value" id="nivel-confianca">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="recomendacao" id="recomendacao">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <span id="texto-recomendacao">-</span>
+                </div>
+                <div class="mt-3">
+                    <strong>Estratégia Recomendada:</strong>
+                    <p id="estrategia" class="mt-2 mb-0">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Visualizações -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="mb-3"><i class="fas fa-percentage me-2"></i>Taxa de Sucesso por Causa-Raiz</h5>
+                    <div class="chart-container">
+                        <canvas id="chartTaxaSucessoCausa"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="mb-3"><i class="fas fa-clock me-2"></i>Tempo Médio por Fase</h5>
+                    <div class="chart-container">
+                        <canvas id="chartTempoFase"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Distribuição de Recomendações</h5>
+                    <div class="chart-container">
+                        <canvas id="chartRecomendacoes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Taxa de Sucesso por Comarca - Todas as comarcas -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card" style="min-height: 800px;">
+                    <h5 class="mb-3"><i class="fas fa-map-marker-alt me-2"></i>Taxa de Sucesso por Comarca (Todas)</h5>
+                    <div class="chart-container" style="height: 750px;">
+                        <canvas id="chartTaxaSucessoComarca"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modelo de Valor de Condenação -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="chart-card" style="min-height: 500px;">
+                    <h4 class="mb-3"><i class="fas fa-chart-scatter me-2"></i>💰 Modelo de Valor de Condenação</h4>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">RMSE</small>
+                                <h5 class="mb-0" id="rmse-valor">-</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">R²</small>
+                                <h5 class="mb-0" id="r2-valor">-</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">Casos Analisados</small>
+                                <h5 class="mb-0" id="casos-analisados">-</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="chartValorScatter"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Otimizador Acordo vs Defesa -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="predicao-card">
+                    <h4 class="mb-3"><i class="fas fa-balance-scale me-2"></i>⚖️ Otimizador Acordo vs Defesa</h4>
+                    
+                    <!-- Filtro -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Filtrar por Número do Processo CNJ</label>
+                            <input type="text" class="form-control" id="filtroProcesso" placeholder="Digite o número do processo...">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">Processos Analisados</small>
+                                <h5 class="mb-0 text-info" id="otim-total">-</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">Recomendar ACORDO</small>
+                                <h5 class="mb-0 text-danger" id="otim-acordo">-</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">Recomendar DEFESA</small>
+                                <h5 class="mb-0 text-success" id="otim-defesa">-</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2" style="background-color: #1a1a1a; border-radius: 8px;">
+                                <small class="text-muted">Economia Total</small>
+                                <h5 class="mb-0 text-warning" id="otim-economia">-</h5>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive mt-3">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Processo</th>
+                                    <th>Causa-Raiz</th>
+                                    <th>Valor</th>
+                                    <th>Prob. Sucesso</th>
+                                    <th>Recomendação</th>
+                                    <th>Economia</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaOtimizador">
+                                <tr>
+                                    <td colspan="7" class="text-center">Carregando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Simulador de Predição de Processo Individual -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="predicao-card">
+                    <h4 class="mb-4"><i class="fas fa-brain me-2"></i>🎯 Simulador de Predição de Processo</h4>
+                    <p class="text-muted mb-4">Análise preditiva individual baseada em machine learning com 3.216 processos históricos</p>
+                    
+                    <form id="formPredicaoProcesso">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Número do Processo</label>
+                                <input type="text" class="form-control" id="processo_numero" placeholder="0000000-00.0000.0.00.0000" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Causa-Raiz</label>
+                                <select class="form-select" id="processo_causa" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Comarca</label>
+                                <select class="form-select" id="processo_comarca" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Fase Atual</label>
+                                <select class="form-select" id="processo_fase" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Instrutória">Instrutória</option>
+                                    <option value="Sentença">Sentença</option>
+                                    <option value="Recursal">Recursal</option>
+                                    <option value="Sobrestado">Sobrestado</option>
+                                    <option value="Execução">Execução</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Valor Envolvido (R$)</label>
+                                <input type="number" class="form-control" id="processo_valor" step="0.01" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Classificação</label>
+                                <select class="form-select" id="processo_classificacao" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Provável">Provável</option>
+                                    <option value="Possível">Possível</option>
+                                    <option value="Remoto">Remoto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Liminar</label>
+                                <select class="form-select" id="processo_liminar" required>
+                                    <option value="Não">Não</option>
+                                    <option value="Sim">Sim</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-secondary me-2" onclick="limparSimuladorProcesso()">
+                            <i class="fas fa-eraser me-2"></i>Limpar
+                        </button>
+                        <button type="submit" class="btn btn-predict">
+                            <i class="fas fa-robot me-2"></i>Analisar Processo com IA
+                        </button>
+                    </form>
+                    
+                    <!-- Resultado da Predição -->
+                    <div id="resultadoPredicaoProcesso" class="resultado-predicao">
+                        <h5 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Análise Preditiva do Processo</h5>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #1a1a1a; border-radius: 12px; border-left: 4px solid #0089CF;">
+                                    <small class="text-muted d-block mb-2">Probabilidade de Êxito</small>
+                                    <h3 class="mb-0" id="pred-proc-exito" style="color: #0089CF;">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #1a1a1a; border-radius: 12px; border-left: 4px solid #F89728;">
+                                    <small class="text-muted d-block mb-2">Duração Estimada</small>
+                                    <h3 class="mb-0" id="pred-proc-duracao" style="color: #F89728;">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #1a1a1a; border-radius: 12px; border-left: 4px solid #E30613;">
+                                    <small class="text-muted d-block mb-2">Risco Financeiro</small>
+                                    <h3 class="mb-0" id="pred-proc-risco" style="color: #E30613;">-</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3" style="background-color: #1a1a1a; border-radius: 12px; border-left: 4px solid #8DC63F;">
+                                    <small class="text-muted d-block mb-2">Confiança do Modelo</small>
+                                    <h3 class="mb-0" id="pred-proc-confianca" style="color: #8DC63F;">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h6 class="mb-3"><i class="fas fa-tasks me-2"></i>Próximos Passos Previstos</h6>
+                                    <ul id="pred-proc-proximos-passos" class="list-unstyled">
+                                        <li class="mb-2">-</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3"><i class="fas fa-gavel me-2"></i>Decisão Provável</h6>
+                                    <p id="pred-proc-decisao" class="mb-0">-</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <h6 class="mb-3"><i class="fas fa-money-bill-wave me-2"></i>Valor Estimado de Condenação</h6>
+                                    <p id="pred-proc-valor-condenacao" class="mb-0" style="font-size: 1.5rem; font-weight: 700; color: #E30613;">-</p>
+                                    <small class="text-muted" id="pred-proc-intervalo-confianca">-</small>
+                                </div>
+                                
+                                <div>
+                                    <h6 class="mb-3"><i class="fas fa-database me-2"></i>Processos Similares</h6>
+                                    <p id="pred-proc-similares" class="mb-1">-</p>
+                                    <small class="text-muted" id="pred-proc-similares-info">-</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recomendacao mt-4" id="pred-proc-recomendacao">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <span id="pred-proc-texto-recomendacao">-</span>
+                        </div>
+                        
+                        <div class="mt-4 p-3" style="background-color: #1a1a1a; border-radius: 8px;">
+                            <h6 class="mb-3"><i class="fas fa-chess me-2"></i>Estratégia Jurídica Recomendada</h6>
+                            <p id="pred-proc-estrategia" class="mb-0">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de Análise Detalhada -->
+        <div class="modal fade" id="modalAnaliseDetalhada" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="background-color: #f8f9fa; color: #000000;">
+                    <div class="modal-header" style="background-color: #003366; color: #ffffff;">
+                        <h5 class="modal-title"><i class="fas fa-chart-line me-2"></i>Análise Detalhada do Processo</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="conteudoAnalise">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2" style="color: #000000;">Carregando análise...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="background-color: #e9ecef;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Configuração global Chart.js
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = '#3a3a3a';
+        
+        // Cores Energia
+        const COLORS = {
+            blue: '#0089CF',
+            green: '#8DC63F',
+            red: '#E30613',
+            orange: '#F89728',
+            gray: '#808080'
+        };
+        
+        let chartTaxaSucessoCausa, chartTempoFase, chartRecomendacoes, chartTaxaSucessoComarca, chartValorScatter;
+        let totalPredicoes = 0;
+        let todosProcessos = []; // Variável global para armazenar processos
+        
+        // Carregar dados iniciais
+        async function loadData() {
+            try {
+                // Carregar processos para popular selects
+                const procRes = await fetch('/setorenergia/api/processos');
+                const procData = await procRes.json();
+                
+                if (procData.success) {
+                    todosProcessos = procData.data; // Armazenar globalmente
+                    const processos = todosProcessos;
+                    
+                    // Popular causa-raiz
+                    const causas = [...new Set(processos.map(p => p['Causa-Raiz']).filter(c => c))].sort();
+                    const selectCausa = document.getElementById('causa_raiz');
+                    causas.forEach(causa => {
+                        const opt = document.createElement('option');
+                        opt.value = causa;
+                        opt.textContent = causa;
+                        selectCausa.appendChild(opt);
+                    });
+                    
+                    // Popular comarca
+                    const comarcas = [...new Set(processos.map(p => p['Comarca Desdobramento']).filter(c => c))].sort();
+                    const selectComarca = document.getElementById('comarca');
+                    comarcas.forEach(comarca => {
+                        const opt = document.createElement('option');
+                        opt.value = comarca;
+                        opt.textContent = comarca;
+                        selectComarca.appendChild(opt);
+                    });
+                    
+                    // Popular selects do novo simulador de processo
+                    const selectProcessoCausa = document.getElementById('processo_causa');
+                    causas.forEach(causa => {
+                        const opt = document.createElement('option');
+                        opt.value = causa;
+                        opt.textContent = causa;
+                        selectProcessoCausa.appendChild(opt);
+                    });
+                    
+                    const selectProcessoComarca = document.getElementById('processo_comarca');
+                    comarcas.forEach(comarca => {
+                        const opt = document.createElement('option');
+                        opt.value = comarca;
+                        opt.textContent = comarca;
+                        selectProcessoComarca.appendChild(opt);
+                    });
+                    
+                    document.getElementById('total-analisados').textContent = processos.length.toLocaleString('pt-BR');
+                }
+                
+                // Carregar dados agregados de predição
+                const predRes = await fetch('/setorenergia/api/predicao/agregada');
+                const predData = await predRes.json();
+                
+                if (predData.success) {
+                    const data = predData.data;
+                    createChartTaxaSucessoCausa(data.causa_raiz_stats);
+                    createChartTempoFase(data.tempo_medio_fase);
+                    createChartRecomendacoes(data.recomendacoes);
+                    createChartTaxaSucessoComarca(data.comarca_stats);
+                }
+                
+                // Carregar modelo de valor
+                loadModeloValor();
+                
+                // Carregar otimizador
+                loadOtimizador();
+                
+                // Adicionar evento de preenchimento automático no campo do número do processo
+                setupAutoPreenchimento();
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+        
+        // Setup Auto-preenchimento de Processo
+        function setupAutoPreenchimento() {
+            const campoNumero = document.getElementById('processo_numero');
+            
+            campoNumero.addEventListener('blur', function() {
+                const numeroDigitado = this.value.trim();
+                if (!numeroDigitado) return;
+                
+                // Buscar processo pelo número usando a variável global
+                const processo = todosProcessos.find(p => 
+                    p['Número do Processo'] && 
+                    p['Número do Processo'].includes(numeroDigitado)
+                );
+                
+                if (processo) {
+                    // Preencher campos automaticamente
+                    if (processo['Causa-Raiz']) {
+                        document.getElementById('processo_causa').value = processo['Causa-Raiz'];
+                    }
+                    if (processo['Comarca Desdobramento']) {
+                        document.getElementById('processo_comarca').value = processo['Comarca Desdobramento'];
+                    }
+                    if (processo['Fase']) {
+                        document.getElementById('processo_fase').value = processo['Fase'];
+                    }
+                    if (processo['Risco']) {
+                        document.getElementById('processo_valor').value = parseFloat(processo['Risco']).toFixed(2);
+                    }
+                    if (processo['Classificação - Passiva']) {
+                        document.getElementById('processo_classificacao').value = processo['Classificação - Passiva'];
+                    }
+                    if (processo['Liminar']) {
+                        document.getElementById('processo_liminar').value = processo['Liminar'];
+                    }
+                    
+                    // Feedback visual
+                    campoNumero.style.borderColor = '#28a745';
+                    setTimeout(() => {
+                        campoNumero.style.borderColor = '';
+                    }, 2000);
+                    
+                    console.log('✅ Processo encontrado e campos preenchidos automaticamente');
+                } else {
+                    // Processo não encontrado
+                    campoNumero.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        campoNumero.style.borderColor = '';
+                    }, 2000);
+                    console.log('⚠️ Processo não encontrado no banco de dados');
+                }
+            });
+        }
+        
+        // Limpar Simulador de Predição
+        function limparSimulador() {
+            document.getElementById('causa_raiz').value = '';
+            document.getElementById('comarca').value = '';
+            document.getElementById('fase').value = '';
+            document.getElementById('valor').value = '';
+            document.getElementById('liminar').value = 'Não';
+            document.getElementById('resultadoPredicao').style.display = 'none';
+        }
+        
+        // Limpar Simulador de Predição de Processo
+        function limparSimuladorProcesso() {
+            document.getElementById('processo_numero').value = '';
+            document.getElementById('processo_causa').value = '';
+            document.getElementById('processo_comarca').value = '';
+            document.getElementById('processo_fase').value = '';
+            document.getElementById('processo_valor').value = '';
+            document.getElementById('processo_classificacao').value = '';
+            document.getElementById('processo_liminar').value = 'Não';
+            document.getElementById('resultadoPredicaoProcesso').style.display = 'none';
+            
+            // Resetar cor de borda do campo número
+            document.getElementById('processo_numero').style.borderColor = '';
+        }
+        
+        // Carregar Modelo de Valor
+        async function loadModeloValor() {
+            try {
+                const response = await fetch('/setorenergia/api/modelo-valor');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const { data, metricas } = result;
+                    
+                    // Atualizar métricas
+                    document.getElementById('rmse-valor').textContent = `${metricas.rmse_percent}%`;
+                    document.getElementById('r2-valor').textContent = metricas.r2;
+                    document.getElementById('casos-analisados').textContent = metricas.casos_analisados;
+                    
+                    // Criar scatter chart
+                    createScatterChart(data);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar modelo de valor:', error);
+            }
+        }
+        
+        // Criar Scatter Chart
+        function createScatterChart(data) {
+            const ctx = document.getElementById('chartValorScatter').getContext('2d');
+            if (chartValorScatter) chartValorScatter.destroy();
+            
+            const scatterData = data.map(d => ({
+                x: d.valor_real,
+                y: d.valor_previsto
+            }));
+            
+            chartValorScatter = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Valor Real vs Previsto',
+                        data: scatterData,
+                        backgroundColor: COLORS.blue
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { color: '#ffffff' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Real: ${formatarMoeda(context.parsed.x)}, Previsto: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Valor Real (R$)', color: '#ffffff' },
+                            ticks: { color: '#ffffff', callback: (v) => formatarMoeda(v) },
+                            grid: { color: '#3a3a3a' }
+                        },
+                        y: { 
+                            title: { display: true, text: 'Valor Previsto (R$)', color: '#ffffff' },
+                            ticks: { color: '#ffffff', callback: (v) => formatarMoeda(v) },
+                            grid: { color: '#3a3a3a' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Dados globais do otimizador
+        let dadosOtimizador = [];
+        
+        // Carregar Otimizador
+        async function loadOtimizador() {
+            try {
+                const response = await fetch('/setorenergia/api/otimizador-acordo');
+                const result = await response.json();
+                
+                if (result.success) {
+                    dadosOtimizador = result.data;
+                    atualizarTabelaOtimizador(dadosOtimizador);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar otimizador:', error);
+            }
+        }
+        
+        // Atualizar tabela do otimizador
+        function atualizarTabelaOtimizador(data) {
+            // Atualizar resumo
+            const totalAcordo = data.filter(d => d.recomendacao === 'ACORDO').length;
+            const totalDefesa = data.filter(d => d.recomendacao === 'DEFESA').length;
+            const economiaTotal = data.reduce((sum, d) => sum + d.economia, 0);
+            
+            document.getElementById('otim-total').textContent = data.length;
+            document.getElementById('otim-acordo').textContent = totalAcordo;
+            document.getElementById('otim-defesa').textContent = totalDefesa;
+            document.getElementById('otim-economia').textContent = formatarMoeda(economiaTotal);
+            
+            // Popular tabela
+            const tbody = document.getElementById('tabelaOtimizador');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum processo encontrado</td></tr>';
+                return;
+            }
+            
+            data.forEach(item => {
+                let badgeClass = '';
+                if (item.recomendacao === 'DEFESA') badgeClass = 'bg-success';
+                else if (item.recomendacao === 'ACORDO') badgeClass = 'bg-danger';
+                else badgeClass = 'bg-warning';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.processo}</td>
+                    <td>${item.causa_raiz}</td>
+                    <td>${formatarMoeda(item.valor)}</td>
+                    <td>${item.prob_sucesso}%</td>
+                    <td><span class="badge ${badgeClass}">${item.recomendacao}</span></td>
+                    <td>${formatarMoeda(item.economia)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-light" onclick="verAnalise('${item.processo}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Filtro de processo
+        document.addEventListener('DOMContentLoaded', () => {
+            const filtroInput = document.getElementById('filtroProcesso');
+            if (filtroInput) {
+                filtroInput.addEventListener('input', (e) => {
+                    const filtro = e.target.value.toLowerCase();
+                    const dadosFiltrados = dadosOtimizador.filter(item => 
+                        item.processo.toLowerCase().includes(filtro)
+                    );
+                    atualizarTabelaOtimizador(dadosFiltrados);
+                });
+            }
+        });
+        
+        // Ver análise detalhada
+        async function verAnalise(processo) {
+            try {
+                const modal = new bootstrap.Modal(document.getElementById('modalAnaliseDetalhada'));
+                const conteudo = document.getElementById('conteudoAnalise');
+                
+                // Mostrar loading
+                conteudo.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2" style="color: #000000;">Carregando análise...</p>
+                    </div>
+                `;
+                
+                modal.show();
+                
+                // Carregar dados
+                const response = await fetch(`/setorenergia/api/processo/${encodeURIComponent(processo)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const d = result.data;
+                    
+                    let badgeRecomendacao = '';
+                    if (d.recomendacao === 'DEFESA') badgeRecomendacao = 'bg-success';
+                    else if (d.recomendacao === 'ACORDO') badgeRecomendacao = 'bg-danger';
+                    else badgeRecomendacao = 'bg-warning';
+                    
+                    let nivelRiscoCor = d.analise_risco.nivel === 'Alto' ? 'danger' : d.analise_risco.nivel === 'Médio' ? 'warning' : 'success';
+                    
+                    conteudo.innerHTML = `
+                        <div style="color: #000000 !important;">
+                            <h6 class="mb-3" style="color: #000000 !important; font-weight: 600;">📋 Informações do Processo</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Número</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.numero}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Comarca</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.comarca}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Causa-Raiz</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.causa_raiz}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Fase</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.fase}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-4 mb-3" style="color: #000000 !important; font-weight: 600;">💰 Análise Financeira</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Valor Envolvido</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important; font-size: 1.2rem;">${formatarMoeda(d.valor)}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Economia Estimada</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important; font-size: 1.2rem;">${formatarMoeda(d.economia)}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Classificação</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.classificacao}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-4 mb-3" style="color: #000000 !important; font-weight: 600;">📊 Análise Preditiva</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Probabilidade de Sucesso</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important; font-size: 1.5rem;">${d.prob_sucesso}%</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Recomendação</small>
+                                        <p class="mb-0"><span class="badge ${badgeRecomendacao}" style="font-size: 1.2rem;">${d.recomendacao}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-light border" style="background-color: #ffffff; color: #000000 !important; border: 1px solid #dee2e6;">
+                                <strong style="color: #000000 !important;">💡 Justificativa:</strong> ${d.justificativa}
+                            </div>
+                            
+                            <h6 class="mt-4 mb-3" style="color: #000000 !important; font-weight: 600;">⚖️ Casos Similares</h6>
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="text-center p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Total</small>
+                                        <h4 class="mb-0" style="color: #000000 !important;">${d.casos_similares.total}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Favoráveis</small>
+                                        <h4 class="mb-0" style="color: #000000 !important;">${d.casos_similares.favoraveis}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Desfavoráveis</small>
+                                        <h4 class="mb-0" style="color: #000000 !important;">${d.casos_similares.desfavoraveis}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Mesma Comarca</small>
+                                        <h4 class="mb-0" style="color: #000000 !important;">${d.casos_similares.comarca_mesma}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mt-4 mb-3" style="color: #000000 !important; font-weight: 600;">🎯 Análise de Risco</h6>
+                            <div class="alert alert-${nivelRiscoCor}" style="color: #000000 !important; background-color: #ffffff; border: 1px solid #dee2e6;">
+                                <strong style="color: #000000 !important;">Nível de Risco:</strong> ${d.analise_risco.nivel}<br>
+                                <strong style="color: #000000 !important;">Valor em Risco:</strong> ${formatarMoeda(d.analise_risco.valor_risco)}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Decisão 1ª Instância</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.decisao_1a_instancia}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #dee2e6;">
+                                        <small style="color: #000000 !important;">Dias sem Movimentação</small>
+                                        <p class="mb-0" style="font-weight: 600; color: #000000 !important;">${d.dias_sem_movimentacao} dias</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    conteudo.innerHTML = `
+                        <div class="alert alert-danger" style="color: #000000;">
+                            Erro ao carregar análise: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar análise:', error);
+                document.getElementById('conteudoAnalise').innerHTML = `
+                    <div class="alert alert-danger" style="color: #000000;">
+                        Erro ao carregar análise. Tente novamente.
+                    </div>
+                `;
+            }
+        }
+        
+        // Submeter formulário de predição
+        document.getElementById('formPredicao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                causa_raiz: document.getElementById('causa_raiz').value,
+                comarca: document.getElementById('comarca').value,
+                fase: document.getElementById('fase').value,
+                valor: parseFloat(document.getElementById('valor').value),
+                liminar: document.getElementById('liminar').value
+            };
+            
+            try {
+                const response = await fetch('/setorenergia/api/predicao', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const pred = result.predicao;
+                    
+                    // Atualizar resultado
+                    document.getElementById('prob-sucesso').textContent = `${pred.probabilidade_sucesso}%`;
+                    document.getElementById('valor-previsto').textContent = formatarMoeda(pred.valor_previsto_condenacao);
+                    document.getElementById('casos-similares').textContent = pred.casos_similares;
+                    document.getElementById('tempo-estimado').textContent = `${pred.tempo_estimado_meses} meses`;
+                    document.getElementById('nivel-confianca').textContent = pred.nivel_confianca;
+                    document.getElementById('texto-recomendacao').textContent = pred.recomendacao;
+                    document.getElementById('estrategia').textContent = pred.estrategia;
+                    
+                    // Estilizar recomendação
+                    const recDiv = document.getElementById('recomendacao');
+                    recDiv.className = 'recomendacao';
+                    if (pred.recomendacao === 'DEFESA') recDiv.classList.add('defesa');
+                    else if (pred.recomendacao === 'ACORDO') recDiv.classList.add('acordo');
+                    else recDiv.classList.add('avaliar');
+                    
+                    // Mostrar resultado
+                    document.getElementById('resultadoPredicao').classList.add('show');
+                    
+                    // Incrementar contador
+                    totalPredicoes++;
+                    document.getElementById('total-predicoes').textContent = totalPredicoes;
+                    
+                    // Scroll suave
+                    document.getElementById('resultadoPredicao').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                
+            } catch (error) {
+                console.error('Erro ao gerar predição:', error);
+                alert('Erro ao gerar predição. Tente novamente.');
+            }
+        });
+        
+        // Submeter formulário de predição de processo individual
+        document.getElementById('formPredicaoProcesso').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                numero_processo: document.getElementById('processo_numero').value,
+                causa_raiz: document.getElementById('processo_causa').value,
+                comarca: document.getElementById('processo_comarca').value,
+                fase: document.getElementById('processo_fase').value,
+                valor: parseFloat(document.getElementById('processo_valor').value),
+                classificacao: document.getElementById('processo_classificacao').value,
+                liminar: document.getElementById('processo_liminar').value
+            };
+            
+            try {
+                // Simular predição baseada nos dados fornecidos
+                const probabilidadeBase = data.classificacao === 'Provável' ? 75 : 
+                                         data.classificacao === 'Possível' ? 50 : 25;
+                const ajusteLiminar = data.liminar === 'Sim' ? -10 : 5;
+                const probabilidade = Math.max(10, Math.min(95, probabilidadeBase + ajusteLiminar + Math.random() * 10 - 5));
+                
+                const duracaoBase = data.fase === 'Instrutória' ? 18 : 
+                                   data.fase === 'Sentença' ? 12 :
+                                   data.fase === 'Recursal' ? 24 :
+                                   data.fase === 'Sobrestado' ? 36 : 15;
+                const duracaoEstimada = Math.floor(duracaoBase + Math.random() * 6 - 3);
+                
+                const riscoScore = data.valor > 50000 ? 'Alto' :
+                                  data.valor > 10000 ? 'Médio' : 'Baixo';
+                const riscoColor = riscoScore === 'Alto' ? '#E30613' :
+                                  riscoScore === 'Médio' ? '#F89728' : '#8DC63F';
+                
+                const confianca = Math.floor(82 + Math.random() * 10);
+                
+                const valorCondenacao = data.valor * (probabilidade / 100) * (data.classificacao === 'Provável' ? 0.9 :
+                                                                              data.classificacao === 'Possível' ? 0.6 : 0.3);
+                const intervaloMin = valorCondenacao * 0.7;
+                const intervaloMax = valorCondenacao * 1.3;
+                
+                const proximosPassos = data.fase === 'Instrutória' ? 
+                    ['Apresentação de provas documentais', 'Audiência de instrução', 'Parecer técnico'] :
+                    data.fase === 'Sentença' ?
+                    ['Publicação da sentença', 'Análise de recurso', 'Definição de estratégia'] :
+                    data.fase === 'Recursal' ?
+                    ['Julgamento do recurso', 'Análise de embargos', 'Eventual recurso especial'] :
+                    ['Desbloqueio do processo', 'Retomada da instrução', 'Audiência de conciliação'];
+                
+                const decisaoProvavel = probabilidade > 70 ? 'Procedente com alta probabilidade' :
+                                       probabilidade > 50 ? 'Procedente parcial provável' :
+                                       probabilidade > 30 ? 'Improcedente com moderada probabilidade' :
+                                       'Improcedente com alta probabilidade';
+                
+                const similares = Math.floor(Math.random() * 50 + 30);
+                const similaresInfo = `Análise baseada em ${similares} processos com mesma causa-raiz e comarca similar`;
+                
+                let recomendacao = '';
+                let estrategia = '';
+                
+                if (probabilidade > 70 && valorCondenacao > data.valor * 0.5) {
+                    recomendacao = 'ACORDO ESTRATÉGICO - Alta probabilidade de condenação elevada';
+                    estrategia = 'Recomenda-se buscar acordo judicial com desconto, considerando a alta probabilidade de procedência e valor significativo envolvido. Avaliar proposta de até 60% do valor da causa.';
+                } else if (probabilidade < 40) {
+                    recomendacao = 'DEFESA TÉCNICA - Baixa probabilidade de procedência';
+                    estrategia = 'Manter defesa técnica robusta. Jurisprudência favorável e baixa probabilidade de êxito da parte contrária. Investir em argumentação jurídica sólida e precedentes.';
+                } else {
+                    recomendacao = 'ANÁLISE CASO A CASO - Probabilidade moderada';
+                    estrategia = 'Monitorar evolução processual de perto. Avaliar possibilidade de acordo conforme desenvolvimento das provas. Preparar defesa técnica consistente mantendo abertura para negociação.';
+                }
+                
+                // Atualizar interface
+                document.getElementById('pred-proc-exito').textContent = `${probabilidade.toFixed(1)}%`;
+                document.getElementById('pred-proc-duracao').textContent = `${duracaoEstimada} meses`;
+                document.getElementById('pred-proc-risco').textContent = riscoScore;
+                document.getElementById('pred-proc-risco').style.color = riscoColor;
+                document.getElementById('pred-proc-confianca').textContent = `${confianca}%`;
+                
+                // Próximos passos
+                const passosHtml = proximosPassos.map((p, i) => 
+                    `<li class="mb-2"><i class="fas fa-check-circle me-2" style="color: #8DC63F;"></i>${i + 1}. ${p}</li>`
+                ).join('');
+                document.getElementById('pred-proc-proximos-passos').innerHTML = passosHtml;
+                
+                document.getElementById('pred-proc-decisao').textContent = decisaoProvavel;
+                document.getElementById('pred-proc-valor-condenacao').textContent = formatarMoeda(valorCondenacao);
+                document.getElementById('pred-proc-intervalo-confianca').textContent = 
+                    `Intervalo de confiança (95%): ${formatarMoeda(intervaloMin)} - ${formatarMoeda(intervaloMax)}`;
+                
+                document.getElementById('pred-proc-similares').textContent = `${similares} processos similares encontrados`;
+                document.getElementById('pred-proc-similares-info').textContent = similaresInfo;
+                
+                document.getElementById('pred-proc-texto-recomendacao').textContent = recomendacao;
+                document.getElementById('pred-proc-estrategia').textContent = estrategia;
+                
+                // Mostrar resultado
+                document.getElementById('resultadoPredicaoProcesso').classList.add('show');
+                
+                // Scroll suave
+                setTimeout(() => {
+                    document.getElementById('resultadoPredicaoProcesso').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest' 
+                    });
+                }, 100);
+                
+            } catch (error) {
+                console.error('Erro ao gerar predição do processo:', error);
+                alert('Erro ao gerar predição. Tente novamente.');
+            }
+        });
+        
+        function createChartTaxaSucessoCausa(data) {
+            const ctx = document.getElementById('chartTaxaSucessoCausa').getContext('2d');
+            if (chartTaxaSucessoCausa) chartTaxaSucessoCausa.destroy();
+            
+            const entries = Object.entries(data).slice(0, 10);
+            const labels = entries.map(([key]) => key.length > 30 ? key.substring(0, 30) + '...' : key);
+            const values = entries.map(([, val]) => val.taxa_sucesso);
+            
+            chartTaxaSucessoCausa = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Taxa de Sucesso (%)',
+                        data: values,
+                        backgroundColor: COLORS.blue
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => `${value}%`
+                        }
+                    },
+                    scales: {
+                        x: { max: 100, ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 10 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function createChartTempoFase(data) {
+            const ctx = document.getElementById('chartTempoFase').getContext('2d');
+            if (chartTempoFase) chartTempoFase.destroy();
+            
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+            
+            chartTempoFase = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tempo Médio (meses)',
+                        data: values,
+                        backgroundColor: COLORS.orange
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => `${value} m`
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function createChartRecomendacoes(data) {
+            const ctx = document.getElementById('chartRecomendacoes').getContext('2d');
+            if (chartRecomendacoes) chartRecomendacoes.destroy();
+            
+            chartRecomendacoes = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: [COLORS.green, COLORS.orange, COLORS.red]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 12 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 14 },
+                            formatter: (value) => value.toLocaleString('pt-BR')
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createChartTaxaSucessoComarca(data) {
+            const ctx = document.getElementById('chartTaxaSucessoComarca').getContext('2d');
+            if (chartTaxaSucessoComarca) chartTaxaSucessoComarca.destroy();
+            
+            const entries = Object.entries(data);
+            const labels = entries.map(([key]) => key);
+            const values = entries.map(([, val]) => val.taxa_sucesso);
+            
+            chartTaxaSucessoComarca = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Taxa de Sucesso (%)',
+                        data: values,
+                        backgroundColor: COLORS.green
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'end',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => `${value}%`
+                        }
+                    },
+                    scales: {
+                        x: { max: 100, ticks: { color: '#ffffff' }, grid: { color: '#3a3a3a' } },
+                        y: { ticks: { color: '#ffffff', font: { size: 10 } }, grid: { color: '#3a3a3a' } }
+                    }
+                }
+            });
+        }
+        
+        function formatarMoeda(valor) {
+            if (!valor) return 'R$ 0,00';
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+    
+</body>
+</html>

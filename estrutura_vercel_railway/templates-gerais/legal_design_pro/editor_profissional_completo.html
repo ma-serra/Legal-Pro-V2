@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Design Pro - Editor Profissional</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Quill Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #1a365d;
+            --accent-blue: #2563eb;
+            --success-green: #059669;
+            --warning-yellow: #d97706;
+            --danger-red: #dc2626;
+            --dark-bg: #1e293b;
+            --light-bg: #f8fafc;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .editor-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .properties-panel {
+            width: 280px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 12px 16px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--accent-blue);
+            background: none;
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        /* Editor */
+        #quillEditor {
+            min-height: 600px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .ql-editor {
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Template Cards */
+        .template-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent-blue);
+            background-color: #f8fafc;
+        }
+
+        .template-card.active {
+            border-color: var(--accent-blue);
+            background-color: #eff6ff;
+        }
+
+        /* Icon Grid */
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .icon-item {
+            aspect-ratio: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-item:hover {
+            border-color: var(--accent-blue);
+            background-color: #f8fafc;
+        }
+
+        .icon-item img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success { background-color: var(--success-green); }
+        .notification.error { background-color: var(--danger-red); }
+        .notification.info { background-color: var(--accent-blue); }
+
+        /* Editable Fields */
+        .editable-field {
+            display: inline-block;
+            min-width: 60px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .editable-field:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .field-editing {
+            border: 2px solid var(--accent-blue) !important;
+            background: white !important;
+            outline: none;
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        /* Search */
+        .search-box {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 10;
+        }
+
+        /* Stats */
+        .stats-panel {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Search -->
+            <div class="search-box">
+                <input type="text" id="searchInput" class="form-control form-control-sm" 
+                       placeholder="Buscar templates e ícones...">
+            </div>
+
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="templates-tab-btn" data-bs-toggle="tab" 
+                            data-bs-target="#templates-panel" type="button" role="tab">
+                        <i class="fas fa-file-alt me-1"></i> Templates
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="icons-tab-btn" data-bs-toggle="tab" 
+                            data-bs-target="#icons-panel" type="button" role="tab">
+                        <i class="fas fa-icons me-1"></i> Ícones
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Templates Panel -->
+                <div class="tab-pane fade show active" id="templates-panel" role="tabpanel">
+                    <div id="templatesContainer" class="p-3">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando templates...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando templates...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Icons Panel -->
+                <div class="tab-pane fade" id="icons-panel" role="tabpanel">
+                    <div id="iconsContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando ícones...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando ícones...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="editor-main">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" id="saveBtn">
+                            <i class="fas fa-save me-1"></i> Salvar
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="exportPdfBtn">
+                            <i class="fas fa-file-pdf me-1"></i> PDF
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="exportWordBtn">
+                            <i class="fas fa-file-word me-1"></i> Word
+                        </button>
+                    </div>
+                    <div class="text-muted small">
+                        <span id="autoSaveStatus">Salvo automaticamente</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Container -->
+            <div class="editor-container">
+                <div id="quillEditor"></div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+            <div class="p-3">
+                <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem;">
+                    Propriedades
+                </h6>
+                
+                <!-- Document Info -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Título do Documento</label>
+                    <input type="text" id="documentTitle" class="form-control form-control-sm" 
+                           placeholder="Digite o título...">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Área Jurídica</label>
+                    <select id="legalArea" class="form-select form-select-sm">
+                        <option value="">Selecione uma área</option>
+                        <option value="criminal">Direito Criminal</option>
+                        <option value="trabalhista">Direito Trabalhista</option>
+                        <option value="empresarial">Direito Empresarial</option>
+                        <option value="bancario">Direito Bancário</option>
+                        <option value="consumidor">Direito do Consumidor</option>
+                        <option value="agrario">Direito Agrário</option>
+                        <option value="securitario">Direito Securitário</option>
+                    </select>
+                </div>
+
+                <!-- Format Options -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem;">
+                        Formatação
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Fonte</label>
+                        <select id="fontFamily" class="form-select form-select-sm">
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tamanho</label>
+                        <select id="fontSize" class="form-select form-select-sm">
+                            <option value="10">10pt</option>
+                            <option value="11">11pt</option>
+                            <option value="12" selected>12pt</option>
+                            <option value="14">14pt</option>
+                            <option value="16">16pt</option>
+                            <option value="18">18pt</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Espaçamento</label>
+                        <select id="lineSpacing" class="form-select form-select-sm">
+                            <option value="1">Simples</option>
+                            <option value="1.15">1,15</option>
+                            <option value="1.5" selected>1,5</option>
+                            <option value="2">Duplo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats-panel">
+                    <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem;">
+                        Estatísticas
+                    </h6>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Palavras</span>
+                        <span class="stat-value" id="wordCount">0</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Caracteres</span>
+                        <span class="stat-value" id="charCount">0</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Parágrafos</span>
+                        <span class="stat-value" id="paragraphCount">0</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">Páginas (aprox.)</span>
+                        <span class="stat-value" id="pageCount">1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        class LegalEditorComplete {
+            constructor() {
+                this.quill = null;
+                this.templates = new Map();
+                this.icons = new Map();
+                this.currentDocument = {
+                    title: '',
+                    area: '',
+                    content: '',
+                    lastSaved: null
+                };
+                
+                this.init();
+            }
+
+            async init() {
+                console.log('Inicializando Legal Design Editor...');
+                
+                try {
+                    console.log('Passo 1: Inicializando Quill Editor...');
+                    this.initializeQuillEditor();
+                    console.log('✓ Quill Editor inicializado');
+                    
+                    console.log('Passo 2: Configurando eventos...');
+                    this.bindEvents();
+                    console.log('✓ Eventos configurados');
+                    
+                    console.log('Passo 3: Carregando templates...');
+                    await this.loadTemplates();
+                    console.log('✓ Templates carregados');
+                    
+                    console.log('Passo 4: Carregando ícones...');
+                    await this.loadIcons();
+                    console.log('✓ Ícones carregados');
+                    
+                    console.log('Passo 5: Iniciando auto-save...');
+                    this.startAutoSave();
+                    console.log('✓ Auto-save configurado');
+                    
+                    this.showNotification('Editor carregado com sucesso!', 'success');
+                    console.log('🎉 Editor inicializado completamente');
+                } catch (error) {
+                    console.error('❌ Erro na inicialização:', error);
+                    console.error('Stack trace:', error.stack);
+                    this.showNotification(`Erro: ${error.message}`, 'error');
+                }
+            }
+
+            initializeQuillEditor() {
+                try {
+                    const editorElement = document.getElementById('quillEditor');
+                    if (!editorElement) {
+                        throw new Error('Elemento do editor não encontrado');
+                    }
+
+                    const toolbarOptions = [
+                        ['bold', 'italic', 'underline'],
+                        [{ 'header': [1, 2, 3, false] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        [{ 'color': [] }],
+                        ['clean']
+                    ];
+
+                    this.quill = new Quill('#quillEditor', {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: toolbarOptions
+                        }
+                    });
+
+                    if (!this.quill) {
+                        throw new Error('Falha ao inicializar Quill');
+                    }
+
+                    this.quill.on('text-change', () => {
+                        try {
+                            this.updateStatistics();
+                            this.markDocumentAsModified();
+                        } catch (error) {
+                            console.error('Erro ao processar mudança de texto:', error);
+                        }
+                    });
+
+                    // Configurar eventos para campos editáveis
+                    this.quill.root.addEventListener('click', (e) => {
+                        if (e.target && e.target.classList && e.target.classList.contains('editable-field')) {
+                            this.editField(e.target);
+                        }
+                    });
+
+                    console.log('Quill inicializado com sucesso');
+                } catch (error) {
+                    console.error('Erro ao inicializar Quill:', error);
+                    throw error;
+                }
+            }
+
+            bindEvents() {
+                // Botões da toolbar
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveDocument());
+                document.getElementById('exportPdfBtn').addEventListener('click', () => this.exportToPDF());
+                document.getElementById('exportWordBtn').addEventListener('click', () => this.exportToWord());
+
+                // Propriedades do documento
+                document.getElementById('documentTitle').addEventListener('input', (e) => {
+                    this.currentDocument.title = e.target.value;
+                    this.markDocumentAsModified();
+                });
+
+                document.getElementById('legalArea').addEventListener('change', (e) => {
+                    this.currentDocument.area = e.target.value;
+                    this.filterTemplatesByArea(e.target.value);
+                });
+
+                // Formatação
+                document.getElementById('fontFamily').addEventListener('change', (e) => {
+                    this.applyFormatting('font', e.target.value);
+                });
+
+                document.getElementById('fontSize').addEventListener('change', (e) => {
+                    this.applyFormatting('size', e.target.value + 'px');
+                });
+
+                document.getElementById('lineSpacing').addEventListener('change', (e) => {
+                    this.applyLineSpacing(parseFloat(e.target.value));
+                });
+
+                // Busca
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.performSearch(e.target.value);
+                });
+
+                console.log('Eventos configurados');
+            }
+
+            async loadTemplates() {
+                try {
+                    const response = await fetch('/legal-design-pro/api/templates-list');
+                    const data = await response.json();
+                    
+                    if (data.success && data.templates) {
+                        this.templates.clear();
+                        data.templates.forEach(template => {
+                            this.templates.set(template.id, template);
+                        });
+                        
+                        this.renderTemplates();
+                        console.log(`${this.templates.size} templates carregados`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar templates:', error);
+                    document.getElementById('templatesContainer').innerHTML = 
+                        '<div class="text-center py-4"><p class="text-danger">Erro ao carregar templates</p></div>';
+                }
+            }
+
+            async loadIcons() {
+                try {
+                    const response = await fetch('/api/icons/library');
+                    const data = await response.json();
+                    
+                    if (data.success && data.packs) {
+                        this.icons.clear();
+                        Object.values(data.packs).forEach(pack => {
+                            if (pack.icons) {
+                                pack.icons.forEach(icon => {
+                                    this.icons.set(icon.name, icon);
+                                });
+                            }
+                        });
+                        
+                        this.renderIcons();
+                        console.log(`${this.icons.size} ícones carregados`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar ícones:', error);
+                    document.getElementById('iconsContainer').innerHTML = 
+                        '<div class="text-center py-4"><p class="text-danger">Erro ao carregar ícones</p></div>';
+                }
+            }
+
+            renderTemplates() {
+                const container = document.getElementById('templatesContainer');
+                
+                // Agrupar por área jurídica
+                const templatesByArea = new Map();
+                this.templates.forEach(template => {
+                    const area = template.area_juridica || 'geral';
+                    if (!templatesByArea.has(area)) {
+                        templatesByArea.set(area, []);
+                    }
+                    templatesByArea.get(area).push(template);
+                });
+
+                const areaColors = {
+                    'criminal': '#dc2626',
+                    'trabalhista': '#d97706',
+                    'empresarial': '#059669',
+                    'bancario': '#7c3aed',
+                    'consumidor': '#0891b2',
+                    'agrario': '#ca8a04',
+                    'securitario': '#dc2626'
+                };
+
+                let html = '';
+                templatesByArea.forEach((templates, area) => {
+                    const color = areaColors[area] || '#64748b';
+                    const areaName = area.charAt(0).toUpperCase() + area.slice(1).replace('_', ' ');
+                    
+                    html += `
+                        <div class="mb-4" data-area="${area}">
+                            <h6 class="fw-bold text-uppercase mb-3" style="color: ${color}; font-size: 0.75rem; letter-spacing: 1px;">
+                                ${areaName}
+                            </h6>
+                    `;
+                    
+                    templates.forEach(template => {
+                        html += `
+                            <div class="template-card" data-template-id="${template.id}" data-area="${area}">
+                                <div class="d-flex align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1" style="font-size: 0.875rem; font-weight: 600;">
+                                            ${template.nome}
+                                        </h6>
+                                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+                                            ${template.descricao || 'Template jurídico padrão'}
+                                        </p>
+                                    </div>
+                                    <div class="ms-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 8px; height: 8px; background-color: ${color};"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+
+                // Adicionar eventos de clique
+                container.querySelectorAll('.template-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const templateId = parseInt(card.dataset.templateId);
+                        const area = card.dataset.area;
+                        this.insertTemplate(templateId, area);
+                    });
+                });
+            }
+
+            renderIcons() {
+                const container = document.getElementById('iconsContainer');
+                
+                let html = '<div class="icon-grid">';
+                this.icons.forEach(icon => {
+                    html += `
+                        <div class="icon-item" data-icon-path="${icon.path}" title="${icon.name}">
+                            <img loading="lazy" src="${icon.path}" alt="${icon.name}">
+                        </div>
+                    `;
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+
+                // Adicionar eventos de clique
+                container.querySelectorAll('.icon-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const iconPath = item.dataset.iconPath;
+                        this.insertIcon(iconPath);
+                    });
+                });
+            }
+
+            async insertTemplate(templateId, area) {
+                try {
+                    const template = this.templates.get(templateId);
+                    if (!template) {
+                        this.showNotification('Template não encontrado', 'error');
+                        return;
+                    }
+
+                    // Buscar conteúdo do template
+                    const templateKey = template.nome.toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[áàâã]/g, 'a')
+                        .replace(/[éèê]/g, 'e')
+                        .replace(/[íì]/g, 'i')
+                        .replace(/[óòôõ]/g, 'o')
+                        .replace(/[úù]/g, 'u')
+                        .replace(/ç/g, 'c')
+                        .replace(/[^a-z0-9-]/g, '');
+
+                    const response = await fetch(`/legal-design-pro/api/template-content/${templateKey}?area=${area}`);
+                    const data = await response.json();
+                    
+                    let content;
+                    if (data.success && data.template && data.template.conteudo_html) {
+                        content = this.processTemplateContent(data.template.conteudo_html, template, area);
+                    } else {
+                        content = this.createTemplateContent(template, area);
+                    }
+
+                    // Inserir no editor
+                    const selection = this.quill.getSelection();
+                    const index = selection ? selection.index : this.quill.getLength();
+                    this.quill.clipboard.dangerouslyPasteHTML(index, content);
+                    
+                    // Configurar campos editáveis
+                    setTimeout(() => this.setupEditableFields(), 100);
+                    
+                    this.showNotification(`Template "${template.nome}" inserido com sucesso!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Erro ao inserir template:', error);
+                    this.showNotification('Erro ao inserir template', 'error');
+                }
+            }
+
+            createTemplateContent(template, area) {
+                const areaColors = {
+                    'criminal': '#dc2626',
+                    'trabalhista': '#d97706', 
+                    'empresarial': '#059669',
+                    'bancario': '#7c3aed',
+                    'consumidor': '#0891b2',
+                    'agrario': '#ca8a04',
+                    'securitario': '#dc2626'
+                };
+
+                const color = areaColors[area] || '#64748b';
+
+                // Templates específicos por área e tipo
+                const templateContent = this.getTemplateContentByType(template.nome, area, color);
+                
+                return `
+                    <div class="template-container" style="border-left: 4px solid ${color}; padding: 20px; margin: 20px 0; background-color: rgba(100, 116, 139, 0.05); border-radius: 8px;">
+                        ${templateContent}
+                    </div>
+                `;
+            }
+
+            getTemplateContentByType(templateName, area, color) {
+                const name = templateName.toLowerCase();
+
+                // Templates Criminais
+                if (area === 'criminal') {
+                    if (name.includes('denúncia') || name.includes('denuncia')) {
+                        return `
+                            <h3 style="color: ${color}; text-align: center; margin-bottom: 20px;">DENÚNCIA CRIMINAL</h3>
+                            <p><strong>EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO</strong></p>
+                            <p>DA <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">___ª VARA CRIMINAL</span> DA COMARCA DE <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">CIDADE</span></p>
+                            <br>
+                            <p>O <strong>MINISTÉRIO PÚBLICO DO ESTADO DE <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">UF</span></strong>, por seu Promotor de Justiça que esta subscreve, vem respeitosamente à presença de Vossa Excelência oferecer</p>
+                            <p style="text-align: center; font-weight: bold; font-size: 16px; margin: 25px 0;">DENÚNCIA</p>
+                            <p>contra <strong><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">NOME DO DENUNCIADO</span></strong>, <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">qualificação completa</span>, pela prática do crime previsto no artigo <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">XXX</span> do Código Penal.</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">I - DOS FATOS</h4>
+                            <p><span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 60px;">Relatório detalhado dos fatos que configuram o crime...</span></p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">II - DA TIPIFICAÇÃO PENAL</h4>
+                            <p>Os fatos narrados configuram o crime tipificado no artigo <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">XXX</span> do Código Penal.</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">III - DOS PEDIDOS</h4>
+                            <p>Diante do exposto, o Ministério Público requer:</p>
+                            <ul>
+                                <li>O recebimento da presente denúncia;</li>
+                                <li>A citação do denunciado;</li>
+                                <li>A instrução processual;</li>
+                                <li>A condenação nas penas do artigo aplicável.</li>
+                            </ul>
+                            <br>
+                            <p>Termos em que pede deferimento.</p>
+                            <br>
+                            <p><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">Cidade</span>, <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">data</span>.</p>
+                            <br>
+                            <p style="text-align: center;"><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome do Promotor de Justiça</span></p>
+                        `;
+                    }
+                    
+                    if (name.includes('habeas corpus')) {
+                        return `
+                            <h3 style="color: ${color}; text-align: center; margin-bottom: 20px;">HABEAS CORPUS</h3>
+                            <p><strong>EXCELENTÍSSIMO SENHOR DOUTOR DESEMBARGADOR PRESIDENTE</strong></p>
+                            <p>DO <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">TRIBUNAL DE JUSTIÇA DO ESTADO</span></p>
+                            <br>
+                            <p><strong><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">NOME DO IMPETRANTE</span></strong>, brasileiro, advogado, inscrito na OAB sob o nº <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">NÚMERO</span>, vem respeitosamente à presença de Vossa Excelência impetrar</p>
+                            <p style="text-align: center; font-weight: bold; font-size: 16px; margin: 25px 0;">HABEAS CORPUS</p>
+                            <p>em favor de <strong><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">NOME DO PACIENTE</span></strong>, pelos fundamentos que passa a expor:</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">I - DOS FATOS</h4>
+                            <p><span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 60px;">Relato dos fatos que motivam a impetração...</span></p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">II - DO DIREITO</h4>
+                            <p><span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 60px;">Fundamentação jurídica...</span></p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">III - DOS PEDIDOS</h4>
+                            <p>Ante o exposto, requer-se:</p>
+                            <ul>
+                                <li>A concessão da ordem de habeas corpus;</li>
+                                <li>A soltura imediata do paciente;</li>
+                                <li>O relaxamento da prisão.</li>
+                            </ul>
+                        `;
+                    }
+                }
+
+                // Templates Trabalhistas
+                if (area === 'trabalhista') {
+                    if (name.includes('reclamação') || name.includes('reclamatoria')) {
+                        return `
+                            <h3 style="color: ${color}; text-align: center; margin-bottom: 20px;">RECLAMAÇÃO TRABALHISTA</h3>
+                            <p><strong>EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DO TRABALHO</strong></p>
+                            <p>DA <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">___ª VARA DO TRABALHO</span> DE <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">CIDADE</span></p>
+                            <br>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc; background-color: #f9f9f9;"><strong>RECLAMANTE:</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome completo do trabalhador</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc; background-color: #f9f9f9;"><strong>RECLAMADA:</strong></td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome da empresa</span></td>
+                                </tr>
+                            </table>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">I - DOS FATOS</h4>
+                            <p>O reclamante foi admitido em <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">data de admissão</span> para exercer a função de <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">cargo/função</span>, mediante salário de <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span>.</p>
+                            <p><span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 60px;">Descrição detalhada dos fatos trabalhistas...</span></p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">II - DAS VERBAS DEVIDAS</h4>
+                            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc;">Aviso prévio indenizado:</td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc;">13º salário proporcional:</td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc;">Férias proporcionais + 1/3:</td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ccc;">FGTS + 40%:</td>
+                                    <td style="padding: 8px; border: 1px solid #ccc;"><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span></td>
+                                </tr>
+                            </table>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">III - DOS PEDIDOS</h4>
+                            <p>Ante o exposto, requer-se a condenação da reclamada ao pagamento das verbas discriminadas, com juros e correção monetária.</p>
+                        `;
+                    }
+                }
+
+                // Templates Empresariais
+                if (area === 'empresarial') {
+                    if (name.includes('contrato')) {
+                        return `
+                            <h3 style="color: ${color}; text-align: center; margin-bottom: 20px;">CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h3>
+                            
+                            <p><strong>CONTRATANTE:</strong> <span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome da empresa contratante</span>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">00.000.000/0001-00</span>, com sede na <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">endereço completo</span>.</p>
+                            
+                            <p><strong>CONTRATADA:</strong> <span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome da empresa contratada</span>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">00.000.000/0001-00</span>, com sede na <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">endereço completo</span>.</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 25px;">CLÁUSULA PRIMEIRA - DO OBJETO</h4>
+                            <p>O presente contrato tem por objeto <span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 40px;">descrição dos serviços a serem prestados</span></p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">CLÁUSULA SEGUNDA - DO VALOR E FORMA DE PAGAMENTO</h4>
+                            <p>O valor total dos serviços é de <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">R$ valor</span>, a ser pago em <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">forma de pagamento</span>.</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">CLÁUSULA TERCEIRA - DO PRAZO</h4>
+                            <p>O prazo para execução dos serviços é de <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">prazo</span>, contados a partir da assinatura deste contrato.</p>
+                            
+                            <h4 style="color: ${color}; margin-top: 20px;">CLÁUSULA QUARTA - DAS OBRIGAÇÕES</h4>
+                            <p><strong>Das obrigações da CONTRATANTE:</strong></p>
+                            <ul>
+                                <li><span class="editable-field" style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 3px;">Obrigação 1</span></li>
+                                <li><span class="editable-field" style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 3px;">Obrigação 2</span></li>
+                            </ul>
+                            
+                            <p><strong>Das obrigações da CONTRATADA:</strong></p>
+                            <ul>
+                                <li><span class="editable-field" style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 3px;">Obrigação 1</span></li>
+                                <li><span class="editable-field" style="background-color: #f3f4f6; padding: 2px 6px; border-radius: 3px;">Obrigação 2</span></li>
+                            </ul>
+                            
+                            <p style="margin-top: 30px;">E por estarem assim justas e contratadas, assinam o presente instrumento em duas vias de igual teor.</p>
+                            <br>
+                            <p><span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">Cidade</span>, <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">data</span>.</p>
+                            <br><br>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="text-align: center; padding: 20px; border-top: 1px solid #000;">CONTRATANTE</td>
+                                    <td style="text-align: center; padding: 20px; border-top: 1px solid #000;">CONTRATADA</td>
+                                </tr>
+                            </table>
+                        `;
+                    }
+                }
+
+                // Template genérico
+                return `
+                    <h3 style="color: ${color}; margin-bottom: 20px;">${templateName.toUpperCase()}</h3>
+                    <p><strong>Área:</strong> ${area.charAt(0).toUpperCase() + area.slice(1)}</p>
+                    <p><strong>Data:</strong> <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">__/__/____</span></p>
+                    <br>
+                    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid ${color};">
+                        <h4 style="color: ${color};">Conteúdo do Template</h4>
+                        <p><span class="editable-field" style="background-color: #f3f4f6; padding: 8px; border-radius: 3px; display: block; min-height: 100px;">Digite o conteúdo do documento aqui...</span></p>
+                        
+                        <h5 style="color: ${color}; margin-top: 20px;">Informações Adicionais</h5>
+                        <ul>
+                            <li>Item 1: <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">valor editável</span></li>
+                            <li>Item 2: <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">valor editável</span></li>
+                            <li>Item 3: <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">valor editável</span></li>
+                        </ul>
+                    </div>
+                    <br>
+                    <p><strong>Responsável:</strong> <span class="editable-field" style="background-color: #dbeafe; padding: 2px 6px; border-radius: 3px;">Nome do responsável</span></p>
+                    <p><strong>Local e Data:</strong> <span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px;">Cidade, data</span></p>
+                `;
+            }
+
+            processTemplateContent(htmlContent, template, area) {
+                let processed = htmlContent;
+                
+                // Adicionar campos editáveis
+                processed = processed.replace(/\[([^\]]+)\]/g, 
+                    '<span class="editable-field" style="background-color: #fef3c7; padding: 2px 6px; border-radius: 3px; cursor: pointer;" title="Clique para editar">$1</span>'
+                );
+                
+                processed = processed.replace(/___+/g, 
+                    '<span class="editable-field" style="background-color: #dbeafe; padding: 2px 8px; border-radius: 3px; cursor: pointer;" title="Clique para editar">CAMPO EDITÁVEL</span>'
+                );
+                
+                return processed;
+            }
+
+            insertIcon(iconPath) {
+                const iconHtml = `<img loading="lazy" src="${iconPath}" style="width: 32px; height: 32px; margin: 0 4px; vertical-align: middle;" alt="Ícone jurídico">`;
+                
+                const selection = this.quill.getSelection();
+                const index = selection ? selection.index : this.quill.getLength();
+                this.quill.clipboard.dangerouslyPasteHTML(index, iconHtml);
+                
+                this.showNotification('Ícone inserido com sucesso!', 'success');
+            }
+
+            setupEditableFields() {
+                this.quill.root.querySelectorAll('.editable-field').forEach(field => {
+                    field.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.editField(field);
+                    });
+                });
+            }
+
+            editField(field) {
+                if (field.classList.contains('field-editing')) return;
+                
+                const originalText = field.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = originalText;
+                input.className = 'field-editing';
+                input.style.cssText = `
+                    background: white;
+                    border: 2px solid var(--accent-blue);
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    font-family: inherit;
+                    font-size: inherit;
+                    min-width: 120px;
+                    outline: none;
+                `;
+                
+                field.parentNode.insertBefore(input, field);
+                field.style.display = 'none';
+                input.focus();
+                input.select();
+                
+                const finishEdit = () => {
+                    const newValue = input.value || originalText;
+                    field.textContent = newValue;
+                    field.style.display = '';
+                    input.remove();
+                    this.markDocumentAsModified();
+                    this.showNotification('Campo atualizado!', 'success');
+                };
+                
+                input.addEventListener('blur', finishEdit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        finishEdit();
+                    }
+                    if (e.key === 'Escape') {
+                        field.style.display = '';
+                        input.remove();
+                    }
+                });
+            }
+
+            updateStatistics() {
+                if (!this.quill) return;
+                
+                const text = this.quill.getText();
+                const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+                const chars = text.length;
+                const paragraphs = text.split('\n').filter(p => p.trim().length > 0);
+                const pages = Math.ceil(words.length / 250); // Aproximadamente 250 palavras por página
+                
+                document.getElementById('wordCount').textContent = words.length;
+                document.getElementById('charCount').textContent = chars;
+                document.getElementById('paragraphCount').textContent = paragraphs.length;
+                document.getElementById('pageCount').textContent = pages;
+            }
+
+            markDocumentAsModified() {
+                this.currentDocument.content = this.quill.root.innerHTML;
+                document.getElementById('autoSaveStatus').textContent = 'Não salvo';
+            }
+
+            saveDocument() {
+                this.currentDocument.content = this.quill.root.innerHTML;
+                this.currentDocument.lastSaved = new Date();
+                
+                // Aqui você pode implementar o salvamento no servidor
+                document.getElementById('autoSaveStatus').textContent = 'Salvo';
+                this.showNotification('Documento salvo com sucesso!', 'success');
+            }
+
+            startAutoSave() {
+                setInterval(() => {
+                    if (this.currentDocument.content !== this.quill.root.innerHTML) {
+                        this.saveDocument();
+                    }
+                }, 30000); // Auto-save a cada 30 segundos
+            }
+
+            applyFormatting(type, value) {
+                const selection = this.quill.getSelection();
+                if (selection) {
+                    this.quill.formatText(selection.index, selection.length, type, value);
+                }
+            }
+
+            applyLineSpacing(spacing) {
+                const selection = this.quill.getSelection();
+                if (selection) {
+                    this.quill.formatLine(selection.index, selection.length, 'line-height', spacing);
+                }
+            }
+
+            filterTemplatesByArea(area) {
+                const templates = document.querySelectorAll('[data-area]');
+                templates.forEach(template => {
+                    if (!area || template.dataset.area === area) {
+                        template.style.display = 'block';
+                    } else {
+                        template.style.display = 'none';
+                    }
+                });
+            }
+
+            performSearch(query) {
+                if (!query) {
+                    document.querySelectorAll('.template-card, .icon-item').forEach(item => {
+                        item.style.display = 'block';
+                    });
+                    return;
+                }
+
+                const searchTerm = query.toLowerCase();
+                
+                // Buscar em templates
+                document.querySelectorAll('.template-card').forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+                });
+                
+                // Buscar em ícones
+                document.querySelectorAll('.icon-item').forEach(icon => {
+                    const title = icon.title.toLowerCase();
+                    icon.style.display = title.includes(searchTerm) ? 'block' : 'none';
+                });
+            }
+
+            exportToPDF() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                
+                const content = this.quill.root.innerText;
+                const title = this.currentDocument.title || 'Documento Legal';
+                
+                pdf.setFontSize(16);
+                pdf.text(title, 20, 20);
+                
+                pdf.setFontSize(12);
+                const splitText = pdf.splitTextToSize(content, 170);
+                pdf.text(splitText, 20, 40);
+                
+                pdf.save(`${title}.pdf`);
+                this.showNotification('PDF exportado com sucesso!', 'success');
+            }
+
+            exportToWord() {
+                const content = this.quill.root.innerHTML;
+                const title = this.currentDocument.title || 'Documento Legal';
+                
+                const blob = new Blob([`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>${title}</title>
+                    </head>
+                    <body>
+                        <h1>${title}</h1>
+                        ${content}
+                    </body>
+                    </html>
+                `], { type: 'application/msword' });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.doc`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showNotification('Documento Word exportado com sucesso!', 'success');
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => notification.classList.add('show'), 100);
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // Verificar se Quill está carregado
+        function checkQuillLoaded() {
+            if (typeof Quill === 'undefined') {
+                console.error('Quill não foi carregado. Tentando novamente...');
+                setTimeout(checkQuillLoaded, 500);
+                return;
+            }
+            
+            console.log('Quill carregado com sucesso, inicializando editor...');
+            try {
+                window.legalEditor = new LegalEditorComplete();
+                console.log('Editor inicializado com sucesso');
+            } catch (error) {
+                console.error('Erro ao inicializar editor:', error);
+                document.body.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #dc2626;">
+                        <h2>Erro ao carregar o editor</h2>
+                        <p>Erro: ${error.message}</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px;">
+                            Tentar Novamente
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Inicializar quando DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', checkQuillLoaded);
+    </script>
+</body>
+</html>

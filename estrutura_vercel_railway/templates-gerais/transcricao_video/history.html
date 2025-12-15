@@ -1,0 +1,667 @@
+{% extends "layout.html" %}
+
+{% block title %}Histórico de Transcrições{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Transcrições</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+/* Estilos baseados no template history.html fornecido */
+.history-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    color: white;
+}
+
+/* Header */
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.history-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0;
+    letter-spacing: -0.025em;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-header {
+    background: rgba(74, 85, 104, 0.8);
+    color: #E2E8F0;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-header:hover {
+    background: rgba(74, 85, 104, 1);
+    border-color: rgba(226, 232, 240, 0.6);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.btn-header.btn-primary {
+    background: #68D391;
+    border-color: #68D391;
+    color: white;
+}
+
+.btn-header.btn-primary:hover {
+    background: #48BB78;
+    border-color: #48BB78;
+}
+
+/* Search and Filter */
+.search-section {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 280px;
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: rgba(113, 128, 150, 0.6);
+    background: rgba(45, 55, 72, 1);
+}
+
+.search-input::placeholder {
+    color: #A0AEC0;
+}
+
+.filter-select {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+.filter-select:focus {
+    border-color: rgba(113, 128, 150, 0.6);
+    background: rgba(45, 55, 72, 1);
+}
+
+/* Transcription Cards */
+.transcription-item {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.transcription-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    background: rgba(45, 55, 72, 0.9);
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    background: #68D391;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+}
+
+.file-details h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+}
+
+.file-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 0.75rem;
+    color: #A0AEC0;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-completed {
+    background: #68D391;
+    color: white;
+}
+
+.status-processing {
+    background: #ECC94B;
+    color: white;
+}
+
+.status-error {
+    background: #F56565;
+    color: white;
+}
+
+/* Transcription Preview */
+.transcription-preview {
+    background: rgba(74, 85, 104, 0.4);
+    border-left: 3px solid #68D391;
+    padding: 14px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+    color: #E2E8F0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    border-top: 1px solid rgba(113, 128, 150, 0.2);
+    border-bottom: 1px solid rgba(113, 128, 150, 0.2);
+    border-right: 1px solid rgba(113, 128, 150, 0.2);
+}
+
+/* Export Buttons */
+.export-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.export-btn {
+    background: rgba(74, 85, 104, 0.8);
+    border: 1px solid rgba(113, 128, 150, 0.3);
+    color: #E2E8F0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.625rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.export-btn:hover {
+    background: rgba(74, 85, 104, 1);
+    border-color: rgba(113, 128, 150, 0.6);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Action Buttons */
+.item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-view {
+    background: #68D391;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #48BB78;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(104, 211, 145, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-delete {
+    background: #F56565;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #E53E3E;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #A0AEC0;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    color: #718096;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: white;
+    font-weight: 600;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin-bottom: 24px;
+    color: #A0AEC0;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.pagination a,
+.pagination span {
+    padding: 8px 12px;
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(74, 85, 104, 0.6);
+    border-radius: 6px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.pagination a:hover {
+    background: rgba(74, 85, 104, 1);
+    border-color: rgba(113, 128, 150, 0.6);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.pagination .current {
+    background: #68D391;
+    border-color: #68D391;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .history-container {
+        padding: 20px 16px;
+    }
+    
+    .history-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .search-section {
+        flex-direction: column;
+    }
+    
+    .search-input {
+        min-width: auto;
+    }
+    
+    .item-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .file-info {
+        justify-content: center;
+    }
+    
+    .file-meta {
+        justify-content: center;
+    }
+    
+    .item-actions {
+        justify-content: center;
+    }
+    
+    .export-buttons {
+        justify-content: center;
+    }
+    
+    .history-title {
+        font-size: 1.875rem;
+    }
+}
+</style>
+</head>
+
+<body>
+    <div class="history-container">
+        <!-- Header -->
+        <div class="history-header">
+            <h1 class="history-title">Histórico de Transcrições</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('transcricao_video.index') }}" class="btn-header btn-primary">
+                    Nova Transcrição
+                </a>
+                <a href="{{ url_for('home_dashboard_init_app') }}" class="btn-header">
+                    Início
+                </a>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="search-section">
+            <input type="text" id="searchInput" class="search-input" 
+                   placeholder="Buscar por nome do arquivo..." 
+                   value="{{ search }}">
+            <select id="statusFilter" class="filter-select">
+                <option value="">Todos os status</option>
+                <option value="completed" {{ 'selected' if status_filter == 'completed' }}>Completo</option>
+                <option value="processing" {{ 'selected' if status_filter == 'processing' }}>Processando</option>
+                <option value="error" {{ 'selected' if status_filter == 'error' }}>Erro</option>
+            </select>
+        </div>
+
+        <!-- Transcription List -->
+        {% if transcricoes %}
+            {% for transcricao in transcricoes %}
+            <div class="transcription-item">
+                <div class="item-header">
+                    <div class="file-info">
+                        <div class="file-icon">
+                            <i class="fas fa-{{ 'video' if transcricao.file_type in ['.mp4', '.mov', '.avi', '.wmv'] else 'music' }}"></i>
+                        </div>
+                        <div class="file-details">
+                            <h3>{{ transcricao.filename }}</h3>
+                            <div class="file-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ transcricao.created_at.strftime('%d/%m/%Y %H:%M') if transcricao.created_at else 'N/A' }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-weight"></i>
+                                    <span>{{ "%.2f"|format((transcricao.file_size or 0) / (1024*1024)) }} MB</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-stopwatch"></i>
+                                    <span>{{ format_timestamp(transcricao.duration or 0) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="status-badge status-{{ transcricao.status }}">
+                        {{ transcricao.status.title() }}
+                    </div>
+                </div>
+
+                {% if transcricao.text and transcricao.status == 'completed' %}
+                <div class="transcription-preview">
+                    "{{ transcricao.text[:200] }}{{ '...' if transcricao.text|length > 200 else '' }}"
+                </div>
+                {% endif %}
+
+                {% if transcricao.status == 'completed' %}
+                <div class="export-buttons">
+                    <a href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='txt') }}" 
+                       class="export-btn">
+                        <i class="fas fa-download"></i>
+                        TXT
+                    </a>
+                    <a href="{{ url_for('transcricao_video.export', transcript_id=transcricao.transcript_id, format='json') }}" 
+                       class="export-btn">
+                        <i class="fas fa-download"></i>
+                        JSON
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="item-actions">
+                    {% if transcricao.status == 'completed' %}
+                    <a href="{{ url_for('transcricao_video.result', transcript_id=transcricao.transcript_id) }}" 
+                       class="btn-action btn-view">
+                        <i class="fas fa-eye"></i>
+                        Ver Resultado
+                    </a>
+                    {% elif transcricao.status == 'processing' %}
+                    <button class="btn-action btn-view" 
+                            onclick="checkStatus('{{ transcricao.transcript_id }}')">
+                        <i class="fas fa-refresh"></i>
+                        Verificar Status
+                    </button>
+                    {% endif %}
+                    
+                    <button class="btn-action btn-delete" 
+                            onclick="deleteTranscription('{{ transcricao.transcript_id }}')">
+                        <i class="fas fa-trash"></i>
+                        Deletar
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if total > per_page %}
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="?page={{ page - 1 }}&search={{ search }}&status={{ status_filter }}">« Anterior</a>
+                {% endif %}
+                
+                {% for p in range(1, (total // per_page) + 2) %}
+                    {% if p == page %}
+                        <span class="current">{{ p }}</span>
+                    {% elif p <= (total // per_page) + 1 %}
+                        <a href="?page={{ p }}&search={{ search }}&status={{ status_filter }}">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page < (total // per_page) + 1 %}
+                    <a href="?page={{ page + 1 }}&search={{ search }}&status={{ status_filter }}">Próxima »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <i class="fas fa-video"></i>
+                <h3>Nenhuma transcrição encontrada</h3>
+                <p>{{ 'Nenhum resultado para sua busca.' if search or status_filter else 'Você ainda não fez nenhuma transcrição.' }}</p>
+                <a href="{{ url_for('transcricao_video.index') }}" class="btn-header btn-primary">
+                    Fazer primeira transcrição
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Search functionality
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 500);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', performSearch);
+
+        function performSearch() {
+            const search = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            const url = new URL(window.location);
+            url.searchParams.set('search', search);
+            url.searchParams.set('status', status);
+            url.searchParams.delete('page'); // Reset to first page
+            
+            window.location.href = url.toString();
+        }
+
+        // Delete functionality
+        async function deleteTranscription(transcriptId) {
+            if (!confirm('Tem certeza que deseja deletar esta transcrição? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`{{ url_for('transcricao_video.delete', transcript_id='TRANSCRIPT_ID') }}`.replace('TRANSCRIPT_ID', transcriptId), {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Transcrição deletada com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showAlert('Erro ao deletar: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erro na conexão: ' + error.message, 'error');
+            }
+        }
+
+        // Check status functionality
+        async function checkStatus(transcriptId) {
+            try {
+                const response = await fetch(`{{ url_for('transcricao_video.status', transcript_id='TRANSCRIPT_ID') }}`.replace('TRANSCRIPT_ID', transcriptId));
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.status === 'completed') {
+                        showAlert('Transcrição concluída!', 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else if (result.status === 'error') {
+                        showAlert('Erro no processamento', 'error');
+                    } else {
+                        showAlert(`Status: ${result.status} (${result.progress}%)`, 'info');
+                    }
+                } else {
+                    showAlert('Erro ao verificar status: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Erro na conexão: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                padding: 16px 20px;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                background: ${type === 'success' ? 'rgba(104, 211, 145, 0.9)' : type === 'error' ? 'rgba(245, 101, 101, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+                color: white;
+                border: 1px solid ${type === 'success' ? '#68D391' : type === 'error' ? '#F56565' : '#3B82F6'};
+            `;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
+{% endblock %}

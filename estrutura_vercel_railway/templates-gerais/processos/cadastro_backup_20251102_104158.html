@@ -1,0 +1,1405 @@
+{% extends "layout.html" %}
+
+{% block title %}Cadastro de Processo Jurídico{% endblock %}
+
+{% block content %}
+    
+    <style>
+        :root {
+            --primary-blue: #355d6c;
+            --accent-teal: #40aba0;
+            --accent-green: #40a9a3;
+            --neutral-gray: #575b5c;
+            --light-gray: #768082;
+            --bg-dark: #21333d;
+            --text-light: #fcfffb;
+            --text-muted: #ffffff;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #355d6c 0%, #40aba0 100%);
+            min-height: 100vh;
+            color: var(--text-light) !important;
+        }
+        
+        .main-container {
+            background: rgba(87, 91, 92, 0.95);
+            border-radius: 20px;
+            margin: 20px auto;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(64, 171, 160, 0.2);
+            max-width: 1400px;
+            color: var(--text-light) !important;
+        }
+        
+        .header-section {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 3px solid var(--accent-teal);
+            margin-bottom: 40px;
+        }
+        
+        .header-section h1 {
+            color: var(--accent-teal) !important;
+            font-weight: 700;
+            font-size: 2.5rem;
+        }
+        
+        .header-section p {
+            color: white !important;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);
+            color: white !important;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 30px 0 20px 0;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .form-label {
+            font-weight: 600 !important;
+            color: white !important;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--neutral-gray) !important;
+            border: 2px solid var(--light-gray) !important;
+            border-radius: 10px !important;
+            padding: 12px 15px !important;
+            transition: all 0.3s ease;
+            color: white !important;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--neutral-gray) !important;
+            border-color: var(--accent-teal) !important;
+            box-shadow: 0 0 0 0.2rem rgba(64, 171, 160, 0.25) !important;
+            color: white !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%) !important;
+            border: none !important;
+            border-radius: 25px !important;
+            padding: 15px 40px !important;
+            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+            transition: all 0.3s ease;
+            color: white !important;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(64, 171, 160, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--neutral-gray) !important;
+            border: none !important;
+            border-radius: 25px !important;
+            padding: 15px 40px !important;
+            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+            color: white !important;
+        }
+        
+        .form-row {
+            margin-bottom: 25px;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .form-control::placeholder {
+            color: var(--light-gray) !important;
+        }
+        
+        .form-select option {
+            background-color: var(--neutral-gray) !important;
+            color: white !important;
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+            width: auto;
+        }
+        
+        /* Estilo específico para Pedidos de Verba */
+        .pedidos-verba-section {
+            background: #3e9a95 !important;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .pedidos-verba-section .form-check-label {
+            color: white !important;
+            font-weight: 500 !important;
+        }
+        
+        .pedidos-verba-section .form-check-input {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        
+        .pedidos-verba-section .form-check-input:checked {
+            background-color: #2d7873 !important;
+            border-color: #2d7873 !important;
+        }
+        
+        .pedidos-verba-section p {
+            color: white !important;
+        }
+
+        /* Garantir que todos os textos sejam brancos */
+        * {
+            color: white !important;
+        }
+        
+        .text-muted {
+            color: white !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6, p, span, div, label, input, select, textarea {
+            color: white !important;
+        }
+        
+        .form-check-label {
+            color: white !important;
+        }
+        
+        textarea.form-control {
+            color: white !important;
+            background-color: var(--neutral-gray) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-teal) 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home_dashboard_init_app') }}">
+                <img loading="lazy" src="{{ url_for('static', filename='images/ars-logo.png') }}" alt="Legal Design Pro" class="me-2">
+                <span>Legal Design Pro</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('processos_juridicos') }}">
+                    <i class="fas fa-list me-1"></i>Lista de Processos
+                </a>
+                <a class="nav-link" href="{{ url_for('home_dashboard_init_app') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-section">
+                <h1><i class="fas fa-plus-circle me-3"></i>Cadastro de Processo Jurídico</h1>
+                <p class="mb-0 text-muted">Preencha as informações do novo processo</p>
+            </div>
+            
+            <!-- Formulário de Cadastro -->
+            <form method="POST" action="{{ url_for('processo_cadastro_post') }}">
+                
+                <!-- Seção 1: Identificação do Processo -->
+                <div class="section-header">
+                    <i class="fas fa-id-card me-2"></i>1. Identificação do Processo
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="numero_processo_cnj" class="form-label">Número do Processo (CNJ) *</label>
+                        <input type="text" class="form-control" id="numero_processo_cnj" name="numero_processo_cnj" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="area_juridica" class="form-label">Área Jurídica *</label>
+                        <select class="form-select" id="area_juridica" name="area_juridica" required>
+                            <option value="">Selecione a área jurídica</option>
+                            <option value="Direito Agrário">Direito Agrário</option>
+                            <option value="Direito Civil">Direito Civil</option>
+                            <option value="Direito Trabalhista">Direito Trabalhista</option>
+                            <option value="Direito Penal">Direito Penal</option>
+                            <option value="Direito Administrativo">Direito Administrativo</option>
+                            <option value="Direito Tributário">Direito Tributário</option>
+                            <option value="Direito Empresarial">Direito Empresarial</option>
+                            <option value="Direito do Consumidor">Direito do Consumidor</option>
+                            <option value="Direito Previdenciário">Direito Previdenciário</option>
+                            <option value="Direito Imobiliário">Direito Imobiliário</option>
+                            <option value="Direito Ambiental">Direito Ambiental</option>
+                            <option value="Direito Digital">Direito Digital</option>
+                            <option value="Direito Bancário">Direito Bancário</option>
+                            <option value="Direito Securitário">Direito Securitário</option>
+                            <option value="Negociação e Conflitos">Negociação e Conflitos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 2: Dados das Partes -->
+                <div class="section-header">
+                    <i class="fas fa-users me-2"></i>2. Dados das Partes
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="cliente" class="form-label">Cliente *</label>
+                        <input type="text" class="form-control" id="cliente" name="cliente" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cpf_cliente" class="form-label">CPF do Cliente</label>
+                        <input type="text" class="form-control cpf-mask" id="cpf_cliente" name="cpf_cliente" placeholder="000.000.000-00">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="autor" class="form-label">Autor *</label>
+                        <input type="text" class="form-control" id="autor" name="autor" required>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="cpf_autor" class="form-label">CPF do Autor (Pessoa Física)</label>
+                        <input type="text" class="form-control cpf-mask" id="cpf_autor" name="cpf_autor" placeholder="000.000.000-00">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cnpj_autor" class="form-label">CNPJ do Autor (Pessoa Jurídica)</label>
+                        <input type="text" class="form-control cnpj-mask" id="cnpj_autor" name="cnpj_autor" placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cnpj" class="form-label">CNPJ do Cliente</label>
+                        <input type="text" class="form-control cnpj-mask" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="advogado_do_caso" class="form-label">Advogado do Caso *</label>
+                        <input type="text" class="form-control" id="advogado_do_caso" name="advogado_do_caso" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="advogado_adverso" class="form-label">Advogado Adverso</label>
+                        <input type="text" class="form-control" id="advogado_adverso" name="advogado_adverso">
+                    </div>
+                </div>
+                
+
+                <!-- Seção 3: Dados Processuais -->
+                <div class="section-header">
+                    <i class="fas fa-gavel me-2"></i>3. Dados Processuais
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-3">
+                        <label for="esfera" class="form-label">Esfera *</label>
+                        <select class="form-select" id="esfera" name="esfera" required>
+                            <option value="">Selecione a esfera</option>
+                            <option value="Federal">Federal</option>
+                            <option value="Estadual">Estadual</option>
+                            <option value="Municipal">Municipal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="data_registro" class="form-label">Data de Registro</label>
+                        <input type="date" class="form-control" id="data_registro" name="data_registro">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="estado" class="form-label">Estado *</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="">Selecione o estado</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="comarca" class="form-label">Comarca *</label>
+                        <select class="form-select" id="comarca" name="comarca" required>
+                            <option value="">Selecione a comarca</option>
+                            <option value="São Paulo">São Paulo</option>
+                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                            <option value="Belo Horizonte">Belo Horizonte</option>
+                            <option value="Brasília">Brasília</option>
+                            <option value="Salvador">Salvador</option>
+                            <option value="Fortaleza">Fortaleza</option>
+                            <option value="Recife">Recife</option>
+                            <option value="Porto Alegre">Porto Alegre</option>
+                            <option value="Curitiba">Curitiba</option>
+                            <option value="Goiânia">Goiânia</option>
+                            <option value="Manaus">Manaus</option>
+                            <option value="Belém">Belém</option>
+                            <option value="Vitória">Vitória</option>
+                            <option value="Florianópolis">Florianópolis</option>
+                            <option value="São Luís">São Luís</option>
+                            <option value="Maceió">Maceió</option>
+                            <option value="João Pessoa">João Pessoa</option>
+                            <option value="Aracaju">Aracaju</option>
+                            <option value="Teresina">Teresina</option>
+                            <option value="Natal">Natal</option>
+                            <option value="Campo Grande">Campo Grande</option>
+                            <option value="Cuiabá">Cuiabá</option>
+                            <option value="Rio Branco">Rio Branco</option>
+                            <option value="Porto Velho">Porto Velho</option>
+                            <option value="Boa Vista">Boa Vista</option>
+                            <option value="Macapá">Macapá</option>
+                            <option value="Palmas">Palmas</option>
+                            <option value="Campinas">Campinas</option>
+                            <option value="Santos">Santos</option>
+                            <option value="Sorocaba">Sorocaba</option>
+                            <option value="Ribeirão Preto">Ribeirão Preto</option>
+                            <option value="São José dos Campos">São José dos Campos</option>
+                            <option value="Osasco">Osasco</option>
+                            <option value="Santo André">Santo André</option>
+                            <option value="São Bernardo do Campo">São Bernardo do Campo</option>
+                            <option value="Guarulhos">Guarulhos</option>
+                            <option value="Niterói">Niterói</option>
+                            <option value="Duque de Caxias">Duque de Caxias</option>
+                            <option value="Nova Iguaçu">Nova Iguaçu</option>
+                            <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+                            <option value="Petrópolis">Petrópolis</option>
+                            <option value="Volta Redonda">Volta Redonda</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="juizo" class="form-label">Juízo *</label>
+                        <select class="form-select" id="juizo" name="juizo" required>
+                            <option value="">Selecione o juízo</option>
+                            <option value="1ª Vara Cível">1ª Vara Cível</option>
+                            <option value="2ª Vara Cível">2ª Vara Cível</option>
+                            <option value="3ª Vara Cível">3ª Vara Cível</option>
+                            <option value="4ª Vara Cível">4ª Vara Cível</option>
+                            <option value="5ª Vara Cível">5ª Vara Cível</option>
+                            <option value="1ª Vara Criminal">1ª Vara Criminal</option>
+                            <option value="2ª Vara Criminal">2ª Vara Criminal</option>
+                            <option value="3ª Vara Criminal">3ª Vara Criminal</option>
+                            <option value="1ª Vara da Família">1ª Vara da Família</option>
+                            <option value="2ª Vara da Família">2ª Vara da Família</option>
+                            <option value="3ª Vara da Família">3ª Vara da Família</option>
+                            <option value="1ª Vara de Fazenda Pública">1ª Vara de Fazenda Pública</option>
+                            <option value="2ª Vara de Fazenda Pública">2ª Vara de Fazenda Pública</option>
+                            <option value="3ª Vara de Fazenda Pública">3ª Vara de Fazenda Pública</option>
+                            <option value="1ª Vara do Trabalho">1ª Vara do Trabalho</option>
+                            <option value="2ª Vara do Trabalho">2ª Vara do Trabalho</option>
+                            <option value="3ª Vara do Trabalho">3ª Vara do Trabalho</option>
+                            <option value="4ª Vara do Trabalho">4ª Vara do Trabalho</option>
+                            <option value="5ª Vara do Trabalho">5ª Vara do Trabalho</option>
+                            <option value="6ª Vara do Trabalho">6ª Vara do Trabalho</option>
+                            <option value="7ª Vara do Trabalho">7ª Vara do Trabalho</option>
+                            <option value="8ª Vara do Trabalho">8ª Vara do Trabalho</option>
+                            <option value="9ª Vara do Trabalho">9ª Vara do Trabalho</option>
+                            <option value="10ª Vara do Trabalho">10ª Vara do Trabalho</option>
+                            <option value="1ª Vara Federal">1ª Vara Federal</option>
+                            <option value="2ª Vara Federal">2ª Vara Federal</option>
+                            <option value="3ª Vara Federal">3ª Vara Federal</option>
+                            <option value="4ª Vara Federal">4ª Vara Federal</option>
+                            <option value="5ª Vara Federal">5ª Vara Federal</option>
+                            <option value="1ª Vara de Execuções Fiscais">1ª Vara de Execuções Fiscais</option>
+                            <option value="2ª Vara de Execuções Fiscais">2ª Vara de Execuções Fiscais</option>
+                            <option value="3ª Vara de Execuções Fiscais">3ª Vara de Execuções Fiscais</option>
+                            <option value="Vara de Sucessões">Vara de Sucessões</option>
+                            <option value="Vara de Registros Públicos">Vara de Registros Públicos</option>
+                            <option value="Vara de Órfãos e Sucessões">Vara de Órfãos e Sucessões</option>
+                            <option value="Vara de Precatórias">Vara de Precatórias</option>
+                            <option value="Vara de Execuções Criminais">Vara de Execuções Criminais</option>
+                            <option value="Vara da Infância e Juventude">Vara da Infância e Juventude</option>
+                            <option value="Vara de Violência Doméstica">Vara de Violência Doméstica</option>
+                            <option value="Vara do Idoso">Vara do Idoso</option>
+                            <option value="Vara Empresarial">Vara Empresarial</option>
+                            <option value="Juizado Especial Cível">Juizado Especial Cível</option>
+                            <option value="Juizado Especial Criminal">Juizado Especial Criminal</option>
+                            <option value="Juizado Especial Federal">Juizado Especial Federal</option>
+                            <option value="Tribunal do Júri">Tribunal do Júri</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="data_distribuicao" class="form-label">Data de Distribuição *</label>
+                        <input type="date" class="form-control" id="data_distribuicao" name="data_distribuicao" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fase_processual" class="form-label">Fase Processual</label>
+                        <select class="form-select" id="fase_processual" name="fase_processual">
+                            <option value="">Selecione a Fase Processual</option>
+                            <option value="Inicial">Inicial</option>
+                            <option value="Citação">Citação</option>
+                            <option value="Contestação">Contestação</option>
+                            <option value="Tréplica">Tréplica</option>
+                            <option value="Audiência">Audiência</option>
+                            <option value="Audiência Una">Audiência Una</option>
+                            <option value="Audiência de Instrução">Audiência de Instrução</option>
+                            <option value="Instrução">Instrução</option>
+                            <option value="Perícia">Perícia</option>
+                            <option value="Julgamento">Julgamento</option>
+                            <option value="Sentença">Sentença</option>
+                            <option value="Recurso">Recurso</option>
+                            <option value="Apelação">Apelação</option>
+                            <option value="Embargos">Embargos</option>
+                            <option value="Agravo">Agravo</option>
+                            <option value="Execução">Execução</option>
+                            <option value="Liquidação">Liquidação</option>
+                            <option value="Cumprimento">Cumprimento</option>
+                            <option value="Acordo">Acordo</option>
+                            <option value="Arquivo">Arquivo</option>
+                            <option value="Suspenso">Suspenso</option>
+                            <option value="Trânsito em Julgado">Trânsito em Julgado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="instancia" class="form-label">Instância</label>
+                        <select class="form-select" id="instancia" name="instancia">
+                            <option value="">Selecione a instância</option>
+                            <option value="1ª Instância">1ª Instância</option>
+                            <option value="2ª Instância">2ª Instância</option>
+                            <option value="Tribunal Superior">Tribunal Superior</option>
+                            <option value="STF">STF</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 4: Informações Financeiras -->
+                <div class="section-header">
+                    <i class="fas fa-money-bill-wave me-2"></i>4. Informações Financeiras
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="valor_da_causa" class="form-label">Valor da Causa (R$) *</label>
+                        <input type="number" step="0.01" class="form-control" id="valor_da_causa" name="valor_da_causa" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="calculo_contadores" class="form-label">Cálculo dos Contadores (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="calculo_contadores" name="calculo_contadores">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="provisao" class="form-label">Provisão (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="provisao" name="provisao">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-3">
+                        <label for="execucao" class="form-label">Execução (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="execucao" name="execucao">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="bloqueio" class="form-label">Bloqueio (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="bloqueio" name="bloqueio">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="acordo" class="form-label">Acordo (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="acordo" name="acordo">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-3">
+                        <label for="deposito_recursal" class="form-label">Depósito Recursal (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="deposito_recursal" name="deposito_recursal">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="pagamentos" class="form-label">Pagamentos (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="pagamentos" name="pagamentos">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="penhora" class="form-label">Penhora (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="penhora" name="penhora">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="valor_provisao" class="form-label">Valor Provisão (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="valor_provisao" name="valor_provisao">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="previsao_de_pagamento" class="form-label">Previsão de Pagamento</label>
+                        <input type="date" class="form-control" id="previsao_de_pagamento" name="previsao_de_pagamento">
+                    </div>
+                </div>
+
+                <!-- Seção 5: Resumo e Classificação -->
+                <div class="section-header">
+                    <i class="fas fa-clipboard-list me-2"></i>5. Resumo e Classificação
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="resumo_dos_fatos" class="form-label">Resumo dos Fatos *</label>
+                        <textarea class="form-control" id="resumo_dos_fatos" name="resumo_dos_fatos" rows="4" required></textarea>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="risco" class="form-label">Risco *</label>
+                        <select class="form-select" id="risco" name="risco" required>
+                            <option value="">Selecione o risco</option>
+                            <option value="Remoto">Remoto</option>
+                            <option value="Possível">Possível</option>
+                            <option value="Provável">Provável</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Selecione o status</option>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Suspenso">Suspenso</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="Arquivado">Arquivado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="polo" class="form-label">Polo</label>
+                        <select class="form-select" id="polo" name="polo">
+                            <option value="">Selecione o polo</option>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Passivo">Passivo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 6: Informações Complementares -->
+                <div class="section-header">
+                    <i class="fas fa-plus-circle me-2"></i>6. Informações Complementares
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="titulo" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="ano_distribuicao" class="form-label">Ano de Distribuição</label>
+                        <input type="number" class="form-control" id="ano_distribuicao" name="ano_distribuicao" min="1900" max="2030">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="empresa" class="form-label">Empresa</label>
+                        <input type="text" class="form-control" id="empresa" name="empresa">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="acao" class="form-label">Ação</label>
+                        <input type="text" class="form-control" id="acao" name="acao">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="tema" class="form-label">Tema</label>
+                        <input type="text" class="form-control" id="tema" name="tema">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="objeto" class="form-label">Objeto</label>
+                        <input type="text" class="form-control" id="objeto" name="objeto">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="processo" class="form-label">Tipo de Processo</label>
+                        <input type="text" class="form-control" id="processo" name="processo">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="resultado" class="form-label">Resultado</label>
+                        <input type="text" class="form-control" id="resultado" name="resultado">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="posicao_simplificada" class="form-label">Posição Simplificada</label>
+                        <input type="text" class="form-control" id="posicao_simplificada" name="posicao_simplificada">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check" style="margin-top: 25px;">
+                            <input class="form-check-input" type="checkbox" id="liminar" name="liminar" value="1">
+                            <label class="form-check-label" for="liminar">Liminar</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="funcao" class="form-label">Função</label>
+                        <input type="text" class="form-control" id="funcao" name="funcao">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="data_acordo" class="form-label">Data do Acordo</label>
+                        <input type="date" class="form-control" id="data_acordo" name="data_acordo">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="observacoes" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-12">
+                        <label for="andamento_relatorio" class="form-label">Relatório de Andamento</label>
+                        <textarea class="form-control" id="andamento_relatorio" name="andamento_relatorio" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <!-- Seção 7: Análise e Sucesso do Processo -->
+                <div class="section-header">
+                    <i class="fas fa-chart-line me-2"></i>7. Análise de Sucesso e Resultados
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="resultado_processo" class="form-label">Resultado do Processo</label>
+                        <select class="form-select" id="resultado_processo" name="resultado_processo">
+                            <option value="">Selecione o resultado</option>
+                            <option value="Acordo">Acordo</option>
+                            <option value="Improcedente">Improcedente</option>
+                            <option value="Procedente">Procedente</option>
+                            <option value="Procedente em Parte">Procedente em Parte</option>
+                            <option value="Quitado">Quitado</option>
+                            <option value="Extinção com Resolução de Mérito">Extinção com Resolução de Mérito</option>
+                            <option value="Extinção sem Resolução do Mérito">Extinção sem Resolução do Mérito</option>
+                            <option value="Sentença Terminativa">Sentença Terminativa</option>
+                            <option value="Sentença Arbitral Homologada">Sentença Arbitral Homologada</option>
+                            <option value="Improcedência liminar do pedido (art. 332 CPC)">Improcedência liminar do pedido (art. 332 CPC)</option>
+                            <option value="Procedência Liminar do Pedido">Procedência Liminar do Pedido</option>
+                            <option value="Reforma">Reforma</option>
+                            <option value="Manutenção">Manutenção</option>
+                            <option value="Anulação">Anulação</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="data_encerramento" class="form-label">Data de Encerramento</label>
+                        <input type="date" class="form-control" id="data_encerramento" name="data_encerramento">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="valor_recuperado" class="form-label">Valor Recuperado (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="valor_recuperado" name="valor_recuperado">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="taxa_sucesso" class="form-label">Taxa de Sucesso (%)</label>
+                        <input type="number" step="0.01" min="0" max="100" class="form-control" id="taxa_sucesso" name="taxa_sucesso">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tempo_tramitacao_dias" class="form-label">Tempo de Tramitação (dias)</label>
+                        <input type="number" class="form-control" id="tempo_tramitacao_dias" name="tempo_tramitacao_dias">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="custas_processuais" class="form-label">Custas Processuais (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="custas_processuais" name="custas_processuais">
+                    </div>
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-4">
+                        <label for="honorarios_sucumbencia" class="form-label">Honorários de Sucumbência (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="honorarios_sucumbencia" name="honorarios_sucumbencia">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="motivo_encerramento" class="form-label">Motivo do Encerramento</label>
+                        <input type="text" class="form-control" id="motivo_encerramento" name="motivo_encerramento">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="satisfacao_cliente" class="form-label">Satisfação do Cliente (1-5)</label>
+                        <select class="form-select" id="satisfacao_cliente" name="satisfacao_cliente">
+                            <option value="">Selecione a satisfação</option>
+                            <option value="1">1 - Muito Insatisfeito</option>
+                            <option value="2">2 - Insatisfeito</option>
+                            <option value="3">3 - Neutro</option>
+                            <option value="4">4 - Satisfeito</option>
+                            <option value="5">5 - Muito Satisfeito</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 8: Remuneração e Gestão -->
+                <div class="section-header">
+                    <i class="fas fa-coins me-2"></i>8. Remuneração e Gestão
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-md-6">
+                        <label for="remuneracao_cargo_colaborador" class="form-label">Remuneração por Cargo (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="remuneracao_cargo_colaborador" name="remuneracao_cargo_colaborador">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="situacao_id" class="form-label">Situação do Processo</label>
+                        <select class="form-select" id="situacao_id" name="situacao_id">
+                            <option value="">Selecione a situação</option>
+                            <option value="1">Em Andamento</option>
+                            <option value="2">Suspenso</option>
+                            <option value="3">Finalizado</option>
+                            <option value="4">Arquivado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seção 9: Seleção de Tribunais -->
+                <div class="section-header">
+                    <i class="fas fa-building-columns me-2"></i>9. Seleção de Tribunais
+                </div>
+                
+                <div class="row form-row">
+                    <div class="col-12">
+                        <p style="color: white;">Selecione os tribunais relacionados ao processo:</p>
+                        
+                        <!-- Tribunais de Justiça Estaduais -->
+                        <h6 style="color: white; margin-top: 20px;">Tribunais de Justiça Estaduais</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAC" id="cb-tj-ac" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ac">TJAC</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAL" id="cb-tj-al" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-al">TJAL</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAP" id="cb-tj-ap" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ap">TJAP</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJAM" id="cb-tj-am" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-am">TJAM</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJBA" id="cb-tj-ba" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ba">TJBA</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJCE" id="cb-tj-ce" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ce">TJCE</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJDF" id="cb-tj-df" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-df">TJDF</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJES" id="cb-tj-es" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-es">TJES</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJGO" id="cb-tj-go" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-go">TJGO</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMA" id="cb-tj-ma" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ma">TJMA</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMT" id="cb-tj-mt" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-mt">TJMT</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMS" id="cb-tj-ms" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ms">TJMS</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJMG" id="cb-tj-mg" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-mg">TJMG</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPA" id="cb-tj-pa" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-pa">TJPA</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPB" id="cb-tj-pb" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-pb">TJPB</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPR" id="cb-tj-pr" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-pr">TJPR</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPE" id="cb-tj-pe" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-pe">TJPE</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJPI" id="cb-tj-pi" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-pi">TJPI</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRJ" id="cb-tj-rj" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-rj">TJRJ</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRN" id="cb-tj-rn" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-rn">TJRN</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRS" id="cb-tj-rs" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-rs">TJRS</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRO" id="cb-tj-ro" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-ro">TJRO</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJRR" id="cb-tj-rr" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-rr">TJRR</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSC" id="cb-tj-sc" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-sc">TJSC</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSP" id="cb-tj-sp" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-sp">TJSP</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJSE" id="cb-tj-se" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-se">TJSE</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TJTO" id="cb-tj-to" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tj-to">TJTO</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tribunais Regionais do Trabalho -->
+                        <h6 style="color: white; margin-top: 20px;">Tribunais Regionais do Trabalho</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT1" id="cb-trt-1" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trt-1">TRT1</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT2" id="cb-trt-2" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trt-2">TRT2</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT3" id="cb-trt-3" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trt-3">TRT3</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT4" id="cb-trt-4" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trt-4">TRT4</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRT5" id="cb-trt-5" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trt-5">TRT5</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TST" id="cb-tst" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tst">TST</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tribunais Regionais Federais -->
+                        <h6 style="color: white; margin-top: 20px;">Tribunais Regionais Federais</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF1" id="cb-trf-1" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-1">TRF1</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF2" id="cb-trf-2" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-2">TRF2</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF3" id="cb-trf-3" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-3">TRF3</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF4" id="cb-trf-4" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-4">TRF4</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF5" id="cb-trf-5" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-5">TRF5</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TRF6" id="cb-trf-6" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-trf-6">TRF6</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tribunais Superiores -->
+                        <h6 style="color: white; margin-top: 20px;">Tribunais Superiores</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="STF" id="cb-stf" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-stf">STF</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="STJ" id="cb-stj" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-stj">STJ</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="TSE" id="cb-tse" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-tse">TSE</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input tribunal-checkbox" type="checkbox" value="STM" id="cb-stm" name="tribunais-cb">
+                                    <label class="form-check-label" for="cb-stm">STM</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção 10: Pedidos de Verba -->
+                <div class="section-header">
+                    <i class="fas fa-briefcase me-2"></i>10. Pedidos de Verba
+                </div>
+                
+                <div class="pedidos-verba-section">
+                    <p class="mb-3">Selecione os pedidos de verba aplicáveis a este processo:</p>
+                    
+                    <div class="checkbox-grid">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="acidente_de_trabalho" name="acidente_de_trabalho" value="1">
+                            <label class="form-check-label" for="acidente_de_trabalho">Acidente de Trabalho</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="acumulo_de_funcao" name="acumulo_de_funcao" value="1">
+                            <label class="form-check-label" for="acumulo_de_funcao">Acúmulo de Função</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="adicional_de_periculosidade" name="adicional_de_periculosidade" value="1">
+                            <label class="form-check-label" for="adicional_de_periculosidade">Adicional de Periculosidade</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="adicional_de_sobreaviso" name="adicional_de_sobreaviso" value="1">
+                            <label class="form-check-label" for="adicional_de_sobreaviso">Adicional de Sobreaviso</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="adicional_noturno_e_reflexos" name="adicional_noturno_e_reflexos" value="1">
+                            <label class="form-check-label" for="adicional_noturno_e_reflexos">Adicional Noturno e Reflexos</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ajuda_de_custo" name="ajuda_de_custo" value="1">
+                            <label class="form-check-label" for="ajuda_de_custo">Ajuda de Custo</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="aplicacao_do_artigo_467_da_clt" name="aplicacao_do_artigo_467_da_clt" value="1">
+                            <label class="form-check-label" for="aplicacao_do_artigo_467_da_clt">Aplicação do Artigo 467 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="apresentacao_de_documentos" name="apresentacao_de_documentos" value="1">
+                            <label class="form-check-label" for="apresentacao_de_documentos">Apresentação de Documentos</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="artigo_384_da_clt" name="artigo_384_da_clt" value="1">
+                            <label class="form-check-label" for="artigo_384_da_clt">Artigo 384 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="beneficios_previstos_na_cct_da_2a_reclamada" name="beneficios_previstos_na_cct_da_2a_reclamada" value="1">
+                            <label class="form-check-label" for="beneficios_previstos_na_cct_da_2a_reclamada">Benefícios Previstos na CCT da 2ª Reclamada</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="descaracterizacao_do_cargo_de_confianca" name="descaracterizacao_do_cargo_de_confianca" value="1">
+                            <label class="form-check-label" for="descaracterizacao_do_cargo_de_confianca">Descaracterização do Cargo de Confiança</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="devolucao_de_descontos" name="devolucao_de_descontos" value="1">
+                            <label class="form-check-label" for="devolucao_de_descontos">Devolução de Descontos</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="devolucao_de_descontos_lancados_no_trct" name="devolucao_de_descontos_lancados_no_trct" value="1">
+                            <label class="form-check-label" for="devolucao_de_descontos_lancados_no_trct">Devolução de Descontos Lançados no TRCT</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="diferencas_de_comissoes" name="diferencas_de_comissoes" value="1">
+                            <label class="form-check-label" for="diferencas_de_comissoes">Diferenças de Comissões</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="diferencas_salariais" name="diferencas_salariais" value="1">
+                            <label class="form-check-label" for="diferencas_salariais">Diferenças Salariais</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="dsrs" name="dsrs" value="1">
+                            <label class="form-check-label" for="dsrs">DSRs</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="equiparacao_salarial" name="equiparacao_salarial" value="1">
+                            <label class="form-check-label" for="equiparacao_salarial">Equiparação Salarial</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="estabilidade" name="estabilidade" value="1">
+                            <label class="form-check-label" for="estabilidade">Estabilidade</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ferias_em_dobro" name="ferias_em_dobro" value="1">
+                            <label class="form-check-label" for="ferias_em_dobro">Férias em Dobro</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fgts_e_a_multa_de_40" name="fgts_e_a_multa_de_40" value="1">
+                            <label class="form-check-label" for="fgts_e_a_multa_de_40">FGTS e a Multa de 40%</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="horas_extras_e_reflexos" name="horas_extras_e_reflexos" value="1">
+                            <label class="form-check-label" for="horas_extras_e_reflexos">Horas Extras e Reflexos</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="indenizacao_aviso_previo" name="indenizacao_aviso_previo" value="1">
+                            <label class="form-check-label" for="indenizacao_aviso_previo">Indenização Aviso Prévio</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="indenizacao_por_danos_materiais" name="indenizacao_por_danos_materiais" value="1">
+                            <label class="form-check-label" for="indenizacao_por_danos_materiais">Indenização por Danos Materiais</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="indenizacao_por_danos_morais" name="indenizacao_por_danos_morais" value="1">
+                            <label class="form-check-label" for="indenizacao_por_danos_morais">Indenização por Danos Morais</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="integracao_das_comissoes" name="integracao_das_comissoes" value="1">
+                            <label class="form-check-label" for="integracao_das_comissoes">Integração das Comissões</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="integracao_das_comissoes_por_fora" name="integracao_das_comissoes_por_fora" value="1">
+                            <label class="form-check-label" for="integracao_das_comissoes_por_fora">Integração das Comissões por Fora</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="integracao_dos_premios" name="integracao_dos_premios" value="1">
+                            <label class="form-check-label" for="integracao_dos_premios">Integração dos Prêmios</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="intervalo_interjornada" name="intervalo_interjornada" value="1">
+                            <label class="form-check-label" for="intervalo_interjornada">Intervalo Interjornada</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="intervalo_intrajornada" name="intervalo_intrajornada" value="1">
+                            <label class="form-check-label" for="intervalo_intrajornada">Intervalo Intrajornada</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao" name="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao" value="1">
+                            <label class="form-check-label" for="liberacao_das_guias_trct_e_cd_sob_pena_de_indenizacao">Liberação das Guias TRCT e CD sob Pena de Indenização</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="multa_convencional_ou_normativa" name="multa_convencional_ou_normativa" value="1">
+                            <label class="form-check-label" for="multa_convencional_ou_normativa">Multa Convencional ou Normativa</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="multa_do_artigo_477_da_clt" name="multa_do_artigo_477_da_clt" value="1">
+                            <label class="form-check-label" for="multa_do_artigo_477_da_clt">Multa do Artigo 477 da CLT</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="outros" name="outros" value="1">
+                            <label class="form-check-label" for="outros">Outros</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="plr" name="plr" value="1">
+                            <label class="form-check-label" for="plr">PLR</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="quebra_de_caixa" name="quebra_de_caixa" value="1">
+                            <label class="form-check-label" for="quebra_de_caixa">Quebra de Caixa</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="plano_de_saude" name="plano_de_saude" value="1">
+                            <label class="form-check-label" for="plano_de_saude">Plano de Saúde</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reconhecimento_da_remuneracao_recebida" name="reconhecimento_da_remuneracao_recebida" value="1">
+                            <label class="form-check-label" for="reconhecimento_da_remuneracao_recebida">Reconhecimento da Remuneração Recebida</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reembolso_km" name="reembolso_km" value="1">
+                            <label class="form-check-label" for="reembolso_km">Reembolso KM</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reenquadramento_sindical" name="reenquadramento_sindical" value="1">
+                            <label class="form-check-label" for="reenquadramento_sindical">Reenquadramento Sindical</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reintegracao" name="reintegracao" value="1">
+                            <label class="form-check-label" for="reintegracao">Reintegração</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rescisao_indireta" name="rescisao_indireta" value="1">
+                            <label class="form-check-label" for="rescisao_indireta">Rescisão Indireta</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="responsabilizacao_subsidiaria_da_2a_reclamada" name="responsabilizacao_subsidiaria_da_2a_reclamada" value="1">
+                            <label class="form-check-label" for="responsabilizacao_subsidiaria_da_2a_reclamada">Responsabilização Subsidiária da 2ª Reclamada</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa" name="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa" value="1">
+                            <label class="form-check-label" for="reversao_do_pedido_de_demissao_em_demissao_sem_justa_causa">Reversão do Pedido de Demissão em Demissão sem Justa Causa</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="reversao_justa_causa" name="reversao_justa_causa" value="1">
+                            <label class="form-check-label" for="reversao_justa_causa">Reversão Justa Causa</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="salario_substituicao" name="salario_substituicao" value="1">
+                            <label class="form-check-label" for="salario_substituicao">Salário Substituição</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="seguro_desemprego" name="seguro_desemprego" value="1">
+                            <label class="form-check-label" for="seguro_desemprego">Seguro Desemprego</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sucumbencia" name="sucumbencia" value="1">
+                            <label class="form-check-label" for="sucumbencia">Sucumbência</label>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vale_refeicao" name="vale_refeicao" value="1">
+                            <label class="form-check-label" for="vale_refeicao">Vale Refeição</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container para Campos Específicos por Área Jurídica -->
+                <div id="campos-especificos-container" style="display: none;">
+                    <!-- Os campos serão renderizados dinamicamente via JavaScript -->
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="row form-row mt-4">
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary me-3">
+                            <i class="fas fa-save me-2"></i>Cadastrar Processo
+                        </button>
+                        <a href="{{ url_for('processos_juridicos') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/currency-formatter-fixed.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dados-juridicos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/client-validation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/campos_especificos_areas.js') }}"></script>
+    
+    <!-- Script para formatação automática de CPF e CNPJ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Função para formatar CPF
+            function formatCPF(value) {
+                return value
+                    .replace(/\D/g, '') // Remove caracteres não numéricos
+                    .replace(/(\d{3})(\d)/, '$1.$2') // Adiciona primeiro ponto
+                    .replace(/(\d{3})(\d)/, '$1.$2') // Adiciona segundo ponto
+                    .replace(/(\d{3})(\d{1,2})$/, '$1-$2'); // Adiciona hífen
+            }
+            
+            // Função para formatar CNPJ
+            function formatCNPJ(value) {
+                return value
+                    .replace(/\D/g, '') // Remove caracteres não numéricos
+                    .replace(/(\d{2})(\d)/, '$1.$2') // Adiciona primeiro ponto
+                    .replace(/(\d{3})(\d)/, '$1.$2') // Adiciona segundo ponto
+                    .replace(/(\d{3})(\d)/, '$1/$2') // Adiciona barra
+                    .replace(/(\d{4})(\d{1,2})$/, '$1-$2'); // Adiciona hífen
+            }
+            
+            // Aplicar máscara de CPF a todos os campos com classe 'cpf-mask'
+            document.querySelectorAll('.cpf-mask').forEach(function(input) {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    if (value.replace(/\D/g, '').length <= 11) {
+                        e.target.value = formatCPF(value);
+                    }
+                });
+                
+                // Limitar a 14 caracteres (CPF formatado)
+                input.addEventListener('keypress', function(e) {
+                    if (e.target.value.length >= 14 && e.keyCode !== 8 && e.keyCode !== 46) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            // Aplicar máscara de CNPJ a todos os campos com classe 'cnpj-mask'
+            document.querySelectorAll('.cnpj-mask').forEach(function(input) {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value;
+                    if (value.replace(/\D/g, '').length <= 14) {
+                        e.target.value = formatCNPJ(value);
+                    }
+                });
+                
+                // Limitar a 18 caracteres (CNPJ formatado)
+                input.addEventListener('keypress', function(e) {
+                    if (e.target.value.length >= 18 && e.keyCode !== 8 && e.keyCode !== 46) {
+                        e.preventDefault();
+                    }
+                });
+            });
+            
+            console.log('✅ Formatação automática de CPF e CNPJ inicializada');
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Gerenciamento de Papéis - Sistema Jurídico{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-white">Gerenciamento de Papéis</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoRole">
+            <i class="fas fa-plus me-2"></i>Novo Papel
+        </button>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Estatísticas do Sistema -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Papéis Ativos</h6>
+                            <h3 class="mb-0">{{ roles|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-shield fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Permissões</h6>
+                            <h3 class="mb-0">{{ permissions|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-key fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Agentes Jurídicos</h6>
+                            <h3 class="mb-0">331</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+         </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Papéis do Sistema</h5>
+        </div>
+            <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Permissões</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ role.id }}</span></td>
+                            <td><strong class="text-white">{{ role.name }}</strong></td>
+                            <td class="text-white">{{ role.description }}</td>
+                            <td>
+                                {% for permission in role.permissions %}
+                                <span class="badge bg-info me-1">{{ permission.name }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Nenhuma</span>
+                                {% endfor %}
+                            </td>
+                            <td class="text-white">{{ role.created_at.strftime('%d/%m/%Y %H:%M') if role.created_at else 'N/A' }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarRole{{ role.id }}" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalExcluirRole{{ role.id }}" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-white">
+                                <em>Nenhum papel cadastrado no sistema.</em>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para adicionar novo papel -->
+<div class="modal fade" id="modalNovoRole" tabindex="-1" aria-labelledby="modalNovoRoleLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalNovoRoleLabel">Adicionar Novo Papel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('admin_role_novo') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Permissões</label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            {% for permission in permissions %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="{{ permission.id }}" id="perm{{ permission.id }}">
+                                <label class="form-check-label" for="perm{{ permission.id }}">
+                                    {{ permission.name }} ({{ permission.code }})
+                                    <small class="text-muted d-block">{{ permission.description }}</small>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modais para editar e excluir papéis -->
+{% for role in roles %}
+<!-- Modal para editar papel -->
+<div class="modal fade" id="modalEditarRole{{ role.id }}" tabindex="-1" aria-labelledby="modalEditarRoleLabel{{ role.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalEditarRoleLabel{{ role.id }}">Editar Papel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('admin_role_editar', id=role.id) }}">
+                    <div class="mb-3">
+                        <label for="name{{ role.id }}" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="name{{ role.id }}" name="name" value="{{ role.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description{{ role.id }}" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description{{ role.id }}" name="description" rows="3">{{ role.description or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Permissões</label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            {% for permission in permissions %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="{{ permission.id }}" id="perm{{ role.id }}_{{ permission.id }}"
+                                       {% if permission in role.permissions %}checked{% endif %}>
+                                <label class="form-check-label" for="perm{{ role.id }}_{{ permission.id }}">
+                                    {{ permission.name }} ({{ permission.code }})
+                                    <small class="text-muted d-block">{{ permission.description }}</small>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para excluir papel -->
+<div class="modal fade" id="modalExcluirRole{{ role.id }}" tabindex="-1" aria-labelledby="modalExcluirRoleLabel{{ role.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalExcluirRoleLabel{{ role.id }}">Excluir Papel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o papel <strong>{{ role.name }}</strong>?</p>
+                <p class="text-danger">Esta ação não pode ser desfeita! Note que você não pode excluir papéis que estão sendo utilizados por usuários.</p>
+                <form method="POST" action="{{ url_for('admin_role_excluir', id=role.id) }}">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

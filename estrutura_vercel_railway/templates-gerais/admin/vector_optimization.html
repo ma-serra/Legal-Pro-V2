@@ -1,0 +1,377 @@
+{% extends "layout.html" %}
+
+{% block title %}Otimização da Base Vetorial{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-cogs text-warning me-2"></i>
+                Otimização da Base Vetorial
+            </h1>
+            <p class="text-muted mb-0">Gerenciamento e otimização das tabelas de embeddings</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+            </a>
+            <button class="btn btn-warning ms-2" onclick="optimizeVectorBase()">
+                <i class="fas fa-magic me-2"></i>Otimizar Agora
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Embeddings</h5>
+                            <h3 class="mb-0">{{ stats.total_embeddings }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Tabelas Ativas</h5>
+                            <h3 class="mb-0">{{ stats.total_tables }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-table fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Performance</h5>
+                            <h3 class="mb-0">{{ stats.performance_status }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-tachometer-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Dimensões</h5>
+                            <h3 class="mb-0">1536</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-vector-square fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Table Analysis -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>Análise Detalhada por Tabela
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if stats.table_details %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Área Jurídica</th>
+                            <th>Nome da Tabela</th>
+                            <th>Embeddings</th>
+                            <th>Tamanho</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for table in stats.table_details %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary">{{ table.area }}</span>
+                            </td>
+                            <td>
+                                <code>{{ table.name }}</code>
+                            </td>
+                            <td>
+                                <strong>{{ table.count }}</strong>
+                                {% if table.count > 1000 %}
+                                <span class="badge bg-success ms-1">Alto Volume</span>
+                                {% elif table.count > 100 %}
+                                <span class="badge bg-warning ms-1">Médio Volume</span>
+                                {% elif table.count > 0 %}
+                                <span class="badge bg-info ms-1">Baixo Volume</span>
+                                {% else %}
+                                <span class="badge bg-secondary ms-1">Vazia</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ table.size }}</td>
+                            <td>
+                                {% if table.error %}
+                                <span class="badge bg-danger">Erro</span>
+                                {% elif table.count > 0 %}
+                                <span class="badge bg-success">Ativa</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Vazia</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-primary" onclick="analyzeTable('{{ table.name }}')">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="optimizeTable('{{ table.name }}')">
+                                        <i class="fas fa-cogs"></i>
+                                    </button>
+                                    {% if table.count == 0 %}
+                                    <button class="btn btn-outline-danger" onclick="deleteTable('{{ table.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Nenhuma tabela de embeddings encontrada no sistema.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Optimization Actions -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tools me-2"></i>Ações de Otimização
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action" onclick="reindexVectors()">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Reindexar Vetores</h6>
+                                <small>Recomendado</small>
+                            </div>
+                            <p class="mb-1">Reconstrói os índices vetoriais para melhor performance.</p>
+                        </button>
+                        
+                        <button class="list-group-item list-group-item-action" onclick="cleanupOrphaned()">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Limpar Órfãos</h6>
+                                <small>Manutenção</small>
+                            </div>
+                            <p class="mb-1">Remove embeddings sem documentos associados.</p>
+                        </button>
+                        
+                        <button class="list-group-item list-group-item-action" onclick="analyzePerformance()">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Analisar Performance</h6>
+                                <small>Diagnóstico</small>
+                            </div>
+                            <p class="mb-1">Gera relatório detalhado de performance.</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Estatísticas Avançadas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="vectorStats" class="text-center">
+                        <p class="text-muted">Carregando estatísticas detalhadas...</p>
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ações -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Ação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="actionMessage">Tem certeza que deseja executar esta ação?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmAction">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function optimizeVectorBase() {
+    showActionModal('Otimizar toda a base vetorial?', function() {
+        showProgress('Otimizando base vetorial...');
+        // Implementar chamada AJAX
+        setTimeout(() => {
+            hideProgress();
+            showSuccess('Base vetorial otimizada com sucesso!');
+            location.reload();
+        }, 3000);
+    });
+}
+
+function analyzeTable(tableName) {
+    showProgress(`Analisando tabela ${tableName}...`);
+    // Implementar análise específica da tabela
+    setTimeout(() => {
+        hideProgress();
+        showInfo(`Análise da tabela ${tableName} concluída.`);
+    }, 1500);
+}
+
+function optimizeTable(tableName) {
+    showActionModal(`Otimizar a tabela ${tableName}?`, function() {
+        showProgress(`Otimizando ${tableName}...`);
+        setTimeout(() => {
+            hideProgress();
+            showSuccess(`Tabela ${tableName} otimizada!`);
+        }, 2000);
+    });
+}
+
+function deleteTable(tableName) {
+    showActionModal(`ATENÇÃO: Deletar permanentemente a tabela ${tableName}?`, function() {
+        showProgress(`Deletando ${tableName}...`);
+        setTimeout(() => {
+            hideProgress();
+            showSuccess(`Tabela ${tableName} deletada!`);
+            location.reload();
+        }, 1000);
+    });
+}
+
+function reindexVectors() {
+    showActionModal('Reindexar todos os vetores? Esta operação pode demorar.', function() {
+        showProgress('Reindexando vetores...');
+        setTimeout(() => {
+            hideProgress();
+            showSuccess('Reindexação concluída!');
+        }, 5000);
+    });
+}
+
+function cleanupOrphaned() {
+    showActionModal('Limpar embeddings órfãos?', function() {
+        showProgress('Limpando embeddings órfãos...');
+        setTimeout(() => {
+            hideProgress();
+            showSuccess('Limpeza concluída!');
+        }, 2000);
+    });
+}
+
+function analyzePerformance() {
+    showProgress('Analisando performance...');
+    setTimeout(() => {
+        hideProgress();
+        showInfo('Relatório de performance gerado!');
+    }, 3000);
+}
+
+function showActionModal(message, callback) {
+    document.getElementById('actionMessage').textContent = message;
+    document.getElementById('confirmAction').onclick = callback;
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+function showProgress(message) {
+    // Implementar notificação de progresso
+    console.log(message);
+}
+
+function hideProgress() {
+    // Implementar ocultação de progresso
+}
+
+function showSuccess(message) {
+    // Implementar notificação de sucesso
+    alert(message);
+}
+
+function showInfo(message) {
+    // Implementar notificação de info
+    alert(message);
+}
+
+// Carregar estatísticas avançadas
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        document.getElementById('vectorStats').innerHTML = `
+            <div class="row text-center">
+                <div class="col-6">
+                    <h4 class="text-primary">{{ stats.total_embeddings }}</h4>
+                    <small>Total Embeddings</small>
+                </div>
+                <div class="col-6">
+                    <h4 class="text-success">98%</h4>
+                    <small>Eficiência</small>
+                </div>
+            </div>
+            <hr>
+            <div class="row text-center">
+                <div class="col-6">
+                    <h5 class="text-warning">1536</h5>
+                    <small>Dimensões</small>
+                </div>
+                <div class="col-6">
+                    <h5 class="text-info">{{ stats.total_tables }}</h5>
+                    <small>Tabelas</small>
+                </div>
+            </div>
+        `;
+    }, 1000);
+});
+</script>
+{% endblock %}

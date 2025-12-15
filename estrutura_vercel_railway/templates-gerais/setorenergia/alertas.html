@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setor de Energia - Alertas Críticos</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Energia Theme -->
+    <link rel="stylesheet" href="/static/css/cpfl-theme.css">
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #003366 0%, #001a33 100%);
+            padding: 1.5rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            height: 50px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+        }
+        
+        .nav-item.active {
+            background-color: #0089CF;
+            color: #ffffff;
+            border-left: 4px solid #8DC63F;
+        }
+        
+        .nav-item i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #E30613 0%, #8B0000 100%);
+            padding: 1.5rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .stat-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .alert-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .badge-critico {
+            background-color: #E30613;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-alto {
+            background-color: #F89728;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-medio {
+            background-color: #0089CF;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .table-dark {
+            background-color: #2a2a2a;
+            color: #ffffff;
+        }
+        
+        .table-dark thead {
+            background-color: #1a1a1a;
+        }
+        
+        .dataTables_wrapper {
+            color: #ffffff;
+        }
+        
+        .dataTables_filter input,
+        .dataTables_length select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+        }
+        
+        .page-link {
+            background-color: #2a2a2a;
+            border-color: #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .page-link:hover {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff;
+        }
+        
+        .page-item.active .page-link {
+            background-color: #0089CF;
+            border-color: #0089CF;
+        }
+        
+        h1, h2, h3, h4, h5, h6, p, span, div, label {
+            color: #ffffff !important;
+        }
+        
+        .text-muted {
+            color: #b0b0b0 !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="#" class="nav-item" onclick="alert('Em desenvolvimento')">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-exclamation-triangle me-2"></i>Alertas Críticos</h2>
+            <p class="mb-0 mt-2">Monitoramento automático de situações de risco nos processos Setor de Energia</p>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Alertas Críticos</div>
+                    <div class="stat-value text-danger" id="total-criticos">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Alertas Altos</div>
+                    <div class="stat-value text-warning" id="total-altos">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Alertas Médios</div>
+                    <div class="stat-value text-info" id="total-medios">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-label">Total de Alertas</div>
+                    <div class="stat-value" id="total-alertas">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Alertas -->
+        <div class="alert-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4><i class="fas fa-bell me-2"></i>Alertas Detectados</h4>
+                <div>
+                    <button class="btn btn-sm btn-outline-danger me-2" onclick="filtrarNivel('CRÍTICO')">
+                        <i class="fas fa-filter me-1"></i>Críticos
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning me-2" onclick="filtrarNivel('ALTO')">
+                        <i class="fas fa-filter me-1"></i>Altos
+                    </button>
+                    <button class="btn btn-sm btn-outline-info me-2" onclick="filtrarNivel('MÉDIO')">
+                        <i class="fas fa-filter me-1"></i>Médios
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" onclick="limparFiltro()">
+                        <i class="fas fa-times me-1"></i>Limpar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="tabelaAlertas" class="table table-dark table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Nível</th>
+                            <th>Tipo</th>
+                            <th>Processo</th>
+                            <th>Comarca</th>
+                            <th>Mensagem</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        let dataTable;
+        let alertasData = [];
+        
+        // Carregar alertas
+        async function loadAlertas() {
+            try {
+                const response = await fetch('/setorenergia/api/alertas');
+                const data = await response.json();
+                
+                if (data.success) {
+                    alertasData = data.alertas;
+                    
+                    // Atualizar KPIs
+                    document.getElementById('total-criticos').textContent = data.resumo.criticos.toLocaleString('pt-BR');
+                    document.getElementById('total-altos').textContent = data.resumo.altos.toLocaleString('pt-BR');
+                    document.getElementById('total-medios').textContent = data.resumo.medios.toLocaleString('pt-BR');
+                    document.getElementById('total-alertas').textContent = data.total.toLocaleString('pt-BR');
+                    
+                    // Preencher tabela
+                    initDataTable();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar alertas:', error);
+            }
+        }
+        
+        // Inicializar DataTable
+        function initDataTable() {
+            if (dataTable) {
+                dataTable.destroy();
+            }
+            
+            const tableData = alertasData.map(alerta => {
+                let badgeClass = '';
+                if (alerta.nivel === 'CRÍTICO') badgeClass = 'badge-critico';
+                else if (alerta.nivel === 'ALTO') badgeClass = 'badge-alto';
+                else badgeClass = 'badge-medio';
+                
+                let tipoIcon = '';
+                if (alerta.tipo === 'INATIVO') tipoIcon = '<i class="fas fa-pause-circle me-1"></i>';
+                else if (alerta.tipo === 'ALTO_RISCO') tipoIcon = '<i class="fas fa-exclamation-circle me-1"></i>';
+                else if (alerta.tipo === 'SOBRESTADO') tipoIcon = '<i class="fas fa-clock me-1"></i>';
+                
+                return [
+                    `<span class="${badgeClass}">${alerta.nivel}</span>`,
+                    `${tipoIcon}${alerta.tipo}`,
+                    alerta.processo || '-',
+                    alerta.comarca || '-',
+                    alerta.mensagem || '-',
+                    `<button class="btn btn-sm btn-outline-light" onclick="verDetalhes('${alerta.processo}')">
+                        <i class="fas fa-eye"></i>
+                    </button>`
+                ];
+            });
+            
+            dataTable = $('#tabelaAlertas').DataTable({
+                data: tableData,
+                pageLength: 25,
+                order: [[0, 'asc']],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json'
+                }
+            });
+        }
+        
+        // Filtrar por nível
+        function filtrarNivel(nivel) {
+            dataTable.column(0).search(nivel).draw();
+        }
+        
+        // Limpar filtro
+        function limparFiltro() {
+            dataTable.search('').columns().search('').draw();
+        }
+        
+        // Ver detalhes
+        function verDetalhes(processo) {
+            alert(`Detalhes do processo ${processo}\n(Em desenvolvimento)`);
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', loadAlertas);
+    </script>
+    
+</body>
+</html>

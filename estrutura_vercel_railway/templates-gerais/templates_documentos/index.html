@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Templates de Documentos Jurídicos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-file-contract text-primary"></i>
+                        Templates de Documentos Jurídicos
+                    </h1>
+                    <p class="text-muted mb-0">Sistema completo de geração de documentos jurídicos especializados</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('templates_documentos.pesquisar') }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-search"></i> Pesquisar Templates
+                    </a>
+                    <a href="{{ url_for('templates_documentos.meus_documentos') }}" class="btn btn-primary">
+                        <i class="fas fa-folder"></i> Meus Documentos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ total_templates }}</h4>
+                            <p class="card-text mb-0">Templates Disponíveis</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ total_categorias }}</h4>
+                            <p class="card-text mb-0">Categorias</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-folder fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ total_documentos_gerados }}</h4>
+                            <p class="card-text mb-0">Documentos Gerados</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-pdf fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">7</h4>
+                            <p class="card-text mb-0">Áreas Jurídicas</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-balance-scale fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorias de Templates -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-th-large text-primary"></i>
+                Categorias de Templates
+            </h4>
+            <div class="row">
+                {% for categoria in categorias %}
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="card h-100 border-left-4" style="border-left-color: {{ categoria.cor_tema }};">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="{{ categoria.icone }} me-2" style="color: {{ categoria.cor_tema }};"></i>
+                                {{ categoria.nome }}
+                            </h6>
+                            <p class="card-text text-muted small mb-3">{{ categoria.descricao }}</p>
+                            <a href="{{ url_for('templates_documentos.templates_por_categoria', categoria_id=categoria.id) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-arrow-right"></i> Ver Templates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Recentes -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-clock text-success"></i>
+                Templates Utilizados Recentemente
+            </h4>
+            {% if templates_recentes %}
+            <div class="row">
+                {% for template in templates_recentes %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title">
+                                    <i class="{{ template.icone }} me-2 text-primary"></i>
+                                    {{ template.nome }}
+                                </h6>
+                                <span class="badge bg-secondary">{{ template.modulo_nome }}</span>
+                            </div>
+                            <p class="card-text text-muted small">{{ template.descricao }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    {% if template.total_utilizacoes %}
+                                        {{ template.total_utilizacoes }} utilizações
+                                    {% else %}
+                                        Novo template
+                                    {% endif %}
+                                </small>
+                                <div>
+                                    <a href="{{ url_for('templates_documentos.visualizar_template', template_id=template.id) }}" 
+                                       class="btn btn-outline-primary btn-sm me-1">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                    <a href="{{ url_for('templates_documentos.usar_template_init_app', template_id=template.id) }}" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Usar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Nenhum template foi utilizado ainda. Explore as categorias acima para começar.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-4 {
+    border-left: 4px solid !important;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s;
+}
+</style>
+{% endblock %}

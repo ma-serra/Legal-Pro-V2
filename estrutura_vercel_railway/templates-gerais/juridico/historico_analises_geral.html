@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Análises IA - Legal Pro{% endblock %}
+
+{% block head %}
+<style>
+    body { 
+        background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%) !important; 
+        color: #e0e6ed !important;
+    }
+    .card {
+        background: rgba(26, 33, 50, 0.95);
+        border: 1px solid #3a4a5c;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #16a085, #1abc9c);
+        color: white;
+        border: none;
+    }
+    .table-dark {
+        background-color: rgba(26, 33, 50, 0.9);
+    }
+    .badge-success { background-color: #16a085; }
+    .badge-warning { background-color: #f39c12; }
+    .badge-info { background-color: #3498db; }
+    .badge-danger { background-color: #e74c3c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-white mb-0">
+                    <i class="fas fa-history me-2"></i>Histórico de Análises IA
+                </h2>
+                <div>
+                    <button class="btn btn-outline-light me-2" onclick="exportarRelatorio()">
+                        <i class="fas fa-download me-1"></i>Exportar
+                    </button>
+                    <a href="{{ url_for('processos_lista_app') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        {% if estatisticas %}
+        {% for stat in estatisticas %}
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h3 class="card-title mb-1">{{ stat[1] }}</h3>
+                    <p class="card-text mb-0">{{ stat[0].title() }}</p>
+                    {% if stat[2] %}
+                    <small>Confiança: {{ "%.1f"|format(stat[2] * 100) }}%</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>Nenhuma análise encontrada</h4>
+                    <p class="text-muted">Ainda não há análises de processos realizadas com IA.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Análises Recentes -->
+    {% if analises_recentes %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Análises Recentes ({{ analises_recentes|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Processo</th>
+                                    <th>Cliente</th>
+                                    <th>Área</th>
+                                    <th>Tipo Análise</th>
+                                    <th>Modelo IA</th>
+                                    <th>Confiança</th>
+                                    <th>Tempo</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analise in analises_recentes %}
+                                <tr>
+                                    <td>
+                                        <small>{{ analise.criado_em.strftime('%d/%m/%Y %H:%M') if analise.criado_em else 'N/A' }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ analise.numero_cnj }}</strong>
+                                    </td>
+                                    <td>{{ analise.cliente[:30] }}{% if analise.cliente|length > 30 %}...{% endif %}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ analise.area_juridica }}</span>
+                                    </td>
+                                    <td>
+                                        {% if analise.tipo_analise == 'estrategica' %}
+                                            <span class="badge badge-success">Estratégica</span>
+                                        {% elif analise.tipo_analise == 'tecnica' %}
+                                            <span class="badge badge-info">Técnica</span>
+                                        {% elif analise.tipo_analise == 'estatistica' %}
+                                            <span class="badge badge-warning">Estatística</span>
+                                        {% elif analise.tipo_analise == 'preditiva' %}
+                                            <span class="badge badge-danger">Preditiva</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ analise.tipo_analise.title() }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-uppercase">{{ analise.modelo_ia }}</small>
+                                    </td>
+                                    <td>
+                                        {% if analise.confianca %}
+                                        <div class="progress" style="height: 15px;">
+                                            <div class="progress-bar 
+                                                {% if analise.confianca >= 0.8 %}bg-success
+                                                {% elif analise.confianca >= 0.6 %}bg-warning
+                                                {% else %}bg-danger{% endif %}" 
+                                                style="width: {{ analise.confianca * 100 }}%">
+                                                {{ "%.0f"|format(analise.confianca * 100) }}%
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if analise.tempo_processamento %}
+                                        <small>{{ analise.tempo_processamento }}s</small>
+                                        {% else %}
+                                        <small class="text-muted">N/A</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-info" 
+                                                    onclick="visualizarAnalise({{ analise.id }})" 
+                                                    title="Visualizar Análise">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="excluirAnalise({{ analise.id }}, '{{ analise.numero_cnj }}')" 
+                                                    title="Excluir Análise">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function visualizarAnalise(analiseId) {
+    // Redirecionar para página de detalhes da análise
+    window.location.href = `/processos-juridicos/analise-ia/${analiseId}/detalhes`;
+}
+
+function excluirAnalise(analiseId, numeroProcesso) {
+    if (confirm(`Tem certeza que deseja excluir a análise do processo ${numeroProcesso}?\n\nEsta ação não pode ser desfeita.`)) {
+        fetch(`/processos-juridicos/analise-ia/${analiseId}/excluir`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remover linha da tabela
+                const row = document.querySelector(`button[onclick="excluirAnalise(${analiseId}, '${numeroProcesso}')"]`).closest('tr');
+                row.remove();
+                
+                // Mostrar mensagem de sucesso
+                showNotification('Análise excluída com sucesso!', 'success');
+                
+                // Recarregar página após 1 segundo para atualizar estatísticas
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Erro ao excluir análise: ' + (data.message || 'Erro desconhecido'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showNotification('Erro ao excluir análise', 'error');
+        });
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Criar elemento de notificação
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remover automaticamente após 5 segundos
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function exportarRelatorio() {
+    window.location.href = '/processos-juridicos/historico-analises/exportar';
+}
+</script>
+{% endblock %}

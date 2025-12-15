@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Templates - {{ area_info.titulo }}{% endblock %}
+
+{% block head %}
+<style>
+    .templates-header {
+        background: linear-gradient(135deg, {{ area_info.cor }} 0%, {{ area_info.cor }}cc 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .template-card {
+        background: #2d3748;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 5px solid {{ area_info.cor }};
+        transition: all 0.3s ease;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    .template-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-visualizar {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-visualizar:hover {
+        background: #138496;
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-editar {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-editar:hover {
+        background: #e0a800;
+        transform: translateY(-2px);
+        color: #212529;
+    }
+    
+    .btn-usar {
+        background: #1f5981;
+        color: white;
+    }
+    
+    .btn-usar:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-excluir {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-excluir:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .template-info {
+        background: rgba(255,255,255,0.05);
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    
+    .template-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin: 0.5rem 0;
+    }
+    
+    .template-tag {
+        background: {{ area_info.cor }}33;
+        color: {{ area_info.cor }};
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1px solid {{ area_info.cor }}66;
+    }
+    
+    .search-box {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .search-box::placeholder {
+        color: rgba(255,255,255,0.7);
+    }
+    
+    .filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active,
+    .filter-btn:hover {
+        background: {{ area_info.cor }};
+        border-color: {{ area_info.cor }};
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: rgba(255,255,255,0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: {{ area_info.cor }};
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+    }
+    
+    .modal-content {
+        background-color: #2d3748;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 800px;
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: white;
+    }
+    
+    .form-control {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        border-radius: 5px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+    
+    .form-control::placeholder {
+        color: rgba(255,255,255,0.7);
+    }
+    
+    .success-message {
+        background: #1f5981;
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .error-message {
+        background: #dc3545;
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="templates-header">
+    <div class="container">
+        <h1><i class="{{ area_info.icon }} me-3"></i>{{ area_info.titulo }}</h1>
+        <p class="lead">{{ area_info.desc }}</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Mensagens de Feedback -->
+    <div id="successMessage" class="success-message"></div>
+    <div id="errorMessage" class="error-message"></div>
+
+    <!-- Estatísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number" id="totalTemplates">{{ templates|length }}</div>
+            <div class="text-white">Templates</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="templatesAtivos">{{ templates|length }}</div>
+            <div class="text-white">Ativos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="text-white">Funcionais</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ (templates|length * 0.3)|round|int }}</div>
+            <div class="text-white">Mais Usados</div>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <input type="text" class="search-box" id="searchTemplates" placeholder="Buscar templates...">
+        </div>
+        <div class="col-md-6">
+            <div class="filters">
+                <button class="filter-btn active" data-filter="todos">Todos</button>
+                <button class="filter-btn" data-filter="mais-usados">Mais Usados</button>
+                <button class="filter-btn" data-filter="recentes">Recentes</button>
+                <button class="filter-btn" data-filter="favoritos">Favoritos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <div id="templatesContainer">
+        {% for template in templates %}
+        <div class="template-card" data-template-id="{{ loop.index }}">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4><i class="{{ template.icon }} me-2"></i>{{ template.nome }}</h4>
+                    <p class="text-muted">{{ template.desc }}</p>
+                    
+                    <div class="template-info">
+                        <strong>Campos:</strong>
+                        <div class="template-tags">
+                            {% for campo in template.campos %}
+                            <span class="template-tag">{{ campo }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="template-info">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>Última modificação: hoje
+                            <i class="fas fa-eye ms-3 me-1"></i>Visualizações: {{ (loop.index * 15)|random(5, 50) }}
+                            <i class="fas fa-download ms-3 me-1"></i>Usos: {{ (loop.index * 8)|random(2, 25) }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="template-actions">
+                        <button class="btn-action btn-visualizar" onclick="visualizarTemplate({{ loop.index }})">
+                            <i class="fas fa-eye"></i>Visualizar
+                        </button>
+                        <button class="btn-action btn-editar" onclick="editarTemplate({{ loop.index }})">
+                            <i class="fas fa-edit"></i>Editar
+                        </button>
+                        <button class="btn-action btn-usar" onclick="usarTemplate({{ loop.index }})">
+                            <i class="fas fa-play"></i>Usar
+                        </button>
+                        <button class="btn-action btn-excluir" onclick="confirmarExclusao({{ loop.index }})">
+                            <i class="fas fa-trash"></i>Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="text-center mt-4 mb-5">
+        <button class="btn btn-success btn-lg me-3" onclick="criarNovoTemplate()">
+            <i class="fas fa-plus me-2"></i>Criar Novo Template
+        </button>
+        <a href="/modulos/{{ area }}" class="btn btn-outline-light btn-lg me-3">
+            <i class="fas fa-arrow-left me-2"></i>Voltar ao Módulo
+        </a>
+        <a href="/templates-juridicos" class="btn btn-outline-light btn-lg">
+            <i class="fas fa-list me-2"></i>Todos os Templates
+        </a>
+    </div>
+</div>
+
+<!-- Modal Visualizar Template -->
+<div id="modalVisualizar" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal('modalVisualizar')">&times;</span>
+        <h2 id="visualizarTitulo">Visualizar Template</h2>
+        <div id="visualizarConteudo">
+            <!-- Conteúdo do template será carregado aqui -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Template -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal('modalEditar')">&times;</span>
+        <h2>Editar Template</h2>
+        <form id="formEditarTemplate">
+            <div class="mb-3">
+                <label class="form-label">Nome do Template:</label>
+                <input type="text" id="editarNome" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descrição:</label>
+                <textarea id="editarDescricao" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Campos (separados por vírgula):</label>
+                <textarea id="editarCampos" class="form-control" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ícone (classe Font Awesome):</label>
+                <input type="text" id="editarIcone" class="form-control" placeholder="fas fa-file-alt">
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary me-2" onclick="fecharModal('modalEditar')">Cancelar</button>
+                <button type="submit" class="btn btn-success">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Usar Template -->
+<div id="modalUsar" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal('modalUsar')">&times;</span>
+        <h2 id="usarTitulo">Usar Template</h2>
+        <form id="formUsarTemplate">
+            <div id="usarCampos">
+                <!-- Campos do template serão gerados dinamicamente -->
+            </div>
+            <div class="text-end mt-4">
+                <button type="button" class="btn btn-secondary me-2" onclick="fecharModal('modalUsar')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Gerar Documento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Confirmar Exclusão -->
+<div id="modalExcluir" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal('modalExcluir')">&times;</span>
+        <h2>Confirmar Exclusão</h2>
+        <p>Tem certeza que deseja excluir este template? Esta ação não pode ser desfeita.</p>
+        <div class="text-end">
+            <button type="button" class="btn btn-secondary me-2" onclick="fecharModal('modalExcluir')">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="confirmarExcluirBtn">Excluir Template</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados dos templates (normalmente viria do backend)
+const templatesData = {{ templates|tojson }};
+let templateAtual = null;
+
+// Busca e filtros
+document.getElementById('searchTemplates').addEventListener('input', function(e) {
+    const busca = e.target.value.toLowerCase();
+    filtrarTemplates(busca);
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filtro = this.dataset.filter;
+        aplicarFiltro(filtro);
+    });
+});
+
+function filtrarTemplates(busca) {
+    const cards = document.querySelectorAll('.template-card');
+    cards.forEach(card => {
+        const texto = card.textContent.toLowerCase();
+        const mostrar = texto.includes(busca);
+        card.style.display = mostrar ? 'block' : 'none';
+    });
+}
+
+function aplicarFiltro(filtro) {
+    const cards = document.querySelectorAll('.template-card');
+    cards.forEach((card, index) => {
+        let mostrar = true;
+        
+        switch(filtro) {
+            case 'mais-usados':
+                mostrar = index < 3; // Primeiros 3 como mais usados
+                break;
+            case 'recentes':
+                mostrar = index % 2 === 0; // Templates alternados como recentes
+                break;
+            case 'favoritos':
+                mostrar = index % 3 === 0; // A cada 3 como favorito
+                break;
+            default:
+                mostrar = true;
+        }
+        
+        card.style.display = mostrar ? 'block' : 'none';
+    });
+}
+
+// Funções dos templates
+function visualizarTemplate(id) {
+    const template = templatesData[id - 1];
+    templateAtual = id;
+    
+    document.getElementById('visualizarTitulo').textContent = `Template: ${template.nome}`;
+    
+    const conteudo = `
+        <div class="template-info">
+            <h4><i class="${template.icon} me-2"></i>${template.nome}</h4>
+            <p class="text-muted">${template.desc}</p>
+            
+            <h5 class="mt-4">Campos do Template:</h5>
+            <ul class="list-unstyled">
+                ${template.campos.map(campo => `<li><i class="fas fa-check me-2" style="color: {{ area_info.cor }};"></i>${campo}</li>`).join('')}
+            </ul>
+            
+            <h5 class="mt-4">Exemplo de Uso:</h5>
+            <div class="bg-dark p-3 rounded">
+                <p>Este template é ideal para ${template.desc.toLowerCase()}. 
+                Utilize os campos disponíveis para criar documentos profissionais e personalizados.</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('visualizarConteudo').innerHTML = conteudo;
+    document.getElementById('modalVisualizar').style.display = 'block';
+}
+
+function editarTemplate(id) {
+    const template = templatesData[id - 1];
+    templateAtual = id;
+    
+    document.getElementById('editarNome').value = template.nome;
+    document.getElementById('editarDescricao').value = template.desc;
+    document.getElementById('editarCampos').value = template.campos.join(', ');
+    document.getElementById('editarIcone').value = template.icon;
+    
+    document.getElementById('modalEditar').style.display = 'block';
+}
+
+function usarTemplate(id) {
+    const template = templatesData[id - 1];
+    templateAtual = id;
+    
+    document.getElementById('usarTitulo').textContent = `Usar Template: ${template.nome}`;
+    
+    let camposHtml = `<p class="text-muted mb-4">${template.desc}</p>`;
+    
+    template.campos.forEach((campo, index) => {
+        camposHtml += `
+            <div class="mb-3">
+                <label class="form-label">${campo}:</label>
+                <textarea class="form-control" name="campo_${index}" rows="3" placeholder="Digite ${campo.toLowerCase()}..."></textarea>
+            </div>
+        `;
+    });
+    
+    document.getElementById('usarCampos').innerHTML = camposHtml;
+    document.getElementById('modalUsar').style.display = 'block';
+}
+
+function confirmarExclusao(id) {
+    templateAtual = id;
+    document.getElementById('modalExcluir').style.display = 'block';
+}
+
+function criarNovoTemplate() {
+    // Limpar formulário
+    document.getElementById('editarNome').value = '';
+    document.getElementById('editarDescricao').value = '';
+    document.getElementById('editarCampos').value = '';
+    document.getElementById('editarIcone').value = 'fas fa-file-alt';
+    
+    templateAtual = null; // Indica que é um novo template
+    document.getElementById('modalEditar').style.display = 'block';
+}
+
+// Event Listeners dos formulários
+document.getElementById('formEditarTemplate').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const dados = {
+        nome: document.getElementById('editarNome').value,
+        descricao: document.getElementById('editarDescricao').value,
+        campos: document.getElementById('editarCampos').value.split(',').map(c => c.trim()),
+        icone: document.getElementById('editarIcone').value
+    };
+    
+    if (templateAtual) {
+        // Editar template existente
+        console.log('Editando template:', templateAtual, dados);
+        mostrarMensagem('success', 'Template atualizado com sucesso!');
+    } else {
+        // Criar novo template
+        console.log('Criando novo template:', dados);
+        mostrarMensagem('success', 'Novo template criado com sucesso!');
+    }
+    
+    fecharModal('modalEditar');
+    // Aqui você enviaria os dados para o servidor
+});
+
+document.getElementById('formUsarTemplate').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const dados = {};
+    
+    for (let [key, value] of formData.entries()) {
+        dados[key] = value;
+    }
+    
+    console.log('Gerando documento com template:', templateAtual, dados);
+    mostrarMensagem('success', 'Documento gerado com sucesso! Verificar downloads.');
+    
+    fecharModal('modalUsar');
+    // Aqui você enviaria os dados para gerar o documento
+});
+
+document.getElementById('confirmarExcluirBtn').addEventListener('click', function() {
+    console.log('Excluindo template:', templateAtual);
+    
+    // Remover template da visualização
+    const card = document.querySelector(`[data-template-id="${templateAtual}"]`);
+    if (card) {
+        card.remove();
+    }
+    
+    mostrarMensagem('success', 'Template excluído com sucesso!');
+    fecharModal('modalExcluir');
+    
+    // Atualizar estatísticas
+    const totalElement = document.getElementById('totalTemplates');
+    const ativosElement = document.getElementById('templatesAtivos');
+    const novoTotal = parseInt(totalElement.textContent) - 1;
+    totalElement.textContent = novoTotal;
+    ativosElement.textContent = novoTotal;
+});
+
+// Funções auxiliares
+function fecharModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function mostrarMensagem(tipo, mensagem) {
+    const elemento = tipo === 'success' ? 
+        document.getElementById('successMessage') : 
+        document.getElementById('errorMessage');
+    
+    elemento.textContent = mensagem;
+    elemento.style.display = 'block';
+    
+    setTimeout(() => {
+        elemento.style.display = 'none';
+    }, 3000);
+}
+
+// Fechar modal clicando fora
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

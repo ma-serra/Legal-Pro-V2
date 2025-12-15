@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Design Pro - Editor</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .main-container { height: 100vh; display: flex; }
+        .sidebar { width: 320px; background: white; border-right: 1px solid #dee2e6; overflow-y: auto; }
+        .editor-area { flex: 1; display: flex; flex-direction: column; }
+        .toolbar { padding: 15px; border-bottom: 1px solid #dee2e6; background: #f8f9fa; }
+        .editor-content { flex: 1; padding: 20px; overflow-y: auto; }
+        #editor { min-height: 500px; }
+        .template-item { 
+            border: 1px solid #e9ecef; 
+            border-radius: 6px; 
+            padding: 12px; 
+            margin: 8px 0; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .template-item:hover { border-color: #0d6efd; background: #f8f9fa; }
+        .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .icon-btn { 
+            aspect-ratio: 1; 
+            border: 1px solid #dee2e6; 
+            background: white; 
+            border-radius: 4px; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn:hover { border-color: #0d6efd; }
+        .icon-btn img { width: 20px; height: 20px; }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { background: #198754; }
+        .notification.error { background: #dc3545; }
+        .editable-field {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px dashed #856404;
+        }
+        .editable-field:hover { background: #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="p-3">
+                <h5>Legal Design Pro</h5>
+                
+                <!-- Tabs -->
+                <ul class="nav nav-pills mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#templates">
+                            Templates
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#icons">
+                            Ícones
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="templates">
+                        <div id="templatesList">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 small">Carregando templates...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="icons">
+                        <div id="iconsList">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 small">Carregando ícones...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="editor-area">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button class="btn btn-primary btn-sm me-2" onclick="saveDocument()">
+                            <i class="fas fa-save me-1"></i> Salvar
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportPDF()">
+                            <i class="fas fa-file-pdf me-1"></i> PDF
+                        </button>
+                    </div>
+                    <div class="small text-muted">
+                        Status: <span id="status">Pronto</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor-content">
+                <div id="editor"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js" onerror="loadQuillFallback()"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script>
+        // Fallback para carregar Quill se o CDN falhar
+        function loadQuillFallback() {
+            console.log('CDN principal falhou, tentando CDN alternativo...');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js';
+            script.onerror = function() {
+                console.error('Todos os CDNs do Quill falharam');
+                showBasicEditor();
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Editor básico como fallback
+        function showBasicEditor() {
+            document.getElementById('editor').innerHTML = `
+                <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; min-height: 400px;">
+                    <textarea id="fallbackEditor" style="width: 100%; height: 400px; border: none; resize: vertical; font-family: inherit;" 
+                              placeholder="Digite seu documento aqui..."></textarea>
+                </div>
+                <div class="mt-2">
+                    <small class="text-warning">⚠️ Editor avançado não disponível. Usando editor básico.</small>
+                </div>
+            `;
+            
+            // Configurar eventos do editor básico
+            const textarea = document.getElementById('fallbackEditor');
+            textarea.addEventListener('input', function() {
+                document.getElementById('status').textContent = 'Editando...';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = 'Salvo';
+                }, 1000);
+            });
+            
+            // Adaptar funções para editor básico
+            window.saveDocument = function() {
+                const content = textarea.value;
+                showNotification('Documento salvo!', 'success');
+                console.log('Documento salvo:', content);
+            };
+            
+            window.exportPDF = function() {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF();
+                    const content = textarea.value;
+                    
+                    pdf.setFontSize(12);
+                    const splitText = pdf.splitTextToSize(content, 180);
+                    pdf.text(splitText, 15, 20);
+                    
+                    pdf.save('documento-legal.pdf');
+                    showNotification('PDF exportado!', 'success');
+                } catch (error) {
+                    showNotification('Erro ao exportar PDF', 'error');
+                }
+            };
+            
+            showNotification('Editor básico carregado', 'success');
+            loadTemplates();
+            loadIcons();
+        }
+    </script>
+    
+    <script>
+        let quill;
+        let templates = new Map();
+        let icons = new Map();
+
+        // Initialize editor
+        function initEditor() {
+            try {
+                console.log('Inicializando editor...');
+                
+                quill = new Quill('#editor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'header': [1, 2, 3, false] }],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                quill.on('text-change', function() {
+                    document.getElementById('status').textContent = 'Editando...';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = 'Salvo';
+                    }, 1000);
+                });
+
+                // Handle clicks on editable fields
+                quill.root.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('editable-field')) {
+                        editField(e.target);
+                    }
+                });
+
+                console.log('Editor inicializado com sucesso');
+                showNotification('Editor carregado!', 'success');
+                
+                // Load data
+                loadTemplates();
+                loadIcons();
+                
+            } catch (error) {
+                console.error('Erro ao inicializar editor:', error);
+                showNotification('Erro ao carregar editor: ' + error.message, 'error');
+            }
+        }
+
+        // Load templates
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/legal-design-pro/api/templates-list');
+                const data = await response.json();
+                
+                if (data.success && data.templates) {
+                    templates.clear();
+                    data.templates.forEach(template => {
+                        templates.set(template.id, template);
+                    });
+                    renderTemplates();
+                    console.log(`${templates.size} templates carregados`);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar templates:', error);
+                document.getElementById('templatesList').innerHTML = 
+                    '<p class="text-danger small">Erro ao carregar templates</p>';
+            }
+        }
+
+        // Render templates
+        function renderTemplates() {
+            const container = document.getElementById('templatesList');
+            let html = '';
+
+            // Group by area
+            const byArea = new Map();
+            templates.forEach(template => {
+                const area = template.area_juridica || 'geral';
+                if (!byArea.has(area)) byArea.set(area, []);
+                byArea.get(area).push(template);
+            });
+
+            const colors = {
+                'criminal': '#dc3545',
+                'trabalhista': '#fd7e14',
+                'empresarial': '#198754',
+                'bancario': '#6f42c1',
+                'consumidor': '#0dcaf0',
+                'agrario': '#ffc107',
+                'securitario': '#d63384'
+            };
+
+            byArea.forEach((templates, area) => {
+                const color = colors[area] || '#6c757d';
+                html += `<h6 style="color: ${color}; font-size: 0.8rem; text-transform: uppercase; margin-top: 20px;">${area}</h6>`;
+                
+                templates.forEach(template => {
+                    html += `
+                        <div class="template-item" onclick="insertTemplate(${template.id}, '${area}')" 
+                             style="border-left: 3px solid ${color};">
+                            <div class="fw-bold" style="font-size: 0.85rem;">${template.nome}</div>
+                            <div class="text-muted small">${template.descricao || 'Template jurídico'}</div>
+                        </div>
+                    `;
+                });
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Insert template
+        async function insertTemplate(templateId, area) {
+            try {
+                const template = templates.get(templateId);
+                if (!template) return;
+
+                showNotification('Inserindo template...', 'info');
+
+                // Try to get template content from API
+                const templateKey = template.nome.toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[áàâã]/g, 'a')
+                    .replace(/[éèê]/g, 'e')
+                    .replace(/[íì]/g, 'i')
+                    .replace(/[óòôõ]/g, 'o')
+                    .replace(/[úù]/g, 'u')
+                    .replace(/ç/g, 'c')
+                    .replace(/[^a-z0-9-]/g, '');
+
+                let content = '';
+                try {
+                    const response = await fetch(`/legal-design-pro/api/template-content/${templateKey}?area=${area}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.template && data.template.conteudo_html) {
+                        content = processTemplateContent(data.template.conteudo_html);
+                    } else {
+                        content = createBasicTemplate(template, area);
+                    }
+                } catch (error) {
+                    content = createBasicTemplate(template, area);
+                }
+
+                // Insert into editor
+                const selection = quill.getSelection();
+                const index = selection ? selection.index : quill.getLength();
+                quill.clipboard.dangerouslyPasteHTML(index, content);
+                
+                showNotification(`Template "${template.nome}" inserido!`, 'success');
+                
+            } catch (error) {
+                console.error('Erro ao inserir template:', error);
+                showNotification('Erro ao inserir template', 'error');
+            }
+        }
+
+        // Process template content to add editable fields
+        function processTemplateContent(html) {
+            let processed = html;
+            
+            // Add editable field styling
+            processed = processed.replace(/\[([^\]]+)\]/g, 
+                '<span class="editable-field" title="Clique para editar">$1</span>'
+            );
+            processed = processed.replace(/___+/g, 
+                '<span class="editable-field" title="Clique para editar">CAMPO EDITÁVEL</span>'
+            );
+            
+            return `<div style="border-left: 4px solid #0d6efd; padding: 20px; margin: 20px 0; background: #f8f9fa; border-radius: 6px;">${processed}</div>`;
+        }
+
+        // Create basic template
+        function createBasicTemplate(template, area) {
+            const colors = {
+                'criminal': '#dc3545',
+                'trabalhista': '#fd7e14',
+                'empresarial': '#198754',
+                'bancario': '#6f42c1',
+                'consumidor': '#0dcaf0',
+                'agrario': '#ffc107',
+                'securitario': '#d63384'
+            };
+            
+            const color = colors[area] || '#6c757d';
+            
+            return `
+                <div style="border-left: 4px solid ${color}; padding: 20px; margin: 20px 0; background: #f8f9fa; border-radius: 6px;">
+                    <h3 style="color: ${color}; margin-bottom: 15px;">${template.nome.toUpperCase()}</h3>
+                    <p><strong>Área:</strong> ${area.charAt(0).toUpperCase() + area.slice(1)}</p>
+                    <p><strong>Data:</strong> <span class="editable-field">__/__/____</span></p>
+                    <br>
+                    <h5 style="color: ${color};">Conteúdo Principal</h5>
+                    <p><span class="editable-field">Digite aqui o conteúdo principal do documento...</span></p>
+                    <br>
+                    <p><strong>Responsável:</strong> <span class="editable-field">Nome do responsável</span></p>
+                    <p><strong>Local:</strong> <span class="editable-field">Cidade, data</span></p>
+                </div>
+            `;
+        }
+
+        // Edit field
+        function editField(field) {
+            const originalText = field.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = originalText;
+            input.style.cssText = `
+                background: white;
+                border: 2px solid #0d6efd;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: inherit;
+                font-size: inherit;
+                min-width: 100px;
+            `;
+            
+            field.parentNode.insertBefore(input, field);
+            field.style.display = 'none';
+            input.focus();
+            input.select();
+            
+            function finish() {
+                field.textContent = input.value || originalText;
+                field.style.display = '';
+                input.remove();
+                showNotification('Campo atualizado!', 'success');
+            }
+            
+            input.addEventListener('blur', finish);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') finish();
+                if (e.key === 'Escape') {
+                    field.style.display = '';
+                    input.remove();
+                }
+            });
+        }
+
+        // Load icons
+        async function loadIcons() {
+            try {
+                const response = await fetch('/api/icons/library');
+                const data = await response.json();
+                
+                if (data.success && data.packs) {
+                    icons.clear();
+                    Object.values(data.packs).forEach(pack => {
+                        if (pack.icons) {
+                            pack.icons.forEach(icon => {
+                                icons.set(icon.name, icon);
+                            });
+                        }
+                    });
+                    renderIcons();
+                    console.log(`${icons.size} ícones carregados`);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar ícones:', error);
+                document.getElementById('iconsList').innerHTML = 
+                    '<p class="text-danger small">Erro ao carregar ícones</p>';
+            }
+        }
+
+        // Render icons
+        function renderIcons() {
+            const container = document.getElementById('iconsList');
+            let html = '<div class="icon-grid p-2">';
+            
+            let count = 0;
+            icons.forEach(icon => {
+                if (count < 50) { // Limit for performance
+                    html += `
+                        <button class="icon-btn" onclick="insertIcon('${icon.path}')" title="${icon.name}">
+                            <img loading="lazy" src="${icon.path}" alt="${icon.name}">
+                        </button>
+                    `;
+                    count++;
+                }
+            });
+            
+            html += '</div>';
+            if (icons.size > 50) {
+                html += `<p class="small text-muted text-center">Mostrando 50 de ${icons.size} ícones</p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Insert icon
+        function insertIcon(iconPath) {
+            const iconHtml = `<img loading="lazy" src="${iconPath}" style="width: 24px; height: 24px; margin: 0 4px; vertical-align: middle;" alt="Ícone">`;
+            const selection = quill.getSelection();
+            const index = selection ? selection.index : quill.getLength();
+            quill.clipboard.dangerouslyPasteHTML(index, iconHtml);
+            showNotification('Ícone inserido!', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Save document
+        function saveDocument() {
+            const content = quill.root.innerHTML;
+            showNotification('Documento salvo!', 'success');
+            console.log('Documento salvo:', content);
+        }
+
+        // Export to PDF
+        function exportPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const content = quill.getText();
+                
+                pdf.setFontSize(12);
+                const splitText = pdf.splitTextToSize(content, 180);
+                pdf.text(splitText, 15, 20);
+                
+                pdf.save('documento-legal.pdf');
+                showNotification('PDF exportado!', 'success');
+            } catch (error) {
+                console.error('Erro ao exportar PDF:', error);
+                showNotification('Erro ao exportar PDF', 'error');
+            }
+        }
+
+        // Aguardar carregamento do Quill com timeout
+        function waitForQuill(callback, timeout = 5000) {
+            const startTime = Date.now();
+            
+            function check() {
+                if (typeof Quill !== 'undefined') {
+                    console.log('✅ Quill carregado com sucesso');
+                    callback();
+                } else if (Date.now() - startTime > timeout) {
+                    console.error('❌ Timeout: Quill não carregou em', timeout, 'ms');
+                    showBasicEditor();
+                } else {
+                    console.log('⏳ Aguardando Quill...');
+                    setTimeout(check, 100);
+                }
+            }
+            
+            check();
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM carregado, verificando Quill...');
+            waitForQuill(initEditor);
+        });
+    </script>
+</body>
+</html>

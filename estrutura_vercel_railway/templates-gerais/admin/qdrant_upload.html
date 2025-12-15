@@ -1,0 +1,282 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Qdrant Cloud{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-info text-white">
+                <div class="card-body">
+                    <h2 class="mb-0"><i class="fas fa-cloud-upload-alt"></i> Upload Qdrant Cloud</h2>
+                    <small class="opacity-75">Sistema híbrido de upload PostgreSQL + Qdrant</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-upload"></i> Novo Documento</h5>
+                </div>
+                <div class="card-body">
+                    <form id="qdrantUploadForm">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título do Documento</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required 
+                                   placeholder="Ex: Acórdão STF 2024, Lei 14.133/2021, etc.">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="area_especializada" class="form-label">Área Jurídica</label>
+                            <select class="form-select" id="area_especializada" name="area_especializada" required>
+                                <option value="">Selecione uma área</option>
+                                <option value="direito_constitucional">Direito Constitucional</option>
+                                <option value="direito_civil">Direito Civil</option>
+                                <option value="direito_penal">Direito Penal</option>
+                                <option value="direito_trabalhista">Direito Trabalhista</option>
+                                <option value="direito_tributario">Direito Tributário</option>
+                                <option value="direito_administrativo">Direito Administrativo</option>
+                                <option value="direito_empresarial">Direito Empresarial</option>
+                                <option value="direito_ambiental">Direito Ambiental</option>
+                                <option value="direito_previdenciario">Direito Previdenciário</option>
+                                <option value="direito_consumidor">Direito do Consumidor</option>
+                                <option value="direito_familia">Direito de Família</option>
+                                <option value="direito_propriedade_intelectual">Propriedade Intelectual</option>
+                                <option value="direito_bancario">Direito Bancário</option>
+                                <option value="direito_imobiliario">Direito Imobiliário</option>
+                                <option value="direito_digital">Direito Digital</option>
+                                <option value="direito_eleitoral">Direito Eleitoral</option>
+                                <option value="direito_internacional">Direito Internacional</option>
+                                <option value="direito_agrario">Direito Agrário</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="conteudo" class="form-label">Conteúdo do Documento</label>
+                            <textarea class="form-control" id="conteudo" name="conteudo" rows="12" 
+                                      placeholder="Cole aqui o texto completo do documento jurídico..." required></textarea>
+                            <div class="form-text">
+                                O sistema irá automaticamente dividir documentos grandes em chunks e gerar embeddings.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-upload"></i> Fazer Upload
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="limparForm()">
+                                    <i class="fas fa-eraser"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Informações do Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Processamento Híbrido</h6>
+                        <p class="mb-0">O documento será:</p>
+                        <ul class="mt-2 mb-0">
+                            <li>Salvo no PostgreSQL com metadados</li>
+                            <li>Dividido em chunks otimizados</li>
+                            <li>Convertido em embeddings OpenAI</li>
+                            <li>Indexado no Qdrant Cloud</li>
+                        </ul>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Estatísticas Atuais</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h5 class="text-primary mb-0" id="totalChunks">-</h5>
+                                        <small>Chunks PG</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h5 class="text-info mb-0" id="totalVectors">-</h5>
+                                    <small>Vectors Qdrant</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <h6>Áreas Mais Utilizadas</h6>
+                        <div id="topAreas">
+                            <div class="d-flex justify-content-between">
+                                <small>Carregando...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-history"></i> Uploads Recentes</h6>
+                </div>
+                <div class="card-body">
+                    <div id="recentUploads">
+                        <small class="text-muted">Nenhum upload recente</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload em Progresso</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p>Processando documento...</p>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        Gerando embeddings e sincronizando com Qdrant Cloud
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Carregar estatísticas iniciais
+document.addEventListener('DOMContentLoaded', function() {
+    carregarEstatisticas();
+});
+
+function carregarEstatisticas() {
+    fetch('/admin/qdrant/api/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalChunks').textContent = data.dados.postgresql.chunks_universal;
+                document.getElementById('totalVectors').textContent = data.dados.qdrant.vectors;
+                
+                // Atualizar top áreas
+                const topAreasDiv = document.getElementById('topAreas');
+                const topAreas = data.dados.postgresql.top_areas;
+                let html = '';
+                
+                Object.entries(topAreas).slice(0, 3).forEach(([area, count]) => {
+                    html += `
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>${area.replace(/_/g, ' ')}</small>
+                            <span class="badge bg-primary">${count}</span>
+                        </div>
+                    `;
+                });
+                
+                topAreasDiv.innerHTML = html || '<small class="text-muted">Nenhum dado</small>';
+            }
+        })
+        .catch(error => console.error('Erro ao carregar estatísticas:', error));
+}
+
+// Handle form submission
+document.getElementById('qdrantUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        titulo: formData.get('titulo'),
+        conteudo: formData.get('conteudo'),
+        area_especializada: formData.get('area_especializada')
+    };
+    
+    // Validação básica
+    if (!data.titulo || !data.conteudo || !data.area_especializada) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    // Mostrar modal de progresso
+    const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+    progressModal.show();
+    
+    // Fazer upload
+    fetch('/admin/qdrant/api/upload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        progressModal.hide();
+        
+        if (data.success) {
+            alert('Upload realizado com sucesso!\n\n' + data.message);
+            limparForm();
+            carregarEstatisticas();
+            
+            // Adicionar aos uploads recentes
+            adicionarUploadRecente(data.titulo || 'Documento', data.area_especializada || 'Área');
+        } else {
+            alert('Erro no upload:\n' + data.error);
+        }
+    })
+    .catch(error => {
+        progressModal.hide();
+        console.error('Erro:', error);
+        alert('Erro na comunicação com o servidor.');
+    });
+});
+
+function limparForm() {
+    document.getElementById('qdrantUploadForm').reset();
+}
+
+function adicionarUploadRecente(titulo, area) {
+    const recentDiv = document.getElementById('recentUploads');
+    const now = new Date().toLocaleString();
+    
+    const uploadHtml = `
+        <div class="border-bottom pb-2 mb-2">
+            <small class="fw-bold">${titulo}</small><br>
+            <small class="text-muted">${area} - ${now}</small>
+        </div>
+    `;
+    
+    recentDiv.innerHTML = uploadHtml + recentDiv.innerHTML;
+    
+    // Manter apenas os 3 mais recentes
+    const uploads = recentDiv.querySelectorAll('.border-bottom');
+    if (uploads.length > 3) {
+        uploads[uploads.length - 1].remove();
+    }
+}
+
+// Auto-refresh estatísticas a cada 60 segundos
+setInterval(carregarEstatisticas, 60000);
+</script>
+{% endblock %}

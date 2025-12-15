@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}Workspace Taskade - {{ workspace.name }} - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title mb-0">Workspace: {{ workspace.name }}</h1>
+        <a href="{{ url_for('admin_taskade') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar para Taskade
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2"></i>Detalhes do Workspace</h5>
+                </div>
+                <div class="card-body">
+                    <dl>
+                        <dt>ID</dt>
+                        <dd class="text-muted">{{ workspace.id }}</dd>
+                        
+                        <dt>Nome</dt>
+                        <dd>{{ workspace.name }}</dd>
+                        
+                        {% if workspace.description %}
+                        <dt>Descrição</dt>
+                        <dd>{{ workspace.description }}</dd>
+                        {% endif %}
+                        
+                        <dt>Criado em</dt>
+                        <dd>{{ workspace.created_at|default('N/A') }}</dd>
+                        
+                        <dt>Atualizado em</dt>
+                        <dd>{{ workspace.updated_at|default('N/A') }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-users me-2"></i>Membros</h5>
+                </div>
+                <div class="card-body">
+                    {% if membros %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Função</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for membro in membros %}
+                                <tr>
+                                    <td>{{ membro.name }}</td>
+                                    <td>{{ membro.email }}</td>
+                                    <td>{{ membro.role|default('Membro') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Nenhum membro encontrado neste workspace.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0"><i class="fas fa-folder me-2"></i>Pastas (Folders)</h5>
+            <span class="badge bg-warning">API com Limitações</span>
+        </div>
+        <div class="card-body">
+            {% if projetos %}
+            <div class="row">
+                {% for projeto in projetos %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-folder text-primary me-2"></i>
+                                <h5 class="card-title mb-0">{{ projeto.name }}</h5>
+                            </div>
+                            
+                            {% if projeto.type %}
+                            <div class="mb-2">
+                                <span class="badge bg-info">{{ projeto.type }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <p class="card-text text-muted small">ID: {{ projeto.id }}</p>
+                            
+                            <div class="alert alert-warning p-2 mt-3 mb-0 small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                A API do Taskade atualmente não permite ver ou criar tarefas nesta pasta.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Nenhuma pasta encontrada neste workspace.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="fas fa-code me-2"></i>Desenvolvimento API</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Nota para desenvolvedores:</strong> A API do Taskade está em desenvolvimento. Muitos endpoints retornam erro 404 ou 500. As seguintes funcionalidades foram testadas mas não estão funcionando na versão atual:
+                <ul class="mb-0 mt-2">
+                    <li>Detalhes de workspaces</li>
+                    <li>Criação de tarefas em projetos</li>
+                    <li>Listagem de tarefas</li>
+                    <li>Autenticação OAuth2 (retorna erro 500)</li>
+                </ul>
+            </div>
+            
+            <div class="mt-3">
+                <p><strong>ID do Workspace:</strong> <code>{{ workspace.id }}</code></p>
+                <p class="mb-0">
+                    <a href="https://www.taskade.com/space/{{ workspace.id }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt me-1"></i> Abrir no Taskade
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

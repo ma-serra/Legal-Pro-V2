@@ -1,0 +1,1267 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Mapa Mental Colaborativo - Sistema Multi-Agente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .mapa-mental-container {
+        position: relative;
+        width: 100%;
+        height: 700px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .assistente-central {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 100;
+        border: 4px solid #FFD700;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .assistente-central:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    }
+    
+    .coroa-assistente {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 15px;
+        background: linear-gradient(45deg, #FFD700, #FFA500);
+        border-radius: 3px 3px 0 0;
+        z-index: 101;
+    }
+    
+    .agente-node {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 11px;
+        cursor: pointer;
+        z-index: 50;
+        border: 2px solid white;
+        transition: all 0.3s ease;
+        text-align: center;
+        line-height: 1.1;
+    }
+    
+    .agente-node:hover {
+        transform: scale(1.2);
+        z-index: 60;
+    }
+    
+    .agente-externo {
+        border: 2px solid #FFD700;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+    
+    .conexao-linha {
+        position: absolute;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.6);
+        transform-origin: 0 0;
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+    
+    .conexao-externa {
+        background: linear-gradient(90deg, #FFD700, #FFA500);
+        height: 3px;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    
+    .painel-controles {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .btn-area {
+        margin: 5px;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 12px;
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-area:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .whisper-controls {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .recording-indicator {
+        width: 12px;
+        height: 12px;
+        background: #dc3545;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .estrategia-salva {
+        background: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 5px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .estrategia-salva:hover {
+        background: #cce7ff;
+    }
+    
+    .tooltip-agente {
+        position: absolute;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 12px;
+        z-index: 200;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">🧠 Mapa Mental Colaborativo</h2>
+                    <p class="text-muted">
+                        Powered by <strong>GPT-4o</strong> + <strong>Whisper</strong> - Estratégias jurídicas inteligentes
+                    </p>
+                    <div class="d-flex gap-2 mt-2">
+                        <span class="badge bg-success">Áudio → Whisper → GPT-4o</span>
+                        <span class="badge bg-primary">Texto → GPT-4o direto</span>
+                        <span class="badge bg-warning text-dark">PDF/DOCX → GPT-4o</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <!-- Templates de Mapa -->
+                    <div class="dropdown">
+                        <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-layer-group"></i> Templates
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('litigioso')">
+                                <i class="fas fa-gavel"></i> Caso Litigioso
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('contratual')">
+                                <i class="fas fa-file-contract"></i> Análise Contratual
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('societario')">
+                                <i class="fas fa-building"></i> Direito Societário
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('tributario')">
+                                <i class="fas fa-calculator"></i> Planejamento Tributário
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('familiar')">
+                                <i class="fas fa-home"></i> Direito de Família
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="aplicarTemplate('trabalhista')">
+                                <i class="fas fa-hard-hat"></i> Questão Trabalhista
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Exportação -->
+                    <div class="dropdown">
+                        <button class="btn btn-warning dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" onclick="exportarPDF()">
+                                <i class="fas fa-file-pdf text-danger"></i> Exportar PDF
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="exportarHTML()">
+                                <i class="fas fa-code text-primary"></i> Exportar HTML
+                            </a></li>
+                            <li><a class="dropdown-item" onclick="exportarImagem()">
+                                <i class="fas fa-image text-success"></i> Exportar PNG
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="salvarEstrategia()">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                    <button class="btn btn-secondary" onclick="limparMapa()">
+                        <i class="fas fa-trash"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Painel de Controles -->
+        <div class="col-md-3">
+            <div class="painel-controles">
+                <h5><i class="fas fa-cogs"></i> Controles</h5>
+                
+                <!-- Seleção de Área Central -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Área Central:</strong></label>
+                    <select id="area-central" class="form-select" onchange="carregarAreaCentral()">
+                        <option value="">Selecione uma área</option>
+                    </select>
+                </div>
+                
+                <!-- Áreas Disponíveis -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Adicionar Agentes:</strong></label>
+                    <div id="areas-disponiveis"></div>
+                </div>
+                
+                <!-- Controles de Input Inteligente -->
+                <div class="whisper-controls">
+                    <h6><i class="fas fa-brain"></i> Input Inteligente</h6>
+                    
+                    <!-- Tabs para diferentes tipos de input -->
+                    <ul class="nav nav-pills nav-sm mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="audio-tab" data-bs-toggle="pill" href="#audio-panel">
+                                <i class="fas fa-microphone"></i> Áudio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="arquivo-tab" data-bs-toggle="pill" href="#arquivo-panel">
+                                <i class="fas fa-file"></i> Arquivo
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="texto-tab" data-bs-toggle="pill" href="#texto-panel">
+                                <i class="fas fa-keyboard"></i> Texto
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <!-- Painel de Áudio -->
+                        <div class="tab-pane fade show active" id="audio-panel">
+                            <button id="btn-whisper" class="btn btn-success btn-sm" onclick="iniciarGravacao()">
+                                <i class="fas fa-microphone"></i> Gravar Comando
+                            </button>
+                            <div id="status-gravacao" class="mt-2" style="display: none;">
+                                <div class="alert alert-danger">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-record-vinyl text-danger blink"></i>
+                                            <strong>Gravando:</strong> <span id="cronometro-tempo">00:00</span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-light" onclick="pararGravacao()">
+                                            <i class="fas fa-stop"></i> Parar
+                                        </button>
+                                    </div>
+                                    <small class="d-block mt-1">Descreva a estratégia jurídica desejada</small>
+                                </div>
+                            </div>
+                            <div id="resultado-whisper" class="mt-2"></div>
+                        </div>
+                        
+                        <!-- Painel de Arquivo -->
+                        <div class="tab-pane fade" id="arquivo-panel">
+                            <div class="mb-2">
+                                <input type="file" id="arquivo-upload" class="form-control form-control-sm" 
+                                       accept=".pdf,.docx,.doc,.txt" onchange="processarArquivo()">
+                                <small class="text-muted">Aceita PDF, DOCX, DOC e TXT</small>
+                            </div>
+                            <div id="status-arquivo" class="mt-2"></div>
+                        </div>
+                        
+                        <!-- Painel de Texto -->
+                        <div class="tab-pane fade" id="texto-panel">
+                            <div class="mb-2">
+                                <textarea id="texto-estrategia" class="form-control form-control-sm" rows="3" 
+                                          placeholder="Descreva sua estratégia jurídica..."></textarea>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="processarTexto()">
+                                <i class="fas fa-cogs"></i> Processar Texto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="resultado-processamento" class="mt-2"></div>
+                </div>
+            </div>
+            
+            <!-- Legenda Visual -->
+            <div class="painel-controles">
+                <h5><i class="fas fa-palette"></i> Legenda</h5>
+                <div class="legenda-mapa">
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #FFD700; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #FFA500;"></div>
+                            <small class="ms-2"><strong>Agente Central</strong> - Coordenador principal</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #e74c3c; width: 15px; height: 15px; border-radius: 50%;"></div>
+                            <small class="ms-2"><strong>Civil</strong> - Contratos, responsabilidade</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #3498db; width: 15px; height: 15px; border-radius: 50%;"></div>
+                            <small class="ms-2"><strong>Penal</strong> - Crimes, defesa</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #2ecc71; width: 15px; height: 15px; border-radius: 50%;"></div>
+                            <small class="ms-2"><strong>Trabalhista</strong> - Emprego, direitos</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #f39c12; width: 15px; height: 15px; border-radius: 50%;"></div>
+                            <small class="ms-2"><strong>Tributário</strong> - Impostos, planejamento</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="cor-legenda" style="background: #9b59b6; width: 15px; height: 15px; border-radius: 50%;"></div>
+                            <small class="ms-2"><strong>Administrativo</strong> - Órgãos públicos</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="linha-conexao" style="width: 20px; height: 2px; background: #34495e;"></div>
+                            <small class="ms-2">Conexão estratégica</small>
+                        </div>
+                    </div>
+                    <div class="item-legenda">
+                        <div class="d-flex align-items-center">
+                            <div class="linha-conexao" style="width: 20px; height: 3px; background: #e74c3c;"></div>
+                            <small class="ms-2">Conexão prioritária</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapas Mentais Salvos -->
+            <div class="painel-controles">
+                <h5><i class="fas fa-bookmark"></i> Mapas Mentais Salvos</h5>
+                <div class="mb-2">
+                    <button class="btn btn-primary btn-sm" onclick="salvarMapaAtual()">
+                        <i class="fas fa-save"></i> Salvar Atual
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="novoMapa()">
+                        <i class="fas fa-plus"></i> Novo
+                    </button>
+                </div>
+                <div id="mapas-salvos" class="list-group list-group-sm">
+                    <p class="text-muted">Carregando mapas...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mapa Mental -->
+        <div class="col-md-9">
+            <div class="mapa-mental-container" id="mapa-mental">
+                <div class="text-center pt-5 mt-5">
+                    <h4 class="text-white">Selecione uma área central para começar</h4>
+                    <p class="text-white-50">O assistente aparecerá no centro com seus agentes ao redor</p>
+                </div>
+            </div>
+            
+            <!-- Informações -->
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Área Central</h6>
+                            <div id="info-area-central">Nenhuma área selecionada</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Conexões Ativas</h6>
+                            <div id="info-conexoes">0 conexões</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Agentes Externos</h6>
+                            <div id="info-agentes-externos">0 agentes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip para agentes -->
+<div id="tooltip-agente" class="tooltip-agente"></div>
+
+<!-- Modal de Seleção de Pasta para Salvar Áudio -->
+<div class="modal fade" id="modalSelecionarPasta" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-folder"></i> Selecionar Pasta para Salvar Áudio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Gravação concluída com duração de <strong id="duracao-gravacao">--</strong>.</p>
+                <p>Selecione a pasta onde deseja salvar o arquivo de áudio:</p>
+                
+                <div class="mb-3">
+                    <label class="form-label">Pasta de Destino:</label>
+                    <select id="pasta-destino" class="form-select">
+                        <option value="estrategias">📁 Estratégias Jurídicas</option>
+                        <option value="audiencias">📁 Audiências e Reuniões</option>
+                        <option value="consultas">📁 Consultas Internas</option>
+                        <option value="pareceres">📁 Pareceres e Análises</option>
+                        <option value="contratos">📁 Análises Contratuais</option>
+                        <option value="litigios">📁 Casos Litigiosos</option>
+                        <option value="tributario">📁 Planejamento Tributário</option>
+                        <option value="trabalhista">📁 Questões Trabalhistas</option>
+                        <option value="outros">📁 Outros Documentos</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Nome do Arquivo:</label>
+                    <input type="text" id="nome-arquivo" class="form-control" 
+                           placeholder="Ex: estrategia_civil_2025">
+                    <small class="text-muted">Será salvo como: [nome].wav</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="salvarAudioNaPasta()">
+                    <i class="fas fa-save"></i> Salvar Áudio
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados das 18 áreas jurídicas completas
+const AREAS_JURIDICAS = [
+    { id: 'civil', nome: 'Civil', cor: '#e74c3c', agentes: 25 },
+    { id: 'penal', nome: 'Penal', cor: '#3498db', agentes: 18 },
+    { id: 'administrativo', nome: 'Administrativo', cor: '#9b59b6', agentes: 22 },
+    { id: 'trabalhista', nome: 'Trabalhista', cor: '#f39c12', agentes: 15 },
+    { id: 'empresarial', nome: 'Empresarial', cor: '#27ae60', agentes: 20 },
+    { id: 'tributario', nome: 'Tributário', cor: '#8e44ad', agentes: 17 },
+    { id: 'consumidor', nome: 'Consumidor', cor: '#1abc9c', agentes: 12 },
+    { id: 'ambiental', nome: 'Ambiental', cor: '#2ecc71', agentes: 14 },
+    { id: 'familia', nome: 'Família', cor: '#e67e22', agentes: 16 },
+    { id: 'sucessoes', nome: 'Sucessões', cor: '#95a5a6', agentes: 13 },
+    { id: 'previdenciario', nome: 'Previdenciário', cor: '#34495e', agentes: 19 },
+    { id: 'constitucional', nome: 'Constitucional', cor: '#c0392b', agentes: 21 },
+    { id: 'internacional', nome: 'Internacional', cor: '#2980b9', agentes: 11 },
+    { id: 'digital', nome: 'Digital', cor: '#6c5ce7', agentes: 10 },
+    { id: 'imobiliario', nome: 'Imobiliário', cor: '#a0522d', agentes: 14 },
+    { id: 'bancario', nome: 'Bancário', cor: '#16a085', agentes: 18 },
+    { id: 'securitario', nome: 'Securitário', cor: '#f1c40f', agentes: 9 },
+    { id: 'saude', nome: 'Saúde', cor: '#e91e63', agentes: 12 }
+];
+
+let areaCentralAtual = null;
+let agentesExternos = [];
+let conexoes = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let estrategiasSalvas = JSON.parse(localStorage.getItem('estrategias-mapas') || '[]');
+
+// Variáveis do cronômetro de gravação
+let tempoInicio = null;
+let intervaloCronometro = null;
+let gravacaoAtiva = false;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarInterface();
+    carregarEstrategiasSalvas();
+    console.log('🧠 Mapa Mental Colaborativo inicializado');
+});
+
+function inicializarInterface() {
+    // Carregar áreas no select
+    const selectArea = document.getElementById('area-central');
+    AREAS_JURIDICAS.forEach(area => {
+        const option = document.createElement('option');
+        option.value = area.id;
+        option.textContent = area.nome;
+        selectArea.appendChild(option);
+    });
+    
+    // Criar botões de áreas disponíveis
+    const containerAreas = document.getElementById('areas-disponiveis');
+    AREAS_JURIDICAS.forEach(area => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-area';
+        btn.style.backgroundColor = area.cor;
+        btn.textContent = area.nome;
+        btn.onclick = () => mostrarAgentesArea(area);
+        containerAreas.appendChild(btn);
+    });
+}
+
+function carregarAreaCentral() {
+    const areaId = document.getElementById('area-central').value;
+    if (!areaId) return;
+    
+    const area = AREAS_JURIDICAS.find(a => a.id === areaId);
+    areaCentralAtual = area;
+    
+    limparMapa();
+    criarAssistenteCentral(area);
+    criarAgentesArea(area);
+    atualizarInformacoes();
+    
+    console.log('Área central carregada:', area.nome);
+}
+
+function criarAssistenteCentral(area) {
+    const mapaContainer = document.getElementById('mapa-mental');
+    
+    // Limpar conteúdo anterior
+    mapaContainer.innerHTML = '';
+    
+    // Assistente central
+    const assistente = document.createElement('div');
+    assistente.className = 'assistente-central';
+    assistente.style.backgroundColor = area.cor;
+    assistente.textContent = area.nome;
+    assistente.onclick = () => mostrarDetalhesAssistente(area);
+    
+    // Coroa
+    const coroa = document.createElement('div');
+    coroa.className = 'coroa-assistente';
+    assistente.appendChild(coroa);
+    
+    mapaContainer.appendChild(assistente);
+}
+
+function criarAgentesArea(area) {
+    const mapaContainer = document.getElementById('mapa-mental');
+    const centerX = mapaContainer.offsetWidth / 2;
+    const centerY = mapaContainer.offsetHeight / 2;
+    const radius = 180;
+    
+    for (let i = 0; i < area.agentes; i++) {
+        const angle = (i * 360 / area.agentes) * (Math.PI / 180);
+        const x = centerX + radius * Math.cos(angle) - 30;
+        const y = centerY + radius * Math.sin(angle) - 30;
+        
+        const agente = document.createElement('div');
+        agente.className = 'agente-node';
+        agente.style.backgroundColor = area.cor;
+        agente.style.left = x + 'px';
+        agente.style.top = y + 'px';
+        agente.textContent = `A${i + 1}`;
+        agente.dataset.areaId = area.id;
+        agente.dataset.agenteId = i + 1;
+        agente.onclick = () => selecionarAgente(agente);
+        
+        // Adicionar eventos de tooltip
+        agente.onmouseenter = (e) => mostrarTooltip(e, area, i + 1);
+        agente.onmouseleave = () => ocultarTooltip();
+        
+        // Criar linha de conexão com o centro
+        criarLinha(centerX, centerY, x + 30, y + 30, area.cor);
+        
+        mapaContainer.appendChild(agente);
+    }
+}
+
+function criarLinha(x1, y1, x2, y2, cor, externa = false) {
+    const linha = document.createElement('div');
+    linha.className = externa ? 'conexao-linha conexao-externa' : 'conexao-linha';
+    
+    const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+    
+    linha.style.width = length + 'px';
+    linha.style.left = x1 + 'px';
+    linha.style.top = y1 + 'px';
+    linha.style.transform = `rotate(${angle}deg)`;
+    
+    if (!externa) {
+        linha.style.background = `rgba(255, 255, 255, 0.4)`;
+    }
+    
+    document.getElementById('mapa-mental').appendChild(linha);
+    return linha;
+}
+
+function mostrarAgentesArea(area) {
+    if (!areaCentralAtual) {
+        alert('Selecione primeiro uma área central');
+        return;
+    }
+    
+    if (area.id === areaCentralAtual.id) {
+        alert('Esta área já é a central');
+        return;
+    }
+    
+    // Mostrar modal ou lista de agentes para seleção
+    const agentes = [];
+    for (let i = 1; i <= area.agentes; i++) {
+        agentes.push(`Agente ${i}`);
+    }
+    
+    const agenteEscolhido = prompt(`Escolha um agente da área ${area.nome}:\n${agentes.map((a, i) => `${i + 1}. ${a}`).join('\n')}`);
+    
+    if (agenteEscolhido && !isNaN(agenteEscolhido)) {
+        adicionarAgenteExterno(area, parseInt(agenteEscolhido));
+    }
+}
+
+function adicionarAgenteExterno(area, agenteId) {
+    const mapaContainer = document.getElementById('mapa-mental');
+    
+    // Posição aleatória na borda externa
+    const centerX = mapaContainer.offsetWidth / 2;
+    const centerY = mapaContainer.offsetHeight / 2;
+    const angle = Math.random() * 2 * Math.PI;
+    const radius = 280;
+    const x = centerX + radius * Math.cos(angle) - 30;
+    const y = centerY + radius * Math.sin(angle) - 30;
+    
+    const agente = document.createElement('div');
+    agente.className = 'agente-node agente-externo';
+    agente.style.backgroundColor = area.cor;
+    agente.style.left = x + 'px';
+    agente.style.top = y + 'px';
+    agente.textContent = `${area.nome.substr(0, 1)}${agenteId}`;
+    agente.dataset.areaId = area.id;
+    agente.dataset.agenteId = agenteId;
+    agente.dataset.externo = 'true';
+    agente.onclick = () => conectarAgenteExterno(agente);
+    
+    // Adicionar eventos de tooltip
+    agente.onmouseenter = (e) => mostrarTooltip(e, area, agenteId, true);
+    agente.onmouseleave = () => ocultarTooltip();
+    
+    mapaContainer.appendChild(agente);
+    agentesExternos.push({ area, agenteId, elemento: agente });
+    
+    atualizarInformacoes();
+    console.log(`Agente externo adicionado: ${area.nome} - Agente ${agenteId}`);
+}
+
+function conectarAgenteExterno(agenteExterno) {
+    const agentesInternos = document.querySelectorAll('.agente-node:not(.agente-externo)');
+    
+    // Destacar agentes disponíveis para conexão
+    agentesInternos.forEach(agente => {
+        agente.style.border = '3px solid #FFD700';
+        agente.style.cursor = 'crosshair';
+    });
+    
+    // Adicionar listener temporário para conexão
+    const connectListener = (e) => {
+        const agenteAlvo = e.target;
+        if (agenteAlvo.classList.contains('agente-node') && !agenteAlvo.dataset.externo) {
+            criarConexaoExterna(agenteExterno, agenteAlvo);
+            
+            // Remover destaque
+            agentesInternos.forEach(agente => {
+                agente.style.border = '2px solid white';
+                agente.style.cursor = 'pointer';
+                agente.removeEventListener('click', connectListener);
+            });
+        }
+    };
+    
+    agentesInternos.forEach(agente => {
+        agente.addEventListener('click', connectListener);
+    });
+}
+
+function criarConexaoExterna(agenteExterno, agenteInterno) {
+    const rect1 = agenteExterno.getBoundingClientRect();
+    const rect2 = agenteInterno.getBoundingClientRect();
+    const mapRect = document.getElementById('mapa-mental').getBoundingClientRect();
+    
+    const x1 = rect1.left - mapRect.left + 30;
+    const y1 = rect1.top - mapRect.top + 30;
+    const x2 = rect2.left - mapRect.left + 30;
+    const y2 = rect2.top - mapRect.top + 30;
+    
+    const linha = criarLinha(x1, y1, x2, y2, '#FFD700', true);
+    
+    conexoes.push({
+        externo: agenteExterno,
+        interno: agenteInterno,
+        linha: linha
+    });
+    
+    atualizarInformacoes();
+    console.log('Conexão criada entre agentes');
+}
+
+function mostrarTooltip(e, area, agenteId, externo = false) {
+    const tooltip = document.getElementById('tooltip-agente');
+    tooltip.innerHTML = `
+        <strong>${area.nome}</strong><br>
+        Agente ${agenteId}<br>
+        ${externo ? 'Agente Externo' : 'Agente da Área Central'}
+    `;
+    tooltip.style.left = e.pageX + 10 + 'px';
+    tooltip.style.top = e.pageY - 40 + 'px';
+    tooltip.style.opacity = '1';
+}
+
+function ocultarTooltip() {
+    document.getElementById('tooltip-agente').style.opacity = '0';
+}
+
+function mostrarDetalhesAssistente(area) {
+    alert(`Assistente Orquestrador - ${area.nome}\n\n✨ Coordena ${area.agentes} agentes especializados\n🔗 ${conexoes.length} conexões ativas\n🎯 Status: Operacional`);
+}
+
+function atualizarInformacoes() {
+    document.getElementById('info-area-central').textContent = 
+        areaCentralAtual ? `${areaCentralAtual.nome} (${areaCentralAtual.agentes} agentes)` : 'Nenhuma área selecionada';
+    
+    document.getElementById('info-conexoes').textContent = `${conexoes.length} conexões`;
+    document.getElementById('info-agentes-externos').textContent = `${agentesExternos.length} agentes`;
+}
+
+function limparMapa() {
+    document.getElementById('mapa-mental').innerHTML = '<div class="text-center pt-5 mt-5"><h4 class="text-white">Selecione uma área central para começar</h4><p class="text-white-50">O assistente aparecerá no centro com seus agentes ao redor</p></div>';
+    agentesExternos = [];
+    conexoes = [];
+    atualizarInformacoes();
+}
+
+function salvarEstrategia() {
+    if (!areaCentralAtual) {
+        alert('Crie um mapa antes de salvar');
+        return;
+    }
+    
+    const nome = prompt('Nome da estratégia:');
+    if (!nome) return;
+    
+    const estrategia = {
+        id: Date.now(),
+        nome: nome,
+        areaCentral: areaCentralAtual,
+        agentesExternos: agentesExternos.map(a => ({ area: a.area, agenteId: a.agenteId })),
+        conexoes: conexoes.length,
+        dataCreated: new Date().toISOString()
+    };
+    
+    estrategiasSalvas.push(estrategia);
+    localStorage.setItem('estrategias-mapas', JSON.stringify(estrategiasSalvas));
+    carregarEstrategiasSalvas();
+    
+    alert('Estratégia salva com sucesso!');
+}
+
+function carregarEstrategiasSalvas() {
+    const container = document.getElementById('estrategias-lista');
+    
+    if (estrategiasSalvas.length === 0) {
+        container.innerHTML = '<p class="text-muted">Nenhuma estratégia salva ainda</p>';
+        return;
+    }
+    
+    container.innerHTML = estrategiasSalvas.map(e => `
+        <div class="estrategia-salva" onclick="carregarEstrategia(${e.id})">
+            <strong>${e.nome}</strong><br>
+            <small>${e.areaCentral.nome} • ${e.agentesExternos.length} agentes externos • ${e.conexoes} conexões</small>
+        </div>
+    `).join('');
+}
+
+function carregarEstrategia(id) {
+    const estrategia = estrategiasSalvas.find(e => e.id === id);
+    if (!estrategia) return;
+    
+    // Carregar área central
+    document.getElementById('area-central').value = estrategia.areaCentral.id;
+    carregarAreaCentral();
+    
+    // Recriar agentes externos
+    estrategia.agentesExternos.forEach(ae => {
+        adicionarAgenteExterno(ae.area, ae.agenteId);
+    });
+    
+    console.log('Estratégia carregada:', estrategia.nome);
+}
+
+// Funções Whisper
+async function iniciarGravacao() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+            pararCronometro();
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            mostrarModalSelecionarPasta(audioBlob);
+        };
+        
+        mediaRecorder.start();
+        gravacaoAtiva = true;
+        iniciarCronometro();
+        
+        const btnWhisper = document.getElementById('btn-whisper');
+        const statusGravacao = document.getElementById('status-gravacao');
+        
+        if (btnWhisper) {
+            btnWhisper.textContent = 'Parar Gravação';
+            btnWhisper.onclick = pararGravacao;
+        }
+        
+        if (statusGravacao) {
+            statusGravacao.style.display = 'block';
+        }
+        
+    } catch (error) {
+        alert('Erro ao acessar microfone: ' + error.message);
+    }
+}
+}
+
+function pararGravacao() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    
+    document.getElementById('btn-whisper').textContent = 'Gravar Comando';
+    document.getElementById('btn-whisper').onclick = iniciarGravacao;
+    document.getElementById('status-gravacao').style.display = 'none';
+}
+
+async function enviarAudioParaWhisper(audioBlob) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'comando.wav');
+    
+    try {
+        document.getElementById('resultado-whisper').innerHTML = '<small class="text-info">Processando comando...</small>';
+        
+        const response = await fetch('/api/whisper/transcribe', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            processarComandoVoz(result.text);
+            document.getElementById('resultado-whisper').innerHTML = `
+                <small class="text-success">Comando reconhecido:</small><br>
+                <em>"${result.text}"</em>
+            `;
+        } else {
+            document.getElementById('resultado-whisper').innerHTML = 
+                '<small class="text-danger">Erro ao processar áudio</small>';
+        }
+        
+    } catch (error) {
+        document.getElementById('resultado-whisper').innerHTML = 
+            '<small class="text-danger">Erro de conexão</small>';
+        console.error('Erro Whisper:', error);
+    }
+}
+
+function processarComandoVoz(texto) {
+    console.log('Processando comando:', texto);
+    
+    // Exemplo de processamento de comando
+    // "conectar agente 5 da área civil ao agente 3"
+    const regex = /conectar agente (\d+) da área (\w+) ao agente (\d+)/i;
+    const match = texto.match(regex);
+    
+    if (match) {
+        const [_, agenteOrigem, areaNome, agenteDestino] = match;
+        const area = AREAS_JURIDICAS.find(a => a.nome.toLowerCase().includes(areaNome.toLowerCase()));
+        
+        if (area && areaCentralAtual) {
+            adicionarAgenteExterno(area, parseInt(agenteOrigem));
+            alert(`Comando executado: Adicionando agente ${agenteOrigem} da área ${area.nome}`);
+        }
+    } else {
+        alert('Comando não reconhecido. Tente: "conectar agente X da área Y ao agente Z"');
+    }
+}
+
+// Templates Jurídicos Predefinidos
+const TEMPLATES_JURIDICOS = {
+    litigioso: {
+        nome: "Caso Litigioso",
+        area_central: "Civil",
+        agentes: [
+            { area: "Civil", agente_id: 1, nome: "Especialista em Responsabilidade Civil" },
+            { area: "Penal", agente_id: 2, nome: "Defensor Criminal" },
+            { area: "Administrativo", agente_id: 1, nome: "Consultor Público" }
+        ],
+        conexoes: [
+            { origem: 1, destino: 2, motivo: "coordenar defesa civil-criminal" },
+            { origem: 1, destino: 3, motivo: "aspectos administrativos do caso" }
+        ]
+    },
+    contratual: {
+        nome: "Análise Contratual",
+        area_central: "Civil",
+        agentes: [
+            { area: "Civil", agente_id: 3, nome: "Especialista em Contratos" },
+            { area: "Tributário", agente_id: 5, nome: "Consultor Fiscal" },
+            { area: "Empresarial", agente_id: 2, nome: "Advogado Societário" }
+        ],
+        conexoes: [
+            { origem: 3, destino: 5, motivo: "implicações tributárias do contrato" },
+            { origem: 3, destino: 2, motivo: "aspectos societários" }
+        ]
+    },
+    societario: {
+        nome: "Direito Societário",
+        area_central: "Empresarial",
+        agentes: [
+            { area: "Empresarial", agente_id: 1, nome: "Consultor Empresarial" },
+            { area: "Tributário", agente_id: 3, nome: "Planejamento Tributário" },
+            { area: "Trabalhista", agente_id: 4, nome: "Relações Trabalhistas" }
+        ],
+        conexoes: [
+            { origem: 1, destino: 3, motivo: "otimização fiscal da empresa" },
+            { origem: 1, destino: 4, motivo: "questões trabalhistas societárias" }
+        ]
+    },
+    tributario: {
+        nome: "Planejamento Tributário",
+        area_central: "Tributário",
+        agentes: [
+            { area: "Tributário", agente_id: 1, nome: "Especialista Tributário" },
+            { area: "Empresarial", agente_id: 3, nome: "Estruturação Societária" },
+            { area: "Administrativo", agente_id: 2, nome: "Defesa Fiscal" }
+        ],
+        conexoes: [
+            { origem: 1, destino: 3, motivo: "estrutura societária otimizada" },
+            { origem: 1, destino: 2, motivo: "defesa em processos administrativos" }
+        ]
+    },
+    familiar: {
+        nome: "Direito de Família",
+        area_central: "Família",
+        agentes: [
+            { area: "Família", agente_id: 1, nome: "Especialista Família" },
+            { area: "Civil", agente_id: 2, nome: "Bens e Patrimônio" },
+            { area: "Sucessões", agente_id: 1, nome: "Planejamento Sucessório" }
+        ],
+        conexoes: [
+            { origem: 1, destino: 2, motivo: "divisão patrimonial" },
+            { origem: 1, destino: 3, motivo: "planejamento hereditário" }
+        ]
+    },
+    trabalhista: {
+        nome: "Questão Trabalhista",
+        area_central: "Trabalhista",
+        agentes: [
+            { area: "Trabalhista", agente_id: 1, nome: "Especialista Trabalhista" },
+            { area: "Previdenciário", agente_id: 1, nome: "Benefícios Previdenciários" },
+            { area: "Civil", agente_id: 4, nome: "Danos Morais" }
+        ],
+        conexoes: [
+            { origem: 1, destino: 2, motivo: "direitos previdenciários" },
+            { origem: 1, destino: 4, motivo: "indenizações por danos" }
+        ]
+    }
+};
+
+function aplicarTemplate(tipoTemplate) {
+    const template = TEMPLATES_JURIDICOS[tipoTemplate];
+    if (!template) {
+        alert('Template não encontrado');
+        return;
+    }
+    
+    // Limpar mapa atual
+    limparMapa();
+    
+    // Aplicar template
+    console.log(`Aplicando template: ${template.nome}`);
+    
+    // Simular criação do mapa baseado no template
+    document.getElementById('mapa-mental').innerHTML = `
+        <div class="text-center pt-4">
+            <h4><i class="fas fa-layer-group text-success"></i> Template: ${template.nome}</h4>
+            <p class="text-muted">Área Central: <strong>${template.area_central}</strong></p>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-success">
+                        <h6>Agentes Configurados:</h6>
+                        <ul class="list-unstyled mb-0">
+                            ${template.agentes.map(agente => 
+                                `<li><i class="fas fa-user"></i> ${agente.nome} (${agente.area})</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Conexões Estratégicas:</h6>
+                        <ul class="list-unstyled mb-0">
+                            ${template.conexoes.map(conexao => 
+                                `<li><i class="fas fa-link"></i> ${conexao.motivo}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Mostrar notificação
+    mostrarNotificacao(`Template "${template.nome}" aplicado com sucesso!`, 'success');
+}
+
+// Funções de Exportação
+function exportarPDF() {
+    const mapaElement = document.getElementById('mapa-mental');
+    const conteudo = mapaElement.innerHTML;
+    
+    // Criar janela para impressão
+    const janelaImpressao = window.open('', '_blank');
+    janelaImpressao.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Mapa Mental Jurídico - PDF</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .container { max-width: 800px; margin: 0 auto; }
+                h1 { color: #2c3e50; text-align: center; }
+                .legenda { border: 1px solid #ddd; padding: 15px; margin: 20px 0; }
+                .export-header { text-align: center; margin-bottom: 30px; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="export-header">
+                    <h1>Mapa Mental Jurídico Colaborativo</h1>
+                    <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <p>Sistema Legal Design Pro V2 - Powered by GPT-4o + Whisper</p>
+                </div>
+                <div class="legenda">
+                    <h3>Legenda:</h3>
+                    <p><strong>🟡 Agente Central:</strong> Coordenador principal da estratégia</p>
+                    <p><strong>🔴 Civil:</strong> Contratos, responsabilidade civil</p>
+                    <p><strong>🔵 Penal:</strong> Crimes, defesa criminal</p>
+                    <p><strong>🟢 Trabalhista:</strong> Emprego, direitos trabalhistas</p>
+                    <p><strong>🟠 Tributário:</strong> Impostos, planejamento fiscal</p>
+                    <p><strong>🟣 Administrativo:</strong> Órgãos públicos, licitações</p>
+                </div>
+                ${conteudo}
+                <div class="no-print" style="text-align: center; margin-top: 30px;">
+                    <button onclick="window.print()">Imprimir como PDF</button>
+                    <button onclick="window.close()">Fechar</button>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    
+    janelaImpressao.document.close();
+    mostrarNotificacao('PDF preparado para impressão', 'success');
+}
+
+function exportarHTML() {
+    const mapaElement = document.getElementById('mapa-mental');
+    const conteudo = mapaElement.innerHTML;
+    
+    const htmlCompleto = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental Jurídico - Exportação HTML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { margin-top: 30px; }
+        .card { box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .legenda-item { display: flex; align-items: center; margin-bottom: 10px; }
+        .cor-legenda { width: 20px; height: 20px; border-radius: 50%; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h3 mb-0"><i class="fas fa-brain"></i> Mapa Mental Jurídico Colaborativo</h1>
+                <small>Exportado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        ${conteudo}
+                    </div>
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-palette"></i> Legenda</h5>
+                        <div class="legenda-item">
+                            <div class="cor-legenda" style="background: #FFD700; border: 3px solid #FFA500;"></div>
+                            <small><strong>Agente Central</strong> - Coordenador</small>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="cor-legenda" style="background: #e74c3c;"></div>
+                            <small><strong>Civil</strong> - Contratos</small>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="cor-legenda" style="background: #3498db;"></div>
+                            <small><strong>Penal</strong> - Crimes</small>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="cor-legenda" style="background: #2ecc71;"></div>
+                            <small><strong>Trabalhista</strong> - Emprego</small>
+                        </div>
+                        <div class="legenda-item">
+                            <div class="cor-legenda" style="background: #f39c12;"></div>
+                            <small><strong>Tributário</strong> - Impostos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <small class="text-muted">Gerado pelo Sistema Legal Design Pro V2 - Powered by GPT-4o + Whisper</small>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    // Criar blob e download
+    const blob = new Blob([htmlCompleto], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mapa-mental-juridico-${new Date().getTime()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    mostrarNotificacao('Arquivo HTML baixado com sucesso!', 'success');
+}
+
+function exportarImagem() {
+    // Usar html2canvas para capturar o mapa como imagem
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = function() {
+        const mapaElement = document.getElementById('mapa-mental');
+        html2canvas(mapaElement, {
+            backgroundColor: '#667eea',
+            scale: 2,
+            useCORS: true
+        }).then(canvas => {
+            // Criar link para download
+            const link = document.createElement('a');
+            link.download = `mapa-mental-juridico-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            mostrarNotificacao('Imagem PNG baixada com sucesso!', 'success');
+        }).catch(error => {
+            console.error('Erro ao gerar imagem:', error);
+            mostrarNotificacao('Erro ao gerar imagem. Tente novamente.', 'danger');
+        });
+    };
+    document.head.appendChild(script);
+}
+
+function mostrarNotificacao(mensagem, tipo = 'info') {
+    // Criar notificação toast
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${tipo} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <span>${mensagem}</span>
+            <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Remover automaticamente após 3 segundos
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+console.log('🧠 Script do Mapa Mental Colaborativo carregado');
+</script>
+{% endblock %}

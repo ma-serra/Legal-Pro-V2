@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca Avançada | Energia Smart Legal Analytics</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background-color: #003366;
+            padding: 1.5rem 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar-logo {
+            text-align: center;
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-logo img {
+            max-width: 120px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-logo h5 {
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(0, 137, 207, 0.1);
+            color: #ffffff;
+            border-left-color: #0089CF;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(0, 137, 207, 0.2);
+            color: #ffffff;
+            border-left-color: #0089CF;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+        }
+        
+        .top-bar {
+            background: linear-gradient(135deg, #003366 0%, #0089CF 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .top-bar h2 {
+            color: #ffffff;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .top-bar p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0.5rem 0 0 0;
+        }
+        
+        .search-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .search-section {
+            margin-bottom: 2rem;
+        }
+        
+        .search-section h5 {
+            color: #0089CF;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .result-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #0089CF;
+            transition: all 0.3s;
+        }
+        
+        .result-card:hover {
+            background-color: #333333;
+            transform: translateX(5px);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .result-number {
+            font-weight: 700;
+            color: #0089CF;
+            font-size: 1.1rem;
+        }
+        
+        .result-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .info-item {
+            padding: 0.5rem;
+            background-color: #1a1a1a;
+            border-radius: 6px;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            color: #b0b0b0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .section-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+        
+        .nav-label {
+            padding: 0.5rem 1.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            background-color: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #1a1a1a;
+            border-color: #0089CF;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 137, 207, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        
+        .form-label {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #0089CF;
+            border-color: #0089CF;
+            color: #ffffff;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #006ba8;
+            border-color: #006ba8;
+        }
+        
+        .btn-secondary {
+            background-color: #3a3a3a;
+            border-color: #4a4a4a;
+            color: #ffffff;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4a4a4a;
+            border-color: #5a5a5a;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000000;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        .badge-info {
+            background-color: #0089CF;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+        
+        h1, h2, h3, h4, h5, h6, p, span, div, label {
+            color: #ffffff !important;
+        }
+        
+        .text-muted {
+            color: #b0b0b0 !important;
+        }
+        
+        .results-summary {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #8DC63F;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            
+            <h5>Smart Legal Analytics</h5>
+        </div>
+        
+        <div class="nav-label">Principal</div>
+        <a href="/setorenergia/" class="nav-item">
+            <i class="fas fa-home"></i>
+            Dashboard
+        </a>
+        <a href="/setorenergia/analytics" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            Analytics Avançado
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Processos</div>
+        <a href="/setorenergia/sobrestados" class="nav-item">
+            <i class="fas fa-pause-circle"></i>
+            Sobrestados
+        </a>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-list"></i>
+            Todos os Processos
+        </a>
+        <a href="/setorenergia/audiencias" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Pauta de Audiências
+        </a>
+        <a href="/setorenergia/busca-avancada" class="nav-item active">
+            <i class="fas fa-search"></i>
+            Busca Avançada
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Análises</div>
+        <a href="/setorenergia/agente" class="nav-item">
+            <i class="fas fa-robot"></i>
+            Agente Jurídico IA
+        </a>
+        <a href="/setorenergia/predicoes" class="nav-item">
+            <i class="fas fa-brain"></i>
+            Predições IA
+        </a>
+        <a href="/setorenergia/geolocalizacao" class="nav-item">
+            <i class="fas fa-cloud-sun-rain"></i>
+            Geolocalização & Clima
+        </a>
+        <a href="/setorenergia/analisador-sentencas" class="nav-item">
+            <i class="fas fa-gavel"></i>
+            Analisador de Sentenças
+        </a>
+        <a href="/setorenergia/mapa-risco" class="nav-item">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Riscos
+        </a>
+        <a href="/setorenergia/evolucao-temporal" class="nav-item">
+            <i class="fas fa-calendar-alt"></i>
+            Evolução Temporal
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Relatórios</div>
+        <a href="/setorenergia/relatorios" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            Relatórios Gerenciais
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/excel" class="nav-item">
+            <i class="fas fa-file-excel"></i>
+            Exportar Excel
+        </a>
+        <a href="/setorenergia/api/export/sobrestados/csv" class="nav-item">
+            <i class="fas fa-file-csv"></i>
+            Exportar CSV
+        </a>
+        
+        <div class="section-divider"></div>
+        
+        <div class="nav-label">Sistema</div>
+        <a href="/setorenergia/todos-processos" class="nav-item">
+            <i class="fas fa-cog"></i>
+            Configurações
+        </a>
+        <a href="/" class="nav-item">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Legal Pro
+        </a>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <h2><i class="fas fa-search me-2"></i>Busca Avançada de Processos</h2>
+            <p>Utilize filtros avançados para encontrar processos específicos com precisão</p>
+        </div>
+        
+        <!-- Formulário de Busca -->
+        <div class="search-card">
+            <div class="search-section">
+                <h5><i class="fas fa-filter me-2"></i>Critérios de Busca</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Número do Processo</label>
+                        <input type="text" class="form-control" placeholder="Ex: 1000001-23.2024.8.21.0001">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nome do Autor</label>
+                        <input type="text" class="form-control" placeholder="Digite o nome do autor">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <h5><i class="fas fa-map-marker-alt me-2"></i>Localização</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Comarca</label>
+                        <select class="form-select" id="comarcaSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vara Desdobramento</label>
+                        <select class="form-select" id="varaSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <h5><i class="fas fa-gavel me-2"></i>Decisão e Status</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Resultado Final</label>
+                        <select class="form-select" id="resultadoSelect">
+                            <option value="">Todos</option>
+                            <option value="Favorável">Favorável</option>
+                            <option value="Desfavorável">Desfavorável</option>
+                            <option value="Parcialmente Desfavorável">Parcialmente Desfavorável</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fase</label>
+                        <select class="form-select" id="faseSelect">
+                            <option value="">Todas</option>
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Arquivado">Arquivado</option>
+                            <option value="Sobrestado">Sobrestado</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Causa Raiz</label>
+                        <select class="form-select" id="causaRaizSelect">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <h5><i class="fas fa-calendar-alt me-2"></i>Período</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Data Início</label>
+                        <input type="date" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Data Fim</label>
+                        <input type="date" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Mínimo (R$)</label>
+                        <input type="number" class="form-control" placeholder="0,00">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-end mt-4">
+                <button class="btn btn-secondary me-2" onclick="limparFiltros()">
+                    <i class="fas fa-redo me-2"></i>Limpar Filtros
+                </button>
+                <button class="btn btn-primary" onclick="realizarBusca()">
+                    <i class="fas fa-search me-2"></i>Buscar Processos
+                </button>
+            </div>
+        </div>
+        
+        <!-- Resultados -->
+        <div id="resultadosContainer" style="display: none;">
+            <div class="results-summary">
+                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i><span id="totalResultados">0</span> processos encontrados</h5>
+            </div>
+            
+            <div id="resultadosList">
+                <!-- Resultados serão inseridos aqui -->
+            </div>
+        </div>
+        
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let todosProcessos = [];
+        
+        // Carregar dados ao inicializar
+        document.addEventListener('DOMContentLoaded', async function() {
+            await carregarProcessos();
+            await carregarFiltros();
+        });
+        
+        async function carregarProcessos() {
+            try {
+                const response = await fetch('/setorenergia/api/processos');
+                const data = await response.json();
+                todosProcessos = data.data || [];
+                console.log(`✅ ${todosProcessos.length} processos carregados`);
+            } catch (error) {
+                console.error('Erro ao carregar processos:', error);
+            }
+        }
+        
+        async function carregarFiltros() {
+            try {
+                // Carregar comarcas
+                const comarcasRes = await fetch('/setorenergia/api/comarcas');
+                const comarcasData = await comarcasRes.json();
+                const comarcaSelect = document.getElementById('comarcaSelect');
+                comarcasData.data.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.comarca;
+                    option.textContent = c.comarca;
+                    comarcaSelect.appendChild(option);
+                });
+                
+                // Carregar causas raiz
+                const causasRes = await fetch('/setorenergia/api/causa-raiz');
+                const causasData = await causasRes.json();
+                const causaSelect = document.getElementById('causaRaizSelect');
+                causasData.data.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.causa_raiz;
+                    option.textContent = c.causa_raiz;
+                    causaSelect.appendChild(option);
+                });
+                
+                // Extrair varas únicas
+                const varasUnicas = [...new Set(todosProcessos.map(p => p['Vara Desdobramento']).filter(v => v))];
+                const varaSelect = document.getElementById('varaSelect');
+                varasUnicas.sort().forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v;
+                    option.textContent = v;
+                    varaSelect.appendChild(option);
+                });
+                
+                console.log('✅ Filtros carregados com sucesso');
+            } catch (error) {
+                console.error('Erro ao carregar filtros:', error);
+            }
+        }
+        
+        function limparFiltros() {
+            document.getElementById('comarcaSelect').value = '';
+            document.getElementById('varaSelect').value = '';
+            document.getElementById('resultadoSelect').value = '';
+            document.getElementById('faseSelect').value = '';
+            document.getElementById('causaRaizSelect').value = '';
+            document.getElementById('resultadosContainer').style.display = 'none';
+        }
+        
+        function realizarBusca() {
+            const comarca = document.getElementById('comarcaSelect').value;
+            const vara = document.getElementById('varaSelect').value;
+            const resultado = document.getElementById('resultadoSelect').value;
+            const fase = document.getElementById('faseSelect').value;
+            const causaRaiz = document.getElementById('causaRaizSelect').value;
+            
+            let resultados = todosProcessos.filter(p => {
+                if (comarca && p['Comarca Desdobramento'] !== comarca) return false;
+                if (vara && p['Vara Desdobramento'] !== vara) return false;
+                if (resultado && p['Resultado final'] !== resultado) return false;
+                if (fase && p['Fase'] !== fase) return false;
+                if (causaRaiz && p['Causa-Raiz'] !== causaRaiz) return false;
+                return true;
+            });
+            
+            exibirResultados(resultados);
+        }
+        
+        function exibirResultados(resultados) {
+            const container = document.getElementById('resultadosContainer');
+            const list = document.getElementById('resultadosList');
+            
+            document.getElementById('totalResultados').textContent = resultados.length;
+            
+            if (resultados.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center p-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum processo encontrado</h5>
+                        <p class="text-muted">Tente ajustar os filtros de busca</p>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = resultados.slice(0, 50).map(p => `
+                    <div class="result-card">
+                        <div class="result-header">
+                            <div>
+                                <div class="result-number">${p['Número do Processo'] || 'N/A'}</div>
+                                <small class="text-muted"><i class="fas fa-user me-1"></i>${p['Parte Contraria'] || 'N/A'}</small>
+                            </div>
+                            <div>
+                                <span class="badge-${p['Resultado final'] === 'Favorável' ? 'success' : p['Resultado final'] === 'Desfavorável' ? 'danger' : 'warning'}">${p['Resultado final'] || 'Pendente'}</span>
+                            </div>
+                        </div>
+                        <div class="result-info">
+                            <div class="info-item">
+                                <div class="info-label">Comarca</div>
+                                <div class="info-value">${p['Comarca Desdobramento'] || 'N/A'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Risco</div>
+                                <div class="info-value">R$ ${Number(p['Risco'] || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Fase</div>
+                                <div class="info-value">${p['Fase'] || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                if (resultados.length > 50) {
+                    list.innerHTML += `
+                        <div class="text-center p-3">
+                            <p class="text-muted mb-0">Mostrando 50 de ${resultados.length} processos. Refine sua busca para ver todos os resultados.</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            container.style.display = 'block';
+        }
+    </script>
+    
+</body>
+</html>

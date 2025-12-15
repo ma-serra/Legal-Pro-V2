@@ -1,0 +1,295 @@
+{% extends "layout.html" %}
+
+{% block title %}Transcrição com Whisper{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+  .file-drop-area {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 25px;
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 3px;
+    transition: 0.2s;
+    background-color: var(--bs-body-bg);
+  }
+
+  .file-drop-area.is-active {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+  }
+
+  .file-msg {
+    font-size: small;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .file-input:focus {
+    outline: none;
+  }
+  
+  .format-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    margin-right: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .config-heading {
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    padding-bottom: 0.5rem;
+  }
+  
+  .form-help-text {
+    font-size: 0.8rem;
+    color: var(--bs-gray-600);
+    margin-top: 0.25rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-6">
+        <i class="fas fa-microphone-alt text-primary me-2"></i>
+        Transcrição com Whisper
+      </h1>
+      <p class="lead">
+        Transcreva áudio e vídeo com reconhecimento avançado de fala, 
+        detecção de falantes e análise de sentimento.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-file-upload me-2"></i>
+            Upload de Arquivo
+          </h5>
+          
+          <form action="{{ url_for('whisper.processar') }}" method="post" enctype="multipart/form-data">
+            <div class="mb-4 mt-3">
+              <div class="file-drop-area">
+                <span class="file-msg">Arraste e solte ou clique para selecionar um arquivo</span>
+                <input class="file-input" type="file" name="arquivo" accept=".mp3,.wav,.ogg,.m4a,.flac,.aac,.mp4,.avi,.mov,.mkv">
+              </div>
+              <div class="d-flex flex-wrap mt-2">
+                <span class="form-help-text me-2">Formatos aceitos:</span>
+                {% for formato in formatos_audio %}
+                  <span class="badge bg-primary format-badge">{{ formato }}</span>
+                {% endfor %}
+                {% for formato in formatos_video %}
+                  <span class="badge bg-secondary format-badge">{{ formato }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            
+            <h6 class="config-heading">
+              <i class="fas fa-cogs me-2"></i>
+              Configurações da Transcrição
+            </h6>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="modelo" class="form-label">Modelo Whisper</label>
+                <select class="form-select" id="modelo" name="modelo">
+                  <option value="tiny">Tiny (rápido, menor precisão)</option>
+                  <option value="base" selected>Base (equilíbrio entre velocidade/precisão)</option>
+                  <option value="small">Small (mais preciso)</option>
+                  <option value="medium">Medium (alta precisão)</option>
+                  <option value="large">Large (máxima precisão)</option>
+                </select>
+                <div class="form-help-text">
+                  Modelos maiores são mais precisos, mas requerem mais recursos e tempo
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="idioma" class="form-label">Idioma Principal</label>
+                <select class="form-select" id="idioma" name="idioma">
+                  <option value="pt" selected>Português</option>
+                  <option value="en">Inglês</option>
+                  <option value="es">Espanhol</option>
+                  <option value="fr">Francês</option>
+                  <option value="de">Alemão</option>
+                  <option value="it">Italiano</option>
+                  <option value="ja">Japonês</option>
+                  <option value="auto">Detectar automaticamente</option>
+                </select>
+                <div class="form-help-text">
+                  Selecione o idioma predominante no áudio para melhor precisão
+                </div>
+              </div>
+            </div>
+            
+            <h6 class="config-heading">
+              <i class="fas fa-users me-2"></i>
+              Reconhecimento de Falantes
+            </h6>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" role="switch" id="falantes" name="falantes" value="true" checked>
+                  <label class="form-check-label" for="falantes">Detectar diferentes falantes</label>
+                </div>
+                <div class="form-help-text mb-3">
+                  Identifica automaticamente diferentes pessoas falando no áudio
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="num_falantes" class="form-label">Número de Falantes (opcional)</label>
+                <input type="number" class="form-control" id="num_falantes" name="num_falantes" min="2" max="10" placeholder="Detectar automaticamente">
+                <div class="form-help-text">
+                  Deixe em branco para detectar automaticamente
+                </div>
+              </div>
+            </div>
+            
+            <h6 class="config-heading">
+              <i class="fas fa-chart-pie me-2"></i>
+              Análise de Sentimento
+            </h6>
+            
+            <div class="form-check form-switch mb-4">
+              <input class="form-check-input" type="checkbox" role="switch" id="sentimento" name="sentimento" value="true" checked>
+              <label class="form-check-label" for="sentimento">Analisar sentimento por segmento</label>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-play me-2"></i>
+                Iniciar Transcrição
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-info-circle me-2"></i>
+            Sobre o Whisper
+          </h5>
+          <p class="card-text">
+            O Whisper é um modelo avançado de reconhecimento de fala desenvolvido pela OpenAI,
+            capaz de transcrever com precisão em mais de 99 idiomas.
+          </p>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Suporte a múltiplos idiomas
+            </li>
+            <li class="list-group-item px-0">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Timestamps precisos
+            </li>
+            <li class="list-group-item px-0">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Reconhecimento de falantes
+            </li>
+            <li class="list-group-item px-0">
+              <i class="fas fa-check-circle text-success me-2"></i>
+              Análise de sentimento
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-history me-2"></i>
+            Transcrições Recentes
+          </h5>
+          <a href="{{ url_for('whisper.historico') }}" class="btn btn-outline-secondary w-100">
+            <i class="fas fa-list me-2"></i>
+            Ver Histórico
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileDropArea = document.querySelector('.file-drop-area');
+    const fileInput = fileDropArea.querySelector('.file-input');
+    const fileMsg = fileDropArea.querySelector('.file-msg');
+    
+    // Highlight drag area when item is dragged over
+    fileDropArea.addEventListener('dragover', function() {
+      fileDropArea.classList.add('is-active');
+    });
+    
+    // Remove highlight when item is dragged out
+    fileDropArea.addEventListener('dragleave', function() {
+      fileDropArea.classList.remove('is-active');
+    });
+    
+    // Handle dropped files
+    fileDropArea.addEventListener('drop', function(e) {
+      fileDropArea.classList.remove('is-active');
+      fileInput.files = e.dataTransfer.files;
+      updateFileMsg();
+    });
+    
+    // Handle selected files
+    fileInput.addEventListener('change', updateFileMsg);
+    
+    function updateFileMsg() {
+      const numFiles = fileInput.files.length;
+      
+      if (numFiles > 0) {
+        fileMsg.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
+        fileDropArea.classList.add('is-active');
+      } else {
+        fileMsg.textContent = 'Arraste e solte ou clique para selecionar um arquivo';
+        fileDropArea.classList.remove('is-active');
+      }
+    }
+    
+    // Toggle falantes settings visibility based on checkbox
+    const falantesCheckbox = document.getElementById('falantes');
+    const numFalantesInput = document.getElementById('num_falantes');
+    
+    falantesCheckbox.addEventListener('change', function() {
+      const falantesRow = numFalantesInput.closest('.row');
+      falantesRow.style.opacity = this.checked ? '1' : '0.5';
+      numFalantesInput.disabled = !this.checked;
+    });
+  });
+</script>
+{% endblock %}

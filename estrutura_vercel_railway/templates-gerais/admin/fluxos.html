@@ -1,0 +1,377 @@
+{% extends "layout.html" %}
+
+{% block title %}Gerenciamento de Fluxos - Sistema Multi-Agente{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Administração do Sistema</h1>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-3">
+            {% include "admin/admin_sidebar.html" %}
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Gerenciamento de Fluxos</h2>
+                <div>
+                    <a href="/fluxos/criar" class="btn btn-success me-2">
+                        <i class="fas fa-plus me-2"></i>Criar Fluxo
+                    </a>
+                    <a href="/fluxos/editor" class="btn btn-primary">
+                        <i class="fas fa-project-diagram me-2"></i>Editor Visual
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Estatísticas dos Fluxos -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total de Fluxos</h6>
+                                    <h3 class="mb-0">{{ stats.total_fluxos }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-project-diagram fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Fluxos Ativos</h6>
+                                    <h3 class="mb-0">{{ stats.fluxos_ativos }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-play-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total Execuções</h6>
+                                    <h3 class="mb-0">{{ stats.total_execucoes }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-cogs fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Concluídas</h6>
+                                    <h3 class="mb-0">{{ stats.execucoes_concluidas }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Fluxos de Processamento</h5>
+                    <small>{{ stats.total_fluxos }} fluxo(s) cadastrado(s)</small>
+                </div>
+                <div class="card-body">
+                    {% if fluxos %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Agentes</th>
+                                        <th>Status</th>
+                                        <th>Execuções</th>
+                                        <th>Criado</th>
+                                        <th>Última Execução</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fluxo in fluxos %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#{{ fluxo.id }}</span></td>
+                                        <td>
+                                            <strong>{{ fluxo.nome }}</strong>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ fluxo.descricao[:50] + '...' if fluxo.descricao and fluxo.descricao|length > 50 else fluxo.descricao or 'Sem descrição' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ fluxo.num_agentes }} agente(s)</span>
+                                        </td>
+                                        <td>
+                                            {% if fluxo.ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inativo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ fluxo.total_execucoes }}</span>
+                                            {% if fluxo.status_ultima_execucao %}
+                                                <br><small class="text-muted">{{ fluxo.status_ultima_execucao }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ fluxo.data_criacao.strftime('%d/%m/%Y %H:%M') if fluxo.data_criacao else 'N/A' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ fluxo.ultima_execucao.strftime('%d/%m/%Y %H:%M') if fluxo.ultima_execucao else 'Nunca' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="/fluxos/editor?id={{ fluxo.id }}" class="btn btn-outline-primary" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-outline-success" onclick="executarFluxo({{ fluxo.id }})" title="Executar">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="verDetalhes({{ fluxo.id }})" title="Detalhes">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="excluirFluxo({{ fluxo.id }})" title="Excluir">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">Nenhum fluxo cadastrado</h4>
+                            <p class="text-muted">Comece criando seu primeiro fluxo de processamento multi-agente</p>
+                            <a href="/fluxos/criar" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Criar Primeiro Fluxo
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Fluxo -->
+<div class="modal fade" id="modalDetalhesFluxo" tabindex="-1" aria-labelledby="modalDetalhesFluxoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="modalDetalhesFluxoLabel">Detalhes do Fluxo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalhesFluxoContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Execução de Fluxo -->
+<div class="modal fade" id="modalExecutarFluxo" tabindex="-1" aria-labelledby="modalExecutarFluxoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalExecutarFluxoLabel">Executar Fluxo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="inputTexto" class="form-label">Texto de Entrada</label>
+                    <textarea class="form-control" id="inputTexto" rows="4" placeholder="Digite o texto para processamento..."></textarea>
+                </div>
+                <div id="resultadoExecucao" style="display: none;">
+                    <h6>Resultado da Execução:</h6>
+                    <div class="bg-light p-3 rounded" id="resultadoContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-success" id="btnExecutar">
+                    <i class="fas fa-play me-2"></i>Executar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let fluxoAtualId = null;
+
+// Função para executar um fluxo
+function executarFluxo(fluxoId) {
+    fluxoAtualId = fluxoId;
+    document.getElementById('inputTexto').value = '';
+    document.getElementById('resultadoExecucao').style.display = 'none';
+    const modal = new bootstrap.Modal(document.getElementById('modalExecutarFluxo'));
+    modal.show();
+}
+
+// Evento do botão executar no modal
+document.getElementById('btnExecutar').addEventListener('click', async function() {
+    const inputTexto = document.getElementById('inputTexto').value.trim();
+    
+    if (!inputTexto) {
+        alert('Por favor, insira um texto para processamento.');
+        return;
+    }
+    
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Executando...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/fluxos/executar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fluxo_id: fluxoAtualId,
+                input_text: inputTexto,
+                execution_mode: 'sequential',
+                verbose_mode: true
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('resultadoContent').innerHTML = 
+                `<pre>${JSON.stringify(data.resultado, null, 2)}</pre>`;
+            document.getElementById('resultadoExecucao').style.display = 'block';
+        } else {
+            alert('Erro na execução: ' + (data.message || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro de conexão: ' + error.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
+
+// Função para ver detalhes de um fluxo
+async function verDetalhes(fluxoId) {
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesFluxo'));
+    modal.show();
+    
+    try {
+        const response = await fetch(`/api/fluxos/${fluxoId}/detalhes`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const fluxo = data.fluxo;
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informações Básicas</h6>
+                        <p><strong>ID:</strong> ${fluxo.id}</p>
+                        <p><strong>Nome:</strong> ${fluxo.nome}</p>
+                        <p><strong>Status:</strong> <span class="badge ${fluxo.ativo ? 'bg-success' : 'bg-secondary'}">${fluxo.ativo ? 'Ativo' : 'Inativo'}</span></p>
+                        <p><strong>Criado:</strong> ${new Date(fluxo.data_criacao).toLocaleString('pt-BR')}</p>
+                        <p><strong>Atualizado:</strong> ${new Date(fluxo.data_atualizacao).toLocaleString('pt-BR')}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Estatísticas</h6>
+                        <p><strong>Total de Agentes:</strong> ${fluxo.num_agentes}</p>
+                        <p><strong>Execuções:</strong> ${fluxo.total_execucoes}</p>
+                        <p><strong>Última Execução:</strong> ${fluxo.ultima_execucao ? new Date(fluxo.ultima_execucao).toLocaleString('pt-BR') : 'Nunca'}</p>
+                    </div>
+                </div>
+                ${fluxo.descricao ? `<div class="mt-3"><h6>Descrição</h6><p>${fluxo.descricao}</p></div>` : ''}
+            `;
+            document.getElementById('detalhesFluxoContent').innerHTML = html;
+        } else {
+            document.getElementById('detalhesFluxoContent').innerHTML = 
+                `<div class="alert alert-danger">Erro ao carregar detalhes: ${data.message}</div>`;
+        }
+    } catch (error) {
+        document.getElementById('detalhesFluxoContent').innerHTML = 
+            `<div class="alert alert-danger">Erro de conexão: ${error.message}</div>`;
+    }
+}
+
+// Função para excluir um fluxo
+function excluirFluxo(fluxoId) {
+    if (confirm('Tem certeza que deseja excluir este fluxo? Esta ação não pode ser desfeita.')) {
+        fetch(`/api/fluxos/${fluxoId}/excluir`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Fluxo excluído com sucesso!');
+                location.reload(); // Recarregar a página para atualizar a lista
+            } else {
+                alert('Erro ao excluir fluxo: ' + (data.message || 'Erro desconhecido'));
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de conexão: ' + error.message);
+        });
+    }
+}
+
+// Auto-refresh da página a cada 30 segundos para atualizar estatísticas
+setInterval(() => {
+    if (!document.querySelector('.modal.show')) { // Só atualiza se não há modal aberto
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}

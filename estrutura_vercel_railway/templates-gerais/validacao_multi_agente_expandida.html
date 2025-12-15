@@ -1,0 +1,5112 @@
+{% extends "layout.html" %}
+
+{% block title %}Sistema Avançado de Validação Multi-Agente{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards-especialistas-clonado.css') }}">
+<style>
+  :root {
+    --primary-dark: #2c3e50;      /* Azul escuro principal */
+    --primary-blue: #34495e;      /* Azul médio */
+    --accent-teal: #16a085;       /* Verde-azulado */
+    --accent-green: #27ae60;      /* Verde */
+    --accent-light-blue: #3498db; /* Azul claro */
+    --neutral-dark: #1a1a1a;      /* Preto */
+    --neutral-gray: #7f8c8d;      /* Cinza */
+    --neutral-light: #ecf0f1;     /* Cinza claro */
+    
+    /* Aplicação das cores */
+    --bg-primary: var(--primary-dark);
+    --bg-secondary: var(--primary-blue);
+    --bg-card: var(--neutral-dark);
+    --text-primary: #ffffff;
+    --text-secondary: var(--neutral-light);
+    --accent-main: var(--accent-teal);
+    --accent-secondary: var(--accent-light-blue);
+    --border-color: var(--neutral-gray);
+    
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+
+  .gradient-bg {
+    background: var(--primary-gradient);
+  }
+
+  .card-advanced {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .card-advanced:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  .agent-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .agent-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .agent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(22, 160, 133, 0.3);
+    border-color: var(--accent-main);
+  }
+
+  .agent-card.selected {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(22, 160, 133, 0.3);
+    border-color: var(--accent-main);
+    background: #243447;
+  }
+
+  .agent-card.selected::before {
+    transform: scaleX(1);
+  }
+
+  .agent-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    border-color: #16a085;
+  }
+
+  /* ==========================================
+     CORES POR ÁREA JURÍDICA - PADRONIZADAS
+     ========================================== */
+  
+  /* Criminal - Vermelho */
+  .agent-card[data-area="criminal"] {
+    border-left: 4px solid #dc3545;
+  }
+  .agent-card[data-area="criminal"] .agent-logo,
+  .agent-card[data-area="criminal"] .capability-item i {
+    background-color: #dc3545 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="criminal"] .area-tag,
+  .agent-card[data-area="criminal"] .badge {
+    background: #dc3545 !important;
+    color: white !important;
+  }
+
+  /* Trabalhista - Laranja */
+  .agent-card[data-area="trabalhista"] {
+    border-left: 4px solid #fd7e14;
+  }
+  .agent-card[data-area="trabalhista"] .agent-logo,
+  .agent-card[data-area="trabalhista"] .capability-item i {
+    background-color: #fd7e14 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="trabalhista"] .area-tag,
+  .agent-card[data-area="trabalhista"] .badge {
+    background: #fd7e14 !important;
+    color: white !important;
+  }
+
+  /* Empresarial - Azul */
+  .agent-card[data-area="empresarial"] {
+    border-left: 4px solid #007bff;
+  }
+  .agent-card[data-area="empresarial"] .agent-logo,
+  .agent-card[data-area="empresarial"] .capability-item i {
+    background-color: #007bff !important;
+    color: white !important;
+  }
+  .agent-card[data-area="empresarial"] .area-tag,
+  .agent-card[data-area="empresarial"] .badge {
+    background: #007bff !important;
+    color: white !important;
+  }
+
+  /* Bancário - Dourado */
+  .agent-card[data-area="bancario"] {
+    border-left: 4px solid #c29e74;
+  }
+  .agent-card[data-area="bancario"] .agent-logo,
+  .agent-card[data-area="bancario"] .capability-item i {
+    background-color: #c29e74 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="bancario"] .area-tag,
+  .agent-card[data-area="bancario"] .badge {
+    background: #c29e74 !important;
+    color: white !important;
+  }
+
+  /* Recuperação - Amarelo */
+  .agent-card[data-area="recuperacao"] {
+    border-left: 4px solid #ffc107;
+  }
+  .agent-card[data-area="recuperacao"] .agent-logo,
+  .agent-card[data-area="recuperacao"] .capability-item i {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+  }
+  .agent-card[data-area="recuperacao"] .area-tag,
+  .agent-card[data-area="recuperacao"] .badge {
+    background: #ffc107 !important;
+    color: #212529 !important;
+  }
+
+  /* Agrário - Marrom */
+  .agent-card[data-area="agrario"] {
+    border-left: 4px solid #896302;
+  }
+  .agent-card[data-area="agrario"] .agent-logo,
+  .agent-card[data-area="agrario"] .capability-item i {
+    background-color: #896302 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="agrario"] .area-tag,
+  .agent-card[data-area="agrario"] .badge {
+    background: #896302 !important;
+    color: white !important;
+  }
+
+  /* Securitário - Ciano */
+  .agent-card[data-area="securitario"] {
+    border-left: 4px solid #0dcaf0;
+  }
+  .agent-card[data-area="securitario"] .agent-logo,
+  .agent-card[data-area="securitario"] .capability-item i {
+    background-color: #0dcaf0 !important;
+    color: #212529 !important;
+  }
+  .agent-card[data-area="securitario"] .area-tag,
+  .agent-card[data-area="securitario"] .badge {
+    background: #0dcaf0 !important;
+    color: #212529 !important;
+  }
+
+  /* Seguros (alias para securitario) */
+  .agent-card[data-area="seguros"] {
+    border-left: 4px solid #0dcaf0;
+  }
+  .agent-card[data-area="seguros"] .agent-logo,
+  .agent-card[data-area="seguros"] .capability-item i {
+    background-color: #0dcaf0 !important;
+    color: #212529 !important;
+  }
+  .agent-card[data-area="seguros"] .area-tag,
+  .agent-card[data-area="seguros"] .badge {
+    background: #0dcaf0 !important;
+    color: #212529 !important;
+  }
+
+  /* Família - Ouro */
+  .agent-card[data-area="familia"] {
+    border-left: 4px solid #ba9851;
+  }
+  .agent-card[data-area="familia"] .agent-logo,
+  .agent-card[data-area="familia"] .capability-item i {
+    background-color: #ba9851 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="familia"] .area-tag,
+  .agent-card[data-area="familia"] .badge {
+    background: #ba9851 !important;
+    color: white !important;
+  }
+
+  /* Saúde - Coral */
+  .agent-card[data-area="saude"] {
+    border-left: 4px solid #fd6c6c;
+  }
+  .agent-card[data-area="saude"] .agent-logo,
+  .agent-card[data-area="saude"] .capability-item i {
+    background-color: #fd6c6c !important;
+    color: white !important;
+  }
+  .agent-card[data-area="saude"] .area-tag,
+  .agent-card[data-area="saude"] .badge {
+    background: #fd6c6c !important;
+    color: white !important;
+  }
+
+  /* Internacional - Teal */
+  .agent-card[data-area="internacional"] {
+    border-left: 4px solid #17a2b8;
+  }
+  .agent-card[data-area="internacional"] .agent-logo,
+  .agent-card[data-area="internacional"] .capability-item i {
+    background-color: #17a2b8 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="internacional"] .area-tag,
+  .agent-card[data-area="internacional"] .badge {
+    background: #17a2b8 !important;
+    color: white !important;
+  }
+
+  /* Riscos - Vinho */
+  .agent-card[data-area="riscos"] {
+    border-left: 4px solid #af353f;
+  }
+  .agent-card[data-area="riscos"] .agent-logo,
+  .agent-card[data-area="riscos"] .capability-item i {
+    background-color: #af353f !important;
+    color: white !important;
+  }
+  .agent-card[data-area="riscos"] .area-tag,
+  .agent-card[data-area="riscos"] .badge {
+    background: #af353f !important;
+    color: white !important;
+  }
+
+  /* Análise de Riscos (alias) */
+  .agent-card[data-area="analise_riscos"] {
+    border-left: 4px solid #af353f;
+  }
+  .agent-card[data-area="analise_riscos"] .agent-logo,
+  .agent-card[data-area="analise_riscos"] .capability-item i {
+    background-color: #af353f !important;
+    color: white !important;
+  }
+  .agent-card[data-area="analise_riscos"] .area-tag,
+  .agent-card[data-area="analise_riscos"] .badge {
+    background: #af353f !important;
+    color: white !important;
+  }
+
+  /* Negociação - Azul Escuro */
+  .agent-card[data-area="negociacao"] {
+    border-left: 4px solid #316286;
+  }
+  .agent-card[data-area="negociacao"] .agent-logo,
+  .agent-card[data-area="negociacao"] .capability-item i {
+    background-color: #316286 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="negociacao"] .area-tag,
+  .agent-card[data-area="negociacao"] .badge {
+    background: #316286 !important;
+    color: white !important;
+  }
+
+  /* Conflitos e Mediação (alias) */
+  .agent-card[data-area="conflitos_mediacao"] {
+    border-left: 4px solid #316286;
+  }
+  .agent-card[data-area="conflitos_mediacao"] .agent-logo,
+  .agent-card[data-area="conflitos_mediacao"] .capability-item i {
+    background-color: #316286 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="conflitos_mediacao"] .area-tag,
+  .agent-card[data-area="conflitos_mediacao"] .badge {
+    background: #316286 !important;
+    color: white !important;
+  }
+
+  /* Previdenciário - Rosa */
+  .agent-card[data-area="previdenciario"] {
+    border-left: 4px solid #e94690;
+  }
+  .agent-card[data-area="previdenciario"] .agent-logo,
+  .agent-card[data-area="previdenciario"] .capability-item i {
+    background-color: #e94690 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="previdenciario"] .area-tag,
+  .agent-card[data-area="previdenciario"] .badge {
+    background: #e94690 !important;
+    color: white !important;
+  }
+
+  /* Tributário - Roxo */
+  .agent-card[data-area="tributario"] {
+    border-left: 4px solid #6e25f0;
+  }
+  .agent-card[data-area="tributario"] .agent-logo,
+  .agent-card[data-area="tributario"] .capability-item i {
+    background-color: #6e25f0 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="tributario"] .area-tag,
+  .agent-card[data-area="tributario"] .badge {
+    background: #6e25f0 !important;
+    color: white !important;
+  }
+
+  /* Imobiliário - Verde Escuro */
+  .agent-card[data-area="imobiliario"] {
+    border-left: 4px solid #256149;
+  }
+  .agent-card[data-area="imobiliario"] .agent-logo,
+  .agent-card[data-area="imobiliario"] .capability-item i {
+    background-color: #256149 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="imobiliario"] .area-tag,
+  .agent-card[data-area="imobiliario"] .badge {
+    background: #256149 !important;
+    color: white !important;
+  }
+
+  /* Digital - Prata */
+  .agent-card[data-area="digital"] {
+    border-left: 4px solid #c0c0c0;
+  }
+  .agent-card[data-area="digital"] .agent-logo,
+  .agent-card[data-area="digital"] .capability-item i {
+    background-color: #c0c0c0 !important;
+    color: #212529 !important;
+  }
+  .agent-card[data-area="digital"] .area-tag,
+  .agent-card[data-area="digital"] .badge {
+    background: #c0c0c0 !important;
+    color: #212529 !important;
+  }
+
+  /* Consumidor - Verde Claro */
+  .agent-card[data-area="consumidor"] {
+    border-left: 4px solid #28a745;
+  }
+  .agent-card[data-area="consumidor"] .agent-logo,
+  .agent-card[data-area="consumidor"] .capability-item i {
+    background-color: #28a745 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="consumidor"] .area-tag,
+  .agent-card[data-area="consumidor"] .badge {
+    background: #28a745 !important;
+    color: white !important;
+  }
+
+  /* Ambiental - Verde */
+  .agent-card[data-area="ambiental"] {
+    border-left: 4px solid #20c997;
+  }
+  .agent-card[data-area="ambiental"] .agent-logo,
+  .agent-card[data-area="ambiental"] .capability-item i {
+    background-color: #20c997 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="ambiental"] .area-tag,
+  .agent-card[data-area="ambiental"] .badge {
+    background: #20c997 !important;
+    color: white !important;
+  }
+
+  /* Civil - Azul Info */
+  .agent-card[data-area="civil"] {
+    border-left: 4px solid #17a2b8;
+  }
+  .agent-card[data-area="civil"] .agent-logo,
+  .agent-card[data-area="civil"] .capability-item i {
+    background-color: #17a2b8 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="civil"] .area-tag,
+  .agent-card[data-area="civil"] .badge {
+    background: #17a2b8 !important;
+    color: white !important;
+  }
+
+  /* Administrativo - Azul Marinho */
+  .agent-card[data-area="administrativo"] {
+    border-left: 4px solid #6c757d;
+  }
+  .agent-card[data-area="administrativo"] .agent-logo,
+  .agent-card[data-area="administrativo"] .capability-item i {
+    background-color: #6c757d !important;
+    color: white !important;
+  }
+  .agent-card[data-area="administrativo"] .area-tag,
+  .agent-card[data-area="administrativo"] .badge {
+    background: #6c757d !important;
+    color: white !important;
+  }
+
+  /* Constitucional - Amarelo Ouro */
+  .agent-card[data-area="constitucional"] {
+    border-left: 4px solid #ffc107;
+  }
+  .agent-card[data-area="constitucional"] .agent-logo,
+  .agent-card[data-area="constitucional"] .capability-item i {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+  }
+  .agent-card[data-area="constitucional"] .area-tag,
+  .agent-card[data-area="constitucional"] .badge {
+    background: #ffc107 !important;
+    color: #212529 !important;
+  }
+
+  /* Geral - Índigo */
+  .agent-card[data-area="geral"] {
+    border-left: 4px solid #6610f2;
+  }
+  .agent-card[data-area="geral"] .agent-logo,
+  .agent-card[data-area="geral"] .capability-item i {
+    background-color: #6610f2 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="geral"] .area-tag,
+  .agent-card[data-area="geral"] .badge {
+    background: #6610f2 !important;
+    color: white !important;
+  }
+
+  /* Jurimetria - Pink */
+  .agent-card[data-area="jurimetria"] {
+    border-left: 4px solid #e83e8c;
+  }
+  .agent-card[data-area="jurimetria"] .agent-logo,
+  .agent-card[data-area="jurimetria"] .capability-item i {
+    background-color: #e83e8c !important;
+    color: white !important;
+  }
+  .agent-card[data-area="jurimetria"] .area-tag,
+  .agent-card[data-area="jurimetria"] .badge {
+    background: #e83e8c !important;
+    color: white !important;
+  }
+
+  /* Executores - Teal */
+  .agent-card[data-area="executores"] {
+    border-left: 4px solid #16a085;
+  }
+  .agent-card[data-area="executores"] .agent-logo,
+  .agent-card[data-area="executores"] .capability-item i {
+    background-color: #16a085 !important;
+    color: white !important;
+  }
+  .agent-card[data-area="executores"] .area-tag,
+  .agent-card[data-area="executores"] .badge {
+    background: #16a085 !important;
+    color: white !important;
+  }
+
+  /* Estilos para estrutura dos cards */
+
+  .agent-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .agent-logo {
+    width: 50px;
+    height: 50px;
+    background: #16a085;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 24px;
+    color: white;
+  }
+
+  .agent-info h5 {
+    margin: 0;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .agent-info .badge {
+    font-size: 0.75rem;
+    margin-top: 5px;
+  }
+
+  .agent-description {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+
+  .agent-capabilities {
+    margin-bottom: 20px;
+  }
+  
+  .llm-model-selector {
+    min-width: 150px;
+  }
+  
+  .llm-model-selector .form-select {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 0.8rem;
+  }
+  
+  .llm-model-selector .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+  }
+  
+  .llm-model-selector .form-select option {
+    background-color: var(--card-bg);
+    color: white;
+  }
+
+  .agent-capabilities h6 {
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .capability-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    color: #ccc;
+  }
+
+  .capability-item i {
+    color: #3291d1;
+    margin-right: 8px;
+    width: 12px;
+    font-size: 10px;
+  }
+
+  .agent-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .area-tag {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ccc;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .agent-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .analysis-configuration {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+  }
+
+  /* Navegação de Etapas Ultra Compacta */
+  .etapas-nav {
+    background: rgba(44, 44, 44, 0.8);
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-bottom: 15px;
+    border: 1px solid #404040;
+  }
+  
+  .etapas-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .etapa-item {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  
+  .etapa-item:hover {
+    background: rgba(74, 144, 226, 0.1);
+    border-color: var(--accent-color);
+    transform: translateY(-5px);
+  }
+  
+  .etapa-item.ativa {
+    background: linear-gradient(135deg, var(--accent-color), #6ba3f5);
+    border-color: var(--accent-color);
+    color: white;
+    transform: translateY(-8px);
+  }
+  
+  .etapa-item.concluida {
+    background: linear-gradient(135deg, #28a745, #34ce57);
+    border-color: #28a745;
+    color: white;
+  }
+  
+  .etapa-numero {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    font-weight: bold;
+    font-size: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    flex-shrink: 0;
+    color: white;
+  }
+  
+  .etapa-item.ativa .etapa-numero,
+  .etapa-item.concluida .etapa-numero {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .etapa-item.concluida .etapa-numero::after {
+    content: "✓";
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .etapa-info h6 {
+    margin: 0 0 4px 0;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .etapa-info small {
+    opacity: 0.7;
+    font-size: 10px;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  /* Removida linha conectora para layout ultra compacto */
+
+  .analysis-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px 0;
+    display: none;
+  }
+
+  .analysis-panel.active {
+    display: block;
+    animation: fadeInUp 0.5s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .execution-dashboard {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px 0;
+  }
+
+  .agent-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    margin: 10px 0;
+  }
+
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+
+  .status-waiting { background: #ffc107; }
+  .status-processing { background: #17a2b8; animation: pulse 1.5s infinite; }
+  .status-completed { background: #28a745; }
+  .status-error { background: #dc3545; }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  .results-container {
+    display: none;
+    margin-top: 30px;
+  }
+
+  .results-container.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .result-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 15px 0;
+    border-left: 5px solid #667eea;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  }
+
+  .confidence-meter {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    background: var(--success-gradient);
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+
+  .analysis-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #667eea;
+  }
+  
+  /* Estilos para área de upload */
+  .upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .upload-area:hover {
+    border-color: var(--accent-color);
+    background: rgba(74, 144, 226, 0.1);
+  }
+  
+  .upload-area.dragover {
+    border-color: #28a745 !important;
+    background: rgba(40, 167, 69, 0.15) !important;
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+  }
+  
+  .upload-area.dragover .upload-icon {
+    color: #28a745 !important;
+    animation: bounce 0.6s ease infinite alternate;
+  }
+  
+  .upload-area.dragover .upload-text {
+    color: #28a745 !important;
+  }
+  
+  @keyframes bounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-5px); }
+  }
+  
+  .upload-icon {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+  }
+  
+  .uploaded-files {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .file-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .file-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .file-icon {
+    margin-right: 10px;
+    color: var(--accent-color);
+  }
+  
+  .file-details {
+    flex: 1;
+  }
+  
+  .file-name {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  
+  .file-size {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .file-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .btn-file-action {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+  }
+
+  .processing-animation {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .processing-animation.active {
+    display: block;
+  }
+
+  .spinner-custom {
+    width: 80px;
+    height: 80px;
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .advanced-controls {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+  }
+
+  .control-group {
+    margin-bottom: 20px;
+  }
+
+  .control-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .form-control-advanced {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+  }
+
+  .form-control-advanced:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-advanced {
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-advanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transition: width 0.6s, height 0.6s;
+    transform: translate(-50%, -50%);
+  }
+
+  .btn-advanced:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Estilos para cabeçalhos de categoria */
+  .category-header {
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .category-header:first-child {
+    margin-top: 0.5rem;
+  }
+
+  .category-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #007bff40, transparent);
+  }
+
+  .category-title {
+    background: transparent;
+    padding: 0 1rem;
+    color: #ffffff !important;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .category-title i {
+    color: #16a085;
+  }
+
+  /* Animações */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* Estilos para cards compactos */
+  .agent-card.compact {
+    padding: 12px 16px;
+    min-height: auto;
+    height: auto;
+    margin-bottom: 8px;
+  }
+
+  .agent-icon-compact {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .agent-name-compact {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .agent-desc-compact {
+    font-size: 12px;
+    line-height: 1.3;
+    max-height: 2.6em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .badge-compact {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .expertise-compact {
+    font-size: 11px;
+  }
+
+  .form-check-input {
+    margin: 0;
+  }
+
+  .btn-primary-advanced {
+    background: var(--primary-gradient);
+    color: white;
+  }
+
+  .btn-success-advanced {
+    background: var(--success-gradient);
+    color: white;
+  }
+
+  .btn-warning-advanced {
+    background: var(--warning-gradient);
+    color: white;
+  }
+
+  .export-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .export-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #495057;
+  }
+
+  .export-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+    color: #667eea;
+    text-decoration: none;
+  }
+
+  .chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  }
+
+  .real-time-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+  }
+
+  .stat-widget {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-widget::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+  }
+
+  .floating-controls {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+  }
+
+  .floating-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+  }
+
+  /* Responsividade para Etapas */
+  @media (max-width: 768px) {
+    .etapas-container {
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .etapas-container::before {
+      display: none;
+    }
+    
+    .etapa-item {
+      width: 100%;
+      max-width: none;
+      flex-direction: row;
+      text-align: left;
+      padding: 15px 20px;
+    }
+    
+    .etapa-numero {
+      margin-bottom: 0;
+      margin-right: 15px;
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+    
+    .agent-selection-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .analysis-metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Header Principal -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card card-advanced">
+        <div class="card-header gradient-bg text-white p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h2 class="mb-2">
+                <i class="fas fa-robot me-3"></i>
+                Sistema Avançado de Validação Multi-Agente
+              </h2>
+              <p class="mb-0 opacity-90">
+                Plataforma completa para análise jurídica com inteligência artificial distribuída
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <div class="d-flex flex-column align-items-end">
+                <div class="badge bg-light text-dark fs-6 mb-2">
+                  <i class="fas fa-users me-1"></i>
+                  <span id="selectedAgentsCount">0</span> Agentes Selecionados
+                </div>
+                <div class="badge bg-light text-dark fs-6 mb-2">
+                  <i class="fas fa-clock me-1"></i>
+                  Tempo Estimado: <span id="estimatedTime">--</span>
+                </div>
+                <a href="/historico-analises-multiagente" class="btn btn-outline-light btn-sm">
+                  <i class="fas fa-history me-1"></i>
+                  Histórico de Análises
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Painel 1: Seleção de Agentes -->
+  <div class="analysis-panel active" id="panel1">
+    <div class="row">
+      <div class="col-12">
+        <div class="card card-advanced">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-robot me-2"></i>
+              Seleção de Agentes Especializados
+            </h5>
+          </div>
+          <div class="card-body p-4">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Filtros de Seleção</h6>
+                <div class="mb-2">
+                  <small id="selectedAgentsCount" class="text-muted">{{ total_agentes }} agentes disponíveis</small>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="control-label">Área Jurídica</label>
+                    <select class="form-control form-control-advanced" id="areaFilter">
+                      <option value="">Todas as áreas</option>
+                      <!-- As opções serão populadas dinamicamente via JavaScript -->
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="control-label">Especialização</label>
+                    <select class="form-control form-control-advanced" id="specializationFilter">
+                      <option value="">Todas especializações</option>
+                      <option value="análise">Análise</option>
+                      <option value="revisão">Revisão</option>
+                      <option value="compliance">Compliance</option>
+                      <option value="contratos">Contratos</option>
+                      <option value="execução">Execução</option>
+                      <option value="criminal">Criminal</option>
+                      <option value="civil">Civil</option>
+                      <option value="trabalhista">Trabalhista</option>
+                      <option value="empresarial">Empresarial</option>
+                      <option value="tributário">Tributário</option>
+                      <option value="consumidor">Consumidor</option>
+                      <option value="ambiental">Ambiental</option>
+                      <option value="constitucional">Constitucional</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Configurações de Seleção</h6>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="control-label">Máximo de Agentes</label>
+                    <select class="form-control form-control-advanced" id="maxAgents">
+                      <option value="1">1 Agente</option>
+                      <option value="2">2 Agentes</option>
+                      <option value="3" selected>3 Agentes</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="control-label">Análise Inteligente</label>
+                    <button type="button" class="btn btn-outline-info btn-sm w-100 mb-2" id="btnAutoAnalyze" onclick="autoSelectAgentsForDocument()">
+                      <i class="fas fa-brain me-2"></i>Analisar Documento
+                    </button>
+                    
+                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="executarAnaliseCompletaUnificada()" id="btnAnaliseRealTop" disabled style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%); border: none; display: none;">
+                      <i class="fas fa-robot me-2"></i>Iniciar Análise Multi Agente
+                    </button>
+
+                    <small class="text-muted">Suporta seleção automática e manual de agentes</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Área de Upload de Documentos -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-muted mb-3">
+                  <i class="fas fa-file-upload me-2"></i>
+                  Upload de Documento
+                </h6>
+                <div class="card" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <div class="card-body">
+                    <!-- Interface Unificada de Entrada de Documento -->
+                    <form id="multiAgentForm" method="POST" enctype="multipart/form-data">
+                      <!-- Área de Upload Integrada -->
+                      <div class="mb-3">
+                        <div class="upload-area-unified" id="uploadAreaUnified" onclick="document.getElementById('fileInput').click()">
+                          <div class="upload-section">
+                            <div class="upload-icon">
+                              <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h6 class="text-white mb-2">Arraste arquivo aqui ou clique para selecionar</h6>
+                            <p class="text-muted small">PDF, DOC, DOCX, TXT (até 10MB)</p>
+                            <input type="file" id="fileInput" name="arquivo_documento" accept=".pdf,.doc,.docx,.txt" 
+                                   style="display: none;" onchange="handleFileUploadAndExtract(this)">
+                          </div>
+                          
+                          <!-- Divisor "OU" -->
+                          <div class="divider-section">
+                            <div class="divider-line"></div>
+                            <span class="divider-text">OU</span>
+                            <div class="divider-line"></div>
+                          </div>
+                        </div>
+                        
+                        <!-- Indicador de processamento -->
+                        <div id="uploadProcessing" class="text-center mt-2" style="display: none;">
+                          <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Processando...</span>
+                          </div>
+                          <small class="text-muted ms-2">Extraindo texto do documento...</small>
+                        </div>
+                      </div>
+                      
+                      <!-- Área de Texto -->
+                      <div class="mb-3">
+                        <label for="texto_documento" class="form-label text-white">
+                          <i class="fas fa-file-text me-2"></i>Texto do Documento
+                        </label>
+                        <textarea class="form-control" id="documentText" name="texto_documento" rows="8" 
+                                  placeholder="Digite ou cole o texto do documento para análise jurídica, ou use o upload acima..." 
+                                  style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white;">{{ demo_text if demo_text }}</textarea>
+                        <small class="form-text text-light">
+                          <i class="fas fa-info-circle me-1"></i>
+                          O texto aparecerá automaticamente aqui após o upload do arquivo
+                        </small>
+                      </div>
+                      
+                      <!-- Configurações de Análise -->
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label for="modo_analise" class="form-label text-white">Modo de Análise</label>
+                          <select class="form-control" id="modo_analise" name="modo_analise" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); color: black;">
+                            <option value="automatico">🤖 Automático (IA seleciona agentes)</option>
+                            <option value="manual">👤 Manual (Selecionar agentes)</option>
+                            <option value="completa">🔍 Completa (Análise detalhada)</option>
+                            <option value="rapida">⚡ Rápida (Análise superficial)</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="area_foco" class="form-label text-white">Área de Foco (Opcional)</label>
+                          <select class="form-control" id="area_foco" name="area_foco" style="background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); color: black;">
+                            <option value="">Detectar automaticamente</option>
+                            <option value="civil">Direito Civil</option>
+                            <option value="criminal">Direito Criminal</option>
+                            <option value="trabalhista">Direito Trabalhista</option>
+                            <option value="empresarial">Direito Empresarial</option>
+                            <option value="tributario">Direito Tributário</option>
+                            <option value="consumidor">Direito do Consumidor</option>
+                            <option value="administrativo">Direito Administrativo</option>
+                          </select>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h6 class="text-muted mb-3">Agentes Disponíveis</h6>
+            <div class="row" id="agentsGrid">
+              <!-- Cards serão gerados dinamicamente via JavaScript seguindo os modelos das 18 áreas -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão de Análise Multi-Agente com Seleção Automática Inteligente -->
+    <div class="text-center mt-4 mb-4">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <button type="button" class="btn btn-primary btn-lg w-100 px-4 py-3" onclick="executarAnaliseCompletaUnificada()" id="btnAnaliseReal" disabled 
+                  style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);">
+            <i class="fas fa-robot me-2"></i>Análise Completa Multi-API
+            <br><small class="d-block mt-1">OpenAI GPT-4o + Anthropic Claude + Google Gemini | Seleção Automática + Manual</small>
+          </button>
+        </div>
+      </div>
+      <div class="row justify-content-center mt-3">
+        <div class="col-md-8">
+          <div class="d-flex justify-content-center gap-3">
+            <span class="badge bg-success">
+              <i class="fas fa-brain me-1"></i>OpenAI GPT-4o
+            </span>
+            <span class="badge bg-warning">
+              <i class="fas fa-lightbulb me-1"></i>Anthropic Claude
+            </span>
+            <span class="badge bg-info">
+              <i class="fas fa-star me-1"></i>Google Gemini
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-center mt-3">
+        <div class="col-md-6 text-center">
+          <a href="/historico-analises-multiagente" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-history me-1"></i>
+            Ver Histórico de Análises
+          </a>
+        </div>
+      </div>
+      
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Dados e configurações das 18 áreas jurídicas com ícones únicos para identificação
+const legalAreasConfig = {
+  'criminal': {
+    color: '#ef4444',
+    icon: 'fas fa-gavel',
+    name: 'Direito Criminal',
+    btnColor: '#ef4444'
+  },
+  'penal': {
+    color: '#ef4444',
+    icon: 'fas fa-gavel',
+    name: 'Direito Penal',
+    btnColor: '#ef4444'
+  },
+  'agrario': {
+    color: '#896302',
+    icon: 'fas fa-tractor',
+    name: 'Direito Agrário',
+    btnColor: '#896302'
+  },
+  'trabalhista': {
+    color: '#f97316',
+    icon: 'fas fa-hard-hat',
+    name: 'Direito Trabalhista',
+    btnColor: '#f97316'
+  },
+  'consumidor': {
+    color: '#10b981',
+    icon: 'fas fa-user-shield',
+    name: 'Direito do Consumidor',
+    btnColor: '#10b981'
+  },
+  'familia': {
+    color: '#d4a148',
+    icon: 'fas fa-users',
+    name: 'Direito de Família',
+    btnColor: '#d4a148'
+  },
+  'civil': {
+    color: '#007dfa',
+    icon: 'fas fa-balance-scale',
+    name: 'Direito Civil',
+    btnColor: '#007dfa'
+  },
+  'empresarial': {
+    color: '#3b82f6',
+    icon: 'fas fa-building',
+    name: 'Direito Empresarial',
+    btnColor: '#3b82f6'
+  },
+  'administrativo': {
+    color: '#6b7280',
+    icon: 'fas fa-university',
+    name: 'Direito Administrativo',
+    btnColor: '#6b7280'
+  },
+  'constitucional': {
+    color: '#1c7dde',
+    icon: 'fas fa-landmark',
+    name: 'Direito Constitucional',
+    btnColor: '#1c7dde'
+  },
+  'digital': {
+    color: '#475569',
+    icon: 'fas fa-laptop-code',
+    name: 'Direito Digital',
+    btnColor: '#475569'
+  },
+  'ambiental': {
+    color: '#1f744d',
+    icon: 'fas fa-leaf',
+    name: 'Direito Ambiental',
+    btnColor: '#1f744d'
+  },
+  'bancario': {
+    color: '#c29e74',
+    icon: 'fas fa-piggy-bank',
+    name: 'Direito Bancário',
+    btnColor: '#c29e74'
+  },
+  'previdenciario': {
+    color: '#ec4899',
+    icon: 'fas fa-coins',
+    name: 'Direito Previdenciário',
+    btnColor: '#ec4899'
+  },
+  'seguros': {
+    color: '#06b6d4',
+    icon: 'fas fa-shield-alt',
+    name: 'Direito Securitário',
+    btnColor: '#06b6d4'
+  },
+  'imobiliario': {
+    color: '#059669',
+    icon: 'fas fa-home',
+    name: 'Direito Imobiliário',
+    btnColor: '#059669'
+  },
+  'conflitos': {
+    color: '#64748b',
+    icon: 'fas fa-handshake',
+    name: 'Negociação e Conflitos',
+    btnColor: '#64748b'
+  },
+  'riscos': {
+    color: '#df3542',
+    icon: 'fas fa-chart-line',
+    name: 'Análise de Riscos Jurídicos',
+    btnColor: '#df3542'
+  },
+  'tributario': {
+    color: '#8b5cf6',
+    icon: 'fas fa-calculator',
+    name: 'Direito Tributário',
+    btnColor: '#8b5cf6'
+  },
+};
+
+// Cache para estilos das áreas carregados da API
+let estilosAreasCache = null;
+
+// Função para carregar estilos das áreas do banco de dados
+async function carregarEstilosAreas() {
+  if (estilosAreasCache) {
+    return estilosAreasCache;
+  }
+  
+  try {
+    const response = await fetch('/api/areas/estilos');
+    const data = await response.json();
+    
+    if (data.success) {
+      estilosAreasCache = data.estilos;
+      console.log('✅ Estilos das áreas carregados do banco:', Object.keys(estilosAreasCache));
+      return estilosAreasCache;
+    } else {
+      console.error('❌ Erro ao carregar estilos:', data.error);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Erro na requisição de estilos:', error);
+    return null;
+  }
+}
+
+// Função para normalizar e mapear áreas jurídicas usando dados do banco
+async function normalizeAreaKey(area) {
+  if (!area) return 'civil';
+  
+  // Carregar estilos do banco se ainda não foram carregados
+  const estilos = await carregarEstilosAreas();
+  if (!estilos) {
+    // Fallback para mapeamento hardcoded se API falhar
+    return normalizeAreaKeyFallback(area);
+  }
+  
+  // Primeiro, tentar encontrar por nome exato
+  for (const [key, estilo] of Object.entries(estilos)) {
+    if (estilo.nome === area) {
+      return key;
+    }
+  }
+  
+  // Se não encontrar, tentar mapeamentos normalizados
+  const normalized = area.toLowerCase()
+    .replace(/direito\s+/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/ã/g, 'a')
+    .replace(/ç/g, 'c')
+    .replace(/í/g, 'i')
+    .replace(/ó/g, 'o');
+  
+  // Verificar se existe uma chave que corresponde
+  if (estilos[normalized]) {
+    return normalized;
+  }
+  
+  // Mapeamentos específicos para casos especiais
+  const mappings = {
+    'analise_de_riscos_juridicos': 'riscos',
+    'analise_de_riscos': 'riscos',
+    'risco': 'riscos',
+    'penal': 'criminal',
+    'trabalho': 'trabalhista',
+    'consumidor': 'consumidor'
+  };
+  
+  return mappings[normalized] || 'civil';
+}
+
+// Função de fallback para mapeamento de áreas (caso a API falhe)
+function normalizeAreaKeyFallback(area) {
+  if (!area) return 'civil';
+  
+  const directMappings = {
+    'Análise de Riscos Jurídicos': 'riscos',
+    'Direito Penal': 'criminal',
+    'Direito Criminal': 'criminal',
+    'Direito Agrário': 'agrario',
+    'Direito do Trabalho': 'trabalhista',
+    'Direito Trabalhista': 'trabalhista',
+    'Direito do Consumidor': 'consumidor',
+    'Direito de Família': 'familia',
+    'Direito Civil': 'civil',
+    'Direito Empresarial': 'empresarial',
+    'Direito Administrativo': 'administrativo',
+    'Direito Constitucional': 'constitucional',
+    'Direito Digital': 'digital',
+    'Direito Ambiental': 'ambiental',
+    'Direito Bancário': 'bancario',
+    'Direito Previdenciário': 'previdenciario',
+    'Direito dos Seguros': 'seguros',
+    'Direito Imobiliário': 'imobiliario',
+    'Resolução de Conflitos': 'conflitos',
+    'Direito Tributário': 'tributario'
+  };
+  
+  return directMappings[area] || 'civil';
+};
+
+// Função para criar card seguindo exatamente os modelos das 18 áreas
+async function createAgentCardFromModel(agent) {
+  // Usar dados reais do agente
+  const agentName = agent.nome || agent.name || 'Agente Jurídico';
+  const agentArea = agent.categoria || agent.area_especializada || 'Civil';
+  const agentDescription = agent.descricao || agent.description || `Especialista em ${agentArea}`;
+  
+  // Normalizar área para configuração visual
+  const areaKey = await normalizeAreaKey(agentArea);
+  const config = legalAreasConfig[areaKey] || legalAreasConfig['civil'];
+  
+  // Priorizar cores do banco de dados (verificar se não é string vazia ou null)
+  const agentColor = (agent.cor_destaque && agent.cor_destaque.trim() !== '') ? agent.cor_destaque : config.color;
+  const agentIcon = (agent.icone && agent.icone.trim() !== '') ? agent.icone : config.icon;
+  
+  // Debug: log para verificar cores
+  if (agentArea === 'Análise de Riscos Jurídicos') {
+    console.log(`🔍 Debug Agente: ${agentName}`, {
+      categoria: agent.categoria,
+      area_especializada: agent.area_especializada,
+      agentArea: agentArea,
+      areaKey: areaKey,
+      normalized: agentArea.toLowerCase().replace(/direito\s+/g, '').replace(/\s+/g, '_').replace(/ã/g, 'a').replace(/ç/g, 'c').replace(/í/g, 'i').replace(/ó/g, 'o'),
+      cor_destaque: agent.cor_destaque,
+      icone: agent.icone,
+      agentColor: agentColor,
+      agentIcon: agentIcon,
+      config: config
+    });
+  }
+  
+  // Processar capacidades REAIS do agente (todas as capacidades para todos os IDs)
+  let agentCapacidades = [];
+  
+  // Carregar TODAS as capacidades do agente sem limitações
+  if (agent.capacidades && Array.isArray(agent.capacidades)) {
+    // Capacidades já vêm como array do banco de dados
+    agentCapacidades = agent.capacidades.filter(cap => cap && cap.trim() !== '');
+  } else if (typeof agent.capacidades === 'string' && agent.capacidades.trim() !== '') {
+    try {
+      // Parse do JSON string para array
+      const parsed = JSON.parse(agent.capacidades);
+      if (Array.isArray(parsed)) {
+        agentCapacidades = parsed.filter(cap => cap && cap.trim() !== '');
+      } else {
+        agentCapacidades = [agent.capacidades];
+      }
+    } catch (e) {
+      // Se falhar parse, usar como string única
+      agentCapacidades = [agent.capacidades];
+    }
+  }
+  
+  // Fallback apenas se realmente não houver capacidades
+  if (agentCapacidades.length === 0) {
+    agentCapacidades = [`Especialista em ${agentArea}`, 'Análise jurídica especializada'];
+  }
+  
+  const cardHtml = `
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="agent-card h-100" data-area="${areaKey}" data-agent-id="${agent.id}" style="background: #2d3748; border-radius: 12px; border: 1px solid #4a5568; color: white; position: relative; padding: 20px;">
+        <!-- Header com ícone e título -->
+        <div style="display: flex; align-items: flex-start; margin-bottom: 15px;">
+          <div style="width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0;">
+            <i class="${agentIcon}" style="color: ${agentColor}; font-size: 24px;"></i>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <h5 style="color: white; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; line-height: 1.2;">${agentName}</h5>
+          </div>
+        </div>
+        
+        <!-- Descrição -->
+        <div style="margin-bottom: 20px;">
+          <p style="color: #e2e8f0; font-size: 14px; line-height: 1.4; margin: 0;">${agentDescription}</p>
+        </div>
+        
+        <!-- Capacidades Completas do Agente -->
+        ${agentCapacidades.length > 0 ? `
+        <div style="margin-bottom: 20px;">
+          <h6 style="color: white; font-size: 14px; font-weight: 600; margin-bottom: 12px;">
+            <i class="fas fa-check-circle" style="color: ${agentColor}; margin-right: 6px;"></i>
+            Capacidades: (${agentCapacidades.length})
+          </h6>
+          <div style="max-height: 180px; overflow-y: auto; padding-right: 8px;">
+            ${agentCapacidades.map((cap, index) => `
+              <div style="display: flex; align-items: flex-start; margin-bottom: 6px; padding: 3px 0;">
+                <div style="width: 16px; height: 16px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 8px; margin-top: 2px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                  <i class="fas fa-check" style="color: ${agentColor}; font-size: 9px;"></i>
+                </div>
+                <span style="color: #e2e8f0; font-size: 12px; line-height: 1.4; flex: 1;">${cap}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+        
+        <!-- Botões de ação como nos modelos -->
+        <div style="display: flex; gap: 8px; margin-top: auto;">
+          <button onclick="consultarEspecialista('${agent.categoria || agent.area_juridica}', '${agentName}', ${agent.id})" style="background: ${agentColor}; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <i class="fas fa-comment"></i>
+            Chat
+          </button>
+          <button onclick="editarAgente(${agent.id})" style="background: transparent; color: ${agentColor}; border: 1px solid ${agentColor}; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button id="utilizar_${agent.id}" onclick="selecionarAgente(${agent.id})" class="btn-utilizar" data-agent-id="${agent.id}" style="background: transparent; color: #6b7280; border: 1px solid #6b7280; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.3s ease;">
+            <i class="fas fa-plus"></i>
+            <span class="btn-text">Selecionar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return cardHtml;
+}
+
+// Função para renderizar todos os agentes usando os modelos
+async function renderAgentCards() {
+  const agentsGrid = document.getElementById('agentsGrid');
+  if (!agentsGrid || !window.agentsData || !window.agentsData.length) return;
+  
+  console.log(`🎨 Renderizando ${window.agentsData.length} agentes com modelos das 18 áreas jurídicas...`);
+  
+  let cardsHtml = '';
+  for (const agent of window.agentsData) {
+    cardsHtml += await createAgentCardFromModel(agent);
+  }
+  
+  agentsGrid.innerHTML = cardsHtml;
+  
+  // Adicionar eventos de clique nos checkboxes
+  agentsGrid.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const card = this.closest('.agent-card');
+      if (this.checked) {
+        card.style.transform = 'translateY(-5px)';
+        card.style.boxShadow = '0 15px 35px rgba(22, 160, 133, 0.3)';
+        card.style.borderColor = '#16a085';
+      } else {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = 'none';
+        card.style.borderColor = '#4a5568';
+      }
+      updateSelectedAgentsCount();
+      toggleAnalysisButton();
+    });
+  });
+  
+  console.log('✅ Cards renderizados com sucesso usando modelos das 18 áreas');
+}
+
+// Atualizar contadores e estados
+function updateSelectedAgentsCount() {
+  const selectedCount = document.querySelectorAll('#agentsGrid input[type="checkbox"]:checked').length;
+  const countElements = document.querySelectorAll('#selectedAgentsCount');
+  countElements.forEach(el => {
+    el.textContent = `${selectedCount} agentes selecionados`;
+  });
+}
+
+function toggleAnalysisButton() {
+  const selectedCount = selectedAgents.size;
+  const analysisBtn = document.getElementById('btnIniciarAnalise');
+  const analyzeButton = document.getElementById('btnStartAnalysis');
+  
+  if (analysisBtn) {
+    analysisBtn.disabled = selectedCount === 0;
+  }
+  if (analyzeButton) {
+    analyzeButton.disabled = selectedCount === 0;
+  }
+}
+
+// Função para carregar agentes do banco de dados
+async function loadAgentsFromDatabase() {
+  try {
+    console.log('🔄 Carregando agentes do banco de dados...');
+    const response = await fetch('/api/especialistas');
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    window.agentsData = data.agentes || [];
+    
+    console.log(`✅ ${window.agentsData.length} agentes carregados com sucesso`);
+    return window.agentsData;
+  } catch (error) {
+    console.error('❌ Erro ao carregar agentes:', error);
+    
+    // Dados fallback apenas para desenvolvimento
+    window.agentsData = [
+      {
+        id: 1,
+        name: 'Dr. João Silva',
+        categoria: 'Criminal',
+        description: 'Especialista em direito criminal com 15 anos de experiência',
+        capacidades: ['Defesa Criminal', 'Júri Popular', 'Recursos Penais', 'Medidas Cautelares', 'Execução Penal']
+      },
+      {
+        id: 2,
+        name: 'Dra. Maria Santos',
+        categoria: 'Civil',
+        description: 'Advogada especializada em direito civil e contratos',
+        capacidades: ['Contratos', 'Responsabilidade Civil', 'Direitos Reais', 'Família', 'Sucessões']
+      },
+      {
+        id: 3,
+        name: 'Dr. Carlos Oliveira',
+        categoria: 'Trabalhista',
+        description: 'Especialista em direito do trabalho e previdenciário',
+        capacidades: ['CLT', 'Acidentes de Trabalho', 'Rescisões', 'Sindicatos', 'FGTS']
+      },
+      {
+        id: 4,
+        name: 'Dra. Ana Costa',
+        categoria: 'Consumidor',
+        description: 'Defensora dos direitos do consumidor',
+        capacidades: ['CDC', 'Vícios e Defeitos', 'Serviços Bancários', 'E-commerce', 'Telemarketing']
+      },
+      {
+        id: 5,
+        name: 'Dr. Paulo Ferreira',
+        categoria: 'Tributário',
+        description: 'Consultor tributário e fiscal',
+        capacidades: ['ICMS', 'ISS', 'IR', 'Planejamento Tributário', 'Defesas Fiscais']
+      },
+      {
+        id: 6,
+        name: 'Dra. Lucia Almeida',
+        categoria: 'Empresarial',
+        description: 'Assessoria jurídica empresarial completa',
+        capacidades: ['Contratos Empresariais', 'Societário', 'Compliance', 'M&A', 'Propriedade Intelectual']
+      }
+    ];
+    
+    return window.agentsData;
+  }
+}
+
+// Função para popular filtros de área
+function populateAreaFilter() {
+  const areaFilter = document.getElementById('areaFilter');
+  
+  if (!window.agentsData || window.agentsData.length === 0) {
+    console.warn('⚠️ Nenhum agente carregado para popular filtro de área');
+    return;
+  }
+  
+  // Limpar opções existentes (manter apenas "Todas as áreas")
+  while (areaFilter.children.length > 1) {
+    areaFilter.removeChild(areaFilter.lastChild);
+  }
+  
+  // Extrair áreas únicas dos agentes
+  const areas = [...new Set(window.agentsData.map(agent => 
+    agent.categoria || agent.area_juridica || agent.area || 'Civil'
+  ))].sort();
+  
+  console.log('📋 Áreas encontradas para filtro:', areas);
+  
+  areas.forEach(area => {
+    const option = document.createElement('option');
+    option.value = area;
+    option.textContent = area;
+    areaFilter.appendChild(option);
+  });
+  
+  console.log(`✅ Filtro de área populado com ${areas.length} áreas`);
+}
+
+// Função para popular filtros de especialização
+function populateSpecializationFilter() {
+  const specializationFilter = document.getElementById('specializationFilter');
+  
+  // Extrair todas as capacidades/especializações dos agentes
+  const specializations = new Set();
+  
+  window.agentsData.forEach(agent => {
+    const capacidades = agent.capacidades || [];
+    const descricao = agent.descricao || agent.description || '';
+    const nome = agent.nome || agent.name || '';
+    
+    // Adicionar capacidades específicas
+    if (Array.isArray(capacidades)) {
+      capacidades.forEach(cap => {
+        if (cap && cap.trim()) {
+          specializations.add(cap.trim());
+        }
+      });
+    }
+    
+    // Extrair especializações da descrição
+    const descWords = descricao.toLowerCase();
+    const commonSpecializations = [
+      'análise', 'revisão', 'compliance', 'contratos', 'execução',
+      'criminal', 'civil', 'trabalhista', 'empresarial', 'tributário',
+      'consumidor', 'ambiental', 'constitucional', 'previdenciário',
+      'administrativo', 'família', 'sucessões', 'imobiliário',
+      'digital', 'bancário', 'seguros', 'mediação', 'arbitragem',
+      'defesa', 'acusação', 'consultoria', 'auditoria', 'perícia'
+    ];
+    
+    commonSpecializations.forEach(spec => {
+      if (descWords.includes(spec)) {
+        specializations.add(spec.charAt(0).toUpperCase() + spec.slice(1));
+      }
+    });
+  });
+  
+  // Limpar opções existentes (exceto a primeira)
+  while (specializationFilter.children.length > 1) {
+    specializationFilter.removeChild(specializationFilter.lastChild);
+  }
+  
+  // Adicionar especializações encontradas
+  [...specializations].sort().forEach(spec => {
+    const option = document.createElement('option');
+    option.value = spec.toLowerCase();
+    option.textContent = spec;
+    specializationFilter.appendChild(option);
+  });
+}
+
+// Função para filtrar agentes
+async function filterAgents() {
+  const areaFilter = document.getElementById('areaFilter').value;
+  const specializationFilter = document.getElementById('specializationFilter').value;
+  
+  let filteredAgents = [...window.agentsData];
+  
+  // Filtrar por área - agora usa os dados já mapeados da API
+  if (areaFilter) {
+    filteredAgents = filteredAgents.filter(agent => {
+      const areaAgente = agent.categoria || agent.area_juridica || 'Direito Civil';
+      return areaAgente === areaFilter;
+    });
+  }
+  
+  // Filtrar por especialização usando capacidades
+  if (specializationFilter) {
+    filteredAgents = filteredAgents.filter(agent => {
+      const capacidades = agent.capacidades || [];
+      const descricao = agent.descricao || agent.description || '';
+      const nome = agent.nome || agent.name || '';
+      
+      // Verificar se a especialização está nas capacidades, descrição ou nome
+      const searchText = (capacidades.join(' ') + ' ' + descricao + ' ' + nome).toLowerCase();
+      return searchText.includes(specializationFilter.toLowerCase()) || 
+             capacidades.some(cap => cap.toLowerCase().includes(specializationFilter.toLowerCase()));
+    });
+  }
+  
+  // Renderizar agentes filtrados
+  await renderFilteredAgents(filteredAgents);
+  
+  // Atualizar contador
+  document.getElementById('selectedAgentsCount').textContent = 
+    `${filteredAgents.length} agentes disponíveis`;
+}
+
+// Função para renderizar agentes filtrados
+async function renderFilteredAgents(agents) {
+  console.log(`🎨 Renderizando ${agents.length} agentes filtrados...`);
+  
+  const agentsGrid = document.getElementById('agentsGrid');
+  agentsGrid.innerHTML = '';
+  
+  for (const agent of agents) {
+    const cardHtml = await createAgentCardFromModel(agent);
+    agentsGrid.innerHTML += cardHtml;
+  }
+  
+  // Reativar event listeners dos checkboxes
+  setupCheckboxListeners();
+  
+  console.log(`✅ ${agents.length} agentes filtrados renderizados com sucesso`);
+}
+
+// Função para configurar listeners dos checkboxes
+function setupCheckboxListeners() {
+  const checkboxes = document.querySelectorAll('#agentsGrid input[type="checkbox"]');
+  const maxAgents = parseInt(document.getElementById('maxAgents').value) || 3;
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const selectedCount = document.querySelectorAll('#agentsGrid input[type="checkbox"]:checked').length;
+      
+      // Limitar seleção máxima
+      if (selectedCount > maxAgents) {
+        this.checked = false;
+        showModernModal({
+          title: 'Limite de Agentes',
+          subtitle: 'Máximo de agentes atingido',
+          text: `Você pode selecionar no máximo ${maxAgents} agentes para análise.`,
+          icon: 'fas fa-exclamation-triangle',
+          actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+        });
+        return;
+      }
+      
+      // Atualizar contador de selecionados
+      document.querySelector('.badge .fas.fa-users').nextSibling.textContent = ` ${selectedCount} Agentes Selecionados`;
+      
+      // Habilitar/desabilitar botão de análise real
+      const btnAnaliseReal = document.getElementById('btnAnaliseReal');
+      if (btnAnaliseReal) btnAnaliseReal.disabled = selectedCount === 0;
+      
+      const btnRealTop = document.getElementById('btnAnaliseRealTop');
+      if (btnRealTop) btnRealTop.disabled = selectedCount === 0;
+      
+      // Estimar tempo
+      const estimatedMinutes = selectedCount * 2;
+      document.getElementById('estimatedTime').textContent = `${estimatedMinutes}min`;
+    });
+  });
+}
+
+// Inicializar quando página carregar
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadAgentsFromDatabase();
+  await renderAgentCards();
+  
+  // Popular filtros após carregar dados
+  setTimeout(() => {
+    populateAreaFilter();
+    populateSpecializationFilter();
+  }, 100);
+  
+  // Configurar filtros
+  document.getElementById('areaFilter').addEventListener('change', () => filterAgents());
+  document.getElementById('specializationFilter').addEventListener('change', () => filterAgents());
+  
+  // Configurar mudança de máximo de agentes
+  document.getElementById('maxAgents').addEventListener('change', function() {
+    // Desmarcar agentes excedentes se necessário
+    const maxAgents = parseInt(this.value);
+    const checkboxes = document.querySelectorAll('#agentsGrid input[type="checkbox"]:checked');
+    
+    if (checkboxes.length > maxAgents) {
+      for (let i = maxAgents; i < checkboxes.length; i++) {
+        checkboxes[i].checked = false;
+      }
+      
+      // Atualizar contador
+      document.querySelector('.badge .fas.fa-users').nextSibling.textContent = ` ${maxAgents} Agentes Selecionados`;
+      
+      // Atualizar tempo estimado
+      const estimatedMinutes = maxAgents * 2;
+      document.getElementById('estimatedTime').textContent = `${estimatedMinutes}min`;
+    }
+  });
+});
+
+// Função para análise automática de documento com detecção avançada
+async function autoSelectAgentsForDocument() {
+  const textoDocumento = document.getElementById('documentText').value.trim();
+  
+  if (!textoDocumento) {
+    showModernModal({
+      title: 'Texto Necessário',
+      subtitle: 'Documento requerido para análise',
+      text: 'Por favor, insira o texto do documento antes de usar a análise automática.',
+      icon: 'fas fa-file-text',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  if (textoDocumento.length < 100) {
+    showModernModal({
+      title: 'Texto Insuficiente',
+      subtitle: 'Mais conteúdo necessário',
+      text: 'Texto muito curto para detecção automática confiável. Mínimo de 100 caracteres necessários.',
+      icon: 'fas fa-info-circle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Mostrar indicador de processamento
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Detectando área...';
+  btn.disabled = true;
+  
+  try {
+    // Usar detecção avançada de área jurídica
+    const areaDetectada = await detectarAreaJuridicaAvancada(textoDocumento);
+    
+    if (areaDetectada.confianca < 0.3) {
+      showModernModal({
+        title: 'Detecção Automática',
+        subtitle: 'Seleção manual recomendada',
+        text: 'Não foi possível detectar automaticamente a área jurídica com confiança suficiente. Selecione os agentes manualmente.',
+        icon: 'fas fa-search',
+        actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+      });
+      return;
+    }
+    
+    // Selecionar agentes automaticamente baseado na área detectada
+    await autoSelectAgentsByAreaDetectada(areaDetectada);
+    
+    // Atualizar modo de análise e área de foco
+    document.getElementById('modo_analise').value = 'automatico';
+    document.getElementById('area_foco').value = areaDetectada.area;
+    
+    // Mostrar resultado da detecção
+    showModernModal({
+      title: 'Área Detectada',
+      subtitle: `${areaDetectada.nome} - ${(areaDetectada.confianca * 100).toFixed(0)}% de confiança`,
+      text: `${areaDetectada.agentes_selecionados} agentes selecionados automaticamente para análise especializada.`,
+      icon: 'fas fa-check-circle',
+      actions: [{ 
+        text: 'Continuar', 
+        type: 'primary', 
+        action: 'custom',
+        callback: function() {
+          // Fechar modal usando Bootstrap
+          const allModals = document.querySelectorAll('.modal');
+          allModals.forEach(modal => {
+            const bootstrapModal = bootstrap.Modal.getInstance(modal);
+            if (bootstrapModal) {
+              bootstrapModal.hide();
+            }
+          });
+          
+          // Scroll suave para o final da página
+          setTimeout(() => {
+            window.scrollTo({
+              top: document.body.scrollHeight,
+              behavior: 'smooth'
+            });
+          }, 300);
+        }
+      }]
+    });
+    
+  } catch (error) {
+    console.error('Erro na detecção automática:', error);
+    showModernModal({
+      title: 'Erro na Detecção',
+      subtitle: 'Seleção manual necessária',
+      text: 'Erro na detecção automática. Selecione os agentes manualmente.',
+      icon: 'fas fa-exclamation-triangle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  } finally {
+    // Restaurar botão
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// Detector simplificado e robusto de área jurídica
+async function detectarAreaJuridicaAvancada(texto) {
+  console.log('🔍 Iniciando detecção de área jurídica...');
+  
+  const textoLower = texto.toLowerCase();
+  
+  // Configuração simplificada e robusta de palavras-chave por área
+  const areasJuridicas = {
+    'agrario': {
+      nome: 'Direito Agrário',
+      palavras: [
+        'arrendamento rural', 'pecuária', 'agricultura', 'rural', 'hectares',
+        'terras', 'propriedade rural', 'itr', 'incra', 'fazenda',
+        'arrendante', 'arrendatário', 'produção rural', 'campo'
+      ],
+      peso: 2.0
+    },
+    'civil': {
+      nome: 'Direito Civil',
+      palavras: [
+        'contrato particular', 'obrigações', 'responsabilidade civil',
+        'propriedade', 'posse', 'locação', 'compra e venda'
+      ],
+      peso: 1.0
+    },
+    'empresarial': {
+      nome: 'Direito Empresarial',
+      palavras: [
+        'cnpj', 'empresa', 'sociedade', 'comercial', 'prestação de serviços',
+        'razão social', 'atividade empresarial'
+      ],
+      peso: 1.0
+    },
+    'trabalhista': {
+      nome: 'Direito Trabalhista',
+      palavras: [
+        'empregado', 'empregador', 'clt', 'salário', 'contrato de trabalho'
+      ],
+      peso: 1.0
+    }
+  };
+  
+  // Calcular pontuação para cada área
+  const pontuacoes = {};
+  
+  for (const [area, config] of Object.entries(areasJuridicas)) {
+    let pontuacao = 0;
+    let matches = 0;
+    
+    for (const palavra of config.palavras) {
+      if (textoLower.includes(palavra.toLowerCase())) {
+        pontuacao += config.peso;
+        matches++;
+        console.log(`✅ Match encontrado: "${palavra}" em ${config.nome}`);
+      }
+    }
+    
+    pontuacoes[area] = {
+      pontuacao: pontuacao,
+      matches: matches,
+      nome: config.nome,
+      percentual: matches / config.palavras.length
+    };
+  }
+  
+  console.log('📊 Pontuações calculadas:', pontuacoes);
+  
+  // Encontrar área com maior pontuação
+  let melhorArea = null;
+  let maiorPontuacao = 0;
+  
+  for (const [area, dados] of Object.entries(pontuacoes)) {
+    if (dados.pontuacao > maiorPontuacao) {
+      maiorPontuacao = dados.pontuacao;
+      melhorArea = area;
+    }
+  }
+  
+  console.log(`🎯 Melhor área detectada: ${melhorArea} com pontuação ${maiorPontuacao}`);
+  
+  if (!melhorArea || maiorPontuacao < 1) {
+    return {
+      area: 'geral',
+      nome: 'Área Geral',
+      confianca: 0.1,
+      pontuacao: 0,
+      agentes_selecionados: 0
+    };
+  }
+  
+  const resultadoFinal = {
+    area: melhorArea,
+    nome: pontuacoes[melhorArea].nome,
+    confianca: Math.min(pontuacoes[melhorArea].percentual * 0.8 + 0.2, 0.95),
+    pontuacao: maiorPontuacao,
+    agentes_selecionados: 3
+  };
+  
+  console.log('✅ Resultado final da detecção:', resultadoFinal);
+  return resultadoFinal;
+}
+
+// Função para selecionar agentes automaticamente baseado na área detectada
+async function autoSelectAgentsByAreaDetectada(areaDetectada) {
+  console.log('🎯 Selecionando agentes para área:', areaDetectada);
+  
+  // Limpar seleções anteriores
+  selectedAgents.clear();
+  
+  // Resetar todos os botões
+  document.querySelectorAll('[id^="utilizar_"]').forEach(button => {
+    button.style.background = 'transparent';
+    button.style.color = '#6b7280';
+    button.style.borderColor = '#6b7280';
+    const buttonText = button.querySelector('.btn-text');
+    const buttonIcon = button.querySelector('i');
+    if (buttonText) buttonText.textContent = 'Selecionar';
+    if (buttonIcon) buttonIcon.className = 'fas fa-plus';
+  });
+  
+  // Mapear áreas para palavras-chave de busca de agentes
+  const mapeamentoAreas = {
+    'agrario': ['agrário', 'rural', 'arrendamento', 'pecuária', 'agricultura'],
+    'civil': ['civil', 'contratos', 'obrigações', 'responsabilidade'],
+    'empresarial': ['empresarial', 'comercial', 'societário', 'negócios'],
+    'trabalhista': ['trabalhista', 'trabalho', 'empregado', 'clt']
+  };
+  
+  const palavrasChave = mapeamentoAreas[areaDetectada.area] || [areaDetectada.area];
+  let agentesEncontrados = [];
+  
+  console.log('🔍 Procurando agentes com palavras-chave:', palavrasChave);
+  
+  // Buscar agentes que correspondem à área detectada
+  if (window.agentsData && window.agentsData.length > 0) {
+    console.log('📋 Total de agentes disponíveis:', window.agentsData.length);
+    
+    for (const agent of window.agentsData) {
+      let score = 0;
+      const nomeAgent = (agent.nome || '').toLowerCase();
+      const categoriaAgent = (agent.categoria || '').toLowerCase();
+      const descricaoAgent = (agent.descricao || '').toLowerCase();
+      
+      // Calcular pontuação baseada em correspondências
+      for (const palavra of palavrasChave) {
+        if (nomeAgent.includes(palavra.toLowerCase())) score += 3;
+        if (categoriaAgent.includes(palavra.toLowerCase())) score += 2;
+        if (descricaoAgent.includes(palavra.toLowerCase())) score += 1;
+      }
+      
+      if (score > 0) {
+        agentesEncontrados.push({ agent, score });
+        console.log(`✅ Agente encontrado: ${agent.nome} (score: ${score})`);
+      }
+    }
+    
+    // Ordenar por pontuação e pegar os 3 melhores
+    agentesEncontrados.sort((a, b) => b.score - a.score);
+    const maxAgentes = parseInt(document.getElementById('maxAgents').value) || 3;
+    const agentesParaSelecionar = agentesEncontrados.slice(0, maxAgentes);
+    
+    console.log(`🎯 Selecionando ${agentesParaSelecionar.length} agentes de maior pontuação`);
+    
+    // Selecionar os agentes encontrados
+    for (const { agent } of agentesParaSelecionar) {
+      selecionarAgente(agent.id);
+    }
+    
+    // Atualizar display e habilitar botões
+    updateSelectionDisplay();
+    
+    areaDetectada.agentes_selecionados = agentesParaSelecionar.length;
+    return agentesParaSelecionar.length;
+  } else {
+    console.log('❌ Nenhum agente disponível para seleção');
+    return 0;
+  }
+}
+
+function autoSelectAgentsByAreas(areasDetectadas) {
+  // Limpar seleções anteriores
+  selectedAgents.clear();
+  
+  // Resetar todos os botões
+  document.querySelectorAll('[id^="utilizar_"]').forEach(button => {
+    button.style.background = 'transparent';
+    button.style.color = '#6b7280';
+    button.style.borderColor = '#6b7280';
+    const buttonText = button.querySelector('.btn-text');
+    const buttonIcon = button.querySelector('i');
+    if (buttonText) buttonText.textContent = 'Selecionar';
+    if (buttonIcon) buttonIcon.className = 'fas fa-plus';
+  });
+  
+  // Mapear áreas para agentes
+  const mapeamentoAreas = {
+    'criminal': ['criminal', 'penal'],
+    'civil': ['civil', 'familia'],
+    'trabalhista': ['trabalhista', 'trabalho'],
+    'tributario': ['tributario'],
+    'consumidor': ['consumidor'],
+    'empresarial': ['empresarial', 'comercial'],
+    'contrato': ['civil', 'empresarial']
+  };
+  
+  let agentesParaSelecionar = [];
+  
+  for (const { area } of areasDetectadas) {
+    const categoriasRelacionadas = mapeamentoAreas[area] || [area];
+    
+    for (const categoria of categoriasRelacionadas) {
+      const agentesDisponiveis = window.agentsData?.filter(agent => 
+        agent.categoria?.toLowerCase().includes(categoria) ||
+        agent.nome?.toLowerCase().includes(categoria) ||
+        agent.area_especializada?.toLowerCase().includes(categoria)
+      ) || [];
+      
+      agentesParaSelecionar = agentesParaSelecionar.concat(agentesDisponiveis.slice(0, 2));
+      
+      if (agentesParaSelecionar.length >= 6) break;
+    }
+    
+    if (agentesParaSelecionar.length >= 6) break;
+  }
+  
+  // Selecionar até 4 agentes
+  const agentesUnicos = [...new Set(agentesParaSelecionar.map(a => a.id))];
+  
+  for (let i = 0; i < Math.min(4, agentesUnicos.length); i++) {
+    const agenteId = agentesUnicos[i];
+    selecionarAgente(agenteId);
+  }
+}
+
+// FUNÇÃO REMOVIDA: executarAnaliseMultiAgente()
+// Sistema agora usa apenas análise inteligente com seleção automática de agentes
+
+// Função para exibir resultados da análise
+function exibirResultadosAnalise(dados) {
+  console.log('🎨 Exibindo resultados da análise');
+  
+  if (!dados || !dados.resultados || dados.resultados.length === 0) {
+    showModernModal({
+      title: 'Análise Incompleta',
+      subtitle: 'Nenhum resultado retornado',
+      text: 'Nenhum resultado foi retornado da análise. Tente novamente.',
+      icon: 'fas fa-info-circle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Ocultar formulário principal
+  const formulario = document.querySelector('.container-fluid');
+  if (formulario) {
+    formulario.style.display = 'none';
+  }
+  
+  // Criar seção de resultados
+  const secaoResultados = document.createElement('div');
+  secaoResultados.id = 'resultadosAnalise';
+  secaoResultados.innerHTML = `
+    <div class="container-fluid" style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); min-height: 100vh; padding: 20px;">
+      <div class="row">
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-white mb-0">
+              <i class="fas fa-chart-line me-2" style="color: #10b981;"></i>
+              Relatório de Análise Multi-Agente
+            </h2>
+            <button class="btn btn-outline-light" onclick="voltarParaFormulario()">
+              <i class="fas fa-arrow-left me-2"></i>Voltar
+            </button>
+          </div>
+          
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="card bg-dark border-success">
+                <div class="card-body text-center">
+                  <h5 class="card-title text-success">${dados.total_agentes || dados.resultados.length}</h5>
+                  <p class="card-text text-white">Agentes Analisaram</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card bg-dark border-primary">
+                <div class="card-body text-center">
+                  <h5 class="card-title text-primary">${dados.numero_registro || 'N/A'}</h5>
+                  <p class="card-text text-white">Número do Registro</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card bg-dark border-warning">
+                <div class="card-body">
+                  <h6 class="card-title text-warning">Status da Análise</h6>
+                  <p class="card-text text-white">${dados.message || 'Análise concluída'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            ${dados.resultados.map((resultado, index) => `
+              <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card bg-dark border-light h-100">
+                  <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                      <i class="fas fa-user-tie me-2"></i>
+                      ${resultado.agente_nome || `Agente ${index + 1}`}
+                    </h6>
+                    <small>${resultado.modelo_usado || 'IA Especializada'}</small>
+                  </div>
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <span class="badge bg-secondary">${resultado.categoria || 'Análise Jurídica'}</span>
+                    </div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                      <pre style="white-space: pre-wrap; color: white; font-size: 0.875rem; margin: 0; font-family: inherit;">${resultado.resultado || 'Análise não disponível'}</pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Adicionar ao documento
+  document.body.appendChild(secaoResultados);
+  
+  // Scroll para o topo
+  window.scrollTo(0, 0);
+}
+
+// Função para voltar ao formulário
+function voltarParaFormulario() {
+  const resultados = document.getElementById('resultadosAnalise');
+  if (resultados) {
+    resultados.remove();
+  }
+  
+  const formulario = document.querySelector('.container-fluid');
+  if (formulario) {
+    formulario.style.display = 'block';
+  }
+}
+
+// Função displayAnalysisResults esperada pelo sistema de salvamento
+function displayAnalysisResults(data) {
+  console.log('🎯 DEBUG: displayAnalysisResults chamada com dados:', data);
+  
+  // Verificar se temos dados válidos
+  if (!data || (!data.results && !data.resultado_principal && !data.resultados_agentes)) {
+    console.error('❌ Dados inválidos recebidos em displayAnalysisResults:', data);
+    return;
+  }
+  
+  // Ocultar área de upload/formulário
+  const uploadArea = document.getElementById('upload-area');
+  if (uploadArea) uploadArea.style.display = 'none';
+  
+  const agentsGrid = document.getElementById('agentsGrid')?.parentElement?.parentElement;
+  if (agentsGrid) agentsGrid.style.display = 'none';
+  
+  // Criar container de resultados se não existir
+  let resultsContainer = document.getElementById('analysis-results');
+  if (!resultsContainer) {
+    resultsContainer = document.createElement('div');
+    resultsContainer.id = 'analysis-results';
+    resultsContainer.className = 'container-fluid mt-4';
+    document.body.appendChild(resultsContainer);
+  }
+  
+  // Processar dados da análise multi-agente manual
+  let analises = [];
+  
+  if (data.results && data.results.analises) {
+    // Formato correto da API (/api/analise-3-agentes-manual)
+    analises = data.results.analises.map(analise => ({
+      agente: analise.agente,
+      resultado: analise.resultado,
+      status: analise.status || 'sucesso',
+      icon: analise.icon || 'fas fa-robot',
+      color: analise.color || '#28a745'
+    }));
+  } else if (data.results) {
+    // Formato legado (manter compatibilidade)
+    if (data.results.analise_openai) {
+      analises.push({
+        agente: 'OpenAI GPT-4o',
+        resultado: data.results.analise_openai,
+        status: data.results.analise_openai.startsWith('ERRO') ? 'erro' : 'sucesso',
+        icon: 'fas fa-brain',
+        color: '#10b981'
+      });
+    }
+    
+    if (data.results.analise_gemini) {
+      analises.push({
+        agente: 'Google Gemini',
+        resultado: data.results.analise_gemini,
+        status: data.results.analise_gemini.startsWith('ERRO') ? 'erro' : 'sucesso',
+        icon: 'fas fa-gem',
+        color: '#3b82f6'
+      });
+    }
+    
+    if (data.results.analise_anthropic) {
+      analises.push({
+        agente: 'Anthropic Claude',
+        resultado: data.results.analise_anthropic,
+        status: data.results.analise_anthropic.startsWith('ERRO') ? 'erro' : 'sucesso',
+        icon: 'fas fa-robot',
+        color: '#8b5cf6'
+      });
+    }
+  }
+  
+  // Template de resultados
+  resultsContainer.innerHTML = `
+    <div class="row">
+      <div class="col-12">
+        <div class="card bg-dark border-success mb-4">
+          <div class="card-header bg-success text-white">
+            <h4 class="mb-0">
+              <i class="fas fa-chart-line me-2"></i>
+              Resultado da Análise Multi-Agente
+            </h4>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <span class="badge bg-light text-dark">
+                <i class="fas fa-clock me-1"></i>
+                ${data.meta?.total_tokens || 'N/A'} tokens | ${data.results?.tempo_total || 'N/A'}s
+              </span>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" onclick="voltarParaFormulario(); document.getElementById('analysis-results').remove();">
+                  <i class="fas fa-arrow-left me-1"></i>Nova Análise
+                </button>
+                <a href="/historico-analises-multiagente" class="btn btn-outline-info btn-sm">
+                  <i class="fas fa-history me-1"></i>Ver Histórico
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-success">${data.meta?.apis_funcionais || analises.filter(a => a.status === 'sucesso').length}/3</h3>
+                  <small class="text-muted">APIs Funcionais</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-info">${data.meta?.total_tokens || 'N/A'}</h3>
+                  <small class="text-muted">Total de Tokens</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center">
+                  <h3 class="text-warning">${data.results?.tempo_total || 'N/A'}s</h3>
+                  <small class="text-muted">Tempo Total</small>
+                </div>
+              </div>
+            </div>
+            
+            ${data.results?.comparacao ? `
+              <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Síntese da Análise</h6>
+                <p class="mb-1"><strong>Consenso:</strong> ${data.results.comparacao.consenso}</p>
+                <p class="mb-1"><strong>Metodologia:</strong> ${data.results.comparacao.divergencias}</p>
+                <p class="mb-0"><strong>Recomendação:</strong> ${data.results.comparacao.recomendacao_final}</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <div class="row">
+          ${analises.map((analise, index) => `
+            <div class="col-lg-4 mb-4">
+              <div class="card bg-dark border-light h-100">
+                <div class="card-header" style="background-color: ${analise.color};">
+                  <h6 class="text-white mb-0">
+                    <i class="${analise.icon} me-2"></i>
+                    ${analise.agente}
+                  </h6>
+                  <span class="badge ${analise.status === 'sucesso' ? 'bg-success' : 'bg-danger'} mt-1">
+                    ${analise.status === 'sucesso' ? 'Sucesso' : 'Erro'}
+                  </span>
+                </div>
+                <div class="card-body">
+                  <div style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.4; color: white;">
+${analise.resultado}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        ${data.meta?.resultado_id ? `
+          <div class="alert alert-success">
+            <h6><i class="fas fa-save me-2"></i>Análise Salva no Sistema</h6>
+            <p class="mb-0">ID do Resultado: <code>${data.meta.resultado_id}</code></p>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  
+  // Scroll para os resultados
+  resultsContainer.scrollIntoView({ behavior: 'smooth' });
+  
+  console.log('✅ Resultados exibidos com sucesso');
+}
+
+// Funcionalidade de Upload de Arquivos
+function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  // Validar tipo de arquivo
+  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+  if (!allowedTypes.includes(file.type)) {
+    showModernModal({
+      title: 'Arquivo Não Suportado',
+      subtitle: 'Formato inválido',
+      text: 'Tipo de arquivo não suportado. Use PDF, DOC, DOCX ou TXT.',
+      icon: 'fas fa-exclamation-triangle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Validar tamanho (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showModernModal({
+      title: 'Arquivo Muito Grande',
+      subtitle: 'Limite de tamanho excedido',
+      text: 'Arquivo muito grande. Máximo 10MB permitido.',
+      icon: 'fas fa-exclamation-triangle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Mostrar arquivo carregado
+  showUploadedFile(file);
+  
+  // Extrair texto do arquivo
+  extractTextFromFile(file);
+}
+
+function showUploadedFile(file) {
+  const uploadedFiles = document.getElementById('uploadedFiles');
+  const filesList = document.getElementById('filesList');
+  
+  const fileItem = document.createElement('div');
+  fileItem.className = 'file-item mb-2';
+  fileItem.innerHTML = `
+    <div class="d-flex align-items-center">
+      <i class="fas fa-file me-2 text-primary"></i>
+      <div class="flex-grow-1">
+        <div class="fw-medium text-white">${file.name}</div>
+        <small class="text-muted">${formatFileSize(file.size)} - ${file.type}</small>
+      </div>
+      <button class="btn btn-sm btn-outline-danger" onclick="removeUploadedFile(this)">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  filesList.innerHTML = '';
+  filesList.appendChild(fileItem);
+  uploadedFiles.style.display = 'block';
+}
+
+function removeUploadedFile(button) {
+  const uploadedFiles = document.getElementById('uploadedFiles');
+  const fileInput = document.getElementById('fileInput');
+  
+  uploadedFiles.style.display = 'none';
+  fileInput.value = '';
+  
+  // Limpar textarea
+  document.getElementById('documentText').value = '';
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Função para capturar e processar arquivo de upload
+function handleFileUploadAndExtract(input) {
+  console.log('🔍 DEBUG: handleFileUploadAndExtract iniciada');
+  console.log('🔍 DEBUG: Input recebido:', input);
+  console.log('🔍 DEBUG: Input.files:', input.files);
+  console.log('🔍 DEBUG: Input.files.length:', input.files ? input.files.length : 'N/A');
+  
+  if (input.files && input.files[0]) {
+    uploadedFile = input.files[0];
+    const filename = uploadedFile.name;
+    const filesize = (uploadedFile.size / 1024 / 1024).toFixed(2);
+    const filetype = uploadedFile.type;
+    
+    console.log('✅ DEBUG: Arquivo detectado');
+    console.log(`📄 DEBUG: Nome: ${filename}`);
+    console.log(`📊 DEBUG: Tamanho: ${filesize}MB`);
+    console.log(`🏷️ DEBUG: Tipo: ${filetype}`);
+    console.log(`🔢 DEBUG: Tamanho em bytes: ${uploadedFile.size}`);
+    
+    // Mostrar indicador de processamento
+    const processingDiv = document.getElementById('uploadProcessing');
+    console.log('🔍 DEBUG: Element uploadProcessing:', processingDiv);
+    if (processingDiv) {
+      processingDiv.style.display = 'block';
+      console.log('✅ DEBUG: Indicador de processamento mostrado');
+    }
+    
+    // Processar arquivo e extrair texto
+    console.log('🚀 DEBUG: Iniciando extractTextFromFile...');
+    extractTextFromFile(uploadedFile)
+      .then(extractedText => {
+        console.log('✅ DEBUG: extractTextFromFile concluída');
+        console.log('📝 DEBUG: Texto extraído (length):', extractedText ? extractedText.length : 'NULL');
+        
+        // Ocultar indicador de processamento
+        if (processingDiv) {
+          processingDiv.style.display = 'none';
+          console.log('✅ DEBUG: Indicador de processamento ocultado');
+        }
+        
+        if (extractedText && extractedText.trim()) {
+          // Preencher textarea com texto extraído
+          const textArea = document.getElementById('documentText');
+          console.log('🔍 DEBUG: TextArea element:', textArea);
+          
+          if (textArea) {
+            textArea.value = extractedText;
+            console.log('✅ DEBUG: Texto inserido na textarea');
+            console.log('📝 DEBUG: Primeiros 200 caracteres:', extractedText.substring(0, 200));
+            
+            // Focar na área de texto
+            focusTextArea();
+          } else {
+            console.error('❌ DEBUG: TextArea não encontrada');
+          }
+          
+          // Mostrar feedback de sucesso
+          console.log(`🎉 DEBUG: Sucesso - ${extractedText.length} caracteres processados`);
+          showModernModal({
+            title: 'Extração Concluída',
+            subtitle: `Texto extraído de ${filename}`,
+            text: `${extractedText.length} caracteres processados com sucesso.`,
+            icon: 'fas fa-check-circle',
+            actions: [{ text: 'OK', type: 'primary', action: 'close' }]
+          });
+        } else {
+          console.error('❌ DEBUG: Texto extraído está vazio ou nulo');
+          showModernModal({
+            title: 'Erro na Extração',
+            subtitle: 'Formato não suportado',
+            text: 'Não foi possível extrair texto do arquivo. Verifique se é um formato suportado.',
+            icon: 'fas fa-exclamation-triangle',
+            actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+          });
+        }
+      })
+      .catch(error => {
+        console.error('❌ DEBUG: Erro na extração:', error);
+        console.error('❌ DEBUG: Stack trace:', error.stack);
+        if (processingDiv) {
+          processingDiv.style.display = 'none';
+        }
+        showModernModal({
+          title: 'Erro no Processamento',
+          subtitle: 'Falha ao processar arquivo',
+          text: 'Erro ao processar arquivo: ' + error.message,
+          icon: 'fas fa-times-circle',
+          actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+        });
+      });
+  } else {
+    console.error('❌ DEBUG: Nenhum arquivo encontrado no input');
+    console.log('🔍 DEBUG: Input completo:', input);
+    showModernModal({
+      title: 'Arquivo Necessário',
+      subtitle: 'Nenhum arquivo selecionado',
+      text: 'Por favor, selecione um arquivo para continuar.',
+      icon: 'fas fa-file',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  }
+}
+
+// Função para focar na área de texto após upload
+function focusTextArea() {
+  console.log('🔄 DEBUG: Focando na área de texto...');
+  const textArea = document.getElementById('documentText');
+  if (textArea) {
+    textArea.focus();
+    textArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function extractTextFromFile(file) {
+  console.log('🚀 DEBUG: extractTextFromFile iniciada para:', file.name);
+  
+  return new Promise((resolve, reject) => {
+    const fileType = file.type;
+    const fileName = file.name.toLowerCase();
+    
+    console.log('🔍 DEBUG: Analisando arquivo:', fileName, 'Tipo:', fileType);
+    
+    if (fileType === 'text/plain' || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+      // Arquivo de texto simples
+      console.log('📝 DEBUG: Processando arquivo de texto simples...');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        console.log('✅ DEBUG: Texto lido com sucesso');
+        resolve(e.target.result);
+      };
+      reader.onerror = function() {
+        console.error('❌ DEBUG: Erro ao ler arquivo de texto');
+        reject(new Error('Erro ao ler arquivo de texto'));
+      };
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      // Para PDF, DOC, DOCX - enviar para servidor para extração
+      console.log('📋 DEBUG: Enviando para servidor para extração...');
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('📡 DEBUG: Enviando requisição para /api/extrair-texto');
+      
+      fetch('/api/extrair-texto', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        console.log('📡 DEBUG: Resposta recebida:', response.status);
+        console.log('📡 DEBUG: Response headers:', response.headers);
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('📊 DEBUG: Dados recebidos:', data);
+        if (data.sucesso && data.texto) {
+          console.log('✅ DEBUG: Texto extraído com sucesso via API');
+          console.log('📝 DEBUG: Tamanho do texto:', data.texto.length);
+          resolve(data.texto);
+        } else {
+          console.error('❌ DEBUG: API retornou erro:', data.erro);
+          reject(new Error(data.erro || 'Erro ao extrair texto'));
+        }
+      })
+      .catch(error => {
+        console.error('❌ DEBUG: Erro na API:', error);
+        console.error('❌ DEBUG: Stack trace:', error.stack);
+        reject(error);
+      });
+    }
+  });
+}
+
+// Drag and Drop functionality - Inicialização completa
+function initializeDragAndDrop() {
+  console.log('🚀 DEBUG: initializeDragAndDrop iniciada');
+  
+  const uploadArea = document.getElementById('uploadAreaUnified');
+  console.log('🔍 DEBUG: uploadArea element:', uploadArea);
+  
+  if (!uploadArea) {
+    console.error('❌ DEBUG: Área de upload não encontrada, tentando novamente...');
+    setTimeout(initializeDragAndDrop, 500);
+    return;
+  }
+  
+  console.log('✅ DEBUG: Inicializando drag and drop na área de upload');
+  console.log('🔍 DEBUG: UploadArea ID:', uploadArea.id);
+  console.log('🔍 DEBUG: UploadArea classList:', uploadArea.classList);
+  
+  // Prevenir comportamento padrão do navegador
+  function preventDefaults(e) {
+    console.log('🛡️ DEBUG: preventDefaults chamada para evento:', e.type);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  // Adicionar efeito visual durante drag
+  function highlight(e) {
+    console.log('🎨 DEBUG: highlight chamada para evento:', e.type);
+    uploadArea.classList.add('dragover');
+    uploadArea.style.borderColor = '#28a745';
+    uploadArea.style.background = 'rgba(40, 167, 69, 0.15)';
+  }
+  
+  // Remover efeito visual
+  function unhighlight(e) {
+    console.log('🎨 DEBUG: unhighlight chamada para evento:', e.type);
+    uploadArea.classList.remove('dragover');
+    uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+    uploadArea.style.background = 'rgba(255, 255, 255, 0.02)';
+  }
+  
+  // Processar arquivo solto
+  function handleDrop(e) {
+    console.log('🎯 DEBUG: handleDrop iniciada');
+    console.log('🔍 DEBUG: Event:', e);
+    
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    console.log('📁 DEBUG: DataTransfer:', dt);
+    console.log('📁 DEBUG: Files:', files);
+    console.log('📁 DEBUG: Files.length:', files.length);
+    
+    if (files.length > 0) {
+      const file = files[0];
+      console.log(`📄 DEBUG: Arquivo arrastado: ${file.name}`);
+      console.log(`📊 DEBUG: Tamanho: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      console.log(`🏷️ DEBUG: Tipo: ${file.type}`);
+      
+      const fileInput = document.getElementById('fileInput');
+      console.log('🔍 DEBUG: FileInput element:', fileInput);
+      
+      try {
+        // Criar lista de arquivos para input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(files[0]);
+        fileInput.files = dataTransfer.files;
+        
+        console.log('✅ DEBUG: Arquivo atribuído ao input');
+        console.log('🔍 DEBUG: FileInput.files após atribuição:', fileInput.files);
+        
+        // Processar arquivo
+        handleFileUploadAndExtract(fileInput);
+      } catch (error) {
+        console.error('❌ DEBUG: Erro ao processar drop:', error);
+        console.error('❌ DEBUG: Stack trace:', error.stack);
+      }
+    } else {
+      console.error('❌ DEBUG: Nenhum arquivo no drop');
+    }
+  }
+  
+  // Eventos de drag and drop
+  console.log('🔧 DEBUG: Registrando eventos de drag and drop...');
+  
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    console.log(`📝 DEBUG: Registrando ${eventName} no uploadArea`);
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+  });
+  
+  ['dragenter', 'dragover'].forEach(eventName => {
+    console.log(`🎨 DEBUG: Registrando highlight para ${eventName}`);
+    uploadArea.addEventListener(eventName, highlight, false);
+  });
+  
+  ['dragleave', 'drop'].forEach(eventName => {
+    console.log(`🎨 DEBUG: Registrando unhighlight para ${eventName}`);
+    uploadArea.addEventListener(eventName, unhighlight, false);
+  });
+  
+  console.log('📁 DEBUG: Registrando evento drop...');
+  uploadArea.addEventListener('drop', handleDrop, false);
+  
+  // Adicionar indicador visual de que drag and drop está ativo
+  uploadArea.setAttribute('data-drag-drop', 'active');
+  console.log('✅ DEBUG: Drag and drop ativado com sucesso');
+  console.log('🔍 DEBUG: UploadArea final classList:', uploadArea.classList);
+  console.log('🔍 DEBUG: UploadArea final attributes:', uploadArea.attributes);
+}
+
+// Inicializar quando DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+  initializeDragAndDrop();
+  
+  // Inicializar imediatamente na área unificada
+  console.log('✅ Drag and drop inicializado na interface unificada');
+});
+
+// Função para consultar especialista (botão Chat)
+function consultarEspecialista(area, nome, agenteId) {
+  console.log(`Iniciando chat com ${nome} da área ${area} (ID: ${agenteId})`);
+  
+  // Redirecionar para página de detalhes do agente
+  window.open(`/agentes/${agenteId}/detalhe`, '_blank');
+}
+
+// Função para exportar análise em PDF ou DOCX
+async function exportarAnalise(formato, analiseId) {
+  console.log(`📄 Exportando análise ${analiseId} em formato ${formato.toUpperCase()}`);
+  
+  try {
+    // Mostrar loading
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = `<i class="fas fa-spinner fa-spin me-1"></i>Exportando...`;
+    button.disabled = true;
+    
+    // Fazer requisição para o backend
+    const response = await fetch(`/api/validacao-multi-agente/exportar/${analiseId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        formato: formato
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
+    // Verificar se é um arquivo ou JSON
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      // Resposta de erro
+      const data = await response.json();
+      throw new Error(data.error || 'Erro na exportação');
+    } else {
+      // Download do arquivo
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analise_multi_agente_${analiseId}.${formato}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      console.log(`✅ Arquivo ${formato.toUpperCase()} baixado com sucesso`);
+      
+      // Mostrar modal de sucesso
+      showModernModal({
+        title: 'Exportação Concluída',
+        subtitle: `Arquivo ${formato.toUpperCase()} gerado com sucesso`,
+        text: `O relatório de análise multi-agente foi exportado em formato ${formato.toUpperCase()} profissional.`,
+        icon: 'fas fa-download',
+        iconColor: 'success',
+        actions: [{ text: 'OK', type: 'primary', action: 'close' }]
+      });
+    }
+    
+  } catch (error) {
+    console.error(`❌ Erro na exportação ${formato.toUpperCase()}:`, error);
+    
+    showModernModal({
+      title: 'Erro na Exportação',
+      subtitle: 'Falha ao gerar arquivo',
+      text: `Não foi possível exportar em ${formato.toUpperCase()}: ${error.message}`,
+      icon: 'fas fa-exclamation-triangle',
+      iconColor: 'danger',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  } finally {
+    // Restaurar botão
+    if (button) {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  }
+}
+
+// Função para editar agente (botão Editar)
+function editarAgente(agenteId) {
+  const agent = window.agentsData.find(a => a.id === agenteId);
+  if (!agent) {
+    alert('Agente não encontrado');
+    return;
+  }
+  
+  console.log(`Editando agente: ${agent.nome || agent.name} (ID: ${agenteId})`);
+  
+  // Usar a rota padrão de edição do sistema
+  window.open(`/admin/agentes/${agenteId}/editar`, '_blank');
+}
+
+// Variáveis globais do sistema
+let selectedAgents = new Set();
+let ultimaAnaliseRealizada = null; // Armazena dados da última análise
+
+// Função para selecionar/desselecionar agente (novo botão Selecionar)
+function selecionarAgente(agenteId) {
+  const agent = window.agentsData.find(a => a.id === agenteId);
+  if (!agent) {
+    alert('Agente não encontrado');
+    return;
+  }
+  
+  const button = document.getElementById(`utilizar_${agenteId}`);
+  const buttonText = button.querySelector('.btn-text');
+  const buttonIcon = button.querySelector('i');
+  
+  if (selectedAgents.has(agenteId)) {
+    // Desselecionar agente
+    selectedAgents.delete(agenteId);
+    button.style.background = 'transparent';
+    button.style.color = '#6b7280';
+    button.style.borderColor = '#6b7280';
+    buttonText.textContent = 'Selecionar';
+    buttonIcon.className = 'fas fa-plus';
+    console.log(`Agente ${agent.nome || agent.name} removido da seleção`);
+  } else {
+    // Verificar limite máximo de agentes
+    const maxAgents = parseInt(document.getElementById('maxAgents').value) || 3;
+    if (selectedAgents.size >= maxAgents) {
+      showModernModal({
+        title: 'Limite Atingido',
+        subtitle: 'Máximo de agentes selecionados',
+        text: `Você pode selecionar no máximo ${maxAgents} agentes para análise.`,
+        icon: 'fas fa-exclamation-triangle',
+        actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+      });
+      return;
+    }
+    
+    // Selecionar agente
+    selectedAgents.add(agenteId);
+    button.style.background = '#22c55e';
+    button.style.color = 'white';
+    button.style.borderColor = '#22c55e';
+    buttonText.textContent = 'Selecionado';
+    buttonIcon.className = 'fas fa-check';
+    console.log(`Agente ${agent.nome || agent.name} adicionado à seleção`);
+  }
+  
+  // Atualizar contadores
+  updateSelectionDisplay();
+}
+
+// Função para atualizar exibição da seleção
+function updateSelectionDisplay() {
+  const selectedCount = selectedAgents.size;
+  const maxAgents = parseInt(document.getElementById('maxAgents').value) || 3;
+  
+  // Atualizar contador no cabeçalho
+  const counterElement = document.getElementById('selectedAgentsCount');
+  if (counterElement) {
+    counterElement.textContent = selectedCount;
+  }
+  
+  // Atualizar tempo estimado baseado no número de agentes
+  const timeElement = document.getElementById('estimatedTime');
+  if (timeElement) {
+    const estimatedMinutes = selectedCount * 2; // 2 minutos por agente
+    timeElement.textContent = selectedCount > 0 ? `${estimatedMinutes} min` : '--';
+  }
+  
+  // Habilitar/desabilitar botões de análise
+  const analyzeButton = document.getElementById('btnStartAnalysis');
+  const initiateButton = document.getElementById('btnIniciarAnalise');
+  const realButton = document.getElementById('btnAnaliseReal');
+  
+  if (analyzeButton) {
+    analyzeButton.disabled = selectedCount === 0;
+    analyzeButton.style.opacity = selectedCount === 0 ? '0.6' : '1';
+  }
+  
+  if (initiateButton) {
+    initiateButton.disabled = selectedCount === 0;
+    initiateButton.style.opacity = selectedCount === 0 ? '0.6' : '1';
+  }
+  
+  if (realButton) {
+    realButton.disabled = selectedCount === 0;
+    realButton.style.opacity = selectedCount === 0 ? '0.6' : '1';
+    console.log(`🔘 Botão Análise Real: ${selectedCount === 0 ? 'DESABILITADO' : 'HABILITADO'}`);
+  }
+  
+  const topButton = document.getElementById('btnIniciarAnaliseTop');
+  if (topButton) {
+    topButton.disabled = selectedCount === 0;
+    topButton.style.opacity = selectedCount === 0 ? '0.6' : '1';
+  }
+}
+
+// Função principal para executar análise real com agentes selecionados
+// ============================================================================
+// FUNÇÃO UNIFICADA ROBUSTA - ANÁLISE COMPLETA MULTI-API
+// ============================================================================
+async function executarAnaliseCompletaUnificada() {
+  console.log('🚀 Iniciando análise completa multi-agente unificada...');
+  
+  // Verificar se há texto do documento
+  const textoDocumento = document.getElementById('documentText').value.trim();
+  if (!textoDocumento) {
+    showModernModal({
+      title: 'Documento Necessário',
+      subtitle: 'Texto requerido para análise',
+      text: 'Por favor, insira ou faça upload do texto do documento para análise.',
+      icon: 'fas fa-file-text',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  if (textoDocumento.length < 100) {
+    showModernModal({
+      title: 'Texto Insuficiente',
+      subtitle: 'Mais conteúdo necessário',
+      text: 'Texto muito curto para análise confiável. Mínimo de 100 caracteres necessários.',
+      icon: 'fas fa-info-circle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Verificar se há agentes selecionados (manual ou automática)
+  if (selectedAgents.size === 0) {
+    console.log('🧠 Nenhum agente selecionado - oferecendo opções...');
+    showModernModal({
+      title: 'Seleção de Agentes',
+      subtitle: 'Escolha o modo de seleção',
+      text: 'Para realizar a análise, você pode:<br><br>• <strong>Seleção Automática:</strong> Clique em "Analisar Documento" para detectar automaticamente os agentes mais adequados<br>• <strong>Seleção Manual:</strong> Escolha manualmente os agentes desejados na lista abaixo',
+      icon: 'fas fa-users',
+      actions: [
+        { text: 'Seleção Automática', type: 'primary', action: 'custom', callback: async () => {
+          console.log('🤖 Executando seleção automática...');
+          await autoSelectAgentsForDocument();
+          if (selectedAgents.size > 0) {
+            console.log('✅ Agentes selecionados automaticamente, reiniciando análise...');
+            setTimeout(() => executarAnaliseCompletaUnificada(), 1000);
+          }
+        }},
+        { text: 'Seleção Manual', type: 'secondary', action: 'close' }
+      ]
+    });
+    return;
+  }
+  
+  const selectedAgentIds = Array.from(selectedAgents);
+  console.log('🎯 Agentes selecionados para análise:', selectedAgentIds);
+  
+  // Mostrar loading em ambos os botões
+  const btnReal = document.getElementById('btnAnaliseReal');
+  const btnRealTop = document.getElementById('btnAnaliseRealTop');
+  const originalTextMain = btnReal?.innerHTML;
+  const originalTextTop = btnRealTop?.innerHTML;
+  
+  // Desabilitar ambos os botões e mostrar loading
+  if (btnReal) {
+    btnReal.disabled = true;
+    btnReal.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando Análise Multi-API...<br><small class="d-block mt-1">OpenAI + Anthropic + Gemini</small>';
+  }
+  if (btnRealTop) {
+    btnRealTop.disabled = true;
+    btnRealTop.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando...';
+  }
+  
+  try {
+    console.log('📡 Conectando com API robusta sequencial (/api/analise-3-agentes-manual)...');
+    
+    // Função para obter agentes selecionados
+    function getSelectedAgents() {
+      return Array.from(selectedAgents);
+    }
+    
+    // Fazer requisição para a API mais robusta
+    const response = await fetch('/api/analise-3-agentes-manual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        texto: textoDocumento,
+        agentes_selecionados: getSelectedAgents()
+      })
+    });
+    
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response ok:', response.ok);
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Análise concluída:', data);
+    
+    if (data.success === true) {
+      // Chamar função de exibição principal
+      console.log('🎯 Chamando displayAnalysisResults com dados:', data);
+      
+      try {
+        displayAnalysisResults(data);
+        console.log('✅ Resultados exibidos com sucesso via displayAnalysisResults');
+      } catch (error) {
+        console.error('❌ Erro ao exibir resultados:', error);
+        
+        // Fallback simples
+        alert(`Análise concluída! APIs funcionais: ${data.meta?.apis_funcionais || 0}/3. Tokens: ${data.meta?.total_tokens || 0}`);
+      }
+      
+      // Sucesso - mostrar modal
+      showModernModal({
+        title: 'Análise Concluída!',
+        subtitle: 'Processamento Multi-API finalizado',
+        text: `Análise realizada com sucesso usando ${data.meta.apis_funcionais} APIs em ${typeof data.results.tempo_total === 'number' ? data.results.tempo_total.toFixed(1) : data.results.tempo_total}s. Resultados exibidos abaixo.`,
+        icon: 'fas fa-check-circle',
+        iconColor: 'success',
+        actions: [{ text: 'Ver Resultados', type: 'primary', action: 'close' }]
+      });
+    } else {
+      throw new Error(data.mensagem || 'Erro na análise');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na análise:', error);
+    
+    // Mostrar modal de erro
+    showModernModal({
+      title: 'Erro na Análise',
+      subtitle: 'Falha no processamento',
+      text: `Ocorreu um erro durante a análise: ${error.message}`,
+      icon: 'fas fa-exclamation-triangle',
+      iconColor: 'danger',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  } finally {
+    // Restaurar estado original dos botões
+    if (btnReal && originalTextMain) {
+      btnReal.disabled = false;
+      btnReal.innerHTML = originalTextMain;
+    }
+    if (btnRealTop && originalTextTop) {
+      btnRealTop.disabled = false;
+      btnRealTop.innerHTML = originalTextTop;
+    }
+  }
+}
+
+// ============================================================================
+// FUNÇÃO ORIGINAL (MANTIDA PARA COMPATIBILIDADE)
+// ============================================================================
+async function executarAnaliseReal() {
+  console.log('🚀 Iniciando análise real multi-agente...');
+  
+  // Verificar se há texto do documento
+  const textoDocumento = document.getElementById('documentText').value.trim();
+  if (!textoDocumento) {
+    showModernModal({
+      title: 'Documento Necessário',
+      subtitle: 'Texto requerido para análise',
+      text: 'Por favor, insira ou faça upload do texto do documento para análise.',
+      icon: 'fas fa-file-text',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  if (textoDocumento.length < 100) {
+    showModernModal({
+      title: 'Texto Insuficiente',
+      subtitle: 'Mais conteúdo necessário',
+      text: 'Texto muito curto para análise confiável. Mínimo de 100 caracteres necessários.',
+      icon: 'fas fa-info-circle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Verificar se há agentes selecionados
+  if (selectedAgents.size === 0) {
+    showModernModal({
+      title: 'Agentes Necessários',
+      subtitle: 'Seleção requerida',
+      text: 'Selecione pelo menos um agente para realizar a análise, ou use o botão "Analisar Documento" para seleção automática.',
+      icon: 'fas fa-users',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  const selectedAgentIds = Array.from(selectedAgents);
+  console.log('🎯 Agentes selecionados para análise:', selectedAgentIds);
+  
+  // Mostrar loading no botão
+  const btnReal = document.getElementById('btnAnaliseReal');
+  const originalText = btnReal.innerHTML;
+  btnReal.disabled = true;
+  btnReal.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando Análise...';
+  
+  try {
+    // Preparar dados para envio
+    const formData = new FormData();
+    formData.append('texto_documento', textoDocumento);
+    formData.append('modo_analise', 'automatico');
+    formData.append('area_foco', '');
+    
+    // Enviar IDs dos agentes selecionados
+    selectedAgentIds.forEach(id => {
+      formData.append('agentes_selecionados', id);
+    });
+    
+    // Verificar se há arquivo carregado
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput && fileInput.files[0]) {
+      formData.append('arquivo_documento', fileInput.files[0]);
+    }
+    
+    console.log('📡 Enviando para API Multi-Agente Robusta...');
+    
+    // Usar nova API sequencial robusta: OpenAI -> Gemini -> Anthropic
+    console.log('🚀 Conectando com API robusta sequencial sem timeout');
+    
+    // Função para obter agentes selecionados
+    function getSelectedAgents() {
+      const checkboxes = document.querySelectorAll('input[name="agentes_selecionados"]:checked');
+      return Array.from(checkboxes).map(cb => parseInt(cb.value));
+    }
+    
+    const response = await fetch('/api/analise-3-agentes-manual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        texto: document.getElementById('documentText').value,
+        agentes_selecionados: getSelectedAgents()
+      })
+    });
+    
+    console.log('📡 Response status:', response.status);
+    console.log('📡 Response ok:', response.ok);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Análise concluída:', data);
+      
+      if (data.status === 'sucesso') {
+        // Processar resposta da API de 3 agentes idênticos
+        const adaptedData = {
+          success: true,
+          id: data.meta.sistema_id,
+          tempo_total: data.results.tempo_total,
+          total_agentes: data.meta.apis_funcionais,
+          apis_utilizadas: data.meta.configuracao.sequencia.split(' -> '),
+          hash_documento: data.meta.sistema_id,
+          uuid_analise: data.meta.sistema_id,
+          numero_registro: data.meta.sistema_id,
+          resultados_por_api: data.results,
+          comparacao_agentes: data.results.comparacao
+        };
+        
+        // Armazenar dados globalmente para botões
+        ultimaAnaliseRealizada = adaptedData;
+        console.log('🔧 Dados 3 agentes armazenados:', ultimaAnaliseRealizada);
+        
+        // Exibir resultados com comparação entre 3 agentes
+        console.log('🎯 Chamando displayAnalysisResults com dados adaptados:', data);
+        displayAnalysisResults(data);
+        
+        // Mostrar modal de sucesso
+        showModernModal({
+          title: 'Análise Multi-Agente Concluída',
+          subtitle: `${data.meta.apis_funcionais}/3 APIs funcionaram - ${data.meta.total_tokens} tokens`,
+          text: `Análise comparativa realizada. Tempo: ${data.results.tempo_total.toFixed(1)}s`,
+          icon: 'fas fa-check-circle',
+          actions: [
+            { text: 'Nova Análise', type: 'secondary', action: 'close' }
+          ]
+        });
+      } else {
+        throw new Error(data.mensagem || 'Erro na análise');
+      }
+    } else {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na análise:', error);
+    showModernModal({
+      title: 'Erro na Análise',
+      subtitle: 'Falha no processamento',
+      text: 'Ocorreu um erro durante a análise. Tente novamente.',
+      icon: 'fas fa-exclamation-triangle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  } finally {
+    // Restaurar botão
+    btnReal.disabled = false;
+    btnReal.innerHTML = originalText;
+  }
+}
+
+// Função GARANTIDA para exibir resultados da análise
+function displayCompleteAnalysisResults(apiResponse) {
+  console.log('🚀 FUNÇÃO CHAMADA - displayCompleteAnalysisResults');
+  console.log('🚀 DADOS RECEBIDOS:', apiResponse);
+  console.log('🚀 TIPO DOS DADOS:', typeof apiResponse);
+  console.log('🚀 apiResponse.results existe?', !!apiResponse?.results);
+  console.log('🚀 Chaves de apiResponse:', Object.keys(apiResponse || {}));
+  
+  try {
+    // Validação rigorosa
+    if (!apiResponse) {
+      throw new Error('API Response é null/undefined');
+    }
+    if (!apiResponse.results) {
+      throw new Error('Resultados não encontrados na resposta');
+    }
+    
+    // Extrair análise com fallback garantido
+    let analise = '';
+    console.log('🔍 Verificando análises disponíveis:');
+    console.log('🔍 OpenAI:', !!apiResponse.results.analise_openai);
+    console.log('🔍 Gemini:', !!apiResponse.results.analise_gemini);
+    console.log('🔍 Anthropic:', !!apiResponse.results.analise_anthropic);
+    
+    if (apiResponse.results.analise_openai && apiResponse.results.analise_openai !== "OpenAI não configurado") {
+      analise = apiResponse.results.analise_openai;
+      console.log('✅ Usando análise OpenAI:', analise.length, 'caracteres');
+    } else if (apiResponse.results.analise_gemini && apiResponse.results.analise_gemini !== "Gemini não configurado") {
+      analise = apiResponse.results.analise_gemini;
+      console.log('✅ Usando análise Gemini:', analise.length, 'caracteres');
+    } else if (apiResponse.results.analise_anthropic && apiResponse.results.analise_anthropic !== "Anthropic não configurado") {
+      analise = apiResponse.results.analise_anthropic;
+      console.log('✅ Usando análise Anthropic:', analise.length, 'caracteres');
+    } else {
+      console.error('❌ Nenhuma análise válida encontrada');
+      throw new Error('Nenhuma análise válida encontrada nos resultados');
+    }
+    
+    // Validar se a análise não está vazia
+    if (!analise || analise.trim().length === 0) {
+      throw new Error('Análise extraída está vazia');
+    }
+    
+    // Garantir que existe um container
+    let container = document.getElementById('analysis-results');
+    if (container) {
+      container.remove(); // Remove o antigo se existir
+    }
+    
+    // Criar novo container garantido
+    container = document.createElement('div');
+    container.id = 'analysis-results';
+    container.style.cssText = 'width: 100%; margin: 30px 0; padding: 0;';
+    
+    // Escapar o texto da análise para evitar problemas de template
+    const analiseEscapada = analise
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    
+    console.log('🔧 Análise escapada para HTML:', analiseEscapada.length, 'caracteres');
+    
+    // HTML garantido e funcional
+    const html = `
+      <div style="background: linear-gradient(135deg, #1a1a1a, #2d2d2d); color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #444;">
+        <div style="border-bottom: 2px solid #60a5fa; padding-bottom: 20px; margin-bottom: 30px;">
+          <h1 style="color: #60a5fa; margin: 0; font-size: 2.2rem; display: flex; align-items: center;">
+            <i class="fas fa-gavel" style="margin-right: 15px;"></i>
+            Análise Jurídica Completa
+          </h1>
+          <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 1.1rem;">
+            ${apiResponse.meta?.total_tokens || 0} tokens • ${(apiResponse.results?.tempo_total || 0).toFixed(1)}s • ID: ${apiResponse.meta?.sistema_id || 'N/A'}
+          </p>
+        </div>
+        <div style="background: rgba(96, 165, 250, 0.1); padding: 30px; border-radius: 15px; border-left: 5px solid #60a5fa;">
+          <pre style="white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; line-height: 1.7; margin: 0; font-size: 1rem; color: #f1f5f9;">${analiseEscapada}</pre>
+        </div>
+        <div style="margin-top: 25px; text-align: center;">
+          <button onclick="window.print()" style="background: #60a5fa; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin: 0 10px;">
+            <i class="fas fa-print"></i> Imprimir
+          </button>
+          <button onclick="copiarAnalise()" style="background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin: 0 10px;">
+            <i class="fas fa-copy"></i> Copiar
+          </button>
+        </div>
+      </div>
+    `;
+    
+    // Adicionar função de cópia no escopo global
+    window.copiarAnalise = function() {
+      navigator.clipboard.writeText(analise).then(() => {
+        alert('Análise copiada para a área de transferência!');
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        alert('Erro ao copiar a análise');
+      });
+    };
+    
+    // Inserir no DOM de forma garantida
+    container.innerHTML = html;
+    console.log('🔧 HTML inserido no container. Tamanho:', html.length);
+    
+    document.body.appendChild(container);
+    console.log('🔧 Container adicionado ao body. ID:', container.id);
+    
+    // Verificar se realmente foi inserido
+    const verificacao = document.getElementById('analysis-results');
+    console.log('🔧 Verificação DOM - Container existe?', !!verificacao);
+    console.log('🔧 Verificação DOM - Container visível?', verificacao?.style.display !== 'none');
+    console.log('🔧 Verificação DOM - Posição no body:', Array.from(document.body.children).indexOf(verificacao));
+    
+    // Scroll garantido com delay
+    setTimeout(() => {
+      container.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+      console.log('🎯 Scroll executado para o container');
+    }, 300);
+    
+    console.log('✅ SUCESSO GARANTIDO: Análise exibida na página!');
+    return true;
+    
+  } catch (error) {
+    console.error('❌ ERRO na exibição:', error);
+    
+    // Container de erro garantido
+    let errorContainer = document.createElement('div');
+    errorContainer.id = 'analysis-error';
+    errorContainer.innerHTML = `
+      <div style="background: #dc2626; color: white; padding: 20px; border-radius: 10px; margin: 30px 0; position: relative; z-index: 9999;">
+        <h3><i class="fas fa-exclamation-triangle"></i> Erro na Exibição da Análise</h3>
+        <p><strong>Detalhes:</strong> ${error.message}</p>
+        <p><strong>Dados recebidos:</strong> ${JSON.stringify(apiResponse, null, 2).substring(0, 800)}...</p>
+        <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 10px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+    `;
+    document.body.appendChild(errorContainer);
+    errorContainer.scrollIntoView({ behavior: 'smooth' });
+    return false;
+  }
+}
+
+// Funções auxiliares para os botões de ação
+function copiarAnaliseCompleta() {
+  const analiseElement = document.querySelector('#analysis-results div[style*="white-space: pre-wrap"]');
+  if (analiseElement) {
+    const texto = analiseElement.textContent;
+    navigator.clipboard.writeText(texto).then(() => {
+      showModernModal({
+        title: 'Análise Copiada',
+        subtitle: 'Sucesso na operação',
+        text: 'O texto completo da análise foi copiado para a área de transferência.',
+        icon: 'fas fa-check-circle',
+        actions: [{ text: 'OK', type: 'primary', action: 'close' }]
+      });
+    }).catch(err => {
+      console.error('Erro ao copiar:', err);
+    });
+  }
+}
+
+function exportarAnaliseParaPDF() {
+  showModernModal({
+    title: 'Exportação PDF',
+    subtitle: 'Funcionalidade em desenvolvimento',
+    text: 'A exportação para PDF será implementada em breve. Por enquanto, use o botão "Copiar Análise".',
+    icon: 'fas fa-info-circle',
+    actions: [{ text: 'Entendido', type: 'secondary', action: 'close' }]
+  });
+}
+
+function novaAnalise() {
+  // Limpar resultados anteriores
+  const resultContainer = document.getElementById('analysis-results');
+  if (resultContainer) {
+    resultContainer.remove();
+  }
+  
+  // Scroll para o topo da página
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  showModernModal({
+    title: 'Nova Análise',
+    subtitle: 'Sistema resetado',
+    text: 'Os resultados anteriores foram limpos. Você pode fazer upload de um novo documento.',
+    icon: 'fas fa-plus-circle',
+    actions: [{ text: 'OK', type: 'primary', action: 'close' }]
+  });
+}
+
+// Funções auxiliares para as ações dos resultados
+function copyAnalysisToClipboard() {
+  const analysisText = document.querySelector('#analysis-results .card-body div[style*="white-space"]')?.textContent;
+  if (analysisText) {
+    navigator.clipboard.writeText(analysisText).then(() => {
+      showModernModal({
+        title: 'Copiado!',
+        subtitle: 'Análise copiada para a área de transferência',
+        text: 'O texto da análise foi copiado com sucesso.',
+        icon: 'fas fa-check',
+        actions: [{ text: 'OK', type: 'primary', action: 'close' }]
+      });
+    });
+  }
+}
+
+function exportAnalysisToPDF() {
+  showModernModal({
+    title: 'Exportação PDF',
+    subtitle: 'Funcionalidade em desenvolvimento',
+    text: 'A exportação para PDF será implementada em breve.',
+    icon: 'fas fa-info-circle',
+    actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+  });
+}
+
+function generateApiResultCards(resultados_apis) {
+  if (!resultados_apis) return '';
+  
+  const apis = [
+    { key: 'openai', name: 'OpenAI GPT-4o', color: '#10b981', icon: 'fas fa-brain' },
+    { key: 'anthropic', name: 'Anthropic Claude', color: '#f59e0b', icon: 'fas fa-lightbulb' },
+    { key: 'gemini', name: 'Google Gemini', color: '#3b82f6', icon: 'fas fa-star' }
+  ];
+  
+  return apis.map(api => {
+    const resultado = resultados_apis[api.key];
+    if (!resultado) return '';
+    
+    const statusClass = resultado.status === 'sucesso' ? 'success' : 'danger';
+    const statusIcon = resultado.status === 'sucesso' ? 'check-circle' : 'exclamation-triangle';
+    
+    return `
+      <div class="col-md-4 mb-4">
+        <div class="card bg-dark text-white h-100" style="border: 1px solid ${api.color};">
+          <div class="card-header" style="background: linear-gradient(135deg, ${api.color} 0%, ${api.color}aa 100%);">
+            <h6 class="mb-0">
+              <i class="${api.icon} me-2"></i>${api.name}
+            </h6>
+            <div class="d-flex justify-content-between align-items-center">
+              <small>
+                <i class="fas fa-${statusIcon} text-${statusClass} me-1"></i>
+                ${resultado.status === 'sucesso' ? 'Sucesso' : 'Erro'}
+              </small>
+              <small>
+                <i class="fas fa-coins me-1"></i>
+                ${resultado.tokens_usados || 0} tokens
+              </small>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="max-height: 300px; overflow-y: auto;">
+              <pre style="white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; font-size: 13px; line-height: 1.4;">${resultado.analise || 'Nenhuma análise disponível'}</pre>
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <small class="text-muted">Modelo: ${resultado.modelo || 'N/A'}</small>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Função para análise multi-agente - CORRIGIDA
+// FUNÇÃO REMOVIDA: startMultiAgentAnalysis()
+// Sistema agora usa apenas executarAnaliseReal() com seleção automática inteligente
+
+function startMultiAgentAnalysis_DEPRECATED() {
+  console.log('🚀 Iniciando análise multi-agente...');
+  
+  const textoDocumento = document.getElementById('documentText').value.trim();
+  
+  if (!textoDocumento) {
+    showModernModal({
+      title: 'Documento Necessário',
+      subtitle: 'Texto requerido para análise',
+      text: 'Por favor, insira o texto do documento para análise.',
+      icon: 'fas fa-file-text',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  if (selectedAgents.size === 0) {
+    alert('Selecione pelo menos um agente para iniciar a análise.');
+    return;
+  }
+  
+  const selectedAgentIds = Array.from(selectedAgents);
+  console.log('Agentes selecionados:', selectedAgentIds);
+  
+  // Mostrar loading e desabilitar botões
+  const btnAnalysis = document.getElementById('btnStartAnalysis');
+  const btnInitiate = document.getElementById('btnIniciarAnalise');
+  const btnTop = document.getElementById('btnIniciarAnaliseTop');
+  
+  let originalText = '';
+  let activeButton = null;
+  
+  if (btnAnalysis) {
+    originalText = btnAnalysis.innerHTML;
+    activeButton = btnAnalysis;
+    btnAnalysis.disabled = true;
+    btnAnalysis.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando Análise...';
+  } else if (btnInitiate) {
+    originalText = btnInitiate.innerHTML;
+    activeButton = btnInitiate;
+    btnInitiate.disabled = true;
+    btnInitiate.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando Análise...';
+  } else if (btnTop) {
+    originalText = btnTop.innerHTML;
+    activeButton = btnTop;
+    btnTop.disabled = true;
+    btnTop.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processando Análise...';
+  }
+  
+  // Preparar dados para envio
+  const formData = new FormData();
+  formData.append('texto_documento', textoDocumento);
+  formData.append('modo_analise', document.getElementById('modo_analise').value || 'completa');
+  formData.append('area_foco', document.getElementById('area_foco').value || '');
+  
+  // Enviar IDs dos agentes como array separado por vírgula
+  selectedAgentIds.forEach(id => {
+    formData.append('agentes_selecionados', id);
+  });
+  
+  // Verificar se há arquivo carregado
+  const fileInput = document.getElementById('arquivo_documento');
+  if (fileInput && fileInput.files[0]) {
+    formData.append('arquivo_documento', fileInput.files[0]);
+    console.log('Arquivo anexado:', fileInput.files[0].name);
+  } else if (uploadedFile) {
+    formData.append('arquivo_documento', uploadedFile);
+    console.log('Arquivo anexado via variável global:', uploadedFile.name);
+  }
+  
+  // Debug: mostrar dados que serão enviados
+  console.log('Dados para envio:');
+  for (let pair of formData.entries()) {
+    console.log(`${pair[0]}: ${pair[1]}`);
+  }
+  
+  // Enviar via AJAX para a API simplificada (3 agentes)
+  fetch('/api/analise-multi-agente', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    console.log('📡 DEBUG: Response status:', response.status);
+    console.log('📡 DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('📡 DEBUG: Response type:', response.type);
+    console.log('📡 DEBUG: Response url:', response.url);
+    
+    // Verificar se a resposta é realmente JSON
+    const contentType = response.headers.get('content-type');
+    console.log('📡 DEBUG: Content-Type:', contentType);
+    
+    if (response.status === 200) {
+      // Ler como texto primeiro para debug
+      return response.text().then(text => {
+        console.log('📝 DEBUG: Response text (primeiros 500 chars):', text.substring(0, 500));
+        console.log('📝 DEBUG: Response text (últimos 200 chars):', text.substring(Math.max(0, text.length - 200)));
+        
+        // Verificar se é HTML
+        if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+          console.error('❌ DEBUG: Servidor retornou HTML em vez de JSON');
+          console.error('❌ DEBUG: Possível redirecionamento ou erro 404');
+          throw new Error('Servidor retornou HTML em vez de JSON. Verificar endpoint da API.');
+        }
+        
+        // Tentar fazer parse do JSON
+        try {
+          const jsonData = JSON.parse(text);
+          console.log('✅ DEBUG: JSON parseado com sucesso');
+          console.log('✅ DEBUG: JSON keys:', Object.keys(jsonData));
+          return jsonData;
+        } catch (parseError) {
+          console.error('❌ DEBUG: Erro ao parsear JSON:', parseError);
+          console.error('❌ DEBUG: Texto recebido completo:', text);
+          throw new Error(`Erro ao parsear JSON: ${parseError.message}`);
+        }
+      });
+    } else {
+      return response.text().then(text => {
+        console.error('❌ DEBUG: Erro HTTP, resposta:', text);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      });
+    }
+  })
+  .then(data => {
+    // Restaurar todos os botões SEMPRE
+    const buttonsToRestore = [
+      { id: 'btnStartAnalysis', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' },
+      { id: 'btnIniciarAnalise', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' },
+      { id: 'btnIniciarAnaliseTop', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' }
+    ];
+    
+    buttonsToRestore.forEach(btnInfo => {
+      const btn = document.getElementById(btnInfo.id);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = btnInfo.text;
+      }
+    });
+    
+    if (data && data.success) {
+      console.log('✅ DEBUG: Análise concluída com sucesso');
+      console.log('✅ DEBUG: Dados recebidos:', data);
+      
+      // EXIBIR ANÁLISE COMPLETA NA INTERFACE
+      if (data.resultados && data.resultados.length > 0) {
+        displayCompleteAnalysisResults(data);
+      } else {
+        // Fallback para modal se não houver resultados
+        showModernModal({
+          title: 'Análise Concluída',
+          subtitle: `Registro: ${data.numero_registro || 'N/A'}`,
+          text: `Análise realizada por ${data.total_agentes || 0} agentes especialistas.`,
+          icon: 'fas fa-check-circle',
+          actions: [
+            { text: 'Ver Histórico', type: 'primary', action: 'redirect_historico' },
+            { text: 'Nova Análise', type: 'secondary', action: 'close' }
+          ]
+        });
+      }
+      
+    } else if (data && !data.success) {
+      console.error('❌ DEBUG: Erro retornado pela API:', data.error);
+      throw new Error(data.error || 'Erro desconhecido na análise');
+    } else {
+      console.error('❌ DEBUG: Resposta inesperada:', data);
+      throw new Error('Resposta inesperada do servidor');
+    }
+  })
+  .catch(error => {
+    console.error('❌ DEBUG: Erro na análise:', error);
+    console.error('❌ DEBUG: Stack trace completo:', error.stack);
+    
+    // Restaurar todos os botões em caso de erro
+    const buttonsToRestore = [
+      { id: 'btnStartAnalysis', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' },
+      { id: 'btnIniciarAnalise', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' },
+      { id: 'btnIniciarAnaliseTop', text: '<i class="fas fa-play me-2"></i>Iniciar Análise Multi-Agente' }
+    ];
+    
+    buttonsToRestore.forEach(btnInfo => {
+      const btn = document.getElementById(btnInfo.id);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = btnInfo.text;
+      }
+    });
+    
+    showModernModal({
+      title: 'Erro no Processamento',
+      subtitle: 'Falha na análise',
+      text: 'Erro ao processar análise: ' + error.message,
+      icon: 'fas fa-times-circle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+  });
+}
+
+// Função para exibir análise completa NO FINAL DA PÁGINA
+function displayCompleteAnalysisResults(data) {
+  console.log('📊 DEBUG: Exibindo análise COMPLETA no FINAL da página');
+  console.log('📄 DEBUG: Dados recebidos:', data);
+  
+  // Adaptar estrutura para compatibilidade
+  if (!data.resultados && data.resultados_por_api) {
+    // Converter nova estrutura para formato esperado
+    data.resultados = [];
+    Object.keys(data.resultados_por_api).forEach(api => {
+      if (api !== 'resumo_consolidado') {
+        const resultado = data.resultados_por_api[api];
+        data.resultados.push({
+          agente_nome: `Especialista via ${api.toUpperCase()}`,
+          especialidade: 'Análise Jurídica Especializada',
+          api_utilizada: api,
+          modelo_usado: resultado.modelo || 'N/A',
+          resultado: resultado.analise || 'Análise não disponível'
+        });
+      }
+    });
+  }
+  
+  console.log('📄 DEBUG: Resultados processados:', data.resultados);
+  
+  // Remover resultados anteriores se existirem
+  const existingSection = document.getElementById('analysis-results-section');
+  if (existingSection) {
+    existingSection.remove();
+  }
+  
+  // Criar seção de resultados no final da página PRINCIPAL
+  const resultsSection = document.createElement('div');
+  resultsSection.id = 'analysis-results-section';
+  resultsSection.className = 'row mt-5';
+  resultsSection.style.cssText = `
+    margin-top: 3rem !important;
+    margin-bottom: 2rem;
+  `;
+  
+  // Construir HTML DENTRO da página principal - não como painel separado
+  let resultsHTML = `
+    <div class="col-12">
+      <div class="card card-advanced" style="background: #1a202c; border: 1px solid #2d3748; border-radius: 15px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.3);">
+        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem;">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h2 class="mb-2">
+                <i class="fas fa-chart-line me-3"></i>
+                Análise Multi-Agente Concluída
+              </h2>
+              <p class="mb-0 opacity-90 lead">
+                Sistema: ${data.sistema_usado || 'Multi-Agente'} • 
+                Agentes: ${data.total_agentes || data.resultados?.length || 0} • 
+                Tempo: ${data.tempo_total || 'N/A'}s
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <span class="badge bg-success fs-5 px-3 py-2">
+                <i class="fas fa-check-circle me-2"></i>
+                Análise Concluída
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="background: #1a202c; color: white; padding: 0;">
+  `;
+  
+  // Adicionar análise de cada agente COMPLETA no final da página
+  if (data.resultados && data.resultados.length > 0) {
+    data.resultados.forEach((resultado, index) => {
+      resultsHTML += `
+        <div class="agent-result" style="border-bottom: 1px solid #2d3748;">
+          <div class="agent-header" style="background: #2d3748; padding: 1.5rem 2rem;">
+            <div class="d-flex align-items-center">
+              <div class="agent-number" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin-right: 1.5rem;">
+                ${index + 1}
+              </div>
+              <div class="flex-grow-1">
+                <h4 class="mb-2" style="color: #e2e8f0;">${resultado.agente_nome || 'Agente Especializado'}</h4>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge fs-6 px-3 py-1" style="background: #4a5568; color: white;">
+                    <i class="fas fa-graduation-cap me-1"></i>
+                    ${resultado.especialidade || 'Especialista'}
+                  </span>
+                  <span class="badge fs-6 px-3 py-1" style="background: #16a085; color: white;">
+                    <i class="fas fa-robot me-1"></i>
+                    ${resultado.api_utilizada || 'Sistema'}
+                  </span>
+                  ${resultado.modelo_usado ? `
+                    <span class="badge fs-6 px-3 py-1" style="background: #e67e22; color: white;">
+                      <i class="fas fa-microchip me-1"></i>
+                      ${resultado.modelo_usado}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="agent-content" style="padding: 2rem;">
+            <div class="analysis-text" style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid #16a085; padding: 2rem; border-radius: 10px; color: #e2e8f0; line-height: 1.8; white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; font-size: 15px;">
+              ${resultado.resultado || 'Análise não disponível'}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  } else {
+    resultsHTML += `
+      <div class="text-center py-5" style="padding: 3rem 2rem;">
+        <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+        <h4 style="color: #e2e8f0;">Nenhum resultado encontrado</h4>
+        <p style="color: #a0aec0; font-size: 1.1rem;">Os resultados da análise não estão disponíveis.</p>
+      </div>
+    `;
+  }
+  
+  resultsHTML += `
+        </div>
+        <div class="card-footer text-center" style="background: #2d3748; border-top: 1px solid #4a5568; padding: 1.5rem;">
+          <button class="btn btn-success btn-lg me-3" onclick="window.location.href='/historico-analises-multiagente'">
+            <i class="fas fa-history me-2"></i>Ver Histórico Completo
+          </button>
+          <button class="btn btn-info btn-lg me-3" onclick="abrirResultadoCompleto(ultimaAnaliseRealizada)">
+            <i class="fas fa-external-link-alt me-2"></i>Visualizar Resultado Completo
+          </button>
+          <button class="btn btn-secondary btn-lg" onclick="document.getElementById('analysis-results-section').remove()">
+            <i class="fas fa-times me-2"></i>Fechar Resultados
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Inserir HTML na seção no final da página
+  resultsSection.innerHTML = resultsHTML;
+  
+  // Adicionar ao final da página principal - DENTRO do container principal
+  const mainContainer = document.querySelector('.container-fluid.py-4');
+  if (mainContainer) {
+    mainContainer.appendChild(resultsSection);
+  } else {
+    // Se não encontrar o container principal, adicionar ao body
+    document.body.appendChild(resultsSection);
+  }
+  
+  // Scroll suave para os resultados no final da página
+  setTimeout(() => {
+    resultsSection.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+  }, 100);
+  
+  console.log('✅ DEBUG: Análise COMPLETA exibida no FINAL da página');
+}
+
+// Função para abrir resultado completo em nova página
+function abrirResultadoCompleto(data) {
+  console.log('🔗 Abrindo resultado completo:', data);
+  
+  // Verificar se existem dados
+  if (!data) {
+    showModernModal({
+      title: 'Dados Não Disponíveis',
+      subtitle: 'Nenhuma análise encontrada',
+      text: 'Realize uma análise primeiro para visualizar os resultados completos.',
+      icon: 'fas fa-exclamation-triangle',
+      actions: [{ text: 'OK', type: 'secondary', action: 'close' }]
+    });
+    return;
+  }
+  
+  // Usar UUID ou número de registro como identificador
+  let identificador = data.uuid_analise || data.numero_registro || data.id || Date.now();
+  
+  // Abrir em nova aba
+  const url = `/validacao-multi-agente-expandida/resultado/${identificador}`;
+  window.open(url, '_blank');
+}
+
+// Função showModernModal que estava faltando
+function showModernModal(options) {
+  console.log('🎨 Exibindo modal moderno:', options);
+  
+  // Criar modal
+  const modalId = 'modernModal' + Date.now();
+  const modalHTML = `
+    <div class="modal fade" id="${modalId}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); border: 1px solid #4a5568;">
+          <div class="modal-header border-bottom border-secondary">
+            <div class="d-flex align-items-center">
+              <div class="modal-icon me-3">
+                <i class="${options.icon || 'fas fa-info-circle'}"></i>
+              </div>
+              <div>
+                <h5 class="modal-title text-white mb-0">${options.title || 'Notificação'}</h5>
+                ${options.subtitle ? `<small class="text-muted">${options.subtitle}</small>` : ''}
+              </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="text-white mb-4">${options.text || ''}</p>
+          </div>
+          <div class="modal-footer border-top border-secondary justify-content-center">
+            ${(options.actions || []).map((action, index) => 
+              `<button type="button" class="btn ${action.type === 'primary' ? 'btn-success' : 'btn-secondary'} me-2" 
+                      onclick="handleModalAction_${modalId}('${action.action === 'custom' ? 'custom_' + index : action.action}')">
+                ${action.text}
+               </button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Adicionar modal ao DOM
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  // Armazenar callbacks personalizados
+  const customCallbacks = {};
+  (options.actions || []).forEach((action, index) => {
+    if (action.action === 'custom' && action.callback) {
+      customCallbacks[`custom_${index}`] = action.callback;
+    }
+  });
+  
+  // Adicionar função de handle das ações
+  window[`handleModalAction_${modalId}`] = function(action) {
+    if (action === 'close') {
+      bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+    } else if (action === 'redirect_historico') {
+      window.location.href = '/historico-analises-multiagente';
+    } else if (action.startsWith('custom_')) {
+      // Executar callback personalizado
+      const callback = customCallbacks[action];
+      if (callback && typeof callback === 'function') {
+        callback();
+      } else {
+        // Fallback para fechar modal se callback não estiver disponível
+        bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+      }
+    } else if (typeof action === 'function') {
+      action();
+      bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+    } else {
+      // Ação personalizada
+      console.log('Ação do modal:', action);
+    }
+  };
+  
+  // Mostrar modal
+  const modal = new bootstrap.Modal(document.getElementById(modalId));
+  modal.show();
+  
+  // Remover modal do DOM após fechar
+  document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
+    this.remove();
+    delete window[`handleModalAction_${modalId}`];
+  });
+}
+
+// Nova função para exibir análises com estrutura de 9 seções
+function displayStructuredAnalysisResults(data) {
+  console.log('📊 Exibindo análises estruturadas completas:', data);
+  
+  // Criar ou obter elemento de resultados
+  let resultsSection = document.getElementById('analysisResults');
+  if (!resultsSection) {
+    // Criar elemento se não existir
+    resultsSection = document.createElement('div');
+    resultsSection.id = 'analysisResults';
+    resultsSection.className = 'container-fluid mt-5';
+    resultsSection.style.cssText = `
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 50px;
+      border: 1px solid rgba(255,255,255,0.1);
+    `;
+    
+    // Adicionar ao final da página
+    document.body.appendChild(resultsSection);
+    console.log('✅ Elemento analysisResults criado e adicionado à página');
+  }
+  
+  // Preparar resultados das APIs
+  let resultsHTML = '';
+  
+  if (data.resultados_por_api) {
+    for (const [api, resultado] of Object.entries(data.resultados_por_api)) {
+      if (api === 'resumo_consolidado') continue;
+      
+      const analise = resultado.analise || 'Análise não disponível';
+      const agenteName = resultado.agente_nome || 'Agente Especializado';
+      const tokens = resultado.tokens_usados || 0;
+      const modelo = resultado.modelo || api;
+      
+      // Processar análise estruturada em seções
+      const secoes = processarAnaliseEstruturada(analise);
+      
+      resultsHTML += `
+        <div class="analysis-card mb-4" style="background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; overflow: hidden;">
+          <div class="analysis-header p-4" style="background: linear-gradient(135deg, #${getAPIColor(api)} 0%, #${getAPIColorDark(api)} 100%); color: white;">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h5 class="mb-1">
+                  <i class="fas fa-robot me-2"></i>
+                  ${agenteName}
+                </h5>
+                <small class="opacity-75">
+                  <i class="fas fa-cog me-1"></i>${modelo.toUpperCase()} • 
+                  <i class="fas fa-tokens me-1"></i>${tokens} tokens •
+                  <i class="fas fa-brain me-1"></i>${api.toUpperCase()}
+                </small>
+              </div>
+              <div class="col-md-4 text-end">
+                <span class="badge bg-light text-dark fs-6">
+                  <i class="fas fa-check-circle me-1"></i>Análise Completa
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analysis-content">
+            ${renderizarSecoesEstruturadas(secoes)}
+          </div>
+        </div>
+      `;
+    }
+  }
+  
+  // Atualizar HTML
+  resultsSection.innerHTML = resultsHTML;
+  
+  // Scroll para resultados
+  setTimeout(() => {
+    resultsSection.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+  }, 100);
+  
+  console.log('✅ Análises estruturadas exibidas com sucesso');
+}
+
+// Função para processar análise em estrutura de 9 seções
+function processarAnaliseEstruturada(analise) {
+  const secoes = {
+    identificacao: '',
+    estrutural: '',
+    riscos: { criticos: [], altos: [], medios: [], baixos: [] },
+    alteracoes: { criticas: [], importantes: [], sugestoes: [] },
+    conformidade: '',
+    recomendacoes: '',
+    resumo: '',
+    colaboracao: '',
+    limitacoes: ''
+  };
+  
+  const linhas = analise.split('\n');
+  let secaoAtual = '';
+  let subSecaoAtual = '';
+  let conteudoAtual = [];
+  
+  for (const linha of linhas) {
+    const linhaTrim = linha.trim();
+    
+    // Identificar seções principais
+    if (linhaTrim.match(/^1\.\s*IDENTIFICAÇÃO E CONTEXTUALIZAÇÃO/i)) {
+      secaoAtual = 'identificacao';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^2\.\s*ANÁLISE ESTRUTURAL/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'estrutural';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^3\.\s*IDENTIFICAÇÃO DE RISCOS/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'riscos';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^4\.\s*PROPOSTA DE ALTERAÇÕES/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'alteracoes';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^5\.\s*CONFORMIDADE/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'conformidade';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^6\.\s*RECOMENDAÇÕES PRÁTICAS/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'recomendacoes';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^7\.\s*RESUMO EXECUTIVO/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'resumo';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^8\.\s*PROTOCOLO DE COLABORAÇÃO/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'colaboracao';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^9\.\s*LIMITAÇÕES DA ANÁLISE/i)) {
+      salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+      secaoAtual = 'limitacoes';
+      conteudoAtual = [];
+    } else if (linhaTrim.match(/^(CRÍTICOS|ALTOS|MÉDIOS|BAIXOS|CRÍTICAS|IMPORTANTES|SUGESTÕES)/i)) {
+      // Subsecções de riscos/alterações
+      subSecaoAtual = linhaTrim.toLowerCase().replace(/[^a-z]/g, '');
+      conteudoAtual = [];
+    } else if (linhaTrim && secaoAtual) {
+      // Conteúdo da seção
+      conteudoAtual.push(linhaTrim);
+    }
+  }
+  
+  // Salvar última seção
+  salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual);
+  
+  return secoes;
+}
+
+// Função auxiliar para salvar seção anterior
+function salvarSecaoAnterior(secoes, secaoAtual, subSecaoAtual, conteudoAtual) {
+  if (!secaoAtual || conteudoAtual.length === 0) return;
+  
+  const conteudo = conteudoAtual.join('\n');
+  
+  if (secaoAtual === 'riscos' && subSecaoAtual) {
+    if (secoes.riscos[subSecaoAtual]) {
+      secoes.riscos[subSecaoAtual].push(conteudo);
+    }
+  } else if (secaoAtual === 'alteracoes' && subSecaoAtual) {
+    if (secoes.alteracoes[subSecaoAtual]) {
+      secoes.alteracoes[subSecaoAtual].push(conteudo);
+    }
+  } else {
+    secoes[secaoAtual] = conteudo;
+  }
+}
+
+// Função para renderizar seções estruturadas
+function renderizarSecoesEstruturadas(secoes) {
+  return `
+    <div class="accordion accordion-flush" id="accordionAnalysis">
+      
+      <!-- 1. Identificação e Contextualização -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section1" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-id-card me-2 text-primary"></i>
+            <strong>1. Identificação e Contextualização</strong>
+          </button>
+        </h2>
+        <div id="section1" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.identificacao || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 2. Análise Estrutural -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section2" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-sitemap me-2 text-success"></i>
+            <strong>2. Análise Estrutural</strong>
+          </button>
+        </h2>
+        <div id="section2" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.estrutural || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 3. Identificação de Riscos -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section3" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            <strong>3. Identificação de Riscos Jurídicos</strong>
+          </button>
+        </h2>
+        <div id="section3" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            ${renderizarRiscos(secoes.riscos)}
+          </div>
+        </div>
+      </div>
+      
+      <!-- 4. Proposta de Alterações -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section4" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-edit me-2 text-info"></i>
+            <strong>4. Proposta de Alterações</strong>
+          </button>
+        </h2>
+        <div id="section4" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            ${renderizarAlteracoes(secoes.alteracoes)}
+          </div>
+        </div>
+      </div>
+      
+      <!-- 5. Conformidade e Aspectos Regulatórios -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section5" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-balance-scale me-2 text-secondary"></i>
+            <strong>5. Conformidade e Aspectos Regulatórios</strong>
+          </button>
+        </h2>
+        <div id="section5" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.conformidade || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 6. Recomendações Práticas -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section6" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-lightbulb me-2 text-warning"></i>
+            <strong>6. Recomendações Práticas</strong>
+          </button>
+        </h2>
+        <div id="section6" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.recomendacoes || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 7. Resumo Executivo -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#section7" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-file-alt me-2 text-primary"></i>
+            <strong>7. Resumo Executivo</strong>
+          </button>
+        </h2>
+        <div id="section7" class="accordion-collapse collapse show">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.resumo || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 8. Protocolo de Colaboração Multi-Agente -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section8" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-users-cog me-2 text-info"></i>
+            <strong>8. Protocolo de Colaboração Multi-Agente</strong>
+          </button>
+        </h2>
+        <div id="section8" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.colaboracao || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 9. Limitações da Análise -->
+      <div class="accordion-item" style="background: transparent; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#section9" style="background: rgba(255,255,255,0.05); color: white; border: none;">
+            <i class="fas fa-info-circle me-2 text-muted"></i>
+            <strong>9. Limitações da Análise</strong>
+          </button>
+        </h2>
+        <div id="section9" class="accordion-collapse collapse">
+          <div class="accordion-body" style="color: rgba(255,255,255,0.9);">
+            <pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${secoes.limitacoes || 'Não disponível'}</pre>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  `;
+}
+
+// Função para renderizar riscos categorizados
+function renderizarRiscos(riscos) {
+  return `
+    <div class="risk-categories">
+      <div class="risk-category mb-3" style="border-left: 4px solid #dc3545; padding-left: 15px;">
+        <h6 class="text-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>CRÍTICOS
+        </h6>
+        <div class="risk-content">
+          ${riscos.criticos?.length ? riscos.criticos.map(r => `<div class="mb-2">${r}</div>`).join('') : '<em>Nenhum risco crítico identificado</em>'}
+        </div>
+      </div>
+      
+      <div class="risk-category mb-3" style="border-left: 4px solid #fd7e14; padding-left: 15px;">
+        <h6 class="text-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>ALTOS
+        </h6>
+        <div class="risk-content">
+          ${riscos.altos?.length ? riscos.altos.map(r => `<div class="mb-2">${r}</div>`).join('') : '<em>Nenhum risco alto identificado</em>'}
+        </div>
+      </div>
+      
+      <div class="risk-category mb-3" style="border-left: 4px solid #ffc107; padding-left: 15px;">
+        <h6 class="text-warning">
+          <i class="fas fa-info-circle me-2"></i>MÉDIOS
+        </h6>
+        <div class="risk-content">
+          ${riscos.medios?.length ? riscos.medios.map(r => `<div class="mb-2">${r}</div>`).join('') : '<em>Nenhum risco médio identificado</em>'}
+        </div>
+      </div>
+      
+      <div class="risk-category mb-3" style="border-left: 4px solid #28a745; padding-left: 15px;">
+        <h6 class="text-success">
+          <i class="fas fa-check-circle me-2"></i>BAIXOS
+        </h6>
+        <div class="risk-content">
+          ${riscos.baixos?.length ? riscos.baixos.map(r => `<div class="mb-2">${r}</div>`).join('') : '<em>Nenhum risco baixo identificado</em>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Função para renderizar alterações categorizadas  
+function renderizarAlteracoes(alteracoes) {
+  return `
+    <div class="alterations-categories">
+      <div class="alteration-category mb-3" style="border-left: 4px solid #dc3545; padding-left: 15px;">
+        <h6 class="text-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>CRÍTICAS (Implementação Obrigatória)
+        </h6>
+        <div class="alteration-content">
+          ${alteracoes.criticas?.length ? alteracoes.criticas.map(a => `<div class="mb-2">${a}</div>`).join('') : '<em>Nenhuma alteração crítica necessária</em>'}
+        </div>
+      </div>
+      
+      <div class="alteration-category mb-3" style="border-left: 4px solid #fd7e14; padding-left: 15px;">
+        <h6 class="text-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>IMPORTANTES (Implementação Recomendada)
+        </h6>
+        <div class="alteration-content">
+          ${alteracoes.importantes?.length ? alteracoes.importantes.map(a => `<div class="mb-2">${a}</div>`).join('') : '<em>Nenhuma alteração importante identificada</em>'}
+        </div>
+      </div>
+      
+      <div class="alteration-category mb-3" style="border-left: 4px solid #28a745; padding-left: 15px;">
+        <h6 class="text-success">
+          <i class="fas fa-lightbulb me-2"></i>SUGESTÕES DE MELHORIA
+        </h6>
+        <div class="alteration-content">
+          ${alteracoes.sugestoes?.length ? alteracoes.sugestoes.map(a => `<div class="mb-2">${a}</div>`).join('') : '<em>Nenhuma sugestão adicional</em>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Funções auxiliares para cores das APIs
+function getAPIColor(api) {
+  const colors = {
+    'openai': '4a90e2',
+    'anthropic': 'e74c3c',
+    'gemini': '9b59b6'
+  };
+  return colors[api.toLowerCase()] || '6c757d';
+}
+
+function getAPIColorDark(api) {
+  const colors = {
+    'openai': '357abd',
+    'anthropic': 'c0392b',
+    'gemini': '8e44ad'
+  };
+  return colors[api.toLowerCase()] || '5a6268';
+}
+
+// Função para iniciar análise comparativa de 3 APIs
+async function iniciarAnalise3APIs() {
+  console.log('🚀 Iniciando análise comparativa de 3 APIs...');
+  
+  const documentText = document.getElementById('documentText').value.trim();
+  if (!documentText) {
+    alert('Por favor, insira o texto do documento para análise.');
+    return;
+  }
+  
+  const btn = document.getElementById('btnAnalise3APIs');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analisando com 3 APIs...';
+  }
+  
+  try {
+    const response = await fetch('/api/analise-3-agentes-manual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        texto: documentText
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Resposta da API comparativa:', data);
+    
+    if (data.status === 'sucesso') {
+      console.log('🎯 Chamando displayAnalysisResults para análise comparativa:', data);
+      displayAnalysisResults(data);
+    } else {
+      throw new Error(data.mensagem || 'Erro na análise');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na análise comparativa:', error);
+    alert('Erro ao processar análise: ' + error.message);
+  } finally {
+    // Restaurar botão
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-chart-line me-2"></i>Análise Comparativa 3 APIs';
+    }
+  }
+}
+
+// Função para análise comparativa das 3 APIs
+function displayComparativeAnalysisResults(data) {
+  console.log('🎨 Exibindo resultados comparativos:', data);
+  
+  // Criar ou obter container de resultados
+  let container = document.getElementById('results-container');
+  if (!container) {
+    // Criar elemento se não existir
+    container = document.createElement('div');
+    container.id = 'results-container';
+    container.className = 'container-fluid mt-5';
+    container.style.cssText = `
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 50px;
+      border: 1px solid rgba(255,255,255,0.1);
+    `;
+    
+    // Adicionar ao final da página
+    document.body.appendChild(container);
+    console.log('✅ Container results-container criado e adicionado à página');
+    
+    // Scroll para os resultados
+    setTimeout(() => {
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+  
+  container.innerHTML = '';
+  
+  // Estrutura adaptada para a resposta atual
+  const resultados = data.resultados_por_api || {};
+  const tempo_total = data.tempo_total || 0;
+  const total_agentes = data.total_agentes || 0;
+  const apis_utilizadas = data.apis_utilizadas || [];
+  
+  // Contar APIs funcionais
+  let apis_funcionais = 0;
+  let total_tokens = 0;
+  
+  Object.keys(resultados).forEach(api => {
+    const analise = resultados[api];
+    if (analise && typeof analise === 'string' && !analise.includes('temporariamente indisponível')) {
+      apis_funcionais++;
+    }
+  });
+  
+  // Card principal de comparação
+  const comparisonCard = `
+    <div class="card border-0 shadow-lg mb-4" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); color: white;">
+      <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+        <h5 class="mb-0 text-white">
+          <i class="fas fa-chart-line me-2"></i>
+          Análise Multi-Agente Comparativa
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center mb-4">
+          <div class="col-md-4">
+            <h6 class="text-light opacity-75">APIs Funcionais</h6>
+            <span class="h3 text-success">${apis_funcionais}/3</span>
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-light opacity-75">Tempo Total</h6>
+            <span class="h3 text-info">${tempo_total}s</span>
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-light opacity-75">Agentes</h6>
+            <span class="h3 text-warning">${total_agentes}</span>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-12">
+            <h6 class="text-success">
+              <i class="fas fa-check me-2"></i>APIs Utilizadas
+            </h6>
+            <p class="text-light opacity-90 small">${apis_utilizadas.join(', ')}</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+  
+  container.innerHTML += comparisonCard;
+  
+  // Cards das APIs individuais
+  const apiConfigs = {
+    'analise_openai': { 
+      name: 'OpenAI GPT-4o', 
+      icon: 'fas fa-brain', 
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      available: true
+    },
+    'analise_gemini': { 
+      name: 'Google Gemini', 
+      icon: 'fas fa-star', 
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      available: false
+    },
+    'analise_anthropic': { 
+      name: 'Anthropic Claude', 
+      icon: 'fas fa-robot', 
+      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      available: false
+    }
+  };
+  
+  Object.entries(apiConfigs).forEach(([apiKey, config]) => {
+    const analise = resultados[apiKey];
+    if (analise) {
+      const isError = (typeof analise === 'string' && analise.includes('temporariamente indisponível')) || 
+                      (typeof analise === 'string' && analise.startsWith('ERRO'));
+      
+      const apiCard = `
+        <div class="card mb-4 border-0 shadow-lg" style="background: #1a1a1a; color: white;">
+          <div class="card-header border-0" style="background: ${config.gradient};">
+            <h6 class="mb-0 text-white">
+              <i class="${config.icon} me-2"></i>
+              ${config.name}
+              ${isError ? 
+                '<span class="badge bg-warning text-dark ms-2">INDISPONÍVEL</span>' : 
+                '<span class="badge bg-success ms-2">ATIVO</span>'
+              }
+            </h6>
+          </div>
+          <div class="card-body" style="background: #2d2d2d;">
+            ${isError ? 
+              `<div class="alert alert-warning">
+                 <i class="fas fa-info-circle me-2"></i>
+                 ${analise}
+               </div>` :
+              `<div class="analysis-content" style="max-height: 500px; overflow-y: auto;">
+                 <pre class="text-light" style="white-space: pre-wrap; font-family: 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6;">${analise}</pre>
+               </div>`
+            }
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML += apiCard;
+    }
+  });
+  
+  // Scroll suave para resultados
+  setTimeout(() => {
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
+}
+
+// Fim das funções JavaScript
+
+</script>
+
+<style>
+.modal-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 24px;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #b8c6db;
+  font-size: 20px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: rotate(90deg);
+}
+</style>
+
+<!-- Sistema de Salvamento com Identificadores Únicos -->
+<script src="{{ url_for('static', filename='js/salvamento_validacao_multi_agente.js') }}"></script>
+
+{% endblock %}

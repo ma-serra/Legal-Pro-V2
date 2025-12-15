@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}ETL Pipeline - Fintechs Analytics{% endblock %}
+
+{% block head %}
+<style>
+  body {
+    background-color: #21333d !important;
+    min-height: 100vh;
+  }
+  
+  .etl-container {
+    background: linear-gradient(135deg, #eb001b 0%, #ff5f00 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .etl-step {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #ff5f00;
+  }
+  
+  .progress-custom {
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  .progress-bar-custom {
+    background: linear-gradient(90deg, #eb001b 0%, #ff5f00 100%);
+    border-radius: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header ETL -->
+<div class="etl-container">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2">
+          <i class="fas fa-database me-3"></i>
+          ETL Pipeline - Fintechs Analytics
+        </h1>
+        <p class="mb-0 lead">
+          Processamento e transformação dos dados Fintechs
+        </p>
+      </div>
+      <div class="col-md-4 text-end">
+        <a href="/fintechs/" class="btn btn-light">
+          <i class="fas fa-arrow-left me-2"></i>Voltar ao Menu
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  
+  <!-- Status do Sistema -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Status do ETL Pipeline
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="text-center">
+                <i class="fas fa-file-upload fa-2x {{ 'text-success' if status.raw_data_available else 'text-warning' }} mb-2"></i>
+                <h6>Dados Brutos</h6>
+                <p class="text-muted">{{ "✅ Disponível" if status.raw_data_available else "⚠️ Não encontrado" }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center">
+                <i class="fas fa-cogs fa-2x {{ 'text-success' if status.processed_data_available else 'text-secondary' }} mb-2"></i>
+                <h6>Dados Processados</h6>
+                <p class="text-muted">{{ "✅ Processado" if status.processed_data_available else "⏳ Aguardando" }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="text-center">
+                <i class="fas fa-check-circle fa-2x {{ 'text-success' if status.etl_complete else 'text-secondary' }} mb-2"></i>
+                <h6>ETL Completo</h6>
+                <p class="text-muted">{{ "✅ Finalizado" if status.etl_complete else "⏳ Pendente" }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Controles ETL -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-play-circle me-2"></i>
+            Executar Pipeline ETL
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Atenção:</strong> O processo ETL pode levar alguns minutos. Será processado o dataset Excel original com os dados Fintechs.
+          </div>
+          
+          <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <button type="button" class="btn btn-lg" style="background-color: #eb001b; border-color: #eb001b; color: white;" onclick="executeETL()">
+              <i class="fas fa-rocket me-2"></i>
+              Executar ETL Completo
+            </button>
+            <button type="button" class="btn btn-lg btn-success ms-2" onclick="executeETLPro()">
+              <i class="fas fa-magic me-2"></i>
+              ETL Aperfeiçoado
+            </button>
+            <button type="button" class="btn btn-lg btn-warning ms-2" onclick="executeETLCorrigido()">
+              <i class="fas fa-wrench me-2"></i>
+              ETL Corrigido (UTF-8)
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="checkStatus()">
+              <i class="fas fa-sync me-2"></i>
+              Verificar Status
+            </button>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div id="etl-progress" class="mt-3" style="display: none;">
+            <div class="progress-custom mb-2">
+              <div id="progress-bar" class="progress-bar-custom" style="width: 0%"></div>
+            </div>
+            <div id="progress-text" class="text-center text-muted">Preparando...</div>
+          </div>
+          
+          <!-- Resultados -->
+          <div id="etl-results" class="mt-3" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Passos do ETL -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-list-ol me-2"></i>
+            Passos do Pipeline
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="etl-step">
+            <h6><i class="fas fa-upload me-2"></i>1. Carregamento de Dados</h6>
+            <p class="mb-0">Carrega o dataset Excel original das Fintechs</p>
+          </div>
+          
+          <div class="etl-step">
+            <h6><i class="fas fa-broom me-2"></i>2. Limpeza de Dados</h6>
+            <p class="mb-0">Remove duplicatas, corrige formatos e trata valores nulos</p>
+          </div>
+          
+          <div class="etl-step">
+            <h6><i class="fas fa-plus-circle me-2"></i>3. Enriquecimento</h6>
+            <p class="mb-0">Adiciona features calculadas: região, período COVID, scores</p>
+          </div>
+          
+          <div class="etl-step">
+            <h6><i class="fas fa-chart-bar me-2"></i>4. Estatísticas</h6>
+            <p class="mb-0">Calcula KPIs estratégicos e métricas de performance</p>
+          </div>
+          
+          <div class="etl-step">
+            <h6><i class="fas fa-save me-2"></i>5. Salvamento</h6>
+            <p class="mb-0">Salva dados processados em formato otimizado</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Logs e Histórico -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-terminal me-2"></i>
+            Logs de Execução
+          </h5>
+        </div>
+        <div class="card-body">
+          <div id="etl-logs" class="bg-dark text-light p-3 rounded" style="height: 200px; overflow-y: auto; font-family: monospace;">
+            <div class="text-muted">Aguardando execução do ETL...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+function executeETL() {
+  const progressDiv = document.getElementById('etl-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsDiv = document.getElementById('etl-results');
+  const logsDiv = document.getElementById('etl-logs');
+  
+  // Mostrar progress bar
+  progressDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+  
+  // Iniciar progresso
+  let progress = 0;
+  progressText.textContent = 'Iniciando ETL Pipeline...';
+  addLog('🚀 Iniciando ETL Pipeline Fintechs...');
+  
+  // Simular progresso
+  const progressInterval = setInterval(() => {
+    progress += 10;
+    progressBar.style.width = progress + '%';
+    
+    if (progress === 20) {
+      progressText.textContent = 'Carregando dados brutos...';
+      addLog('📥 Carregando dataset Excel original...');
+    } else if (progress === 40) {
+      progressText.textContent = 'Limpando e validando dados...';
+      addLog('🧹 Executando limpeza de dados...');
+    } else if (progress === 60) {
+      progressText.textContent = 'Enriquecendo com features...';
+      addLog('⚡ Adicionando features calculadas...');
+    } else if (progress === 80) {
+      progressText.textContent = 'Calculando estatísticas...';
+      addLog('📊 Gerando KPIs estratégicos...');
+    }
+    
+    if (progress >= 90) {
+      clearInterval(progressInterval);
+      executeActualETL();
+    }
+  }, 500);
+}
+
+function executeActualETL() {
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsDiv = document.getElementById('etl-results');
+  
+  progressText.textContent = 'Finalizando processamento...';
+  addLog('🔄 Executando ETL real...');
+  
+  fetch('/fintechs/api/etl/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(result => {
+    progressBar.style.width = '100%';
+    progressText.textContent = 'ETL Concluído!';
+    
+    if (result.success) {
+      addLog('✅ ETL executado com sucesso!');
+      addLog(`📈 Registros processados: ${result.records_processed || 'N/A'}`);
+      addLog(`⏱️ Tempo de execução: ${result.execution_time || 'N/A'}`);
+      
+      resultsDiv.innerHTML = `
+        <div class="alert alert-success">
+          <h6><i class="fas fa-check-circle me-2"></i>ETL Executado com Sucesso!</h6>
+          <p class="mb-0">
+            <strong>Registros:</strong> ${result.records_processed || 'N/A'}<br>
+            <strong>Tempo:</strong> ${result.execution_time || 'N/A'}<br>
+            <strong>Status:</strong> ${result.message || 'Processamento concluído'}
+          </p>
+        </div>
+      `;
+    } else {
+      addLog('❌ Erro na execução do ETL');
+      addLog(`📋 Detalhes: ${result.error || 'Erro desconhecido'}`);
+      
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro na Execução</h6>
+          <p class="mb-0">${result.error || 'Erro desconhecido durante o processamento'}</p>
+        </div>
+      `;
+    }
+    
+    resultsDiv.style.display = 'block';
+    
+    // Refresh status after 2 seconds
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
+  })
+  .catch(error => {
+    progressText.textContent = 'Erro na execução';
+    addLog('❌ Erro de conexão: ' + error.message);
+    
+    resultsDiv.innerHTML = `
+      <div class="alert alert-danger">
+        <h6><i class="fas fa-exclamation-triangle me-2"></i>Erro de Conexão</h6>
+        <p class="mb-0">Não foi possível executar o ETL. Verifique a conexão.</p>
+      </div>
+    `;
+    resultsDiv.style.display = 'block';
+  });
+}
+
+function executeETLCorrigido() {
+  const progressDiv = document.getElementById('etl-progress');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const resultsDiv = document.getElementById('etl-results');
+  const logsDiv = document.getElementById('etl-logs');
+  
+  // Reset
+  progressDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+  logsDiv.innerHTML = '';
+  progressBar.style.width = '0%';
+  progressText.textContent = 'Iniciando ETL Corrigido com Encoding UTF-8...';
+  
+  addLog('🚀 Iniciando ETL Corrigido - Encoding UTF-8 Robusto');
+  addLog('🔧 Aplicando correções de encoding e parsing...');
+  
+  // Progress simulation
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress > 90) progress = 90;
+    progressBar.style.width = progress + '%';
+  }, 1000);
+  
+  // Execute ETL
+  fetch('/fintechs/api/etl/execute-corrigido', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+    
+    if (data.success) {
+      progressText.textContent = 'ETL Corrigido concluído com sucesso!';
+      addLog(`✅ ETL Corrigido finalizado`);
+      addLog(`📊 Registros processados: ${data.records_processed.toLocaleString()}`);
+      addLog(`⏱️ Tempo: ${data.processing_time}`);
+      addLog(`📁 Arquivo: ${data.output_file}`);
+      
+      // Show improvements
+      addLog('🔧 Melhorias aplicadas:');
+      data.improvements.forEach(improvement => {
+        addLog(`   ${improvement}`);
+      });
+      
+      resultsDiv.style.display = 'block';
+      resultsDiv.innerHTML = `
+        <div class="alert alert-success">
+          <h5><i class="fas fa-check-circle me-2"></i>ETL Corrigido Concluído!</h5>
+          <p><strong>Registros processados:</strong> ${data.records_processed.toLocaleString()}</p>
+          <p><strong>Tempo de processamento:</strong> ${data.processing_time}</p>
+          <p><strong>Arquivo gerado:</strong> ${data.output_file}</p>
+          <hr>
+          <h6>Correções aplicadas:</h6>
+          <ul>
+            ${data.improvements.map(improvement => `<li>${improvement}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+      
+      // Refresh page after delay
+      setTimeout(() => {
+        location.reload();
+      }, 3000);
+      
+    } else {
+      progressText.textContent = 'Erro no ETL Corrigido';
+      addLog(`❌ Erro: ${data.error}`);
+      addLog(`📝 Mensagem: ${data.message}`);
+      
+      resultsDiv.style.display = 'block';
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-exclamation-circle me-2"></i>Erro no ETL Corrigido</h5>
+          <p><strong>Erro:</strong> ${data.error}</p>
+          <p><strong>Mensagem:</strong> ${data.message}</p>
+        </div>
+      `;
+    }
+  })
+  .catch(error => {
+    clearInterval(progressInterval);
+    progressText.textContent = 'Erro de conexão';
+    addLog(`❌ Erro de conexão: ${error.message}`);
+    console.error('Erro ETL Corrigido:', error);
+    
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = `
+      <div class="alert alert-danger">
+        <h5><i class="fas fa-exclamation-circle me-2"></i>Erro de Conexão</h5>
+        <p>Falha na comunicação com o servidor: ${error.message}</p>
+      </div>
+    `;
+  });
+}
+
+function checkStatus() {
+  addLog('🔍 Verificando status do sistema...');
+  location.reload();
+}
+
+function addLog(message) {
+  const logsDiv = document.getElementById('etl-logs');
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = `[${timestamp}] ${message}`;
+  
+  logsDiv.innerHTML += `<div>${logEntry}</div>`;
+  logsDiv.scrollTop = logsDiv.scrollHeight;
+}
+
+// Auto-refresh status every 30 seconds
+setInterval(function() {
+  if (document.getElementById('etl-progress').style.display === 'none') {
+    // Verificar status apenas se não estiver executando
+    fetch('/fintechs/api/kpis')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Status atualizado:', data);
+        updateDataStatus(data);
+      })
+      .catch(error => console.log('Status check:', error));
+  }
+}, 30000);
+
+// Função para atualizar status visual dos dados
+function updateDataStatus(apiData) {
+  // Localizar os cards de status
+  const processedDataIcon = document.querySelector('.col-md-4:nth-child(2) .fas');
+  const processedDataText = document.querySelector('.col-md-4:nth-child(2) p');
+  const etlCompleteIcon = document.querySelector('.col-md-4:nth-child(3) .fas');
+  const etlCompleteText = document.querySelector('.col-md-4:nth-child(3) p');
+  
+  if (apiData.success && apiData.total_records > 0) {
+    // Dados carregados com sucesso
+    if (processedDataIcon) {
+      processedDataIcon.className = 'fas fa-cogs fa-2x text-success mb-2';
+    }
+    if (processedDataText) {
+      processedDataText.innerHTML = `✅ ${apiData.total_records.toLocaleString()} registros`;
+      processedDataText.className = 'text-success';
+    }
+    if (etlCompleteIcon) {
+      etlCompleteIcon.className = 'fas fa-check-circle fa-2x text-success mb-2';
+    }
+    if (etlCompleteText) {
+      etlCompleteText.innerHTML = '✅ Finalizado';
+      etlCompleteText.className = 'text-success';
+    }
+  } else {
+    // Dados ainda não carregados
+    if (processedDataIcon) {
+      processedDataIcon.className = 'fas fa-cogs fa-2x text-secondary mb-2';
+    }
+    if (processedDataText) {
+      processedDataText.innerHTML = '⏳ Aguardando';
+      processedDataText.className = 'text-muted';
+    }
+    if (etlCompleteIcon) {
+      etlCompleteIcon.className = 'fas fa-check-circle fa-2x text-secondary mb-2';
+    }
+    if (etlCompleteText) {
+      etlCompleteText.innerHTML = '⏳ Pendente';
+      etlCompleteText.className = 'text-muted';
+    }
+  }
+}
+
+// Verificar status na inicialização da página
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    fetch('/fintechs/api/kpis')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Status inicial:', data);
+        updateDataStatus(data);
+      })
+      .catch(error => console.log('Status inicial:', error));
+  }, 1000);
+});
+</script>
+{% endblock %}

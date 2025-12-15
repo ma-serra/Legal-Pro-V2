@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Análises Reais - Legal Design Pro V2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            padding: 2rem 0;
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .page-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .content-header {
+            background: var(--gradient-bg);
+            color: white;
+            padding: 1.5rem 2rem;
+            border: none;
+        }
+
+        .content-body {
+            padding: 2rem;
+        }
+
+        .filters-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .analysis-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .analysis-body {
+            padding: 1.5rem;
+        }
+
+        .analysis-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .meta-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .meta-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .api-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .api-openai { background: #74aa9c; }
+        .api-anthropic { background: #ff6b35; }
+        .api-gemini { background: #4285f4; }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination .page-link {
+            border-radius: 10px;
+            margin: 0 2px;
+            border: none;
+            color: var(--primary-color);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--gradient-bg);
+            border: none;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+
+        .btn-gradient {
+            background: var(--gradient-bg);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .export-btn {
+            background: var(--success-color);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .analysis-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <!-- Header da Página -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="page-title">
+                        <i class="fas fa-history me-3"></i>
+                        Histórico de Análises Reais
+                    </h1>
+                    <p class="page-subtitle">
+                        Análises Multi-Agente com APIs Reais (6800 tokens por modelo)
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="/validacao-multi-agente-expandida" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Análise
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="stats-container" id="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-value" id="total-analises">-</div>
+                <div class="stat-label">Total de Análises</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-value" id="total-tokens">-</div>
+                <div class="stat-label">Tokens Utilizados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div class="stat-value" id="tempo-medio">-</div>
+                <div class="stat-label">Tempo Médio (s)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon text-info">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value" id="ultima-analise">-</div>
+                <div class="stat-label">Última Análise</div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="content-card">
+            <div class="content-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Lista de Análises
+                </h4>
+            </div>
+            <div class="content-body">
+                <!-- Filtros -->
+                <div class="filters-container">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Itens por página:</label>
+                            <select class="form-select" id="items-per-page" onchange="carregarAnalises()">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ordenar por:</label>
+                            <select class="form-select" id="order-by" onchange="carregarAnalises()">
+                                <option value="data_criacao_desc" selected>Mais Recentes</option>
+                                <option value="data_criacao_asc">Mais Antigas</option>
+                                <option value="tokens_desc">Mais Tokens</option>
+                                <option value="tempo_desc">Mais Demoradas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ações:</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" onclick="carregarAnalises()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="exportarTudo()">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Análises -->
+                <div id="analysis-list">
+                    <div class="loading-container">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <h5>Carregando análises...</h5>
+                        <p>Buscando dados do banco de dados</p>
+                    </div>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pagination-container">
+                    <nav>
+                        <ul class="pagination" id="pagination">
+                            <!-- Paginação será gerada dinamicamente -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Carregar estatísticas ao iniciar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarEstatisticas();
+            carregarAnalises();
+        });
+
+        async function carregarEstatisticas() {
+            try {
+                const response = await fetch('/api/multi-agente-real/estatisticas');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('total-analises').textContent = data.total_analises.toLocaleString();
+                    document.getElementById('total-tokens').textContent = data.total_tokens.toLocaleString();
+                    document.getElementById('tempo-medio').textContent = data.tempo_medio;
+                    document.getElementById('ultima-analise').textContent = data.ultima_analise || 'Nenhuma';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        async function carregarAnalises(page = 1) {
+            try {
+                currentPage = page;
+                const itemsPerPage = document.getElementById('items-per-page').value;
+                
+                const response = await fetch(`/api/multi-agente-real/listar?pagina=${page}&por_pagina=${itemsPerPage}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    exibirAnalises(data.analises);
+                    configurarPaginacao(data.total_paginas, page);
+                    totalPages = data.total_paginas;
+                } else {
+                    exibirErro('Erro ao carregar análises: ' + data.erro);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar análises:', error);
+                exibirErro('Erro de comunicação com o servidor');
+            }
+        }
+
+        function exibirAnalises(analises) {
+            const container = document.getElementById('analysis-list');
+
+            if (analises.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h5>Nenhuma análise encontrada</h5>
+                        <p>Ainda não há análises reais registradas no sistema.</p>
+                        <a href="/validacao-multi-agente-expandida" class="btn btn-gradient">
+                            <i class="fas fa-plus me-2"></i>
+                            Criar Primeira Análise
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            const htmlAnalises = analises.map(analise => `
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Análise #${analise.id}
+                            </h6>
+                            <small class="opacity-90">UUID: ${analise.uuid_analise}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-light text-dark">${analise.status_analise}</span>
+                        </div>
+                    </div>
+                    <div class="analysis-body">
+                        <!-- Meta Informações -->
+                        <div class="analysis-meta">
+                            <div class="meta-item">
+                                <div class="meta-value">${analise.total_agentes}</div>
+                                <div class="meta-label">Agentes</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value">${(analise.api_1_tokens_usados + analise.api_2_tokens_usados + analise.api_3_tokens_usados).toLocaleString()}</div>
+                                <div class="meta-label">Tokens</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value">${analise.tempo_total}s</div>
+                                <div class="meta-label">Tempo</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value">${analise.tamanho_documento.toLocaleString()}</div>
+                                <div class="meta-label">Caracteres</div>
+                            </div>
+                        </div>
+
+                        <!-- Informações das APIs -->
+                        <div class="row">
+                            ${analise.api_1_nome ? `
+                                <div class="col-md-4">
+                                    <div class="api-info">
+                                        <span class="api-badge api-${analise.api_1_nome.toLowerCase()}">${analise.api_1_modelo}</span>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold">${analise.api_1_tokens_usados} tokens</div>
+                                            <small class="text-muted">${analise.api_1_tempo}s</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${analise.api_2_nome ? `
+                                <div class="col-md-4">
+                                    <div class="api-info">
+                                        <span class="api-badge api-${analise.api_2_nome.toLowerCase()}">${analise.api_2_modelo}</span>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold">${analise.api_2_tokens_usados} tokens</div>
+                                            <small class="text-muted">${analise.api_2_tempo}s</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${analise.api_3_nome ? `
+                                <div class="col-md-4">
+                                    <div class="api-info">
+                                        <span class="api-badge api-${analise.api_3_nome.toLowerCase()}">${analise.api_3_modelo}</span>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold">${analise.api_3_tokens_usados} tokens</div>
+                                            <small class="text-muted">${analise.api_3_tempo}s</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Documento Original (Preview) -->
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">Documento Analisado:</h6>
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 1rem; max-height: 100px; overflow-y: auto;">
+                                <small style="font-family: monospace; line-height: 1.4;">
+                                    ${analise.documento_original.substring(0, 200)}${analise.documento_original.length > 200 ? '...' : ''}
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                ${new Date(analise.data_criacao).toLocaleString('pt-BR')}
+                            </small>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="verDetalhes(${analise.id})">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Ver Detalhes
+                                </button>
+                                <a href="/api/multi-agente-real/exportar/${analise.id}" class="export-btn">
+                                    <i class="fas fa-download"></i>
+                                    JSON
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = htmlAnalises;
+        }
+
+        function configurarPaginacao(totalPaginas, paginaAtual) {
+            const paginationElement = document.getElementById('pagination');
+            
+            if (totalPaginas <= 1) {
+                paginationElement.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Botão anterior
+            if (paginaAtual > 1) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="carregarAnalises(${paginaAtual - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            // Páginas
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === paginaAtual) {
+                    paginationHTML += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+                } else {
+                    paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="carregarAnalises(${i})">${i}</a></li>`;
+                }
+            }
+
+            // Botão próximo
+            if (paginaAtual < totalPaginas) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="carregarAnalises(${paginaAtual + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            paginationElement.innerHTML = paginationHTML;
+        }
+
+        async function verDetalhes(analiseId) {
+            try {
+                const response = await fetch(`/api/multi-agente-real/detalhes/${analiseId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Criar modal ou nova janela com detalhes completos
+                    const newWindow = window.open('', '_blank', 'width=1200,height=800');
+                    newWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Detalhes da Análise #${analiseId}</title>
+                            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                            <style>
+                                body { padding: 2rem; background: #f8f9fa; }
+                                .result-card { background: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+                                .api-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h2>Análise #${analiseId} - Detalhes Completos</h2>
+                                <p class="text-muted">UUID: ${data.analise.uuid_analise}</p>
+                                
+                                <div class="result-card">
+                                    <div class="api-header">
+                                        <h5><i class="fas fa-robot me-2"></i>OpenAI GPT-4o</h5>
+                                        <small>${data.analise.api_1_tokens_usados} tokens em ${data.analise.api_1_tempo}s</small>
+                                    </div>
+                                    <pre style="white-space: pre-wrap; font-size: 0.9rem;">${data.analise.resultado_agente_1}</pre>
+                                </div>
+                                
+                                <div class="result-card">
+                                    <div class="api-header">
+                                        <h5><i class="fas fa-robot me-2"></i>Anthropic Claude</h5>
+                                        <small>${data.analise.api_2_tokens_usados} tokens em ${data.analise.api_2_tempo}s</small>
+                                    </div>
+                                    <pre style="white-space: pre-wrap; font-size: 0.9rem;">${data.analise.resultado_agente_2}</pre>
+                                </div>
+                                
+                                <div class="result-card">
+                                    <div class="api-header">
+                                        <h5><i class="fas fa-robot me-2"></i>Google Gemini</h5>
+                                        <small>${data.analise.api_3_tokens_usados} tokens em ${data.analise.api_3_tempo}s</small>
+                                    </div>
+                                    <pre style="white-space: pre-wrap; font-size: 0.9rem;">${data.analise.resultado_agente_3}</pre>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+                alert('Erro ao carregar detalhes da análise');
+            }
+        }
+
+        function exibirErro(mensagem) {
+            document.getElementById('analysis-list').innerHTML = `
+                <div class="text-center text-danger p-4">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <h5>Erro ao carregar dados</h5>
+                    <p>${mensagem}</p>
+                    <button class="btn btn-outline-primary" onclick="carregarAnalises()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Tentar Novamente
+                    </button>
+                </div>
+            `;
+        }
+
+        function exportarTudo() {
+            alert('Funcionalidade de exportação em massa será implementada em breve');
+        }
+    </script>
+</body>
+</html>

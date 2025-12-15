@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuição por Área Jurídica - Legal Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='ars-logo.png') }}">
+    <style>
+        :root {
+            --primary-color: #3b576f;
+            --secondary-color: #2c4151;
+            --accent-color: #4a8eb8;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-primary: #ffffff;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --border-color: #404040;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .chart-container {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            height: 500px;
+        }
+        
+        .chart-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .area-stats {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .area-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .area-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .area-count {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .disclaimer {
+            background: linear-gradient(135deg, rgba(255,193,7,0.2) 0%, rgba(255,193,7,0.1) 100%);
+            border: 1px solid rgba(255,193,7,0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            color: #fff3cd;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .nav-pills .nav-link {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: rgba(255,255,255,0.8);
+            margin-right: 0.5rem;
+            border-radius: 8px;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">🗺️ Distribuição por Área Jurídica</h1>
+                    <p class="mb-0 opacity-75">Análise detalhada por especialização</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{{ url_for('estatisticas_detalhadas') }}" class="btn btn-outline-light">
+                        ← Voltar às Estatísticas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="container mt-4">
+        <ul class="nav nav-pills justify-content-center">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('estatisticas_detalhadas') }}">📊 Visão Geral</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('analise_geografica') }}">🗺️ Distribuição por Área</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('gestao_financeira') }}">💰 Valores por Situação</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('performance') }}">⚡ Performance</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('analise_temporal') }}">📅 Análise Temporal</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('analise_riscos') }}">⚠️ Análise de Riscos</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Métricas principais -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ estatisticas.areas_diferentes }}</div>
+                    <div class="metric-label">Áreas Jurídicas Ativas</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ "{:,.0f}".format(estatisticas.valor_total_causas / estatisticas.areas_diferentes) }}</div>
+                    <div class="metric-label">Valor Médio por Área</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ "{:,.0f}".format(estatisticas.total_processos / estatisticas.areas_diferentes) }}</div>
+                    <div class="metric-label">Processos Médios por Área</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ estatisticas.por_area[0].area.split()[1] if estatisticas.por_area else 'N/A' }}</div>
+                    <div class="metric-label">Área Mais Ativa</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Gráfico Pizza -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">📊 Distribuição de Processos por Área</div>
+                    <div id="areasPieChart"></div>
+                </div>
+            </div>
+            
+            <!-- Gráfico Barras -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">📈 Volume por Área Jurídica</div>
+                    <div id="areasBarChart"></div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Valores -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">💰 Valor Total por Área</div>
+                    <div id="valoresAreaChart"></div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Resumo Detalhado -->
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <div class="chart-title">⚠️ Distribuição de Alto Risco</div>
+                    <div id="riscoAreaChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista detalhada -->
+    <div class="container mt-4">
+        <div class="area-stats">
+            <h3 class="text-center mb-4">📋 Detalhamento por Área Jurídica</h3>
+            {% for area in estatisticas.por_area %}
+            <div class="area-item">
+                <div>
+                    <div class="area-name">{{ area.area }}</div>
+                    <small class="text-muted">Área de atuação especializada</small>
+                </div>
+                <div class="area-count">{{ area.quantidade }} processos</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="container">
+        <div class="disclaimer">
+            ⚠️ <strong>Dados Sintéticos:</strong> Esta demonstração utiliza dados sintéticos para fins educacionais e de demonstração do sistema. 
+            Em um ambiente de produção, todos os dados seriam extraídos de fontes reais do escritório.
+        </div>
+    </div>
+
+    <script>
+        // Dados passados do backend
+        const estatisticas = {{ estatisticas | tojson | safe }};
+        
+        console.log("📊 Dados das áreas jurídicas:", estatisticas);
+
+        // 1. Gráfico Pizza - Distribuição de Processos
+        const areasPieOptions = {
+            series: estatisticas.por_area.map(item => item.quantidade),
+            chart: {
+                type: 'donut',
+                height: 350,
+                background: 'transparent'
+            },
+            theme: { mode: 'dark' },
+            colors: ['#4a8eb8', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'],
+            labels: estatisticas.por_area.map(item => item.area),
+            legend: {
+                position: 'bottom',
+                labels: { colors: '#ffffff' }
+            },
+            tooltip: {
+                theme: 'dark'
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: { width: 300 }
+                }
+            }]
+        };
+        
+        const areasPieChart = new ApexCharts(document.querySelector("#areasPieChart"), areasPieOptions);
+        areasPieChart.render();
+
+        // 2. Gráfico Barras - Volume por Área
+        const areasBarOptions = {
+            series: [{
+                name: 'Processos',
+                data: estatisticas.por_area.map(item => item.quantidade)
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: 'dark' },
+            colors: ['#4a8eb8'],
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    borderRadius: 8,
+                    dataLabels: { position: 'top' }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { colors: ['#ffffff'] }
+            },
+            xaxis: {
+                categories: estatisticas.por_area.map(item => item.area.replace('Direito ', '')),
+                labels: { style: { colors: '#ffffff' } }
+            },
+            yaxis: {
+                labels: { style: { colors: '#ffffff' } }
+            },
+            grid: {
+                borderColor: '#404040',
+                strokeDashArray: 5
+            },
+            tooltip: {
+                theme: 'dark'
+            }
+        };
+        
+        const areasBarChart = new ApexCharts(document.querySelector("#areasBarChart"), areasBarOptions);
+        areasBarChart.render();
+
+        // 3. Gráfico de Valores por Área (baseado nos dados resumo_detalhado)
+        const valoresData = estatisticas.resumo_detalhado.map(item => ({
+            area: item.area.replace('Direito ', ''),
+            valor: item.valor_medio
+        }));
+
+        const valoresAreaOptions = {
+            series: [{
+                name: 'Valor Médio',
+                data: valoresData.map(item => Math.round(item.valor))
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: 'dark' },
+            colors: ['#28a745'],
+            plotOptions: {
+                bar: {
+                    borderRadius: 8,
+                    columnWidth: '60%'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return 'R$ ' + val.toLocaleString('pt-BR');
+                },
+                style: { colors: ['#ffffff'] }
+            },
+            xaxis: {
+                categories: valoresData.map(item => item.area),
+                labels: { 
+                    style: { colors: '#ffffff' },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                labels: { 
+                    style: { colors: '#ffffff' },
+                    formatter: function (val) {
+                        return 'R$ ' + val.toLocaleString('pt-BR');
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#404040',
+                strokeDashArray: 5
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (val) {
+                        return 'R$ ' + val.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        };
+        
+        const valoresAreaChart = new ApexCharts(document.querySelector("#valoresAreaChart"), valoresAreaOptions);
+        valoresAreaChart.render();
+
+        // 4. Gráfico de Distribuição de Alto Risco
+        const riscoData = estatisticas.resumo_detalhado.map(item => ({
+            area: item.area.replace('Direito ', ''),
+            risco_alto: item.risco_alto,
+            total: item.total_processos,
+            percentual: Math.round((item.risco_alto / item.total_processos) * 100)
+        }));
+
+        const riscoAreaOptions = {
+            series: [{
+                name: 'Alto Risco (%)',
+                data: riscoData.map(item => item.percentual)
+            }, {
+                name: 'Processos de Alto Risco',
+                data: riscoData.map(item => item.risco_alto)
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            theme: { mode: 'dark' },
+            colors: ['#dc3545', '#ffc107'],
+            plotOptions: {
+                bar: {
+                    borderRadius: 5,
+                    columnWidth: '60%'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { colors: ['#ffffff'] }
+            },
+            xaxis: {
+                categories: riscoData.map(item => item.area),
+                labels: { 
+                    style: { colors: '#ffffff' },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                labels: { style: { colors: '#ffffff' } }
+            },
+            grid: {
+                borderColor: '#404040',
+                strokeDashArray: 5
+            },
+            tooltip: {
+                theme: 'dark'
+            },
+            legend: {
+                labels: { colors: '#ffffff' }
+            }
+        };
+        
+        const riscoAreaChart = new ApexCharts(document.querySelector("#riscoAreaChart"), riscoAreaOptions);
+        riscoAreaChart.render();
+
+        console.log("✅ Gráficos de distribuição por áreas jurídicas inicializados");
+    </script>
+</body>
+</html>

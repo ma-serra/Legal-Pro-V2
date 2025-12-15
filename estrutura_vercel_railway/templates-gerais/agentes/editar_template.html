@@ -1,0 +1,331 @@
+{% extends "layout.html" %}
+
+{% block title %}{% if nova_template %}Novo Template{% else %}Editar Template{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+      {% if nova_template %}
+      <i class="fas fa-plus-circle me-2"></i> Novo Template
+      {% else %}
+      <i class="fas fa-edit me-2"></i> Editar Template: {{ template.nome }}
+      {% endif %}
+    </h1>
+    <a href="{{ url_for('listar_templates') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+  </div>
+  
+  <form action="{{ url_for('salvar_template_route', template_id=template.id) }}" method="post" id="templateForm">
+    <div class="row">
+      <!-- Informações Básicas -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Informações Básicas</h5>
+          </div>
+          <div class="card-body">
+            <input type="hidden" name="id" value="{{ template.id }}">
+            
+            <div class="mb-3">
+              <label for="nome" class="form-label">Nome do Template</label>
+              <input type="text" class="form-control" id="nome" name="nome" value="{{ template.nome }}" required>
+              <div class="form-text">Nome descritivo para identificar este template.</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="tipo" class="form-label">Tipo de Agente</label>
+              <select class="form-select" id="tipo" name="tipo" required>
+                <option value="" disabled {% if not template.tipo %}selected{% endif %}>Selecione um tipo</option>
+                <option value="extrator" {% if template.tipo == 'extrator' %}selected{% endif %}>Extrator</option>
+                <option value="classificador" {% if template.tipo == 'classificador' %}selected{% endif %}>Classificador</option>
+                <option value="analisador" {% if template.tipo == 'analisador' %}selected{% endif %}>Analisador</option>
+                <option value="sintetizador" {% if template.tipo == 'sintetizador' %}selected{% endif %}>Sintetizador</option>
+                <option value="formatador" {% if template.tipo == 'formatador' %}selected{% endif %}>Formatador</option>
+                <option value="resumidor" {% if template.tipo == 'resumidor' %}selected{% endif %}>Resumidor</option>
+                <option value="tradutor" {% if template.tipo == 'tradutor' %}selected{% endif %}>Tradutor</option>
+                <option value="gerador" {% if template.tipo == 'gerador' %}selected{% endif %}>Gerador</option>
+                <option value="sentimento" {% if template.tipo == 'sentimento' %}selected{% endif %}>Sentimento</option>
+              </select>
+              <div class="form-text">Funcionalidade principal do agente criado a partir deste template.</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="descricao" class="form-label">Descrição</label>
+              <textarea class="form-control" id="descricao" name="descricao" rows="4">{{ template.descricao }}</textarea>
+              <div class="form-text">Descrição detalhada da função e uso deste template.</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Configurações de LLM -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Configurações de LLM</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="config_llm_provider" class="form-label">Provedor</label>
+              <select class="form-select" id="config_llm_provider" name="config_llm_provider" required>
+                <option value="openai" {% if template.configuracoes.llm_provider == 'openai' %}selected{% endif %}>OpenAI</option>
+                <option value="anthropic" {% if template.configuracoes.llm_provider == 'anthropic' %}selected{% endif %}>Anthropic</option>
+                <option value="perplexity" {% if template.configuracoes.llm_provider == 'perplexity' %}selected{% endif %}>Perplexity</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="config_llm_model" class="form-label">Modelo</label>
+              <select class="form-select" id="config_llm_model" name="config_llm_model" required>
+                <!-- OpenAI Models -->
+                <optgroup label="OpenAI" class="openai-models" {% if template.configuracoes.llm_provider != 'openai' %}style="display: none;"{% endif %}>
+                  <option value="gpt-4o" {% if template.configuracoes.llm_model == 'gpt-4o' %}selected{% endif %}>GPT-4o</option>
+                  <option value="gpt-4o-mini" {% if template.configuracoes.llm_model == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini</option>
+                  <option value="o1-preview" {% if template.configuracoes.llm_model == 'o1-preview' %}selected{% endif %}>o1-preview</option>
+                  <option value="o1-mini" {% if template.configuracoes.llm_model == 'o1-mini' %}selected{% endif %}>o1-mini</option>
+                  <option value="gpt-4-turbo" {% if template.configuracoes.llm_model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                  <option value="gpt-4" {% if template.configuracoes.llm_model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                  <option value="gpt-3.5-turbo" {% if template.configuracoes.llm_model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                </optgroup>
+                <!-- Anthropic Models -->
+                <optgroup label="Anthropic" class="anthropic-models" {% if template.configuracoes.llm_provider != 'anthropic' %}style="display: none;"{% endif %}>
+                  <option value="claude-sonnet-4-20250514" {% if template.configuracoes.llm_model == 'claude-sonnet-4-20250514' %}selected{% endif %}>Claude Sonnet 4</option>
+                  <option value="claude-3-7-sonnet-20250219" {% if template.configuracoes.llm_model == 'claude-3-7-sonnet-20250219' %}selected{% endif %}>Claude 3.7 Sonnet</option>
+                  <option value="claude-sonnet-4-20250514" {% if template.configuracoes.llm_model == 'claude-sonnet-4-20250514' %}selected{% endif %}>Claude 3.5 Sonnet</option>
+                  <option value="claude-3-5-haiku-20241022" {% if template.configuracoes.llm_model == 'claude-3-5-haiku-20241022' %}selected{% endif %}>Claude 3.5 Haiku</option>
+                  <option value="claude-3-opus-20240229" {% if template.configuracoes.llm_model == 'claude-3-opus-20240229' %}selected{% endif %}>Claude 3 Opus</option>
+                  <option value="claude-3-sonnet-20240229" {% if template.configuracoes.llm_model == 'claude-3-sonnet-20240229' %}selected{% endif %}>Claude 3 Sonnet</option>
+                  <option value="claude-3-haiku-20240307" {% if template.configuracoes.llm_model == 'claude-3-haiku-20240307' %}selected{% endif %}>Claude 3 Haiku</option>
+                  <option value="claude-3-haiku-20240307" {% if template.configuracoes.llm_model == 'claude-3-haiku-20240307' %}selected{% endif %}>Claude 3 Haiku</option>
+                </optgroup>
+                <!-- Perplexity Models -->
+                <optgroup label="Perplexity" class="perplexity-models" {% if template.configuracoes.llm_provider != 'perplexity' %}style="display: none;"{% endif %}>
+                  <option value="llama-3.1-sonar-small-128k-online" {% if template.configuracoes.llm_model == 'llama-3.1-sonar-small-128k-online' %}selected{% endif %}>Llama 3.1 Sonar Small</option>
+                  <option value="llama-3.1-sonar-large-128k-online" {% if template.configuracoes.llm_model == 'llama-3.1-sonar-large-128k-online' %}selected{% endif %}>Llama 3.1 Sonar Large</option>
+                  <option value="llama-3.1-sonar-huge-128k-online" {% if template.configuracoes.llm_model == 'llama-3.1-sonar-huge-128k-online' %}selected{% endif %}>Llama 3.1 Sonar Huge</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="config_temperatura" class="form-label">Temperatura <span id="tempValue">{{ template.configuracoes.temperatura }}</span></label>
+              <input type="range" class="form-range" id="config_temperatura" name="config_temperatura" min="0" max="1" step="0.1" value="{{ template.configuracoes.temperatura or 0.7 }}">
+              <div class="form-text">Controla a aleatoriedade das respostas. Menor valor = mais previsível, maior valor = mais criativo.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Configurações Avançadas e Parâmetros -->
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Template de Prompt</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <textarea class="form-control font-monospace" id="prompt_template" name="prompt_template" rows="12" required>{{ template.prompt_template }}</textarea>
+              <div class="form-text">
+                Template do prompt a ser enviado para o modelo. Você pode usar as seguintes variáveis:
+                <ul>
+                  <li><code>{input}</code> - O texto de entrada recebido dos agentes anteriores</li>
+                  <li><code>{contexto}</code> - Informações de contexto para o agente</li>
+                  <li><code>{parametros.NOME}</code> - Acesso aos parâmetros configurados abaixo</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Configurações Avançadas -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Configurações Avançadas</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3 form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="config_modo_debug" name="config_modo_debug" {% if template.configuracoes.modo_debug %}checked{% endif %}>
+                  <label class="form-check-label" for="config_modo_debug">Modo Debug</label>
+                  <div class="form-text">Ativa logs detalhados durante execução.</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3 form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="config_sempre_executar" name="config_sempre_executar" {% if template.configuracoes.sempre_executar %}checked{% endif %}>
+                  <label class="form-check-label" for="config_sempre_executar">Sempre Executar</label>
+                  <div class="form-text">Força execução mesmo quando desnecessária.</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="config_timeout" class="form-label">Timeout (segundos)</label>
+                  <input type="number" class="form-control" id="config_timeout" name="config_timeout" value="{{ template.configuracoes.timeout or 120 }}" min="1">
+                  <div class="form-text">Tempo máximo para execução.</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="config_max_tokens" class="form-label">Max Tokens</label>
+                  <input type="number" class="form-control" id="config_max_tokens" name="config_max_tokens" value="{{ template.configuracoes.max_tokens or 4000 }}" min="1">
+                  <div class="form-text">Tamanho máximo da resposta.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Parâmetros -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Parâmetros</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="addParamBtn">
+              <i class="fas fa-plus"></i> Adicionar
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="parametrosTable">
+                <thead>
+                  <tr>
+                    <th style="width: 40%">Nome</th>
+                    <th style="width: 50%">Valor Padrão</th>
+                    <th style="width: 10%">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% if template.configuracoes.parametros %}
+                    {% for nome, valor in template.configuracoes.parametros.items() %}
+                      <tr>
+                        <td>
+                          <input type="text" class="form-control" name="param_nome[]" value="{{ nome }}" placeholder="Nome do parâmetro">
+                        </td>
+                        <td>
+                          <input type="text" class="form-control" name="param_valor[]" value="{{ valor }}" placeholder="Valor padrão">
+                        </td>
+                        <td>
+                          <button type="button" class="btn btn-sm btn-outline-danger remove-param">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% else %}
+                    <tr>
+                      <td colspan="3" class="text-center">
+                        <em>Nenhum parâmetro configurado.</em>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="form-text">
+              Parâmetros personalizados que podem ser acessados no template de prompt com <code>{parametros.NOME}</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-between mb-5">
+      <a href="{{ url_for('listar_templates') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-times"></i> Cancelar
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Salvar Template
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Atualiza o valor de temperatura mostrado
+  document.getElementById('config_temperatura').addEventListener('input', function() {
+    document.getElementById('tempValue').textContent = this.value;
+  });
+  
+  // Gerencia a exibição dos modelos conforme o provedor
+  document.getElementById('config_llm_provider').addEventListener('change', function() {
+    const provider = this.value;
+    
+    // Esconde todos os grupos de modelos
+    document.querySelectorAll('#config_llm_model optgroup').forEach(group => {
+      group.style.display = 'none';
+    });
+    
+    // Mostra apenas o grupo de modelos do provedor selecionado
+    document.querySelector(`.${provider}-models`).style.display = 'block';
+    
+    // Seleciona o primeiro modelo do provedor selecionado
+    const firstOption = document.querySelector(`.${provider}-models option`);
+    if (firstOption) {
+      document.getElementById('config_llm_model').value = firstOption.value;
+    }
+  });
+  
+  // Adiciona um novo parâmetro
+  document.getElementById('addParamBtn').addEventListener('click', function() {
+    const table = document.getElementById('parametrosTable');
+    const tbody = table.querySelector('tbody');
+    
+    // Remove mensagem de "nenhum parâmetro" se existir
+    const emptyRow = tbody.querySelector('tr td[colspan="3"]');
+    if (emptyRow) {
+      tbody.innerHTML = '';
+    }
+    
+    // Adiciona nova linha
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td>
+        <input type="text" class="form-control" name="param_nome[]" placeholder="Nome do parâmetro">
+      </td>
+      <td>
+        <input type="text" class="form-control" name="param_valor[]" placeholder="Valor padrão">
+      </td>
+      <td>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-param">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    
+    // Adiciona evento de remoção ao novo botão
+    newRow.querySelector('.remove-param').addEventListener('click', function() {
+      newRow.remove();
+      checkEmptyParams();
+    });
+  });
+  
+  // Adiciona eventos de remoção aos botões existentes
+  document.querySelectorAll('.remove-param').forEach(button => {
+    button.addEventListener('click', function() {
+      this.closest('tr').remove();
+      checkEmptyParams();
+    });
+  });
+  
+  // Verifica se a tabela de parâmetros está vazia e adiciona mensagem
+  function checkEmptyParams() {
+    const tbody = document.querySelector('#parametrosTable tbody');
+    if (tbody.children.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center">
+            <em>Nenhum parâmetro configurado.</em>
+          </td>
+        </tr>
+      `;
+    }
+  }
+</script>
+{% endblock %}

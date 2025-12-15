@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Calendário</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .zoom-header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            padding: 1.5rem 0;
+            border-bottom: 2px solid #2d2d2d;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .zoom-branding {
+            color: #0E71EB;
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .header-btn {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .header-btn:hover {
+            background-color: #0E71EB;
+            color: white;
+            border-color: #0E71EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(14, 113, 235, 0.3);
+        }
+        
+        .calendar-container {
+            background-color: #1e1e1e;
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #2d2d2d;
+        }
+        
+        .calendar-title {
+            color: #e0e0e0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .btn-nova-reuniao {
+            background-color: #0E71EB;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-nova-reuniao:hover {
+            background-color: #0d5fb8;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(14, 113, 235, 0.4);
+        }
+        
+        /* FullCalendar Custom Dark Theme */
+        .fc {
+            background-color: transparent !important;
+        }
+        
+        .fc-theme-standard td,
+        .fc-theme-standard th {
+            border-color: #2d2d2d !important;
+        }
+        
+        .fc-theme-standard .fc-scrollgrid {
+            border-color: #2d2d2d !important;
+        }
+        
+        .fc-col-header-cell {
+            background-color: #252525 !important;
+            color: #999 !important;
+            font-weight: 600;
+            text-transform: lowercase;
+            padding: 1rem 0.5rem !important;
+            border-color: #2d2d2d !important;
+            font-size: 0.85rem;
+        }
+        
+        .fc-daygrid-day {
+            background-color: #1a1a1a !important;
+        }
+        
+        .fc-daygrid-day-number {
+            color: #e0e0e0 !important;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .fc-day-today {
+            background-color: #2a4a6a !important;
+        }
+        
+        .fc-day-today .fc-daygrid-day-number {
+            color: #4dabf7 !important;
+            font-weight: 700;
+        }
+        
+        .fc-day-other .fc-daygrid-day-number {
+            color: #555 !important;
+        }
+        
+        .fc-toolbar {
+            margin-bottom: 1.5rem !important;
+            padding: 1rem;
+            background-color: #252525;
+            border-radius: 8px;
+        }
+        
+        .fc-toolbar-title {
+            color: #e0e0e0 !important;
+            font-size: 1.4rem !important;
+            font-weight: 600 !important;
+            text-transform: lowercase;
+        }
+        
+        .fc-button {
+            background-color: #2a2a2a !important;
+            border-color: #404040 !important;
+            color: #e0e0e0 !important;
+            text-transform: capitalize !important;
+            font-size: 0.9rem !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .fc-button:hover {
+            background-color: #0E71EB !important;
+            border-color: #0E71EB !important;
+            color: white !important;
+        }
+        
+        .fc-button-active,
+        .fc-button:focus {
+            background-color: #0E71EB !important;
+            border-color: #0E71EB !important;
+            color: white !important;
+            box-shadow: none !important;
+        }
+        
+        .fc-event {
+            background-color: #0E71EB !important;
+            border-color: #0E71EB !important;
+            color: white !important;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .fc-event:hover {
+            background-color: #0d5fb8 !important;
+            transform: scale(1.02);
+        }
+        
+        .fc-daygrid-event {
+            margin: 2px 3px !important;
+        }
+        
+        .fc-h-event {
+            background-color: #0E71EB !important;
+            border: none !important;
+        }
+        
+        .fc-daygrid-day-frame {
+            min-height: 100px !important;
+        }
+        
+        /* View Buttons */
+        .view-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .view-btn {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .view-btn:hover,
+        .view-btn.active {
+            background-color: #0E71EB;
+            color: white;
+            border-color: #0E71EB;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="zoom-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">
+                    <i class="fas fa-video me-2"></i>
+                    <span class="zoom-branding">Zoom</span>
+                    <span style="color: #e0e0e0; font-size: 1.5rem;">Calendário</span>
+                </h1>
+                <div class="header-buttons">
+                    <a href="/" class="header-btn">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/zoom_api/meetings" class="header-btn">
+                        <i class="fas fa-list"></i> Reuniões
+                    </a>
+                    <a href="/zoom_api/" class="header-btn">
+                        <i class="fas fa-th-large"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        {% if error %}
+        <div class="alert alert-danger mt-4" role="alert">
+            <h4 class="alert-heading">Erro!</h4>
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Calendário de Reuniões
+                </div>
+                <a href="/zoom_api/create_meeting" class="btn-nova-reuniao">
+                    <i class="fas fa-plus"></i> Nova Reunião
+                </a>
+            </div>
+            
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/locales/pt-br.global.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        
+        // Converter reuniões para eventos
+        const events = [
+            {% if meetings and meetings|length > 0 %}
+            {% for meeting in meetings %}
+            {
+                title: '{{ meeting.topic }}',
+                start: '{{ meeting.start_time }}',
+                url: '/zoom_api/meeting/{{ meeting.id }}',
+                backgroundColor: '#0E71EB',
+                borderColor: '#0E71EB',
+                textColor: 'white',
+                extendedProps: {
+                    duration: {{ meeting.duration }},
+                    joinUrl: '{{ meeting.join_url }}',
+                    meetingId: '{{ meeting.id }}'
+                }
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+            {% endif %}
+        ];
+        
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'pt-br',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            },
+            buttonText: {
+                today: 'Hoje',
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                list: 'Lista'
+            },
+            events: events,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                window.location.href = info.event.url;
+            },
+            eventMouseEnter: function(info) {
+                info.el.style.cursor = 'pointer';
+                info.el.title = info.event.title + '\nClique para ver detalhes';
+            },
+            height: 'auto',
+            contentHeight: 650,
+            expandRows: true,
+            dayMaxEvents: 3,
+            moreLinkText: function(num) {
+                return '+' + num;
+            },
+            noEventsContent: 'Nenhuma reunião agendada'
+        });
+        
+        calendar.render();
+        
+        {% if not meetings or meetings|length == 0 %}
+        // Adicionar mensagem informativa acima do calendário vazio
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'alert alert-info mb-3';
+        infoDiv.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Nenhuma reunião agendada.</strong> Clique em "Nova Reunião" para criar sua primeira reunião.';
+        calendarEl.parentNode.insertBefore(infoDiv, calendarEl);
+        {% endif %}
+    });
+    </script>
+</body>
+</html>
