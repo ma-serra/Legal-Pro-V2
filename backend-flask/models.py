@@ -553,6 +553,38 @@ class SegundaOpiniao(db.Model):
     def __repr__(self):
         return f'<SegundaOpiniao {self.id}>'
 
+class Conversa(db.Model):
+    """
+    Modelo para armazenar conversas de chat com assistentes.
+    """
+    __tablename__ = 'conversa'
+    
+    id = Column(Integer, primary_key=True)
+    assistente_id = Column(Integer, ForeignKey('agente_juridico.id'), nullable=False)
+    usuario_id = Column(Integer, ForeignKey('user.id'), nullable=True)  # Opcional - pode ser anônimo
+    titulo = Column(String(200), nullable=False)
+    mensagens = Column(JSONB, default=[])  # Array de mensagens {role, content, timestamp}
+    provider_usado = Column(String(50), nullable=True)  # openai, anthropic, google
+    modelo_usado = Column(String(100), nullable=True)  # gpt-5.2, claude-sonnet-4.5, etc
+    arquivos_anexados = Column(JSON, default=[])  # Lista de {nome, url, tipo, tamanho}
+    data_criacao = Column(DateTime, default=datetime.datetime.now)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+    ativa = Column(Boolean, default=True)
+    
+    # Relacionamentos
+    assistente = relationship("AgenteJuridico", backref="conversas")
+    usuario = relationship("User", backref="conversas", foreign_keys=[usuario_id])
+    
+    # Índices
+    __table_args__ = (
+        Index('idx_conversa_assistente', 'assistente_id'),
+        Index('idx_conversa_usuario', 'usuario_id'),
+        Index('idx_conversa_ativa', 'ativa'),
+    )
+    
+    def __repr__(self):
+        return f'<Conversa {self.id}: {self.titulo}>'
+
 # Modelo para documentos e suas versões
 class Documento(db.Model):
     """
