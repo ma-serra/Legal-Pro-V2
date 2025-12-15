@@ -856,6 +856,14 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Processos Dinâmicos: {e}")
     
+    # Registrar API REST de Processos Tributário (Fase 3)
+    try:
+        from modules.processos_tributario.routes import registrar_rotas as registrar_tributario
+        registrar_tributario(app)
+        logger.info("✅ API REST de Processos Tributário registrada com sucesso (15 endpoints)")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Processos Tributário: {e}")
+    
     # Registrar API REST de Transcrição
     try:
         from modules.api_rest_transcricao import register_transcricao_api
