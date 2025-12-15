@@ -419,6 +419,109 @@ def listar_conversas(assistente_id):
         logger.error(f"Erro ao listar conversas do assistente {assistente_id}: {e}")
         return jsonify({'error': 'Erro ao listar conversas'}), 500
 
+@assistentes_api.route('/<int:assistente_id>/conversas', methods=['POST'])
+def criar_conversa(assistente_id):
+    """
+    Cria uma nova conversa
+    """
+    try:
+        from models import Conversa
+        assistente = AgenteJuridico.query.get_or_404(assistente_id)
+        data = request.get_json()
+        
+        conversa = Conversa(
+            assistente_id=assistente_id,
+            titulo=data.get('titulo', f'Conversa com {assistente.nome}'),
+            mensagens=[],
+            provider_usado=data.get('provider'),
+            modelo_usado=data.get('modelo'),
+            arquivos_anexados=[]
+        )
+        db.session.add(conversa)
+        db.session.commit()
+        
+        return jsonify({
+            'id': conversa.id,
+            'titulo': conversa.titulo,
+            'mensagens': [],
+            'provider_usado': conversa.provider_usado,
+            'modelo_usado': conversa.modelo_usado
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao criar conversa: {e}")
+        return jsonify({'error': 'Erro ao criar conversa'}), 500
+
+@assistentes_api.route('/<int:assistente_id>/conversas/<int:conversa_id>', methods=['GET'])
+def obter_conversa(assistente_id, conversa_id):
+    """
+    Obtém detalhes de uma conversa
+    """
+    try:
+        from models import Conversa
+        conversa = Conversa.query.filter_by(id=conversa_id, assistente_id=assistente_id, ativa=True).first_or_404()
+        return jsonify({
+            'id': conversa.id,
+            'titulo': conversa.titulo,
+            'mensagens': conversa.mensagens or [],
+            'provider_usado': conversa.provider_usado,
+            'modelo_usado': conversa.modelo_usado,
+            'arquivos_anexados': conversa.arquivos_anexados or []
+        }), 200
+    except Exception as e:
+        logger.error(f"Erro ao obter conversa: {e}")
+        return jsonify({'error': 'Conversa não encontrada'}), 404
+
+@assistentes_api.route('/<int:assistente_id>/conversas/<int:conversa_id>', methods=['PUT'])
+def atualizar_conversa_endpoint(assistente_id, conversa_id):
+    """
+    Atualiza uma conversa
+    """
+    try:
+        from models import Conversa
+        from datetime import datetime
+        
+        conversa = Conversa.query.filter_by(id=conversa_id, assistente_id=assistente_id, ativa=True).first_or_404()
+        data = request.get_json()
+        
+        if 'titulo' in data:
+            conversa.titulo = data['titulo']
+        if 'mensagens' in data:
+            conversa.mensagens = data['mensagens']
+        if 'provider' in data:
+            conversa.provider_usado = data['provider']
+        if 'modelo' in data:
+            conversa.modelo_usado = data['modelo']
+        
+        conversa.data_atualizacao = datetime.now()
+        db.session.commit()
+        
+        return jsonify({'mensagem': 'Conversa atualizada'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao atualizar conversa: {e}")
+        return jsonify({'error': 'Erro ao atualizar'}), 500
+
+@assistentes_api.route('/<int:assistente_id>/conversas/<int:conversa_id>', methods=['DELETE'])
+def deletar_conversa(assistente_id, conversa_id):
+    """
+    Deleta uma conversa (soft delete)
+    """
+    try:
+        from models import Conversa
+        from datetime import datetime
+        
+        conversa = Conversa.query.filter_by(id=conversa_id, assistente_id=assistente_id, ativa=True).first_or_404()
+        conversa.ativa = False
+        conversa.data_atualizacao = datetime.now()
+        db.session.commit()
+        
+        return jsonify({'mensagem': 'Conversa deletada'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao deletar conversa: {e}")
+        return jsonify({'error': 'Erro ao deletar'}), 500
+
 def register_assistentes_api(app):
     """Registra o blueprint de assistentes no app"""
     app.register_blueprint(assistentes_api)
