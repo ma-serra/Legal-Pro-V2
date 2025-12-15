@@ -1,0 +1,2337 @@
+🎯 PROMPT TÉCNICO DETALHADO - SISTEMA DE CADASTRO DINÂMICO DE PROCESSOS JURÍDICOS
+📋 CONTEXTO DO PROJETO
+Sistema Atual (Legal Pro Hub v2.0)
+
+Arquitetura: SaaS Multi-Tenant
+Backend: Flask 3.0.3 + SQLAlchemy 2.0.34 + PostgreSQL 15
+Frontend: React 18.3 + TypeScript 5.0 + Tailwind CSS 3.4
+Deploy: Railway (Backend) + Vercel (Frontend)
+Funcionalidades Atuais: 395 Assistentes IA, Chat, Multi-agente, Analytics, 39+ módulos
+
+Objetivo da Implementação
+Criar um sistema de cadastro dinâmico de processos que:
+
+Adapta campos e validações conforme a natureza jurídica (Tributário, Trabalhista, Cível)
+Implementa campos específicos solicitados pelo cliente
+Mantém flexibilidade para adicionar novas áreas jurídicas
+Suporta multi-tenancy (SaaS)
+Integra com sistema de atualização monetária
+Fornece prognóstico de êxito detalhado por tese
+
+
+🗄️ ESTRUTURA DE BANCO DE DADOS
+1. TABELAS CORE (Normalizadas)
+1.1 Tabela Principal de Processos
+sql-- =============================================
+-- TABELA PRINCIPAL: processos
+-- =============================================
+CREATE TABLE processos (
+    -- Identificação
+    id_processo BIGSERIAL PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id_tenant) ON DELETE CASCADE,
+    
+    -- Dados Básicos (Comuns a todas as naturezas)
+    numero_cnj VARCHAR(25),
+    pasta VARCHAR(50),
+    status_id INTEGER NOT NULL REFERENCES status_processo(id_status),
+    natureza_id INTEGER NOT NULL REFERENCES natureza_processo(id_natureza),
+    
+    -- Cliente
+    cliente_id INTEGER REFERENCES clientes(id_cliente),
+    posicao_cliente_id INTEGER REFERENCES posicao_cliente(id_posicao),
+    
+    -- Classificação Jurídica
+    acao_id INTEGER REFERENCES acao(id_acao),
+    procedimento_id INTEGER REFERENCES procedimento(id_procedimento),
+    fase_id INTEGER REFERENCES fase_processual(id_fase),
+    
+    -- Localização Processual
+    orgao_id INTEGER REFERENCES orgao(id_orgao),
+    comarca_id INTEGER REFERENCES comarca(id_comarca),
+    vara_turma_id INTEGER REFERENCES vara_turma(id_vara_turma),
+    
+    -- CNJ
+    justica_cnj_id INTEGER REFERENCES justica_cnj(id_justica),
+    instancia_cnj_id INTEGER REFERENCES instancia_cnj(id_instancia),
+    classe_cnj_id INTEGER REFERENCES classe_cnj(id_classe),
+    
+    -- Datas
+    data_distribuicao DATE,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    
+    -- Valores Base
+    valor_causa NUMERIC(18,2),
+    valor_causa_atualizado NUMERIC(18,2),
+    valor_envolvido NUMERIC(18,2),
+    valor_envolvido_atualizado NUMERIC(18,2),
+    contingencia NUMERIC(18,2),
+    
+    -- Prognóstico Base
+    tipo_probabilidade_id INTEGER REFERENCES tipo_probabilidade(id_tipo_probabilidade),
+    risco_id INTEGER REFERENCES nivel_risco(id_risco),
+    
+    -- Metadados
+    titulo TEXT,
+    observacao_pasta TEXT,
+    ativo BOOLEAN DEFAULT TRUE NOT NULL,
+    
+    -- Índices e Constraints
+    CONSTRAINT chk_valores_positivos CHECK (
+        valor_causa >= 0 AND 
+        valor_causa_atualizado >= 0 AND 
+        valor_envolvido >= 0 AND 
+        valor_envolvido_atualizado >= 0 AND
+        contingencia >= 0
+    ),
+    CONSTRAINT chk_valor_atualizado CHECK (
+        valor_causa_atualizado >= valor_causa
+    )
+);
+
+-- Índices para performance
+CREATE INDEX idx_processos_tenant ON processos(tenant_id);
+CREATE INDEX idx_processos_cnj ON processos(numero_cnj);
+CREATE INDEX idx_processos_natureza ON processos(natureza_id);
+CREATE INDEX idx_processos_cliente ON processos(cliente_id);
+CREATE INDEX idx_processos_status ON processos(status_id);
+CREATE INDEX idx_processos_data_dist ON processos(data_distribuicao);
+CREATE INDEX idx_processos_ativo ON processos(ativo) WHERE ativo = TRUE;
+1.2 Tabela de Campos Dinâmicos por Natureza
+sql-- =============================================
+-- CAMPOS ESPECÍFICOS POR NATUREZA
+-- =============================================
+CREATE TABLE processo_campos_especificos (
+    id_campo_especifico BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    natureza_id INTEGER NOT NULL REFERENCES natureza_processo(id_natureza),
+    
+    -- Campos específicos armazenados como JSONB para flexibilidade
+    campos_tributario JSONB,
+    campos_trabalhista JSONB,
+    campos_civel JSONB,
+    
+    -- Auditoria
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    
+    CONSTRAINT uk_processo_natureza UNIQUE(processo_id, natureza_id)
+);
+
+CREATE INDEX idx_campos_processo ON processo_campos_especificos(processo_id);
+CREATE INDEX idx_campos_natureza ON processo_campos_especificos(natureza_id);
+CREATE INDEX idx_campos_tributario ON processo_campos_especificos USING GIN(campos_tributario);
+CREATE INDEX idx_campos_trabalhista ON processo_campos_especificos USING GIN(campos_trabalhista);
+CREATE INDEX idx_campos_civel ON processo_campos_especificos USING GIN(campos_civel);
+2. TABELAS ESPECÍFICAS - TRIBUTÁRIO
+2.1 Tributos
+sqlCREATE TABLE tributos (
+    id_tributo SERIAL PRIMARY KEY,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    esfera VARCHAR(20) CHECK (esfera IN ('Federal', 'Estadual', 'Municipal')),
+    ativo BOOLEAN DEFAULT TRUE NOT NULL,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inserir tributos principais
+INSERT INTO tributos (codigo, nome, esfera) VALUES
+('ICMS', 'Imposto sobre Circulação de Mercadorias e Serviços', 'Estadual'),
+('ISS', 'Imposto sobre Serviços', 'Municipal'),
+('IRPJ', 'Imposto de Renda Pessoa Jurídica', 'Federal'),
+('CSLL', 'Contribuição Social sobre Lucro Líquido', 'Federal'),
+('PIS', 'Programa de Integração Social', 'Federal'),
+('COFINS', 'Contribuição para Financiamento da Seguridade Social', 'Federal'),
+('IPI', 'Imposto sobre Produtos Industrializados', 'Federal'),
+('IPTU', 'Imposto Predial e Territorial Urbano', 'Municipal'),
+('IPVA', 'Imposto sobre Propriedade de Veículos Automotores', 'Estadual');
+2.2 Teses Tributárias
+sqlCREATE TABLE teses_tributarias (
+    id_tese SERIAL PRIMARY KEY,
+    tenant_id INTEGER REFERENCES tenants(id_tenant) ON DELETE CASCADE,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    titulo VARCHAR(500) NOT NULL,
+    descricao TEXT,
+    tributo_id INTEGER REFERENCES tributos(id_tributo),
+    
+    -- Jurisprudência
+    tema_repercussao_geral VARCHAR(50),
+    tema_repetitivo VARCHAR(50),
+    tribunal_origem VARCHAR(100),
+    
+    -- Prognóstico padrão
+    probabilidade_sucesso NUMERIC(5,2) CHECK (probabilidade_sucesso BETWEEN 0 AND 100),
+    fundamentacao TEXT,
+    
+    -- Status
+    situacao VARCHAR(50) CHECK (situacao IN ('Favorável', 'Desfavorável', 'Pendente', 'Superada')),
+    ativo BOOLEAN DEFAULT TRUE NOT NULL,
+    
+    -- Auditoria
+    criado_por INTEGER REFERENCES "user"(id),
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_teses_tenant ON teses_tributarias(tenant_id);
+CREATE INDEX idx_teses_tributo ON teses_tributarias(tributo_id);
+CREATE INDEX idx_teses_ativo ON teses_tributarias(ativo) WHERE ativo = TRUE;
+2.3 Processo Tributário (Campos Específicos)
+sqlCREATE TABLE processo_tributario (
+    id_processo_tributario BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Tributo
+    tributo_id INTEGER REFERENCES tributos(id_tributo),
+    
+    -- Documentos Fiscais
+    numero_aiim VARCHAR(100),
+    numero_cda VARCHAR(100),
+    data_lancamento DATE,
+    
+    -- Valores Específicos
+    valor_inscrito_cda NUMERIC(18,2),
+    valor_principal NUMERIC(18,2),
+    valor_multa NUMERIC(18,2),
+    percentual_multa NUMERIC(5,2),
+    base_calculo_multa VARCHAR(100),
+    
+    -- Juros
+    valor_juros NUMERIC(18,2),
+    indice_juros VARCHAR(50) CHECK (indice_juros IN ('SELIC', 'Lei 13918', 'IPCA', 'CDI', 'Outro')),
+    descricao_indice_juros TEXT,
+    
+    -- Vara/Turma Específicas
+    vara_primeira_instancia_id INTEGER REFERENCES vara_turma(id_vara_turma),
+    turma_segunda_instancia_id INTEGER REFERENCES vara_turma(id_vara_turma),
+    
+    -- Auditoria
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_processo_tributario UNIQUE(processo_id),
+    CONSTRAINT chk_valores_tributario CHECK (
+        valor_inscrito_cda >= 0 AND
+        valor_principal >= 0 AND
+        valor_multa >= 0 AND
+        valor_juros >= 0 AND
+        percentual_multa >= 0
+    )
+);
+
+CREATE INDEX idx_proc_trib_processo ON processo_tributario(processo_id);
+CREATE INDEX idx_proc_trib_tributo ON processo_tributario(tributo_id);
+2.4 Teses por Processo (N:N)
+sqlCREATE TABLE processo_tese (
+    id_processo_tese BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    tese_id INTEGER NOT NULL REFERENCES teses_tributarias(id_tese) ON DELETE CASCADE,
+    
+    -- Ordem de importância
+    ordem INTEGER DEFAULT 1,
+    
+    -- Status específico desta tese no processo
+    status VARCHAR(50) CHECK (status IN ('Aguardando', 'Em análise', 'Aceita', 'Rejeitada')),
+    
+    -- Auditoria
+    data_vinculacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_processo_tese UNIQUE(processo_id, tese_id)
+);
+
+CREATE INDEX idx_proc_tese_processo ON processo_tese(processo_id);
+CREATE INDEX idx_proc_tese_tese ON processo_tese(tese_id);
+2.5 Prognóstico Detalhado (Tributário)
+sqlCREATE TABLE processo_prognostico_tributario (
+    id_prognostico BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Êxito Provável
+    tese_provavel_id INTEGER REFERENCES teses_tributarias(id_tese),
+    valor_provavel NUMERIC(18,2),
+    percentual_provavel NUMERIC(5,2) DEFAULT 70.00,
+    
+    -- Êxito Possível
+    tese_possivel_id INTEGER REFERENCES teses_tributarias(id_tese),
+    valor_possivel NUMERIC(18,2),
+    percentual_possivel NUMERIC(5,2) DEFAULT 50.00,
+    
+    -- Êxito Remoto
+    tese_remota_id INTEGER REFERENCES teses_tributarias(id_tese),
+    valor_remoto NUMERIC(18,2),
+    percentual_remoto NUMERIC(5,2) DEFAULT 25.00,
+    
+    -- Metadados
+    observacoes TEXT,
+    data_avaliacao DATE DEFAULT CURRENT_DATE,
+    avaliado_por INTEGER REFERENCES "user"(id),
+    
+    -- Auditoria
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_prognostico_processo UNIQUE(processo_id)
+);
+
+CREATE INDEX idx_prognostico_processo ON processo_prognostico_tributario(processo_id);
+3. TABELAS ESPECÍFICAS - TRABALHISTA
+sqlCREATE TABLE processo_trabalhista (
+    id_processo_trabalhista BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Acordo
+    tolerancia_acordo NUMERIC(18,2),
+    acordo_realizado NUMERIC(18,2),
+    data_acordo DATE,
+    observacoes_acordo TEXT,
+    
+    -- Auditoria
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_processo_trabalhista UNIQUE(processo_id)
+);
+
+CREATE TABLE processo_prognostico_trabalhista (
+    id_prognostico BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Êxito Provável
+    tese_provavel TEXT,
+    valor_provavel NUMERIC(18,2),
+    percentual_provavel NUMERIC(5,2) DEFAULT 70.00,
+    
+    -- Êxito Possível
+    tese_possivel TEXT,
+    valor_possivel NUMERIC(18,2),
+    percentual_possivel NUMERIC(5,2) DEFAULT 50.00,
+    
+    -- Êxito Remoto
+    tese_remota TEXT,
+    valor_remoto NUMERIC(18,2),
+    percentual_remoto NUMERIC(5,2) DEFAULT 25.00,
+    
+    -- Metadados
+    observacoes TEXT,
+    data_avaliacao DATE DEFAULT CURRENT_DATE,
+    avaliado_por INTEGER REFERENCES "user"(id),
+    
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_prognostico_trab_processo UNIQUE(processo_id)
+);
+4. TABELAS ESPECÍFICAS - CÍVEL
+sqlCREATE TABLE processo_civel (
+    id_processo_civel BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Acordo
+    tolerancia_acordo NUMERIC(18,2),
+    acordo_realizado NUMERIC(18,2),
+    data_acordo DATE,
+    observacoes_acordo TEXT,
+    
+    -- Auditoria
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_processo_civel UNIQUE(processo_id)
+);
+
+CREATE TABLE processo_prognostico_civel (
+    id_prognostico BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Êxito Provável
+    tese_provavel TEXT,
+    valor_provavel NUMERIC(18,2),
+    percentual_provavel NUMERIC(5,2) DEFAULT 70.00,
+    
+    -- Êxito Possível
+    tese_possivel TEXT,
+    valor_possivel NUMERIC(18,2),
+    percentual_possivel NUMERIC(5,2) DEFAULT 50.00,
+    
+    -- Êxito Remoto
+    tese_remota TEXT,
+    valor_remoto NUMERIC(18,2),
+    percentual_remoto NUMERIC(5,2) DEFAULT 25.00,
+    
+    -- Metadados
+    observacoes TEXT,
+    data_avaliacao DATE DEFAULT CURRENT_DATE,
+    avaliado_por INTEGER REFERENCES "user"(id),
+    
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_prognostico_civel_processo UNIQUE(processo_id)
+);
+5. SISTEMA DE ATUALIZAÇÃO MONETÁRIA
+sqlCREATE TABLE indices_monetarios (
+    id_indice SERIAL PRIMARY KEY,
+    nome VARCHAR(50) UNIQUE NOT NULL,
+    descricao TEXT,
+    fonte_oficial VARCHAR(200),
+    ativo BOOLEAN DEFAULT TRUE NOT NULL
+);
+
+INSERT INTO indices_monetarios (nome, descricao, fonte_oficial) VALUES
+('SELIC', 'Sistema Especial de Liquidação e Custódia', 'Banco Central do Brasil'),
+('IPCA', 'Índice de Preços ao Consumidor Amplo', 'IBGE'),
+('INPC', 'Índice Nacional de Preços ao Consumidor', 'IBGE'),
+('IGP-M', 'Índice Geral de Preços do Mercado', 'FGV'),
+('CDI', 'Certificado de Depósito Interbancário', 'CETIP'),
+('TR', 'Taxa Referencial', 'Banco Central do Brasil');
+
+CREATE TABLE historico_indices (
+    id_historico BIGSERIAL PRIMARY KEY,
+    indice_id INTEGER NOT NULL REFERENCES indices_monetarios(id_indice),
+    data_referencia DATE NOT NULL,
+    valor NUMERIC(10,6) NOT NULL,
+    
+    -- Auditoria
+    data_importacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_indice_data UNIQUE(indice_id, data_referencia)
+);
+
+CREATE INDEX idx_hist_indice ON historico_indices(indice_id);
+CREATE INDEX idx_hist_data ON historico_indices(data_referencia);
+
+CREATE TABLE processo_atualizacao_monetaria (
+    id_atualizacao BIGSERIAL PRIMARY KEY,
+    processo_id BIGINT NOT NULL REFERENCES processos(id_processo) ON DELETE CASCADE,
+    
+    -- Configuração
+    indice_id INTEGER NOT NULL REFERENCES indices_monetarios(id_indice),
+    data_base DATE NOT NULL,
+    valor_base NUMERIC(18,2) NOT NULL,
+    
+    -- Resultado
+    data_atualizacao DATE NOT NULL DEFAULT CURRENT_DATE,
+    valor_atualizado NUMERIC(18,2),
+    percentual_correcao NUMERIC(10,6),
+    
+    -- Auditoria
+    calculado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT chk_datas_atualizacao CHECK (data_atualizacao >= data_base)
+);
+
+CREATE INDEX idx_atualizacao_processo ON processo_atualizacao_monetaria(processo_id);
+6. TABELAS DE CONFIGURAÇÃO DINÂMICA
+sqlCREATE TABLE configuracao_formulario (
+    id_configuracao SERIAL PRIMARY KEY,
+    tenant_id INTEGER REFERENCES tenants(id_tenant) ON DELETE CASCADE,
+    natureza_id INTEGER NOT NULL REFERENCES natureza_processo(id_natureza),
+    
+    -- Estrutura do formulário em JSON
+    campos_obrigatorios JSONB NOT NULL DEFAULT '[]',
+    campos_opcionais JSONB NOT NULL DEFAULT '[]',
+    validacoes JSONB NOT NULL DEFAULT '{}',
+    layout JSONB NOT NULL DEFAULT '{}',
+    
+    -- Versão
+    versao INTEGER DEFAULT 1,
+    ativo BOOLEAN DEFAULT TRUE NOT NULL,
+    
+    -- Auditoria
+    criado_por INTEGER REFERENCES "user"(id),
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT uk_tenant_natureza_versao UNIQUE(tenant_id, natureza_id, versao)
+);
+
+CREATE INDEX idx_config_tenant_natureza ON configuracao_formulario(tenant_id, natureza_id);
+```
+
+---
+
+## 🔧 BACKEND - ESTRUTURA E IMPLEMENTAÇÃO
+
+### 1. ESTRUTURA DE DIRETÓRIOS
+```
+backend-flask/
+├── modules/
+│   ├── processos/
+│   │   ├── __init__.py
+│   │   ├── routes.py                    # Rotas principais
+│   │   ├── models.py                    # SQLAlchemy Models
+│   │   ├── schemas.py                   # Marshmallow Schemas
+│   │   ├── services.py                  # Lógica de negócio
+│   │   ├── validators.py                # Validações específicas
+│   │   └── dynamic_forms.py             # Sistema de formulários dinâmicos
+│   │
+│   ├── processos_tributario/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── teses_service.py             # Gestão de teses
+│   │   └── prognostico_service.py       # Cálculo de prognóstico
+│   │
+│   ├── processos_trabalhista/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── models.py
+│   │   └── services.py
+│   │
+│   ├── processos_civel/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── models.py
+│   │   └── services.py
+│   │
+│   ├── atualizacao_monetaria/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── models.py
+│   │   ├── calculadora.py               # Cálculos de correção
+│   │   └── importador_indices.py        # Import automático de índices
+│   │
+│   └── configuracao_dinamica/
+│       ├── __init__.py
+│       ├── routes.py
+│       ├── models.py
+│       └── form_builder.py              # Construtor de formulários
+│
+├── utils/
+│   ├── validators/
+│   │   ├── cnj_validator.py
+│   │   ├── cpf_cnpj_validator.py
+│   │   └── monetary_validator.py
+│   │
+│   └── converters/
+│       ├── monetary_converter.py
+│       └── date_converter.py
+│
+└── migrations/
+    └── versions/
+        ├── 001_create_processos_base.py
+        ├── 002_create_tributario_tables.py
+        ├── 003_create_trabalhista_tables.py
+        ├── 004_create_civel_tables.py
+        └── 005_create_atualizacao_monetaria.py
+2. MODELS SQLAlchemy
+python# modules/processos/models.py
+from sqlalchemy import Column, Integer, String, Text, Date, Numeric, Boolean, ForeignKey, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
+
+from database import Base
+
+class Processo(Base):
+    __tablename__ = 'processos'
+    
+    # Identificação
+    id_processo = Column(Integer, primary_key=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    tenant_id = Column(Integer, ForeignKey('tenants.id_tenant'), nullable=False)
+    
+    # Dados Básicos
+    numero_cnj = Column(String(25))
+    pasta = Column(String(50))
+    status_id = Column(Integer, ForeignKey('status_processo.id_status'), nullable=False)
+    natureza_id = Column(Integer, ForeignKey('natureza_processo.id_natureza'), nullable=False)
+    
+    # Cliente
+    cliente_id = Column(Integer, ForeignKey('clientes.id_cliente'))
+    posicao_cliente_id = Column(Integer, ForeignKey('posicao_cliente.id_posicao'))
+    
+    # Classificação
+    acao_id = Column(Integer, ForeignKey('acao.id_acao'))
+    procedimento_id = Column(Integer, ForeignKey('procedimento.id_procedimento'))
+    fase_id = Column(Integer, ForeignKey('fase_processual.id_fase'))
+    
+    # Localização
+    orgao_id = Column(Integer, ForeignKey('orgao.id_orgao'))
+    comarca_id = Column(Integer, ForeignKey('comarca.id_comarca'))
+    vara_turma_id = Column(Integer, ForeignKey('vara_turma.id_vara_turma'))
+    
+    # CNJ
+    justica_cnj_id = Column(Integer, ForeignKey('justica_cnj.id_justica'))
+    instancia_cnj_id = Column(Integer, ForeignKey('instancia_cnj.id_instancia'))
+    classe_cnj_id = Column(Integer, ForeignKey('classe_cnj.id_classe'))
+    
+    # Datas
+    data_distribuicao = Column(Date)
+    data_criacao = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
+    data_atualizacao = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Valores
+    valor_causa = Column(Numeric(18, 2))
+    valor_causa_atualizado = Column(Numeric(18, 2))
+    valor_envolvido = Column(Numeric(18, 2))
+    valor_envolvido_atualizado = Column(Numeric(18, 2))
+    contingencia = Column(Numeric(18, 2))
+    
+    # Prognóstico
+    tipo_probabilidade_id = Column(Integer, ForeignKey('tipo_probabilidade.id_tipo_probabilidade'))
+    risco_id = Column(Integer, ForeignKey('nivel_risco.id_risco'))
+    
+    # Metadados
+    titulo = Column(Text)
+    observacao_pasta = Column(Text)
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Relationships
+    natureza = relationship('NaturezaProcesso', backref='processos')
+    status = relationship('StatusProcesso', backref='processos')
+    cliente = relationship('Cliente', backref='processos')
+    campos_especificos = relationship('ProcessoCamposEspecificos', back_populates='processo', uselist=False)
+    processo_tributario = relationship('ProcessoTributario', back_populates='processo', uselist=False)
+    processo_trabalhista = relationship('ProcessoTrabalhista', back_populates='processo', uselist=False)
+    processo_civel = relationship('ProcessoCivel', back_populates='processo', uselist=False)
+    assuntos = relationship('ProcessoAssunto', back_populates='processo')
+    
+    def to_dict(self):
+        """Serialização básica"""
+        return {
+            'id_processo': self.id_processo,
+            'uuid': str(self.uuid),
+            'numero_cnj': self.numero_cnj,
+            'pasta': self.pasta,
+            'natureza': self.natureza.descricao if self.natureza else None,
+            'status': self.status.descricao if self.status else None,
+            'data_distribuicao': self.data_distribuicao.isoformat() if self.data_distribuicao else None,
+            'valor_causa': float(self.valor_causa) if self.valor_causa else None,
+            'ativo': self.ativo
+        }
+    
+    def to_dict_completo(self):
+        """Serialização completa incluindo campos específicos"""
+        base_dict = self.to_dict()
+        
+        # Adicionar campos específicos conforme natureza
+        if self.natureza_id == 1:  # Tributário
+            if self.processo_tributario:
+                base_dict['tributario'] = self.processo_tributario.to_dict()
+        elif self.natureza_id == 2:  # Trabalhista
+            if self.processo_trabalhista:
+                base_dict['trabalhista'] = self.processo_trabalhista.to_dict()
+        elif self.natureza_id == 3:  # Cível
+            if self.processo_civel:
+                base_dict['civel'] = self.processo_civel.to_dict()
+        
+        return base_dict
+
+
+class ProcessoTributario(Base):
+    __tablename__ = 'processo_tributario'
+    
+    id_processo_tributario = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # Tributo
+    tributo_id = Column(Integer, ForeignKey('tributos.id_tributo'))
+    
+    # Documentos
+    numero_aiim = Column(String(100))
+    numero_cda = Column(String(100))
+    data_lancamento = Column(Date)
+    
+    # Valores
+    valor_inscrito_cda = Column(Numeric(18, 2))
+    valor_principal = Column(Numeric(18, 2))
+    valor_multa = Column(Numeric(18, 2))
+    percentual_multa = Column(Numeric(5, 2))
+    base_calculo_multa = Column(String(100))
+    
+    # Juros
+    valor_juros = Column(Numeric(18, 2))
+    indice_juros = Column(String(50))
+    descricao_indice_juros = Column(Text)
+    
+    # Varas
+    vara_primeira_instancia_id = Column(Integer, ForeignKey('vara_turma.id_vara_turma'))
+    turma_segunda_instancia_id = Column(Integer, ForeignKey('vara_turma.id_vara_turma'))
+    
+    # Auditoria
+    data_criacao = Column(TIMESTAMP, default=datetime.utcnow)
+    data_atualizacao = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='processo_tributario')
+    tributo = relationship('Tributo', backref='processos_tributarios')
+    teses = relationship('ProcessoTese', back_populates='processo', foreign_keys='ProcessoTese.processo_id')
+    prognostico = relationship('ProcessoPrognosticoTributario', back_populates='processo', uselist=False)
+    
+    def to_dict(self):
+        return {
+            'tributo': self.tributo.nome if self.tributo else None,
+            'numero_aiim': self.numero_aiim,
+            'numero_cda': self.numero_cda,
+            'data_lancamento': self.data_lancamento.isoformat() if self.data_lancamento else None,
+            'valor_inscrito_cda': float(self.valor_inscrito_cda) if self.valor_inscrito_cda else None,
+            'valor_principal': float(self.valor_principal) if self.valor_principal else None,
+            'valor_multa': float(self.valor_multa) if self.valor_multa else None,
+            'percentual_multa': float(self.percentual_multa) if self.percentual_multa else None,
+            'indice_juros': self.indice_juros
+        }
+
+
+class TeseTributaria(Base):
+    __tablename__ = 'teses_tributarias'
+    
+    id_tese = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer, ForeignKey('tenants.id_tenant', ondelete='CASCADE'))
+    codigo = Column(String(50), unique=True, nullable=False)
+    titulo = Column(String(500), nullable=False)
+    descricao = Column(Text)
+    tributo_id = Column(Integer, ForeignKey('tributos.id_tributo'))
+    
+    # Jurisprudência
+    tema_repercussao_geral = Column(String(50))
+    tema_repetitivo = Column(String(50))
+    tribunal_origem = Column(String(100))
+    
+    # Prognóstico
+    probabilidade_sucesso = Column(Numeric(5, 2))
+    fundamentacao = Column(Text)
+    situacao = Column(String(50))
+    
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Auditoria
+    criado_por = Column(Integer, ForeignKey('user.id'))
+    data_criacao = Column(TIMESTAMP, default=datetime.utcnow)
+    data_atualizacao = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    tributo = relationship('Tributo', backref='teses')
+    processos = relationship('ProcessoTese', back_populates='tese')
+    
+    def to_dict(self):
+        return {
+            'id_tese': self.id_tese,
+            'codigo': self.codigo,
+            'titulo': self.titulo,
+            'tributo': self.tributo.nome if self.tributo else None,
+            'probabilidade_sucesso': float(self.probabilidade_sucesso) if self.probabilidade_sucesso else None,
+            'situacao': self.situacao
+        }
+
+
+class ProcessoTese(Base):
+    __tablename__ = 'processo_tese'
+    
+    id_processo_tese = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False)
+    tese_id = Column(Integer, ForeignKey('teses_tributarias.id_tese', ondelete='CASCADE'), nullable=False)
+    
+    ordem = Column(Integer, default=1)
+    status = Column(String(50))
+    
+    data_vinculacao = Column(TIMESTAMP, default=datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', foreign_keys=[processo_id])
+    tese = relationship('TeseTributaria', back_populates='processos')
+3. SERVICES (Lógica de Negócio)
+python# modules/processos/services.py
+from typing import Dict, List, Optional, Any
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from decimal import Decimal
+from datetime import datetime
+
+from .models import Processo, ProcessoTributario, ProcessoTese
+from ..atualizacao_monetaria.calculadora import CalculadoraMonetaria
+from utils.validators.cnj_validator import validar_numero_cnj
+from utils.converters.monetary_converter import limpar_valor_monetario
+
+class ProcessoService:
+    """Service para operações de processo"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def criar_processo(self, dados: Dict[str, Any], tenant_id: int, user_id: int) -> Processo:
+        """
+        Cria um novo processo com validações e campos dinâmicos
+        
+        Args:
+            dados: Dicionário com dados do processo
+            tenant_id: ID do tenant (SaaS)
+            user_id: ID do usuário criador
+            
+        Returns:
+            Processo criado
+            
+        Raises:
+            ValueError: Se validação falhar
+            SQLAlchemyError: Se erro no banco
+        """
+        try:
+            # Validar número CNJ se fornecido
+            if dados.get('numero_cnj'):
+                if not validar_numero_cnj(dados['numero_cnj']):
+                    raise ValueError('Número CNJ inválido')
+            
+            # Validar natureza
+            natureza_id = dados.get('natureza_id')
+            if not natureza_id:
+                raise ValueError('Natureza do processo é obrigatória')
+            
+            # Criar processo base
+            processo = Processo(
+                tenant_id=tenant_id,
+                numero_cnj=dados.get('numero_cnj'),
+                pasta=dados.get('pasta'),
+                status_id=dados.get('status_id', 1),  # Default: Em andamento
+                natureza_id=natureza_id,
+                cliente_id=dados.get('cliente_id'),
+                posicao_cliente_id=dados.get('posicao_cliente_id'),
+                data_distribuicao=dados.get('data_distribuicao'),
+                valor_causa=limpar_valor_monetario(dados.get('valor_causa')),
+                titulo=dados.get('titulo'),
+                observacao_pasta=dados.get('observacao_pasta')
+            )
+            
+            self.db.add(processo)
+            self.db.flush()  # Para obter o ID
+            
+            # Criar registros específicos conforme natureza
+            if natureza_id == 1:  # Tributário
+                self._criar_processo_tributario(processo.id_processo, dados.get('tributario', {}))
+            elif natureza_id == 2:  # Trabalhista
+                self._criar_processo_trabalhista(processo.id_processo, dados.get('trabalhista', {}))
+            elif natureza_id == 3:  # Cível
+                self._criar_processo_civel(processo.id_processo, dados.get('civel', {}))
+            
+            self.db.commit()
+            
+            return processo
+            
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise e
+    
+    def _criar_processo_tributario(self, processo_id: int, dados: Dict[str, Any]):
+        """Cria registro específico de processo tributário"""
+        processo_trib = ProcessoTributario(
+            processo_id=processo_id,
+            tributo_id=dados.get('tributo_id'),
+            numero_aiim=dados.get('numero_aiim'),
+            numero_cda=dados.get('numero_cda'),
+            data_lancamento=dados.get('data_lancamento'),
+            valor_inscrito_cda=limpar_valor_monetario(dados.get('valor_inscrito_cda')),
+            valor_principal=limpar_valor_monetario(dados.get('valor_principal')),
+            valor_multa=limpar_valor_monetario(dados.get('valor_multa')),
+            percentual_multa=dados.get('percentual_multa'),
+            base_calculo_multa=dados.get('base_calculo_multa'),
+            valor_juros=limpar_valor_monetario(dados.get('valor_juros')),
+            indice_juros=dados.get('indice_juros'),
+            vara_primeira_instancia_id=dados.get('vara_primeira_instancia_id'),
+            turma_segunda_instancia_id=dados.get('turma_segunda_instancia_id')
+        )
+        
+        self.db.add(processo_trib)
+        
+        # Vincular teses se fornecidas
+        teses_ids = dados.get('teses_ids', [])
+        for idx, tese_id in enumerate(teses_ids, 1):
+            processo_tese = ProcessoTese(
+                processo_id=processo_id,
+                tese_id=tese_id,
+                ordem=idx,
+                status='Aguardando'
+            )
+            self.db.add(processo_tese)
+    
+    def atualizar_processo(self, processo_id: int, dados: Dict[str, Any], tenant_id: int) -> Processo:
+        """Atualiza processo existente"""
+        processo = self.db.query(Processo).filter(
+            Processo.id_processo == processo_id,
+            Processo.tenant_id == tenant_id,
+            Processo.ativo == True
+        ).first()
+        
+        if not processo:
+            raise ValueError('Processo não encontrado')
+        
+        # Atualizar campos base
+        for campo, valor in dados.items():
+            if campo not in ['tributario', 'trabalhista', 'civel'] and hasattr(processo, campo):
+                setattr(processo, campo, valor)
+        
+        # Atualizar campos específicos
+        if processo.natureza_id == 1 and 'tributario' in dados:
+            self._atualizar_processo_tributario(processo_id, dados['tributario'])
+        
+        processo.data_atualizacao = datetime.utcnow()
+        self.db.commit()
+        
+        return processo
+    
+    def listar_processos(
+        self, 
+        tenant_id: int, 
+        filtros: Dict[str, Any] = None,
+        pagina: int = 1,
+        por_pagina: int = 50
+    ) -> Dict[str, Any]:
+        """Lista processos com filtros e paginação"""
+        query = self.db.query(Processo).filter(
+            Processo.tenant_id == tenant_id,
+            Processo.ativo == True
+        )
+        
+        # Aplicar filtros
+        if filtros:
+            if 'natureza_id' in filtros:
+                query = query.filter(Processo.natureza_id == filtros['natureza_id'])
+            
+            if 'status_id' in filtros:
+                query = query.filter(Processo.status_id == filtros['status_id'])
+            
+            if 'cliente_id' in filtros:
+                query = query.filter(Processo.cliente_id == filtros['cliente_id'])
+            
+            if 'numero_cnj' in filtros:
+                query = query.filter(Processo.numero_cnj.ilike(f"%{filtros['numero_cnj']}%"))
+        
+        # Contar total
+        total = query.count()
+        
+        # Paginar
+        offset = (pagina - 1) * por_pagina
+        processos = query.offset(offset).limit(por_pagina).all()
+        
+        return {
+            'processos': [p.to_dict() for p in processos],
+            'total': total,
+            'pagina': pagina,
+            'por_pagina': por_pagina,
+            'total_paginas': (total + por_pagina - 1) // por_pagina
+        }
+    
+    def obter_processo_completo(self, processo_id: int, tenant_id: int) -> Dict[str, Any]:
+        """Obtém processo com todos os dados específicos"""
+        processo = self.db.query(Processo).filter(
+            Processo.id_processo == processo_id,
+            Processo.tenant_id == tenant_id,
+            Processo.ativo == True
+        ).first()
+        
+        if not processo:
+            raise ValueError('Processo não encontrado')
+        
+        return processo.to_dict_completo()
+    
+    def calcular_valores_atualizados(self, processo_id: int, tenant_id: int) -> Dict[str, Any]:
+        """Calcula valores atualizados com correção monetária"""
+        processo = self.db.query(Processo).filter(
+            Processo.id_processo == processo_id,
+            Processo.tenant_id == tenant_id
+        ).first()
+        
+        if not processo or not processo.data_distribuicao:
+            raise ValueError('Processo inválido ou sem data de distribuição')
+        
+        calculadora = CalculadoraMonetaria(self.db)
+        
+        # Calcular valor da causa atualizado
+        if processo.valor_causa:
+            resultado = calculadora.calcular_correcao(
+                valor_base=processo.valor_causa,
+                data_base=processo.data_distribuicao,
+                data_final=datetime.now().date(),
+                indice='IPCA'
+            )
+            
+            processo.valor_causa_atualizado = resultado['valor_corrigido']
+        
+        # Para tributário, calcular também valores específicos
+        if processo.natureza_id == 1 and processo.processo_tributario:
+            trib = processo.processo_tributario
+            if trib.valor_principal:
+                resultado_principal = calculadora.calcular_correcao(
+                    valor_base=trib.valor_principal,
+                    data_base=trib.data_lancamento or processo.data_distribuicao,
+                    data_final=datetime.now().date(),
+                    indice=trib.indice_juros or 'SELIC'
+                )
+                # Atualizar valores
+        
+        self.db.commit()
+        
+        return processo.to_dict_completo()
+4. SISTEMA DE FORMULÁRIOS DINÂMICOS
+python# modules/processos/dynamic_forms.py
+from typing import Dict, List, Any
+from sqlalchemy.orm import Session
+
+class FormularioDinamicoService:
+    """Gerencia formulários dinâmicos por natureza"""
+    
+    CAMPO_SCHEMAS = {
+        'tributario': {
+            'campos_obrigatorios': [
+                {
+                    'name': 'tributo_id',
+                    'label': 'Tributo Discutido',
+                    'type': 'select',
+                    'options_endpoint': '/api/tributos',
+                    'validation': {'required': True}
+                },
+                {
+                    'name': 'valor_principal',
+                    'label': 'Valor Principal',
+                    'type': 'currency',
+                    'validation': {'required': True, 'min': 0}
+                }
+            ],
+            'campos_opcionais': [
+                {
+                    'name': 'numero_aiim',
+                    'label': 'Número do AIIM',
+                    'type': 'text',
+                    'validation': {'maxLength': 100}
+                },
+                {
+                    'name': 'numero_cda',
+                    'label': 'Número da CDA',
+                    'type': 'text',
+                    'validation': {'maxLength': 100}
+                },
+                {
+                    'name': 'data_lancamento',
+                    'label': 'Data de Lançamento',
+                    'type': 'date',
+                    'validation': {'maxDate': 'today'}
+                },
+                {
+                    'name': 'valor_inscrito_cda',
+                    'label': 'Valor Inscrito na CDA',
+                    'type': 'currency',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'valor_multa',
+                    'label': 'Valor da Multa',
+                    'type': 'currency',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'percentual_multa',
+                    'label': 'Percentual da Multa (%)',
+                    'type': 'percentage',
+                    'validation': {'min': 0, 'max': 100}
+                },
+                {
+                    'name': 'base_calculo_multa',
+                    'label': 'Base de Cálculo da Multa',
+                    'type': 'select',
+                    'options': [
+                        {'value': 'Valor do Tributo', 'label': 'Valor do Tributo'},
+                        {'value': 'Valor da Operação', 'label': 'Valor da Operação'},
+                        {'value': 'Outro', 'label': 'Outro'}
+                    ]
+                },
+                {
+                    'name': 'valor_juros',
+                    'label': 'Valor dos Juros',
+                    'type': 'currency',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'indice_juros',
+                    'label': 'Índice de Juros',
+                    'type': 'select',
+                    'options': [
+                        {'value': 'SELIC', 'label': 'SELIC'},
+                        {'value': 'Lei 13918', 'label': 'Lei 13.918'},
+                        {'value': 'IPCA', 'label': 'IPCA'},
+                        {'value': 'CDI', 'label': 'CDI'},
+                        {'value': 'Outro', 'label': 'Outro'}
+                    ]
+                },
+                {
+                    'name': 'teses_ids',
+                    'label': 'Teses Envolvidas',
+                    'type': 'multiselect',
+                    'options_endpoint': '/api/teses-tributarias',
+                    'description': 'Selecione uma ou mais teses aplicáveis'
+                },
+                {
+                    'name': 'vara_primeira_instancia_id',
+                    'label': 'Vara (1ª Instância)',
+                    'type': 'select',
+                    'options_endpoint': '/api/varas?instancia=1'
+                },
+                {
+                    'name': 'turma_segunda_instancia_id',
+                    'label': 'Turma/Câmara (2ª Instância)',
+                    'type': 'select',
+                    'options_endpoint': '/api/varas?instancia=2'
+                }
+            ],
+            'secoes': [
+                {
+                    'title': 'Informações do Tributo',
+                    'campos': ['tributo_id', 'numero_aiim', 'numero_cda', 'data_lancamento']
+                },
+                {
+                    'title': 'Valores',
+                    'campos': ['valor_inscrito_cda', 'valor_principal', 'valor_multa', 'percentual_multa', 'base_calculo_multa']
+                },
+                {
+                    'title': 'Juros',
+                    'campos': ['valor_juros', 'indice_juros']
+                },
+                {
+                    'title': 'Teses Jurídicas',
+                    'campos': ['teses_ids']
+                },
+                {
+                    'title': 'Instâncias',
+                    'campos': ['vara_primeira_instancia_id', 'turma_segunda_instancia_id']
+                }
+            ]
+        },
+        'trabalhista': {
+            'campos_obrigatorios': [],
+            'campos_opcionais': [
+                {
+                    'name': 'tolerancia_acordo',
+                    'label': 'Tolerância para Acordo',
+                    'type': 'currency',
+                    'description': 'Valor que o cliente está disposto a aceitar',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'acordo_realizado',
+                    'label': 'Valor do Acordo Realizado',
+                    'type': 'currency',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'data_acordo',
+                    'label': 'Data do Acordo',
+                    'type': 'date',
+                    'validation': {'maxDate': 'today'}
+                }
+            ],
+            'secoes': [
+                {
+                    'title': 'Acordo',
+                    'campos': ['tolerancia_acordo', 'acordo_realizado', 'data_acordo']
+                }
+            ]
+        },
+        'civel': {
+            'campos_obrigatorios': [],
+            'campos_opcionais': [
+                {
+                    'name': 'tolerancia_acordo',
+                    'label': 'Tolerância para Acordo',
+                    'type': 'currency',
+                    'description': 'Valor que o cliente está disposto a aceitar',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'acordo_realizado',
+                    'label': 'Valor do Acordo Realizado',
+                    'type': 'currency',
+                    'validation': {'min': 0}
+                },
+                {
+                    'name': 'data_acordo',
+                    'label': 'Data do Acordo',
+                    'type': 'date',
+                    'validation': {'maxDate': 'today'}
+                }
+            ],
+            'secoes': [
+                {
+                    'title': 'Acordo',
+                    'campos': ['tolerancia_acordo', 'acordo_realizado', 'data_acordo']
+                }
+            ]
+        }
+    }
+    
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def obter_schema_formulario(self, natureza: str, tenant_id: int = None) -> Dict[str, Any]:
+        """
+        Obtém schema do formulário dinâmico para uma natureza
+        
+        Args:
+            natureza: 'tributario', 'trabalhista' ou 'civel'
+            tenant_id: ID do tenant (para personalização futura)
+            
+        Returns:
+            Schema do formulário
+        """
+        schema_base = self.CAMPO_SCHEMAS.get(natureza, {})
+        
+        # TODO: Buscar personalizações do tenant no banco
+        # if tenant_id:
+        #     personalizacoes = self._buscar_personalizacoes(tenant_id, natureza)
+        #     schema_base = self._mesclar_schemas(schema_base, personalizacoes)
+        
+        return schema_base
+    
+    def validar_dados_formulario(self, natureza: str, dados: Dict[str, Any]) -> tuple[bool, List[str]]:
+        """
+        Valida dados do formulário conforme schema
+        
+        Returns:
+            (valido, lista_de_erros)
+        """
+        schema = self.obter_schema_formulario(natureza)
+        erros = []
+        
+        # Validar campos obrigatórios
+        for campo in schema.get('campos_obrigatorios', []):
+            if campo['name'] not in dados or dados[campo['name']] is None:
+                erros.append(f"Campo obrigatório '{campo['label']}' não informado")
+        
+        # Validar tipos e regras
+        todos_campos = schema.get('campos_obrigatorios', []) + schema.get('campos_opcionais', [])
+        for campo in todos_campos:
+            nome_campo = campo['name']
+            if nome_campo not in dados or dados[nome_campo] is None:
+                continue
+            
+            valor = dados[nome_campo]
+            validacoes = campo.get('validation', {})
+            
+            # Validar mínimo
+            if 'min' in validacoes and isinstance(valor, (int, float, Decimal)):
+                if valor < validacoes['min']:
+                    erros.append(f"Campo '{campo['label']}' deve ser >= {validacoes['min']}")
+            
+            # Validar máximo
+            if 'max' in validacoes and isinstance(valor, (int, float, Decimal)):
+                if valor > validacoes['max']:
+                    erros.append(f"Campo '{campo['label']}' deve ser <= {validacoes['max']}")
+            
+            # Validar tamanho máximo de string
+            if 'maxLength' in validacoes and isinstance(valor, str):
+                if len(valor) > validacoes['maxLength']:
+                    erros.append(f"Campo '{campo['label']}' excede tamanho máximo de {validacoes['maxLength']} caracteres")
+        
+        return (len(erros) == 0, erros)
+5. ROTAS API
+python# modules/processos/routes.py
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy.orm import Session
+
+from database import get_db
+from .services import ProcessoService
+from .dynamic_forms import FormularioDinamicoService
+from auth import get_current_user_tenant
+
+processos_bp = Blueprint('processos', __name__, url_prefix='/api/processos')
+
+@processos_bp.route('', methods=['POST'])
+@jwt_required()
+def criar_processo():
+    """
+    Cria novo processo
+    
+    POST /api/processos
+    Body: {
+        "natureza_id": 1,
+        "numero_cnj": "0001234-56.2024.8.21.0001",
+        "cliente_id": 123,
+        "valor_causa": 50000.00,
+        "tributario": {
+            "tributo_id": 1,
+            "numero_aiim": "12345",
+            "valor_principal": 50000.00,
+            "teses_ids": [1, 2, 3]
+        }
+    }
+    """
+    try:
+        dados = request.get_json()
+        user_identity = get_jwt_identity()
+        tenant_id = get_current_user_tenant()
+        
+        db = next(get_db())
+        service = ProcessoService(db)
+        
+        # Validar schema dinâmico
+        natureza_map = {1: 'tributario', 2: 'trabalhista', 3: 'civel'}
+        natureza_str = natureza_map.get(dados.get('natureza_id'))
+        
+        if natureza_str:
+            form_service = FormularioDinamicoService(db)
+            dados_especificos = dados.get(natureza_str, {})
+            valido, erros = form_service.validar_dados_formulario(natureza_str, dados_especificos)
+            
+            if not valido:
+                return jsonify({'error': 'Validação falhou', 'erros': erros}), 400
+        
+        processo = service.criar_processo(dados, tenant_id, user_identity['id'])
+        
+        return jsonify({
+            'success': True,
+            'processo': processo.to_dict_completo()
+        }), 201
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@processos_bp.route('', methods=['GET'])
+@jwt_required()
+def listar_processos():
+    """
+    Lista processos com filtros e paginação
+    
+    GET /api/processos?natureza_id=1&pagina=1&por_pagina=50
+    """
+    try:
+        tenant_id = get_current_user_tenant()
+        
+        # Obter parâmetros
+        filtros = {
+            'natureza_id': request.args.get('natureza_id', type=int),
+            'status_id': request.args.get('status_id', type=int),
+            'cliente_id': request.args.get('cliente_id', type=int),
+            'numero_cnj': request.args.get('numero_cnj')
+        }
+        filtros = {k: v for k, v in filtros.items() if v is not None}
+        
+        pagina = request.args.get('pagina', 1, type=int)
+        por_pagina = request.args.get('por_pagina', 50, type=int)
+        
+        db = next(get_db())
+        service = ProcessoService(db)
+        
+        resultado = service.listar_processos(tenant_id, filtros, pagina, por_pagina)
+        
+        return jsonify(resultado), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@processos_bp.route('/<int:processo_id>', methods=['GET'])
+@jwt_required()
+def obter_processo(processo_id):
+    """
+    Obtém detalhes completos do processo
+    
+    GET /api/processos/123
+    """
+    try:
+        tenant_id = get_current_user_tenant()
+        
+        db = next(get_db())
+        service = ProcessoService(db)
+        
+        processo = service.obter_processo_completo(processo_id, tenant_id)
+        
+        return jsonify(processo), 200
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@processos_bp.route('/<int:processo_id>', methods=['PUT'])
+@jwt_required()
+def atualizar_processo(processo_id):
+    """
+    Atualiza processo existente
+    
+    PUT /api/processos/123
+    """
+    try:
+        dados = request.get_json()
+        tenant_id = get_current_user_tenant()
+        
+        db = next(get_db())
+        service = ProcessoService(db)
+        
+        processo = service.atualizar_processo(processo_id, dados, tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'processo': processo.to_dict_completo()
+        }), 200
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@processos_bp.route('/<int:processo_id>/atualizar-valores', methods=['POST'])
+@jwt_required()
+def atualizar_valores_monetarios(processo_id):
+    """
+    Calcula e atualiza valores com correção monetária
+    
+    POST /api/processos/123/atualizar-valores
+    """
+    try:
+        tenant_id = get_current_user_tenant()
+        
+        db = next(get_db())
+        service = ProcessoService(db)
+        
+        processo = service.calcular_valores_atualizados(processo_id, tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'processo': processo
+        }), 200
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+
+@processos_bp.route('/schema/<natureza>', methods=['GET'])
+@jwt_required()
+def obter_schema_formulario(natureza):
+    """
+    Obtém schema do formulário dinâmico
+    
+    GET /api/processos/schema/tributario
+    """
+    try:
+        tenant_id = get_current_user_tenant()
+        
+        db = next(get_db())
+        form_service = FormularioDinamicoService(db)
+        
+        schema = form_service.obter_schema_formulario(natureza, tenant_id)
+        
+        if not schema:
+            return jsonify({'error': 'Natureza inválida'}), 400
+        
+        return jsonify(schema), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Erro interno do servidor'}), 500
+```
+
+---
+
+## ⚛️ FRONTEND - IMPLEMENTAÇÃO REACT
+
+### 1. ESTRUTURA DE COMPONENTES
+```
+src/
+├── pages/
+│   └── processos/
+│       ├── ProcessosList.tsx                 # Lista
+│       ├── ProcessoForm.tsx                  # Formulário dinâmico
+│       ├── ProcessoDetails.tsx               # Detalhes
+│       ├── ProcessoFormTributario.tsx        # Form específico tributário
+│       ├── ProcessoFormTrabalhista.tsx       # Form específico trabalhista
+│       └── ProcessoFormCivel.tsx             # Form específico cível
+│
+├── components/
+│   └── processos/
+│       ├── DynamicForm/
+│       │   ├── DynamicFormBuilder.tsx        # Construtor de form dinâmico
+│       │   ├── FieldRenderer.tsx             # Renderiza campos
+│       │   ├── CurrencyInput.tsx             # Input moeda
+│       │   ├── PercentageInput.tsx           # Input percentual
+│       │   ├── MultiSelectTeses.tsx          # Seletor múltiplo de teses
+│       │   └── ValidationSummary.tsx         # Resumo de validações
+│       │
+│       ├── Tributario/
+│       │   ├── TesesSelector.tsx             # Seletor de teses
+│       │   ├── PrognosticoForm.tsx           # Form de prognóstico
+│       │   ├── CalculadoraJuros.tsx          # Calculadora juros
+│       │   └── VaraInstanciaSelector.tsx     # Seletor varas por instância
+│       │
+│       ├── AtualizacaoMonetaria/
+│       │   ├── CalculadoraModal.tsx          # Modal calculadora
+│       │   ├── HistoricoIndices.tsx          # Histórico índices
+│       │   └── ResultadoCorrecao.tsx         # Resultado correção
+│       │
+│       └── Prognostico/
+│           ├── PrognosticoDetalhado.tsx      # Prognóstico por tese
+│           └── GraficoPrognostico.tsx        # Gráfico visual
+│
+├── hooks/
+│   └── processos/
+│       ├── useProcessoForm.ts                # Hook formulário
+│       ├── useDynamicSchema.ts               # Hook schema dinâmico
+│       ├── useProcessoValidation.ts          # Hook validação
+│       └── useAtualizacaoMonetaria.ts        # Hook atualização
+│
+├── services/
+│   └── api/
+│       ├── processos.api.ts                  # API processos
+│       ├── teses.api.ts                      # API teses
+│       ├── tributario.api.ts                 # API tributário
+│       └── atualizacao.api.ts                # API atualização
+│
+├── types/
+│   └── processos/
+│       ├── processo.types.ts                 # Types processo
+│       ├── tributario.types.ts               # Types tributário
+│       ├── trabalhista.types.ts              # Types trabalhista
+│       └── formulario.types.ts               # Types formulário
+│
+└── utils/
+    └── processos/
+        ├── validators.ts                     # Validadores
+        ├── formatters.ts                     # Formatadores
+        └── calculators.ts                    # Calculadores
+2. COMPONENTE PRINCIPAL - FORMULÁRIO DINÂMICO
+typescript// src/components/processos/DynamicForm/DynamicFormBuilder.tsx
+import React, { useEffect, useState } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import FieldRenderer from './FieldRenderer';
+import ValidationSummary from './ValidationSummary';
+import { FormSchema, FormSection } from '../../../types/processos/formulario.types';
+
+interface DynamicFormBuilderProps {
+  natureza: 'tributario' | 'trabalhista' | 'civel';
+  initialData?: any;
+  onSubmit: (data: any) => Promise<void>;
+  onCancel: () => void;
+}
+
+const DynamicFormBuilder: React.FC<DynamicFormBuilderProps> = ({
+  natureza,
+  initialData,
+  onSubmit,
+  onCancel
+}) => {
+  const [schema, setSchema] = useState<FormSchema | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Buscar schema do backend
+  useEffect(() => {
+    const fetchSchema = async () => {
+      try {
+        const response = await fetch(`/api/processos/schema/${natureza}`);
+        const data = await response.json();
+        setSchema(data);
+      } catch (error) {
+        console.error('Erro ao carregar schema:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchema();
+  }, [natureza]);
+
+  // Construir schema de validação Zod dinamicamente
+  const buildValidationSchema = () => {
+    if (!schema) return z.object({});
+
+    const schemaObject: any = {};
+
+    [...schema.campos_obrigatorios, ...schema.campos_opcionais].forEach(campo => {
+      let fieldSchema;
+
+      switch (campo.type) {
+        case 'currency':
+        case 'percentage':
+          fieldSchema = z.number({
+            required_error: `${campo.label} é obrigatório`,
+            invalid_type_error: `${campo.label} deve ser um número`
+          });
+          
+          if (campo.validation?.min !== undefined) {
+            fieldSchema = fieldSchema.min(campo.validation.min, 
+              `${campo.label} deve ser no mínimo ${campo.validation.min}`);
+          }
+          
+          if (campo.validation?.max !== undefined) {
+            fieldSchema = fieldSchema.max(campo.validation.max, 
+              `${campo.label} deve ser no máximo ${campo.validation.max}`);
+          }
+          break;
+
+        case 'text':
+          fieldSchema = z.string();
+          
+          if (campo.validation?.maxLength) {
+            fieldSchema = fieldSchema.max(campo.validation.maxLength, 
+              `${campo.label} deve ter no máximo ${campo.validation.maxLength} caracteres`);
+          }
+          break;
+
+        case 'date':
+          fieldSchema = z.string().or(z.date());
+          break;
+
+        case 'select':
+          fieldSchema = z.number().or(z.string());
+          break;
+
+        case 'multiselect':
+          fieldSchema = z.array(z.number()).or(z.array(z.string()));
+          break;
+
+        default:
+          fieldSchema = z.any();
+      }
+
+      // Campos opcionais
+      if (!schema.campos_obrigatorios.some(c => c.name === campo.name)) {
+        fieldSchema = fieldSchema.optional().nullable();
+      }
+
+      schemaObject[campo.name] = fieldSchema;
+    });
+
+    return z.object(schemaObject);
+  };
+
+  const validationSchema = buildValidationSchema();
+  const methods = useForm({
+    resolver: zodResolver(validationSchema),
+    defaultValues: initialData || {}
+  });
+
+  const handleSubmit = async (data: any) => {
+    setSubmitting(true);
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Erro ao submeter:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!schema) {
+    return (
+      <div className="text-center text-red-600">
+        Erro ao carregar formulário
+      </div>
+    );
+  }
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-8">
+        {/* Resumo de validações */}
+        {Object.keys(methods.formState.errors).length > 0 && (
+          <ValidationSummary errors={methods.formState.errors} />
+        )}
+
+        {/* Renderizar seções */}
+        {schema.secoes.map((secao: FormSection, idx: number) => (
+          <div key={idx} className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {secao.title}
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {secao.campos.map((nomeCampo: string) => {
+                const campo = [...schema.campos_obrigatorios, ...schema.campos_opcionais]
+                  .find(c => c.name === nomeCampo);
+
+                if (!campo) return null;
+
+                return (
+                  <FieldRenderer
+                    key={campo.name}
+                    field={campo}
+                    control={methods.control}
+                    errors={methods.formState.errors}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Botões de ação */}
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+          >
+            {submitting && (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            {submitting ? 'Salvando...' : 'Salvar Processo'}
+          </button>
+        </div>
+      </form>
+    </FormProvider>
+  );
+};
+
+export default DynamicFormBuilder;
+3. RENDERIZADOR DE CAMPOS
+typescript// src/components/processos/DynamicForm/FieldRenderer.tsx
+import React from 'react';
+import { Controller } from 'react-hook-form';
+import CurrencyInput from './CurrencyInput';
+import PercentageInput from './PercentageInput';
+import MultiSelectTeses from './MultiSelectTeses';
+import { FormField } from '../../../types/processos/formulario.types';
+
+interface FieldRendererProps {
+  field: FormField;
+  control: any;
+  errors: any;
+}
+
+const FieldRenderer: React.FC<FieldRendererProps> = ({ field, control, errors }) => {
+  const error = errors[field.name];
+  const isRequired = field.validation?.required;
+
+  const renderField = () => {
+    switch (field.type) {
+      case 'text':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <input
+                {...formField}
+                type="text"
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  error ? 'border-red-500' : ''
+                }`}
+                placeholder={field.label}
+              />
+            )}
+          />
+        );
+
+      case 'currency':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <CurrencyInput
+                value={formField.value}
+                onChange={formField.onChange}
+                error={!!error}
+              />
+            )}
+          />
+        );
+
+      case 'percentage':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <PercentageInput
+                value={formField.value}
+                onChange={formField.onChange}
+                error={!!error}
+              />
+            )}
+          />
+        );
+
+      case 'date':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <input
+                {...formField}
+                type="date"
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  error ? 'border-red-500' : ''
+                }`}
+              />
+            )}
+          />
+        );
+
+      case 'select':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <select
+                {...formField}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  error ? 'border-red-500' : ''
+                }`}
+              >
+                <option value="">Selecione...</option>
+                {field.options?.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+        );
+
+      case 'multiselect':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            render={({ field: formField }) => (
+              <MultiSelectTeses
+                value={formField.value || []}
+                onChange={formField.onChange}
+                endpoint={field.options_endpoint}
+                error={!!error}
+              />
+            )}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={field.type === 'multiselect' ? 'md:col-span-2' : ''}>
+      <label className="block text-sm font-medium text-gray-700">
+        {field.label}
+        {isRequired && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      
+      {renderField()}
+      
+      {field.description && (
+        <p className="mt-1 text-sm text-gray-500">{field.description}</p>
+      )}
+      
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{error.message}</p>
+      )}
+    </div>
+  );
+};
+
+export default FieldRenderer;
+4. INPUT DE MOEDA
+typescript// src/components/processos/DynamicForm/CurrencyInput.tsx
+import React from 'react';
+import { NumericFormat } from 'react-number-format';
+
+interface CurrencyInputProps {
+  value?: number;
+  onChange: (value: number | undefined) => void;
+  error?: boolean;
+  disabled?: boolean;
+}
+
+const CurrencyInput: React.FC<CurrencyInputProps> = ({
+  value,
+  onChange,
+  error = false,
+  disabled = false
+}) => {
+  return (
+    <NumericFormat
+      value={value}
+      onValueChange={(values) => {
+        onChange(values.floatValue);
+      }}
+      thousandSeparator="."
+      decimalSeparator=","
+      prefix="R$ "
+      decimalScale={2}
+      fixedDecimalScale
+      allowNegative={false}
+      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+        error ? 'border-red-500' : ''
+      }`}
+      disabled={disabled}
+    />
+  );
+};
+
+export default CurrencyInput;
+5. SELETOR MÚLTIPLO DE TESES
+typescript// src/components/processos/DynamicForm/MultiSelectTeses.tsx
+import React, { useEffect, useState } from 'react';
+import Select from 'react-select';
+import { TeseTributaria } from '../../../types/processos/tributario.types';
+
+interface MultiSelectTesesProps {
+  value: number[];
+  onChange: (value: number[]) => void;
+  endpoint?: string;
+  error?: boolean;
+}
+
+const MultiSelectTeses: React.FC<MultiSelectTesesProps> = ({
+  value,
+  onChange,
+  endpoint = '/api/teses-tributarias',
+  error = false
+}) => {
+  const [teses, setTeses] = useState<TeseTributaria[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeses = async () => {
+      try {
+        const response = await fetch(endpoint);
+        const data = await response.json();
+        setTeses(data);
+      } catch (error) {
+        console.error('Erro ao carregar teses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeses();
+  }, [endpoint]);
+
+  const options = teses.map(tese => ({
+    value: tese.id_tese,
+    label: `${tese.codigo} - ${tese.titulo}`,
+    data: tese
+  }));
+
+  const selectedOptions = options.filter(opt => value.includes(opt.value));
+
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      borderColor: error ? '#ef4444' : provided.borderColor,
+      '&:hover': {
+        borderColor: error ? '#ef4444' : provided.borderColor
+      }
+    })
+  };
+
+  return (
+    <Select
+      isMulti
+      value={selectedOptions}
+      onChange={(selected) => {
+        const ids = selected ? selected.map((opt: any) => opt.value) : [];
+        onChange(ids);
+      }}
+      options={options}
+      isLoading={loading}
+      placeholder="Selecione uma ou mais teses..."
+      noOptionsMessage={() => "Nenhuma tese encontrada"}
+      loadingMessage={() => "Carregando teses..."}
+      className="mt-1"
+      styles={customStyles}
+      formatOptionLabel={(option: any) => (
+        <div>
+          <div className="font-medium">{option.data.codigo}</div>
+          <div className="text-sm text-gray-500 truncate">{option.data.titulo}</div>
+          {option.data.probabilidade_sucesso && (
+            <div className="text-xs text-blue-600 mt-1">
+              Probabilidade: {option.data.probabilidade_sucesso}%
+            </div>
+          )}
+        </div>
+      )}
+    />
+  );
+};
+
+export default MultiSelectTeses;
+
+📦 DEPENDÊNCIAS E BIBLIOTECAS
+Backend (Python)
+txt# requirements.txt
+
+# Core
+Flask==3.0.3
+SQLAlchemy==2.0.34
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Auth
+Flask-JWT-Extended==4.6.0
+bcrypt==4.1.2
+
+# Validação
+marshmallow==3.21.0
+marshmallow-sqlalchemy==1.0.0
+python-dotenv==1.0.1
+
+# Monetário e Formatação
+python-dateutil==2.8.2
+num2words==0.5.13
+
+# APIs Externas
+requests==2.31.0
+httpx==0.26.0
+
+# Excel/CSV (ETL)
+pandas==2.2.0
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Validadores
+validate-docbr==1.10.0  # CPF/CNPJ
+python-cnj==0.1.0  # CNJ
+
+# Performance
+redis==5.0.1
+celery==5.3.6  # Tarefas assíncronas
+
+# Deploy
+gunicorn==23.0.0
+gevent==24.2.1
+Frontend (TypeScript/React)
+json// package.json
+{
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.22.0",
+    
+    "react-hook-form": "^7.50.0",
+    "@hookform/resolvers": "^3.3.4",
+    "zod": "^3.22.4",
+    
+    "react-select": "^5.8.0",
+    "react-number-format": "^5.3.1",
+    "date-fns": "^3.3.1",
+    
+    "axios": "^1.6.7",
+    "react-query": "^3.39.3",
+    
+    "tailwindcss": "^3.4.1",
+    "lucide-react": "^0.263.1",
+    
+    "@tanstack/react-table": "^8.12.0",
+    "recharts": "^2.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0",
+    "@vitejs/plugin-react": "^4.2.1"
+  }
+}
+
+🔄 PROCESSO DE ETL
+Script Python Completo
+python# scripts/etl_processos.py
+import pandas as pd
+import numpy as np
+import re
+from datetime import datetime
+from decimal import Decimal
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+def limpar_valor_monetario(valor):
+    """Remove R$, pontos e converte vírgula para ponto"""
+    if pd.isna(valor):
+        return None
+    
+    valor_str = str(valor)
+    valor_limpo = valor_str.replace('R$', '').replace('.', '').replace(' ', '').strip()
+    valor_limpo = valor_limpo.replace(',', '.')
+    
+    try:
+        return Decimal(valor_limpo)
+    except:
+        return None
+
+def validar_cnj(numero_cnj):
+    """Valida formato do número CNJ"""
+    if pd.isna(numero_cnj):
+        return None
+    
+    padrao = r'^\d{7}-\d{2}\.\d{4}\.\d{1}\.\d{2}\.\d{4}$'
+    numero_str = str(numero_cnj).strip()
+    
+    if re.match(padrao, numero_str):
+        return numero_str
+    return None
+
+def normalizar_texto(texto):
+    """Normaliza capitalização e remove espaços extras"""
+    if pd.isna(texto):
+        return None
+    
+    texto_limpo = str(texto).strip()
+    texto_limpo = ' '.join(texto_limpo.split())
+    return texto_limpo.title()
+
+def validar_uf(uf):
+    """Valida sigla de UF"""
+    ufs_validas = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+                   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+                   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO']
+    
+    if pd.isna(uf):
+        return None
+    
+    uf_upper = str(uf).strip().upper()
+    return uf_upper if uf_upper in ufs_validas else None
+
+def processar_etl_completo(arquivo_entrada: str, arquivo_saida: str):
+    """Processo ETL completo"""
+    
+    print("="*60)
+    print("INICIANDO ETL - PROCESSOS JURÍDICOS")
+    print("="*60)
+    
+    # 1. Ler arquivo
+    print("\n[1/8] Lendo arquivo...")
+    df = pd.read_excel(arquivo_entrada)
+    print(f"✓ {len(df)} registros carregados")
+    print(f"✓ {len(df.columns)} colunas encontradas")
+    
+    # 2. Remover colunas vazias
+    print("\n[2/8] Removendo colunas vazias...")
+    colunas_vazias = [col for col in df.columns if df[col].isna().all()]
+    df = df.drop(columns=colunas_vazias)
+    print(f"✓ {len(colunas_vazias)} colunas vazias removidas")
+    
+    # 3. Renomear colunas
+    print("\n[3/8] Padronizando nomes de colunas...")
+    mapeamento_colunas = {
+        'Status': 'status',
+        'Número de CNJ': 'numero_cnj',
+        'Pasta': 'pasta',
+        'Observação_Pasta': 'observacao_pasta',
+        'Cliente principal / Contato / Nome/razão social': 'cliente_nome',
+        'Cliente principal / Posição': 'cliente_posicao',
+        'Data da distribuição': 'data_distribuicao',
+        'Ação': 'acao',
+        'Natureza': 'natureza',
+        'Órgão': 'orgao',
+        'Título': 'titulo',
+        'Procedimento': 'procedimento',
+        'Fase': 'fase',
+        'UF': 'uf',
+        'Cidade': 'cidade',
+        'Justiça (CNJ)': 'justica_cnj',
+        'Instância (CNJ)': 'instancia_cnj',
+        'Classe (CNJ)': 'classe_cnj',
+        'Assuntos (CNJ)': 'assuntos_cnj',
+        'Comarca/Foro': 'comarca_foro',
+        'Nome da vara/turma': 'vara_turma',
+        'UF.1': 'uf_vara',
+        'Objetos / Nome': 'objeto_nome',
+        'Objetos / Observações': 'objeto_observacoes',
+        'Valor da causa': 'valor_causa',
+        'Valor da causa atualizado': 'valor_causa_atualizado',
+        'Valor envolvido': 'valor_envolvido',
+        'Valor envolvido atualizado': 'valor_envolvido_atualizado',
+        'Contingência': 'contingencia',
+        'Tipo da probabilidade atual': 'tipo_probabilidade',
+        'Risco': 'risco'
+    }
+    df = df.rename(columns=mapeamento_colunas)
+    print(f"✓ Colunas renomeadas para snake_case")
+    
+    # 4. Limpar valores monetários
+    print("\n[4/8] Convertendo valores monetários...")
+    colunas_monetarias = ['valor_causa', 'valor_causa_atualizado', 
+                          'valor_envolvido', 'valor_envolvido_atualizado', 
+                          'contingencia']
+    
+    for col in colunas_monetarias:
+        if col in df.columns:
+            df[col] = df[col].apply(limpar_valor_monetario)
+    
+    print(f"✓ {len(colunas_monetarias)} colunas monetárias convertidas")
+    
+    # 5. Converter datas
+    print("\n[5/8]Continuar17:38Convertendo datas...")
+df['data_distribuicao'] = pd.to_datetime(df['data_distribuicao'], errors='coerce')
+# Validar datas futuras
+datas_futuras = df[df['data_distribuicao'] > datetime.now()]['data_distribuicao'].count()
+if datas_futuras > 0:
+    print(f"⚠ {datas_futuras} datas futuras encontradas (serão mantidas)")
+
+print("✓ Datas convertidas para formato ISO")
+
+# 6. Validar e limpar CNJ
+print("\n[6/8] Validando números CNJ...")
+df['numero_cnj'] = df['numero_cnj'].apply(validar_cnj)
+cnj_validos = df['numero_cnj'].notna().sum()
+print(f"✓ {cnj_validos} números CNJ válidos")
+
+# 7. Normalizar textos
+print("\n[7/8] Normalizando textos...")
+colunas_texto = ['cliente_nome', 'acao', 'orgao', 'comarca_foro', 
+                 'vara_turma', 'cidade']
+
+for col in colunas_texto:
+    if col in df.columns:
+        df[col] = df[col].apply(normalizar_texto)
+
+print(f"✓ {len(colunas_texto)} colunas de texto normalizadas")
+
+# 8. Validar UFs
+print("\n[8/8] Validando UFs...")
+df['uf'] = df['uf'].apply(validar_uf)
+df['uf_vara'] = df['uf_vara'].apply(validar_uf)
+ufs_validas = df['uf'].notna().sum()
+print(f"✓ {ufs_validas} UFs válidas")
+
+# Converter tudo para NULL explícito
+df = df.replace('', None)
+df = df.replace(np.nan, None)
+df = df.where(pd.notnull(df), None)
+
+# Criar ID único
+df.insert(0, 'id_processo', range(1, len(df) + 1))
+
+# Salvar
+print(f"\n{'='*60}")
+print("SALVANDO ARQUIVO PROCESSADO")
+print(f"{'='*60}\n")
+
+df.to_excel(arquivo_saida, index=False, engine='openpyxl')
+
+print(f"✓ Arquivo salvo: {arquivo_saida}")
+print(f"✓ Total de registros: {len(df)}")
+print(f"✓ Total de colunas: {len(df.columns)}")
+
+# Relatório de qualidade
+print(f"\n{'='*60}")
+print("RELATÓRIO DE QUALIDADE DE DADOS")
+print(f"{'='*60}\n")
+
+print("Percentual de NULLs por coluna:")
+nulos = (df.isnull().sum() / len(df) * 100).round(2)
+print(nulos[nulos > 0].sort_values(ascending=False).to_string())
+
+print(f"\n{'='*60}")
+print("ETL CONCLUÍDO COM SUCESSO!")
+print(f"{'='*60}\n")
+if name == 'main':
+processar_etl_completo(
+arquivo_entrada='/mnt/user-data/uploads/Tabela_Processos.xlsx',
+arquivo_saida='/home/claude/processos_etl_limpo.xlsx'
+)
+
+---
+
+## 🎯 PLANO DE IMPLEMENTAÇÃO SEQUENCIAL
+
+### FASE 1: Fundação (2 semanas)
+1. ✅ Criar todas as tabelas no PostgreSQL
+2. ✅ Executar ETL e carregar dados históricos
+3. ✅ Implementar models SQLAlchemy
+4. ✅ Criar migrations Alembic
+5. ✅ Testes unitários de models
+
+### FASE 2: Backend Core (3 semanas)
+1. ✅ Implementar ProcessoService completo
+2. ✅ Criar rotas API REST
+3. ✅ Sistema de validação de campos
+4. ✅ Formulários dinâmicos (schema JSON)
+5. ✅ Testes de integração
+
+### FASE 3: Específicos por Natureza (3 semanas)
+1. ✅ Módulo Tributário completo
+   - Gestão de teses
+   - Prognóstico detalhado
+   - Cálculo de juros
+2. ✅ Módulo Trabalhista
+3. ✅ Módulo Cível
+
+### FASE 4: Atualização Monetária (2 semanas)
+1. ✅ Importador automático de índices
+2. ✅ Calculadora de correção
+3. ✅ API de atualização
+4. ✅ Histórico de correções
+
+### FASE 5: Frontend (4 semanas)
+1. ✅ Formulário dinâmico base
+2. ✅ Componentes específicos por natureza
+3. ✅ Seletor de teses
+4. ✅ Calculadora monetária
+5. ✅ Visualizações e gráficos
+
+### FASE 6: Refinamento (2 semanas)
+1. ✅ Otimização de queries
+2. ✅ Cache Redis
+3. ✅ Testes E2E
+4. ✅ Documentação API
+5. ✅ Deploy produção
+
+**TOTAL: 16 semanas (~4 meses)**
+
+---
+
+## 📚 DOCUMENTAÇÃO ADICIONAL RECOMENDADA
+
+1. **Swagger/OpenAPI** para documentação automática das APIs
+2. **Storybook** para componentes React isolados
+3. **Wiki interna** com casos de uso e exemplos
+4. **Vídeos tutoriais** para usuários finais
+5. **Guia de migração** de dados legados
+
+---
+
+## ✅ CHECKLIST DE VALIDAÇÃO
+
+### Backend
+- [ ] Todas as tabelas criadas e relacionadas
+- [ ] Constraints e índices aplicados
+- [ ] Models SQLAlchemy testados
+- [ ] Validações implementadas
+- [ ] APIs REST documentadas
+- [ ] Testes unitários > 80% cobertura
+- [ ] Testes de integração rodando
+
+### Frontend
+- [ ] Formulário dinâmico funcionando
+- [ ] Todos os tipos de campo implementados
+- [ ] Validações client-side
+- [ ] Responsividade mobile
+- [ ] Acessibilidade (WCAG 2.1)
+- [ ] Performance (Lighthouse > 90)
+
+### Integração
+- [ ] ETL rodando sem erros
+- [ ] Dados históricos migrados
+- [ ] Multi-tenancy funcionando
+- [ ] Permissões por role
+- [ ] Auditoria completa
+
+---
