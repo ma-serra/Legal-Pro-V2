@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
 import { PageHeader, StatCard } from '../../components/ui/AdminComponents'
 import { TrendingUp, Clock, CheckCircle, XCircle, BarChart3, Calendar } from 'lucide-react'
-// import api from '../../lib/api'
+import api from '../../lib/api'
 
 interface PerformanceData {
     total_execucoes: number
