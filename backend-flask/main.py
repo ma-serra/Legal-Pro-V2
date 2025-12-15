@@ -848,6 +848,14 @@ def create_app():
     except Exception as e:
         logger.error(f"❌ Erro ao registrar API de Comparação: {e}")
     
+    # Registrar API REST de Processos Dinâmicos (Fase 2)
+    try:
+        from modules.processos.routes import registrar_rotas
+        registrar_rotas(app)
+        logger.info("✅ API REST de Processos Dinâmicos registrada com sucesso (12 endpoints)")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar API de Processos Dinâmicos: {e}")
+    
     # Registrar API REST de Transcrição
     try:
         from modules.api_rest_transcricao import register_transcricao_api
