@@ -90,12 +90,12 @@ def update_models():
     # Verificar distribuição final
     cur.execute("""
         SELECT 
-            configuracoes_llm->>'llm_provider' as provider,
-            configuracoes_llm->>'llm_model' as model,
+            (configuracoes_llm->>'llm_provider') as provider,
+            (configuracoes_llm->>'llm_model') as model,
             COUNT(*) as total
         FROM agente_juridico
         WHERE configuracoes_llm IS NOT NULL
-        GROUP BY provider, model
+        GROUP BY (configuracoes_llm->>'llm_provider'), (configuracoes_llm->>'llm_model')
         ORDER BY provider, total DESC;
     """)
     
