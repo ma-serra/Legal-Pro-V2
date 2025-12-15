@@ -46,7 +46,9 @@ def listar_assistentes():
             result.append({
                 'id': ass.id,
                 'nome': ass.nome,
+                'tipo': ass.tipo or 'juridico',  # NOVO
                 'descricao': ass.descricao,
+                'area_juridica': categoria_nome,  # Renomeado para consistência
                 'categoria': categoria_nome,
                 'categoria_id': ass.categoria_id,
                 'nivel_especializacao': ass.nivel_especializacao,
@@ -54,7 +56,11 @@ def listar_assistentes():
                 'cor_destaque': ass.cor_destaque,
                 'rating_medio': ass.rating_medio,
                 'total_avaliacoes': ass.total_avaliacoes,
-                'capacidades': ass.capacidades or []
+                'total_conversas': ass.total_conversas or 0,  # NOVO
+                'customizado': ass.customizado or False,  # NOVO
+                'capacidades': ass.capacidades or [],
+                'status': 'ativo' if ass.ativo else 'inativo',
+                'created_at': ass.data_criacao.isoformat() if ass.data_criacao else None  # NOVO
             })
         
         return jsonify({'assistentes': result}), 200
@@ -74,25 +80,46 @@ def obter_assistente(assistente_id):
         categoria_nome = assistente.categoria.nome if assistente.categoria else 'Geral'
         detalhes_tecnicos = assistente.get_detalhes_tecnicos()
         
+        # Construir configuracoes_llm se nao existir
+        configuracoes_llm = assistente.configuracoes_llm if assistente.configuracoes_llm else {
+            'llm_provider': detalhes_tecnicos.get('provider', 'openai'),
+            'llm_model': assistente.modelo_ai or 'gpt-4o',
+            'temperatura': assistente.temperatura or 0.3,
+            'parametros': {},
+            'modo_debug': False,
+            'sempre_executar': True,
+            'timeout': 120,
+            'max_tokens': assistente.max_tokens or 8000
+        }
+        
         return jsonify({
             'id': assistente.id,
             'nome': assistente.nome,
+            'tipo': assistente.tipo or 'juridico',  # NOVO
             'classe': assistente.classe,
             'descricao': assistente.descricao,
+            'area_juridica': categoria_nome,  # NOVO
             'categoria': categoria_nome,
             'categoria_id': assistente.categoria_id,
             'nivel_especializacao': assistente.nivel_especializacao,
             'icone': assistente.icone,
             'cor_destaque': assistente.cor_destaque,
-            'modelo_ai': assistente.modelo_ai,
-            'temperatura': assistente.temperatura,
-            'max_tokens': assistente.max_tokens,
+            'prompt_template': assistente.prompt_template or assistente.template_prompt,  # NOVO - usar novo campo
+            'configuracoes': configuracoes_llm,  # NOVO - exposicao completa
+            'customizado': assistente.customizado or False,  # NOVO
+            'total_conversas': assistente.total_conversas or 0,  # NOVO
             'capacidades': assistente.capacidades or [],
             'rating_medio': assistente.rating_medio,
             'total_avaliacoes': assistente.total_avaliacoes,
             'base_vetorial_ativa': assistente.base_vetorial_ativa,
-            'template_prompt': assistente.template_prompt,
-            'detalhes_tecnicos': detalhes_tecnicos
+            'created_at': assistente.data_criacao.isoformat() if assistente.data_criacao else None,  # NOVO
+            'updated_at': assistente.data_atualizacao.isoformat() if assistente.data_atualizacao else None,  # NOVO
+            # Campos legacy para compatibilidade
+            'modelo_ai': assistente.modelo_ai,
+            'temperatura': assistente.temperatura,
+            'max_tokens': assistente.max_tokens,
+            'template_prompt': assistente.template_prompt,  # Deprecated
+            'detalhes_tecnicos': detalhes_tecnicos  # Deprecated
         }), 200
         
     except Exception as e:
@@ -255,6 +282,125 @@ def listar_categorias():
     except Exception as e:
         logger.error(f"Erro ao listar categorias: {e}")
         return jsonify({'error': 'Erro ao listar categorias'}), 500
+
+@assistentes_api.route('', methods=['POST'])
+def criar_assistente():
+    """
+    Cria um novo assistente customizado
+    Body: { "nome": str, "tipo": str, "descricao": str, "prompt_template": str, "configuracoes": {} }
+    """
+    try:
+        from flask_login import current_user, login_required
+        
+        # Verificar autenticacao (simplificado - ideal usar decorator)
+        # if not current_user.is_authenticated:
+        #     return jsonify({'error': 'Autenticacao requerida'}), 401
+        
+        data = request.get_json()
+        
+        # Validacoes
+        if not data or not data.get('nome') or not data.get('tipo'):
+            return jsonify({'error': 'Nome e tipo sao obrigatorios'}), 400
+        
+        # Buscar ou criar categoria padrao
+        categoria_geral = CategoriaJuridica.query.filter_by(nome='Geral').first()
+        if not categoria_geral:
+            categoria_geral = CategoriaJuridica(nome='Geral', ativa=True)
+            db.session.add(categoria_geral)
+            db.session.flush()
+        
+        # Criar assistente
+        assistente = AgenteJuridico(
+            nome=data['nome'],
+            classe=f"Assistente{data['tipo'].capitalize()}",
+            tipo=data['tipo'],
+            descricao=data.get('descricao', ''),
+            prompt_template=data.get('prompt_template', ''),
+            categoria_id=categoria_geral.id,
+            configuracoes_llm=data.get('configuracoes', {}),
+            customizado=True,
+            ativo=True,
+            icone=data.get('icone', 'fas fa-robot'),
+            cor_destaque=data.get('cor_destaque', '#3B82F6'),
+            # created_by=current_user.id if current_user.is_authenticated else None
+        )
+        
+        db.session.add(assistente)
+        db.session.commit()
+        
+        logger.info(f"Assistente customizado criado: {assistente.nome} (ID: {assistente.id})")
+        
+        return jsonify({
+            'id': assistente.id,
+            'nome': assistente.nome,
+            'tipo': assistente.tipo,
+            'mensagem': 'Assistente criado com sucesso'
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao criar assistente: {e}")
+        return jsonify({'error': 'Erro ao criar assistente'}), 500
+
+@assistentes_api.route('/<int:assistente_id>', methods=['PUT'])
+def atualizar_assistente(assistente_id):
+    """
+    Atualiza um assistente customizado
+    Body: { "nome": str, "descricao": str, "prompt_template": str, "configuracoes": {} }
+    """
+    try:
+        assistente = AgenteJuridico.query.get_or_404(assistente_id)
+        
+        # Verificar se e customizado
+        if not assistente.customizado:
+            return jsonify({'error': 'Apenas assistentes customizados podem ser editados'}), 403
+        
+        data = request.get_json()
+        
+        # Atualizar campos permitidos
+        if 'nome' in data:
+            assistente.nome = data['nome']
+        if 'descricao' in data:
+            assistente.descricao = data['descricao']
+        if 'prompt_template' in data:
+            assistente.prompt_template = data['prompt_template']
+        if 'configuracoes' in data:
+            assistente.configuracoes_llm = data['configuracoes']
+        if 'icone' in data:
+            assistente.icone = data['icone']
+        if 'cor_destaque' in data:
+            assistente.cor_destaque = data['cor_destaque']
+        
+        db.session.commit()
+        
+        logger.info(f"Assistente atualizado: {assistente.nome} (ID: {assistente.id})")
+        
+        return jsonify({'mensagem': 'Assistente atualizado com sucesso'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro ao atualizar assistente {assistente_id}: {e}")
+        return jsonify({'error': 'Erro ao atualizar assistente'}), 500
+
+@assistentes_api.route('/<int:assistente_id>/conversas', methods=['GET'])
+def listar_conversas(assistente_id):
+    """
+    Lista conversas/historico de um assistente
+    Por enquanto retorna vazio - implementar modelo Conversa depois
+    """
+    try:
+        # Verificar se assistente existe
+        assistente = AgenteJuridico.query.get_or_404(assistente_id)
+        
+        # TODO: Implementar modelo Conversa e query real
+        # Por enquanto retornar array vazio
+        conversas = []
+        
+        return jsonify({'conversas': conversas, 'total': len(conversas)}), 200
+        
+    except Exception as e:
+        logger.error(f"Erro ao listar conversas do assistente {assistente_id}: {e}")
+        return jsonify({'error': 'Erro ao listar conversas'}), 500
 
 def register_assistentes_api(app):
     """Registra o blueprint de assistentes no app"""
