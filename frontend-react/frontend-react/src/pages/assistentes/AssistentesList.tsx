@@ -242,8 +242,7 @@ export default function AssistentesList() {
         <AdminLayout>
             <PageHeader
                 title="Assistentes Jurídicos"
-                subtitle={`${filteredAssistentes.length} assistentes disponíveis`}
-                icon={Bot}
+                description={`${filteredAssistentes.length} assistentes disponíveis`}
             />
 
             <div className="flex gap-4 h-[calc(100vh-200px)]">
@@ -282,8 +281,8 @@ export default function AssistentesList() {
                                 key={assistente.id}
                                 onClick={() => selecionarAssistente(assistente)}
                                 className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedAssistente?.id === assistente.id
-                                        ? 'bg-blue-50 border-2 border-blue-500'
-                                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                                    ? 'bg-blue-50 border-2 border-blue-500'
+                                    : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                                     }`}
                             >
                                 <div className="flex items-start gap-2">
