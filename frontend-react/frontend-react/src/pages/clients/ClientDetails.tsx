@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { PageHeader, LoadingSpinner } from '../../components/ui/AdminComponents'
+import { PageHeader } from '../../components/ui/AdminComponents'
 import {
     Building2, Mail, Phone, MapPin, Calendar, FileText,
     Edit, Trash2, Plus, ArrowLeft, User
@@ -82,7 +82,7 @@ export default function ClientDetails() {
     if (loading) {
         return (
             <AdminLayout>
-                <LoadingSpinner />
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             </AdminLayout>
         )
     }
@@ -141,8 +141,8 @@ export default function ClientDetails() {
                     <button
                         onClick={() => setActiveTab('info')}
                         className={`pb-4 border-b-2 font-medium ${activeTab === 'info'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Informações
@@ -150,8 +150,8 @@ export default function ClientDetails() {
                     <button
                         onClick={() => setActiveTab('processes')}
                         className={`pb-4 border-b-2 font-medium ${activeTab === 'processes'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Processos ({processes.length})
@@ -159,8 +159,8 @@ export default function ClientDetails() {
                     <button
                         onClick={() => setActiveTab('documents')}
                         className={`pb-4 border-b-2 font-medium ${activeTab === 'documents'
-                                ? 'border-blue-600 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         Documentos
@@ -232,8 +232,8 @@ export default function ClientDetails() {
                         <div>
                             <h3 className="text-sm font-medium text-gray-500 mb-4">Status</h3>
                             <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${client.status === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
                                 }`}>
                                 {client.status === 'active' ? 'Ativo' : 'Inativo'}
                             </span>

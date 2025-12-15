@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { PageHeader, LoadingSpinner } from '../../components/ui/AdminComponents'
+import { PageHeader } from '../../components/ui/AdminComponents'
 import { ArrowLeft, Save } from 'lucide-react'
 import api from '../../lib/api'
 
@@ -76,7 +76,7 @@ export default function EditClient() {
     if (loading) {
         return (
             <AdminLayout>
-                <LoadingSpinner />
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             </AdminLayout>
         )
     }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AdminLayout } from '../../components/layouts/AdminLayout'
-import { PageHeader, StatsCard } from '../../components/ui/AdminComponents'
+import { PageHeader, StatCard } from '../../components/ui/AdminComponents'
 import {
     TrendingUp, AlertTriangle, MapPin, Calendar,
     FileText, DollarSign, Users, BarChart3
@@ -88,27 +88,27 @@ export default function CPFLDashboard() {
 
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <StatsCard
+                <StatCard
                     title="Total de Processos"
                     value={stats.total_processos.toString()}
                     icon={FileText}
                     trend={`${stats.processos_ativos} ativos`}
                     trendUp={true}
                 />
-                <StatsCard
+                <StatCard
                     title="Processos Sobrestados"
                     value={stats.processos_sobrestados.toString()}
                     icon={AlertTriangle}
                     iconColor="text-orange-600"
                     trend="Requer atenção"
                 />
-                <StatsCard
+                <StatCard
                     title="Valor Total em Causa"
                     value={formatCurrency(stats.valor_total_causa)}
                     icon={DollarSign}
                     iconColor="text-green-600"
                 />
-                <StatsCard
+                <StatCard
                     title="Taxa de Sucesso"
                     value={`${stats.taxa_sucesso}%`}
                     icon={TrendingUp}

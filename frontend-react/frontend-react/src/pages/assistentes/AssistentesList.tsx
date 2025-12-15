@@ -88,10 +88,15 @@ export default function AssistentesList() {
 
     const getIconColor = (tipo: string) => {
         switch (tipo) {
-            case 'estrategico': return 'text-blue-600 bg-blue-100'
-            case 'tecnico': return 'text-green-600 bg-green-100'
-            case 'estatistico': return 'text-purple-600 bg-purple-100'
-            case 'preditivo': return 'text-orange-600 bg-orange-100'
+            case 'juridico': return 'text-blue-600 bg-blue-100'
+            case 'resumidor': return 'text-green-600 bg-green-100'
+            case 'sentimento': return 'text-purple-600 bg-purple-100'
+            case 'extrator': return 'text-orange-600 bg-orange-100'
+            case 'tradutor': return 'text-pink-600 bg-pink-100'
+            case 'classificador': return 'text-yellow-600 bg-yellow-100'
+            case 'gerador': return 'text-indigo-600 bg-indigo-100'
+            case 'sintetizador': return 'text-cyan-600 bg-cyan-100'
+            case 'formatador': return 'text-teal-600 bg-teal-100'
             default: return 'text-gray-600 bg-gray-100'
         }
     }
@@ -154,10 +159,15 @@ export default function AssistentesList() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                             <option value="all">Todos os Tipos</option>
-                            <option value="estrategico">Estratégico</option>
-                            <option value="tecnico">Técnico</option>
-                            <option value="estatistico">Estatístico</option>
-                            <option value="preditivo">Preditivo</option>
+                            <option value="juridico">Jurídico</option>
+                            <option value="resumidor">Resumidor</option>
+                            <option value="sentimento">Análise de Sentimento</option>
+                            <option value="extrator">Extrator</option>
+                            <option value="tradutor">Tradutor</option>
+                            <option value="classificador">Classificador</option>
+                            <option value="gerador">Gerador</option>
+                            <option value="sintetizador">Sintetizador</option>
+                            <option value="formatador">Formatador</option>
                         </select>
                     </div>
                 </div>
