@@ -44,7 +44,7 @@ export default function AssistentesList() {
     const fetchAssistentes = async () => {
         try {
             const response = await api.get('/api/assistentes')
-            setAssistentes(response.data)
+            setAssistentes(response.data.assistentes || [])  // FIX: acessar .assistentes
         } catch (error) {
             console.error('Error fetching assistentes:', error)
         } finally {
