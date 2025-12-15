@@ -253,7 +253,7 @@ export default function AssistenteChat() {
                                         <div className="flex-1">
                                             <p className="font-medium text-sm">{conversa.titulo}</p>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                {conversa.mensagens_count || 0} mensagens
+                                                {conversa.mensagens?.length || 0} mensagens
                                             </p>
                                         </div>
                                         <button
@@ -345,8 +345,8 @@ export default function AssistenteChat() {
                                         )}
                                         <div className={`max-w-2xl ${msg.role === 'user' ? 'order-first' : ''}`}>
                                             <div className={`p-4 rounded-lg ${msg.role === 'user'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white border border-gray-200'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-white border border-gray-200'
                                                 }`}>
                                                 <p className="whitespace-pre-wrap">{msg.content}</p>
                                             </div>
