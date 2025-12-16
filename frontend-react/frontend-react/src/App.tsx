@@ -20,8 +20,10 @@ import ProcessoDetailsPage from './pages/processos/ProcessoDetailsPage'
 import NovoProcessoPage from './pages/processos/NovoProcessoPage'
 import ImportacaoPage from './pages/processos/ImportacaoPage'
 import ImportadorETLPage from './pages/processos/ImportadorETLPage'
-import TesesPage from './pages/processos/TesesPage'
-import IndicesPage from './pages/processos/IndicesPage'
+import TesesPage from './pages/processos/TesesPage';
+import IndicesPage from './pages/processos/IndicesPage';
+import MLAnaliseTributarioPage from './pages/processos/MLAnaliseTributarioPage';
+
 
 // Multi-Agente Pages
 import MultiAgenteDashboard from './pages/multiagente/MultiAgenteDashboard'
@@ -107,6 +109,7 @@ export default function App() {
               <Route path="importar-etl" element={<ImportadorETLPage />} />
               <Route path="teses" element={<TesesPage />} />
               <Route path="indices" element={<IndicesPage />} />
+              <Route path="ml-analise" element={<MLAnaliseTributarioPage />} />
               <Route path=":id" element={<ProcessoDetailsPage />} />
             </Route>
 
