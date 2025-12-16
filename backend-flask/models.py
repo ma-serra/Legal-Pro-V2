@@ -2901,489 +2901,488 @@ class HistoricoPagamento(db.Model):
         }
 
 
- 
- #   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
- #   S I S T E M A   D E   P R O C E S S O S   D I N   M I C O S  
- #   A d i c i o n a d o   e m :   1 5   D e z e m b r o   2 0 2 5  
- #   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
-  
- c l a s s   P r o c e s s o ( d b . M o d e l ) :  
-         " " " T a b e l a   p r i n c i p a l   d e   p r o c e s s o s   j u r   d i c o s   c o m   c a m p o s   d i n   m i c o s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o s '  
-          
-         i d _ p r o c e s s o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         u u i d   =   C o l u m n ( U U I D ( a s _ u u i d = T r u e ) ,   d e f a u l t = u u i d . u u i d 4 ,   u n i q u e = T r u e ,   n u l l a b l e = F a l s e )  
-         t e n a n t _ i d   =   C o l u m n ( I n t e g e r ,   n u l l a b l e = T r u e )  
-          
-         #   D a d o s   B   s i c o s  
-         n u m e r o _ c n j   =   C o l u m n ( S t r i n g ( 2 5 ) )  
-         p a s t a   =   C o l u m n ( S t r i n g ( 5 0 ) )  
-         s t a t u s _ i d   =   C o l u m n ( I n t e g e r )  
-         n a t u r e z a _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   C l i e n t e  
-         c l i e n t e _ i d   =   C o l u m n ( I n t e g e r )  
-         p o s i c a o _ c l i e n t e _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   C l a s s i f i c a     o   J u r   d i c a  
-         a c a o _ i d   =   C o l u m n ( I n t e g e r )  
-         p r o c e d i m e n t o _ i d   =   C o l u m n ( I n t e g e r )  
-         f a s e _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   L o c a l i z a     o   P r o c e s s u a l  
-         o r g a o _ i d   =   C o l u m n ( I n t e g e r )  
-         c o m a r c a _ i d   =   C o l u m n ( I n t e g e r )  
-         v a r a _ t u r m a _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   C N J  
-         j u s t i c a _ c n j _ i d   =   C o l u m n ( I n t e g e r )  
-         i n s t a n c i a _ c n j _ i d   =   C o l u m n ( I n t e g e r )  
-         c l a s s e _ c n j _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   D a t a s  
-         d a t a _ d i s t r i b u i c a o   =   C o l u m n ( D a t e T i m e )  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   n u l l a b l e = F a l s e )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w ,   n u l l a b l e = F a l s e )  
-          
-         #   V a l o r e s  
-         v a l o r _ c a u s a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         v a l o r _ c a u s a _ a t u a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         v a l o r _ e n v o l v i d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         v a l o r _ e n v o l v i d o _ a t u a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         c o n t i n g e n c i a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-          
-         #   P r o g n   s t i c o  
-         t i p o _ p r o b a b i l i d a d e _ i d   =   C o l u m n ( I n t e g e r )  
-         r i s c o _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   M e t a d a d o s  
-         t i t u l o   =   C o l u m n ( T e x t )  
-         o b s e r v a c a o _ p a s t a   =   C o l u m n ( T e x t )  
-         a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
-          
-         #   R e l a t i o n s h i p s  
-         c a m p o s _ e s p e c i f i c o s   =   r e l a t i o n s h i p ( ' P r o c e s s o C a m p o s E s p e c i f i c o s ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         p r o c e s s o _ t r i b u t a r i o   =   r e l a t i o n s h i p ( ' P r o c e s s o T r i b u t a r i o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         p r o c e s s o _ t r a b a l h i s t a   =   r e l a t i o n s h i p ( ' P r o c e s s o T r a b a l h i s t a ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         p r o c e s s o _ c i v e l   =   r e l a t i o n s h i p ( ' P r o c e s s o C i v e l ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         t e s e s   =   r e l a t i o n s h i p ( ' P r o c e s s o T e s e ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         a t u a l i z a c o e s _ m o n e t a r i a s   =   r e l a t i o n s h i p ( ' P r o c e s s o A t u a l i z a c a o M o n e t a r i a ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o ' ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-          
-         d e f   _ _ r e p r _ _ ( s e l f ) :  
-                 r e t u r n   f ' < P r o c e s s o   { s e l f . i d _ p r o c e s s o } :   { s e l f . n u m e r o _ c n j   o r   s e l f . p a s t a } > '  
-          
-         d e f   t o _ d i c t ( s e l f ) :  
-                 " " " S e r i a l i z a     o   b   s i c a " " "  
-                 r e t u r n   {  
-                         ' i d _ p r o c e s s o ' :   s e l f . i d _ p r o c e s s o ,  
-                         ' u u i d ' :   s t r ( s e l f . u u i d ) ,  
-                         ' n u m e r o _ c n j ' :   s e l f . n u m e r o _ c n j ,  
-                         ' p a s t a ' :   s e l f . p a s t a ,  
-                         ' n a t u r e z a _ i d ' :   s e l f . n a t u r e z a _ i d ,  
-                         ' s t a t u s _ i d ' :   s e l f . s t a t u s _ i d ,  
-                         ' d a t a _ d i s t r i b u i c a o ' :   s e l f . d a t a _ d i s t r i b u i c a o . i s o f o r m a t ( )   i f   s e l f . d a t a _ d i s t r i b u i c a o   e l s e   N o n e ,  
-                         ' v a l o r _ c a u s a ' :   f l o a t ( s e l f . v a l o r _ c a u s a )   i f   s e l f . v a l o r _ c a u s a   e l s e   N o n e ,  
-                         ' a t i v o ' :   s e l f . a t i v o  
-                 }  
-  
-  
- c l a s s   P r o c e s s o C a m p o s E s p e c i f i c o s ( d b . M o d e l ) :  
-         " " " C a m p o s   e s p e c   f i c o s   p o r   n a t u r e z a   a r m a z e n a d o s   e m   J S O N B " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ c a m p o s _ e s p e c i f i c o s '  
-          
-         i d _ c a m p o _ e s p e c i f i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
-         n a t u r e z a _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   C a m p o s   J S O N B   p o r   n a t u r e z a  
-         c a m p o s _ t r i b u t a r i o   =   C o l u m n ( J S O N B )  
-         c a m p o s _ t r a b a l h i s t a   =   C o l u m n ( J S O N B )  
-         c a m p o s _ c i v e l   =   C o l u m n ( J S O N B )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   n u l l a b l e = F a l s e )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w ,   n u l l a b l e = F a l s e )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' c a m p o s _ e s p e c i f i c o s ' )  
-          
-         _ _ t a b l e _ a r g s _ _   =   (  
-                 U n i q u e C o n s t r a i n t ( ' p r o c e s s o _ i d ' ,   ' n a t u r e z a _ i d ' ,   n a m e = ' u k _ p r o c e s s o _ n a t u r e z a ' ) ,  
-         )  
-  
-  
- c l a s s   T r i b u t o ( d b . M o d e l ) :  
-         " " " C a d a s t r o   d e   t r i b u t o s " " "  
-         _ _ t a b l e n a m e _ _   =   ' t r i b u t o s '  
-          
-         i d _ t r i b u t o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         c o d i g o   =   C o l u m n ( S t r i n g ( 2 0 ) ,   u n i q u e = T r u e ,   n u l l a b l e = F a l s e )  
-         n o m e   =   C o l u m n ( S t r i n g ( 2 0 0 ) ,   n u l l a b l e = F a l s e )  
-         d e s c r i c a o   =   C o l u m n ( T e x t )  
-         e s f e r a   =   C o l u m n ( S t r i n g ( 2 0 ) )     #   F e d e r a l ,   E s t a d u a l ,   M u n i c i p a l  
-         a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         t e s e s   =   r e l a t i o n s h i p ( ' T e s e T r i b u t a r i a ' ,   b a c k _ p o p u l a t e s = ' t r i b u t o ' )  
-         p r o c e s s o s _ t r i b u t a r i o s   =   r e l a t i o n s h i p ( ' P r o c e s s o T r i b u t a r i o ' ,   b a c k _ p o p u l a t e s = ' t r i b u t o ' )  
-          
-         d e f   _ _ r e p r _ _ ( s e l f ) :  
-                 r e t u r n   f ' < T r i b u t o   { s e l f . c o d i g o } :   { s e l f . n o m e } > '  
-  
-  
- c l a s s   T e s e T r i b u t a r i a ( d b . M o d e l ) :  
-         " " " T e s e s   j u r   d i c a s   t r i b u t   r i a s " " "  
-         _ _ t a b l e n a m e _ _   =   ' t e s e s _ t r i b u t a r i a s '  
-          
-         i d _ t e s e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         t e n a n t _ i d   =   C o l u m n ( I n t e g e r )  
-         c o d i g o   =   C o l u m n ( S t r i n g ( 5 0 ) ,   u n i q u e = T r u e ,   n u l l a b l e = F a l s e )  
-         t i t u l o   =   C o l u m n ( S t r i n g ( 5 0 0 ) ,   n u l l a b l e = F a l s e )  
-         d e s c r i c a o   =   C o l u m n ( T e x t )  
-         t r i b u t o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t r i b u t o s . i d _ t r i b u t o ' ) )  
-          
-         #   J u r i s p r u d   n c i a  
-         t e m a _ r e p e r c u s s a o _ g e r a l   =   C o l u m n ( S t r i n g ( 5 0 ) )  
-         t e m a _ r e p e t i t i v o   =   C o l u m n ( S t r i n g ( 5 0 ) )  
-         t r i b u n a l _ o r i g e m   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
-          
-         #   P r o g n   s t i c o   p a d r   o  
-         p r o b a b i l i d a d e _ s u c e s s o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) )  
-         f u n d a m e n t a c a o   =   C o l u m n ( T e x t )  
-         s i t u a c a o   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   F a v o r   v e l ,   D e s f a v o r   v e l ,   P e n d e n t e ,   S u p e r a d a  
-          
-         a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
-          
-         #   A u d i t o r i a  
-         c r i a d o _ p o r   =   C o l u m n ( I n t e g e r )  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         t r i b u t o   =   r e l a t i o n s h i p ( ' T r i b u t o ' ,   b a c k _ p o p u l a t e s = ' t e s e s ' )  
-         p r o c e s s o s   =   r e l a t i o n s h i p ( ' P r o c e s s o T e s e ' ,   b a c k _ p o p u l a t e s = ' t e s e ' )  
-          
-         d e f   _ _ r e p r _ _ ( s e l f ) :  
-                 r e t u r n   f ' < T e s e T r i b u t a r i a   { s e l f . c o d i g o } :   { s e l f . t i t u l o [ : 5 0 ] } > '  
-          
-         d e f   t o _ d i c t ( s e l f ) :  
-                 r e t u r n   {  
-                         ' i d _ t e s e ' :   s e l f . i d _ t e s e ,  
-                         ' c o d i g o ' :   s e l f . c o d i g o ,  
-                         ' t i t u l o ' :   s e l f . t i t u l o ,  
-                         ' t r i b u t o ' :   s e l f . t r i b u t o . n o m e   i f   s e l f . t r i b u t o   e l s e   N o n e ,  
-                         ' p r o b a b i l i d a d e _ s u c e s s o ' :   f l o a t ( s e l f . p r o b a b i l i d a d e _ s u c e s s o )   i f   s e l f . p r o b a b i l i d a d e _ s u c e s s o   e l s e   N o n e ,  
-                         ' s i t u a c a o ' :   s e l f . s i t u a c a o  
-                 }  
-  
-  
- c l a s s   P r o c e s s o T r i b u t a r i o ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   t r i b u t   r i o s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t r i b u t a r i o '  
-          
-         i d _ p r o c e s s o _ t r i b u t a r i o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #   T r i b u t o  
-         t r i b u t o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t r i b u t o s . i d _ t r i b u t o ' ) )  
-          
-         #   D o c u m e n t o s   F i s c a i s  
-         n u m e r o _ a i i m   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
-         n u m e r o _ c d a   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
-         d a t a _ l a n c a m e n t o   =   C o l u m n ( D a t e T i m e )  
-          
-         #   V a l o r e s   E s p e c   f i c o s  
-         v a l o r _ i n s c r i t o _ c d a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         v a l o r _ p r i n c i p a l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         v a l o r _ m u l t a   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ m u l t a   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) )  
-         b a s e _ c a l c u l o _ m u l t a   =   C o l u m n ( S t r i n g ( 1 0 0 ) )  
-          
-         #   J u r o s  
-         v a l o r _ j u r o s   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         i n d i c e _ j u r o s   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   S E L I C ,   L e i   1 3 9 1 8 ,   I P C A ,   C D I ,   O u t r o  
-         d e s c r i c a o _ i n d i c e _ j u r o s   =   C o l u m n ( T e x t )  
-          
-         #   V a r a s  
-         v a r a _ p r i m e i r a _ i n s t a n c i a _ i d   =   C o l u m n ( I n t e g e r )  
-         t u r m a _ s e g u n d a _ i n s t a n c i a _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ t r i b u t a r i o ' )  
-         t r i b u t o   =   r e l a t i o n s h i p ( ' T r i b u t o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o s _ t r i b u t a r i o s ' )  
-         p r o g n o s t i c o   =   r e l a t i o n s h i p ( ' P r o c e s s o P r o g n o s t i c o T r i b u t a r i o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ t r i b u t a r i o ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-          
-         d e f   _ _ r e p r _ _ ( s e l f ) :  
-                 r e t u r n   f ' < P r o c e s s o T r i b u t a r i o   p r o c e s s o _ i d = { s e l f . p r o c e s s o _ i d } > '  
-  
-  
- c l a s s   P r o c e s s o T e s e ( d b . M o d e l ) :  
-         " " " R e l a c i o n a m e n t o   N : N   e n t r e   p r o c e s s o s   e   t e s e s   t r i b u t   r i a s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t e s e '  
-          
-         i d _ p r o c e s s o _ t e s e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
-         t e s e _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
-          
-         #   O r d e m   d e   i m p o r t   n c i a  
-         o r d e m   =   C o l u m n ( I n t e g e r ,   d e f a u l t = 1 )  
-         s t a t u s   =   C o l u m n ( S t r i n g ( 5 0 ) )     #   A g u a r d a n d o ,   E m   a n   l i s e ,   A c e i t a ,   R e j e i t a d a  
-          
-         d a t a _ v i n c u l a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' t e s e s ' )  
-         t e s e   =   r e l a t i o n s h i p ( ' T e s e T r i b u t a r i a ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o s ' )  
-          
-         _ _ t a b l e _ a r g s _ _   =   (  
-                 U n i q u e C o n s t r a i n t ( ' p r o c e s s o _ i d ' ,   ' t e s e _ i d ' ,   n a m e = ' u k _ p r o c e s s o _ t e s e ' ) ,  
-         )  
-  
-  
- c l a s s   P r o c e s s o P r o g n o s t i c o T r i b u t a r i o ( d b . M o d e l ) :  
-         " " " P r o g n   s t i c o   d e t a l h a d o   p a r a   p r o c e s s o s   t r i b u t   r i o s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ t r i b u t a r i o '  
-          
-         i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ t r i b u t a r i o . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #    `x i t o   P r o v   v e l   ( 7 0 % )  
-         t e s e _ p r o v a v e l _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
-         v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
-          
-         #    `x i t o   P o s s   v e l   ( 5 0 % )  
-         t e s e _ p o s s i v e l _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
-         v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
-          
-         #    `x i t o   R e m o t o   ( 2 5 % )  
-         t e s e _ r e m o t a _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' t e s e s _ t r i b u t a r i a s . i d _ t e s e ' ) )  
-         v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
-          
-         #   M e t a d a d o s  
-         o b s e r v a c o e s   =   C o l u m n ( T e x t )  
-         d a t a _ a v a l i a c a o   =   C o l u m n ( D a t e T i m e )  
-         a v a l i a d o _ p o r   =   C o l u m n ( I n t e g e r )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o _ t r i b u t a r i o   =   r e l a t i o n s h i p ( ' P r o c e s s o T r i b u t a r i o ' ,   b a c k _ p o p u l a t e s = ' p r o g n o s t i c o ' )  
-         t e s e _ p r o v a v e l   =   r e l a t i o n s h i p ( ' T e s e T r i b u t a r i a ' ,   f o r e i g n _ k e y s = [ t e s e _ p r o v a v e l _ i d ] )  
-         t e s e _ p o s s i v e l   =   r e l a t i o n s h i p ( ' T e s e T r i b u t a r i a ' ,   f o r e i g n _ k e y s = [ t e s e _ p o s s i v e l _ i d ] )  
-         t e s e _ r e m o t a   =   r e l a t i o n s h i p ( ' T e s e T r i b u t a r i a ' ,   f o r e i g n _ k e y s = [ t e s e _ r e m o t a _ i d ] )  
-  
-  
- c l a s s   P r o c e s s o T r a b a l h i s t a ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   t r a b a l h i s t a s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ t r a b a l h i s t a '  
-          
-         i d _ p r o c e s s o _ t r a b a l h i s t a   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #   A c o r d o  
-         t o l e r a n c i a _ a c o r d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         a c o r d o _ r e a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         d a t a _ a c o r d o   =   C o l u m n ( D a t e T i m e )  
-         o b s e r v a c o e s _ a c o r d o   =   C o l u m n ( T e x t )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ t r a b a l h i s t a ' )  
-         p r o g n o s t i c o   =   r e l a t i o n s h i p ( ' P r o c e s s o P r o g n o s t i c o T r a b a l h i s t a ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ t r a b a l h i s t a ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-  
-  
- c l a s s   P r o c e s s o P r o g n o s t i c o T r a b a l h i s t a ( d b . M o d e l ) :  
-         " " " P r o g n   s t i c o   p a r a   p r o c e s s o s   t r a b a l h i s t a s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ t r a b a l h i s t a '  
-          
-         i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ t r a b a l h i s t a . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #    `x i t o   P r o v   v e l  
-         t e s e _ p r o v a v e l   =   C o l u m n ( T e x t )  
-         v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
-          
-         #    `x i t o   P o s s   v e l  
-         t e s e _ p o s s i v e l   =   C o l u m n ( T e x t )  
-         v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
-          
-         #    `x i t o   R e m o t o  
-         t e s e _ r e m o t a   =   C o l u m n ( T e x t )  
-         v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
-          
-         #   M e t a d a d o s  
-         o b s e r v a c o e s   =   C o l u m n ( T e x t )  
-         d a t a _ a v a l i a c a o   =   C o l u m n ( D a t e T i m e )  
-         a v a l i a d o _ p o r   =   C o l u m n ( I n t e g e r )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o _ t r a b a l h i s t a   =   r e l a t i o n s h i p ( ' P r o c e s s o T r a b a l h i s t a ' ,   b a c k _ p o p u l a t e s = ' p r o g n o s t i c o ' )  
-  
-  
- c l a s s   P r o c e s s o C i v e l ( d b . M o d e l ) :  
-         " " " D a d o s   e s p e c   f i c o s   d e   p r o c e s s o s   c   v e i s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ c i v e l '  
-          
-         i d _ p r o c e s s o _ c i v e l   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #   A c o r d o  
-         t o l e r a n c i a _ a c o r d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         a c o r d o _ r e a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         d a t a _ a c o r d o   =   C o l u m n ( D a t e T i m e )  
-         o b s e r v a c o e s _ a c o r d o   =   C o l u m n ( T e x t )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ c i v e l ' )  
-         p r o g n o s t i c o   =   r e l a t i o n s h i p ( ' P r o c e s s o P r o g n o s t i c o C i v e l ' ,   b a c k _ p o p u l a t e s = ' p r o c e s s o _ c i v e l ' ,   u s e l i s t = F a l s e ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-  
-  
- c l a s s   P r o c e s s o P r o g n o s t i c o C i v e l ( d b . M o d e l ) :  
-         " " " P r o g n   s t i c o   p a r a   p r o c e s s o s   c   v e i s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ p r o g n o s t i c o _ c i v e l '  
-          
-         i d _ p r o g n o s t i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o _ c i v e l . p r o c e s s o _ i d ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e ,   u n i q u e = T r u e )  
-          
-         #    `x i t o   P r o v   v e l  
-         t e s e _ p r o v a v e l   =   C o l u m n ( T e x t )  
-         v a l o r _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p r o v a v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 7 0 . 0 0 )  
-          
-         #    `x i t o   P o s s   v e l  
-         t e s e _ p o s s i v e l   =   C o l u m n ( T e x t )  
-         v a l o r _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ p o s s i v e l   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 5 0 . 0 0 )  
-          
-         #    `x i t o   R e m o t o  
-         t e s e _ r e m o t a   =   C o l u m n ( T e x t )  
-         v a l o r _ r e m o t o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ r e m o t o   =   C o l u m n ( N u m e r i c ( 5 ,   2 ) ,   d e f a u l t = 2 5 . 0 0 )  
-          
-         #   M e t a d a d o s  
-         o b s e r v a c o e s   =   C o l u m n ( T e x t )  
-         d a t a _ a v a l i a c a o   =   C o l u m n ( D a t e T i m e )  
-         a v a l i a d o _ p o r   =   C o l u m n ( I n t e g e r )  
-          
-         #   A u d i t o r i a  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o _ c i v e l   =   r e l a t i o n s h i p ( ' P r o c e s s o C i v e l ' ,   b a c k _ p o p u l a t e s = ' p r o g n o s t i c o ' )  
-  
-  
- c l a s s   I n d i c e M o n e t a r i o ( d b . M o d e l ) :  
-         " " " C a d a s t r o   d e     n d i c e s   d e   c o r r e     o   m o n e t   r i a " " "  
-         _ _ t a b l e n a m e _ _   =   ' i n d i c e s _ m o n e t a r i o s '  
-          
-         i d _ i n d i c e   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         n o m e   =   C o l u m n ( S t r i n g ( 5 0 ) ,   u n i q u e = T r u e ,   n u l l a b l e = F a l s e )  
-         d e s c r i c a o   =   C o l u m n ( T e x t )  
-         f o n t e _ o f i c i a l   =   C o l u m n ( S t r i n g ( 2 0 0 ) )  
-         a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
-          
-         #   R e l a t i o n s h i p s  
-         h i s t o r i c o   =   r e l a t i o n s h i p ( ' H i s t o r i c o I n d i c e ' ,   b a c k _ p o p u l a t e s = ' i n d i c e ' ,   c a s c a d e = ' a l l ,   d e l e t e - o r p h a n ' )  
-         a t u a l i z a c o e s   =   r e l a t i o n s h i p ( ' P r o c e s s o A t u a l i z a c a o M o n e t a r i a ' ,   b a c k _ p o p u l a t e s = ' i n d i c e ' )  
-          
-         d e f   _ _ r e p r _ _ ( s e l f ) :  
-                 r e t u r n   f ' < I n d i c e M o n e t a r i o   { s e l f . n o m e } > '  
-  
-  
- c l a s s   H i s t o r i c o I n d i c e ( d b . M o d e l ) :  
-         " " " H i s t   r i c o   d e   v a l o r e s   d o s     n d i c e s   m o n e t   r i o s " " "  
-         _ _ t a b l e n a m e _ _   =   ' h i s t o r i c o _ i n d i c e s '  
-          
-         i d _ h i s t o r i c o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         i n d i c e _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' i n d i c e s _ m o n e t a r i o s . i d _ i n d i c e ' ) ,   n u l l a b l e = F a l s e )  
-         d a t a _ r e f e r e n c i a   =   C o l u m n ( D a t e T i m e ,   n u l l a b l e = F a l s e )  
-         v a l o r   =   C o l u m n ( N u m e r i c ( 1 0 ,   6 ) ,   n u l l a b l e = F a l s e )  
-          
-         d a t a _ i m p o r t a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         i n d i c e   =   r e l a t i o n s h i p ( ' I n d i c e M o n e t a r i o ' ,   b a c k _ p o p u l a t e s = ' h i s t o r i c o ' )  
-          
-         _ _ t a b l e _ a r g s _ _   =   (  
-                 U n i q u e C o n s t r a i n t ( ' i n d i c e _ i d ' ,   ' d a t a _ r e f e r e n c i a ' ,   n a m e = ' u k _ i n d i c e _ d a t a ' ) ,  
-                 I n d e x ( ' i d x _ h i s t _ i n d i c e ' ,   ' i n d i c e _ i d ' ) ,  
-                 I n d e x ( ' i d x _ h i s t _ d a t a ' ,   ' d a t a _ r e f e r e n c i a ' ) ,  
-         )  
-  
-  
- c l a s s   P r o c e s s o A t u a l i z a c a o M o n e t a r i a ( d b . M o d e l ) :  
-         " " " R e g i s t r o   d e   a t u a l i z a     e s   m o n e t   r i a s   r e a l i z a d a s " " "  
-         _ _ t a b l e n a m e _ _   =   ' p r o c e s s o _ a t u a l i z a c a o _ m o n e t a r i a '  
-          
-         i d _ a t u a l i z a c a o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         p r o c e s s o _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' p r o c e s s o s . i d _ p r o c e s s o ' ,   o n d e l e t e = ' C A S C A D E ' ) ,   n u l l a b l e = F a l s e )  
-          
-         #   C o n f i g u r a     o  
-         i n d i c e _ i d   =   C o l u m n ( I n t e g e r ,   F o r e i g n K e y ( ' i n d i c e s _ m o n e t a r i o s . i d _ i n d i c e ' ) ,   n u l l a b l e = F a l s e )  
-         d a t a _ b a s e   =   C o l u m n ( D a t e T i m e ,   n u l l a b l e = F a l s e )  
-         v a l o r _ b a s e   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) ,   n u l l a b l e = F a l s e )  
-          
-         #   R e s u l t a d o  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   n u l l a b l e = F a l s e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         v a l o r _ a t u a l i z a d o   =   C o l u m n ( N u m e r i c ( 1 8 ,   2 ) )  
-         p e r c e n t u a l _ c o r r e c a o   =   C o l u m n ( N u m e r i c ( 1 0 ,   6 ) )  
-          
-         c a l c u l a d o _ e m   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         #   R e l a t i o n s h i p s  
-         p r o c e s s o   =   r e l a t i o n s h i p ( ' P r o c e s s o ' ,   b a c k _ p o p u l a t e s = ' a t u a l i z a c o e s _ m o n e t a r i a s ' )  
-         i n d i c e   =   r e l a t i o n s h i p ( ' I n d i c e M o n e t a r i o ' ,   b a c k _ p o p u l a t e s = ' a t u a l i z a c o e s ' )  
-  
-  
- c l a s s   C o n f i g u r a c a o F o r m u l a r i o ( d b . M o d e l ) :  
-         " " " C o n f i g u r a     o   d i n   m i c a   d e   f o r m u l   r i o s   p o r   n a t u r e z a " " "  
-         _ _ t a b l e n a m e _ _   =   ' c o n f i g u r a c a o _ f o r m u l a r i o '  
-          
-         i d _ c o n f i g u r a c a o   =   C o l u m n ( I n t e g e r ,   p r i m a r y _ k e y = T r u e )  
-         t e n a n t _ i d   =   C o l u m n ( I n t e g e r )  
-         n a t u r e z a _ i d   =   C o l u m n ( I n t e g e r )  
-          
-         #   E s t r u t u r a   d o   f o r m u l   r i o   e m   J S O N  
-         c a m p o s _ o b r i g a t o r i o s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = [ ] )  
-         c a m p o s _ o p c i o n a i s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = [ ] )  
-         v a l i d a c o e s   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = { } )  
-         l a y o u t   =   C o l u m n ( J S O N B ,   n u l l a b l e = F a l s e ,   d e f a u l t = { } )  
-          
-         #   V e r s   o  
-         v e r s a o   =   C o l u m n ( I n t e g e r ,   d e f a u l t = 1 )  
-         a t i v o   =   C o l u m n ( B o o l e a n ,   d e f a u l t = T r u e ,   n u l l a b l e = F a l s e )  
-          
-         #   A u d i t o r i a  
-         c r i a d o _ p o r   =   C o l u m n ( I n t e g e r )  
-         d a t a _ c r i a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w )  
-         d a t a _ a t u a l i z a c a o   =   C o l u m n ( D a t e T i m e ,   d e f a u l t = d a t e t i m e . d a t e t i m e . u t c n o w ,   o n u p d a t e = d a t e t i m e . d a t e t i m e . u t c n o w )  
-          
-         _ _ t a b l e _ a r g s _ _   =   (  
-                 U n i q u e C o n s t r a i n t ( ' t e n a n t _ i d ' ,   ' n a t u r e z a _ i d ' ,   ' v e r s a o ' ,   n a m e = ' u k _ t e n a n t _ n a t u r e z a _ v e r s a o ' ) ,  
-         )  
- 
+
+# ============================================================================
+# SISTEMA DE PROCESSOS DIN MICOS
+# Adicionado em: 15 Dezembro 2025
+# ============================================================================
+
+class Processo(db.Model):
+    """Tabela principal de processos jurdicos com campos dinmicos"""
+    __tablename__ = 'processos'
+    
+    id_processo = Column(Integer, primary_key=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    tenant_id = Column(Integer, nullable=True)
+    
+    # Dados Bsicos
+    numero_cnj = Column(String(25))
+    pasta = Column(String(50))
+    status_id = Column(Integer)
+    natureza_id = Column(Integer)
+    
+    # Cliente
+    cliente_id = Column(Integer)
+    posicao_cliente_id = Column(Integer)
+    
+    # Classificao Jurdica
+    acao_id = Column(Integer)
+    procedimento_id = Column(Integer)
+    fase_id = Column(Integer)
+    
+    # Localizao Processual
+    orgao_id = Column(Integer)
+    comarca_id = Column(Integer)
+    vara_turma_id = Column(Integer)
+    
+    # CNJ
+    justica_cnj_id = Column(Integer)
+    instancia_cnj_id = Column(Integer)
+    classe_cnj_id = Column(Integer)
+    
+    # Datas
+    data_distribuicao = Column(DateTime)
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
+    
+    # Valores
+    valor_causa = Column(Numeric(18, 2))
+    valor_causa_atualizado = Column(Numeric(18, 2))
+    valor_envolvido = Column(Numeric(18, 2))
+    valor_envolvido_atualizado = Column(Numeric(18, 2))
+    contingencia = Column(Numeric(18, 2))
+    
+    # Prognstico
+    tipo_probabilidade_id = Column(Integer)
+    risco_id = Column(Integer)
+    
+    # Metadados
+    titulo = Column(Text)
+    observacao_pasta = Column(Text)
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Relationships
+    campos_especificos = relationship('ProcessoCamposEspecificos', back_populates='processo', uselist=False, cascade='all, delete-orphan')
+    processo_tributario = relationship('ProcessoTributario', back_populates='processo', uselist=False, cascade='all, delete-orphan')
+    processo_trabalhista = relationship('ProcessoTrabalhista', back_populates='processo', uselist=False, cascade='all, delete-orphan')
+    processo_civel = relationship('ProcessoCivel', back_populates='processo', uselist=False, cascade='all, delete-orphan')
+    teses = relationship('ProcessoTese', back_populates='processo', cascade='all, delete-orphan')
+    atualizacoes_monetarias = relationship('ProcessoAtualizacaoMonetaria', back_populates='processo', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Processo {self.id_processo}: {self.numero_cnj or self.pasta}>'
+    
+    def to_dict(self):
+        """Serializao bsica"""
+        return {
+            'id_processo': self.id_processo,
+            'uuid': str(self.uuid),
+            'numero_cnj': self.numero_cnj,
+            'pasta': self.pasta,
+            'natureza_id': self.natureza_id,
+            'status_id': self.status_id,
+            'data_distribuicao': self.data_distribuicao.isoformat() if self.data_distribuicao else None,
+            'valor_causa': float(self.valor_causa) if self.valor_causa else None,
+            'ativo': self.ativo
+        }
+
+
+class ProcessoCamposEspecificos(db.Model):
+    """Campos especficos por natureza armazenados em JSONB"""
+    __tablename__ = 'processo_campos_especificos'
+    
+    id_campo_especifico = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False)
+    natureza_id = Column(Integer)
+    
+    # Campos JSONB por natureza
+    campos_tributario = Column(JSONB)
+    campos_trabalhista = Column(JSONB)
+    campos_civel = Column(JSONB)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=False)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='campos_especificos')
+    
+    __table_args__ = (
+        UniqueConstraint('processo_id', 'natureza_id', name='uk_processo_natureza'),
+    )
+
+
+class Tributo(db.Model):
+    """Cadastro de tributos"""
+    __tablename__ = 'tributos'
+    
+    id_tributo = Column(Integer, primary_key=True)
+    codigo = Column(String(20), unique=True, nullable=False)
+    nome = Column(String(200), nullable=False)
+    descricao = Column(Text)
+    esfera = Column(String(20))  # Federal, Estadual, Municipal
+    ativo = Column(Boolean, default=True, nullable=False)
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Relationships
+    teses = relationship('TeseTributaria', back_populates='tributo')
+    processos_tributarios = relationship('ProcessoTributario', back_populates='tributo')
+    
+    def __repr__(self):
+        return f'<Tributo {self.codigo}: {self.nome}>'
+
+
+class TeseTributaria(db.Model):
+    """Teses jurdicas tributrias"""
+    __tablename__ = 'teses_tributarias'
+    
+    id_tese = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer)
+    codigo = Column(String(50), unique=True, nullable=False)
+    titulo = Column(String(500), nullable=False)
+    descricao = Column(Text)
+    tributo_id = Column(Integer, ForeignKey('tributos.id_tributo'))
+    
+    # Jurisprudncia
+    tema_repercussao_geral = Column(String(50))
+    tema_repetitivo = Column(String(50))
+    tribunal_origem = Column(String(100))
+    
+    # Prognstico padro
+    probabilidade_sucesso = Column(Numeric(5, 2))
+    fundamentacao = Column(Text)
+    situacao = Column(String(50))  # Favorvel, Desfavorvel, Pendente, Superada
+    
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Auditoria
+    criado_por = Column(Integer)
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    tributo = relationship('Tributo', back_populates='teses')
+    processos = relationship('ProcessoTese', back_populates='tese')
+    
+    def __repr__(self):
+        return f'<TeseTributaria {self.codigo}: {self.titulo[:50]}>'
+    
+    def to_dict(self):
+        return {
+            'id_tese': self.id_tese,
+            'codigo': self.codigo,
+            'titulo': self.titulo,
+            'tributo': self.tributo.nome if self.tributo else None,
+            'probabilidade_sucesso': float(self.probabilidade_sucesso) if self.probabilidade_sucesso else None,
+            'situacao': self.situacao
+        }
+
+
+class ProcessoTributario(db.Model):
+    """Dados especficos de processos tributrios"""
+    __tablename__ = 'processo_tributario'
+    
+    id_processo_tributario = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # Tributo
+    tributo_id = Column(Integer, ForeignKey('tributos.id_tributo'))
+    
+    # Documentos Fiscais
+    numero_aiim = Column(String(100))
+    numero_cda = Column(String(100))
+    data_lancamento = Column(DateTime)
+    
+    # Valores Especficos
+    valor_inscrito_cda = Column(Numeric(18, 2))
+    valor_principal = Column(Numeric(18, 2))
+    valor_multa = Column(Numeric(18, 2))
+    percentual_multa = Column(Numeric(5, 2))
+    base_calculo_multa = Column(String(100))
+    
+    # Juros
+    valor_juros = Column(Numeric(18, 2))
+    indice_juros = Column(String(50))  # SELIC, Lei 13918, IPCA, CDI, Outro
+    descricao_indice_juros = Column(Text)
+    
+    # Varas
+    vara_primeira_instancia_id = Column(Integer)
+    turma_segunda_instancia_id = Column(Integer)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='processo_tributario')
+    tributo = relationship('Tributo', back_populates='processos_tributarios')
+    prognostico = relationship('ProcessoPrognosticoTributario', back_populates='processo_tributario', uselist=False, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<ProcessoTributario processo_id={self.processo_id}>'
+
+
+class ProcessoTese(db.Model):
+    """Relacionamento N:N entre processos e teses tributrias"""
+    __tablename__ = 'processo_tese'
+    
+    id_processo_tese = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False)
+    tese_id = Column(Integer, ForeignKey('teses_tributarias.id_tese', ondelete='CASCADE'), nullable=False)
+    
+    # Ordem de importncia
+    ordem = Column(Integer, default=1)
+    status = Column(String(50))  # Aguardando, Em anlise, Aceita, Rejeitada
+    
+    data_vinculacao = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='teses')
+    tese = relationship('TeseTributaria', back_populates='processos')
+    
+    __table_args__ = (
+        UniqueConstraint('processo_id', 'tese_id', name='uk_processo_tese'),
+    )
+
+
+class ProcessoPrognosticoTributario(db.Model):
+    """Prognstico detalhado para processos tributrios"""
+    __tablename__ = 'processo_prognostico_tributario'
+    
+    id_prognostico = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processo_tributario.processo_id', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # `xito Provvel (70%)
+    tese_provavel_id = Column(Integer, ForeignKey('teses_tributarias.id_tese'))
+    valor_provavel = Column(Numeric(18, 2))
+    percentual_provavel = Column(Numeric(5, 2), default=70.00)
+    
+    # `xito Possvel (50%)
+    tese_possivel_id = Column(Integer, ForeignKey('teses_tributarias.id_tese'))
+    valor_possivel = Column(Numeric(18, 2))
+    percentual_possivel = Column(Numeric(5, 2), default=50.00)
+    
+    # `xito Remoto (25%)
+    tese_remota_id = Column(Integer, ForeignKey('teses_tributarias.id_tese'))
+    valor_remoto = Column(Numeric(18, 2))
+    percentual_remoto = Column(Numeric(5, 2), default=25.00)
+    
+    # Metadados
+    observacoes = Column(Text)
+    data_avaliacao = Column(DateTime)
+    avaliado_por = Column(Integer)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo_tributario = relationship('ProcessoTributario', back_populates='prognostico')
+    tese_provavel = relationship('TeseTributaria', foreign_keys=[tese_provavel_id])
+    tese_possivel = relationship('TeseTributaria', foreign_keys=[tese_possivel_id])
+    tese_remota = relationship('TeseTributaria', foreign_keys=[tese_remota_id])
+
+
+class ProcessoTrabalhista(db.Model):
+    """Dados especficos de processos trabalhistas"""
+    __tablename__ = 'processo_trabalhista'
+    
+    id_processo_trabalhista = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # Acordo
+    tolerancia_acordo = Column(Numeric(18, 2))
+    acordo_realizado = Column(Numeric(18, 2))
+    data_acordo = Column(DateTime)
+    observacoes_acordo = Column(Text)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='processo_trabalhista')
+    prognostico = relationship('ProcessoPrognosticoTrabalhista', back_populates='processo_trabalhista', uselist=False, cascade='all, delete-orphan')
+
+
+class ProcessoPrognosticoTrabalhista(db.Model):
+    """Prognstico para processos trabalhistas"""
+    __tablename__ = 'processo_prognostico_trabalhista'
+    
+    id_prognostico = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processo_trabalhista.processo_id', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # `xito Provvel
+    tese_provavel = Column(Text)
+    valor_provavel = Column(Numeric(18, 2))
+    percentual_provavel = Column(Numeric(5, 2), default=70.00)
+    
+    # `xito Possvel
+    tese_possivel = Column(Text)
+    valor_possivel = Column(Numeric(18, 2))
+    percentual_possivel = Column(Numeric(5, 2), default=50.00)
+    
+    # `xito Remoto
+    tese_remota = Column(Text)
+    valor_remoto = Column(Numeric(18, 2))
+    percentual_remoto = Column(Numeric(5, 2), default=25.00)
+    
+    # Metadados
+    observacoes = Column(Text)
+    data_avaliacao = Column(DateTime)
+    avaliado_por = Column(Integer)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo_trabalhista = relationship('ProcessoTrabalhista', back_populates='prognostico')
+
+
+class ProcessoCivel(db.Model):
+    """Dados especficos de processos cveis"""
+    __tablename__ = 'processo_civel'
+    
+    id_processo_civel = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # Acordo
+    tolerancia_acordo = Column(Numeric(18, 2))
+    acordo_realizado = Column(Numeric(18, 2))
+    data_acordo = Column(DateTime)
+    observacoes_acordo = Column(Text)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='processo_civel')
+    prognostico = relationship('ProcessoPrognosticoCivel', back_populates='processo_civel', uselist=False, cascade='all, delete-orphan')
+
+
+class ProcessoPrognosticoCivel(db.Model):
+    """Prognstico para processos cveis"""
+    __tablename__ = 'processo_prognostico_civel'
+    
+    id_prognostico = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processo_civel.processo_id', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # `xito Provvel
+    tese_provavel = Column(Text)
+    valor_provavel = Column(Numeric(18, 2))
+    percentual_provavel = Column(Numeric(5, 2), default=70.00)
+    
+    # `xito Possvel
+    tese_possivel = Column(Text)
+    valor_possivel = Column(Numeric(18, 2))
+    percentual_possivel = Column(Numeric(5, 2), default=50.00)
+    
+    # `xito Remoto
+    tese_remota = Column(Text)
+    valor_remoto = Column(Numeric(18, 2))
+    percentual_remoto = Column(Numeric(5, 2), default=25.00)
+    
+    # Metadados
+    observacoes = Column(Text)
+    data_avaliacao = Column(DateTime)
+    avaliado_por = Column(Integer)
+    
+    # Auditoria
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo_civel = relationship('ProcessoCivel', back_populates='prognostico')
+
+
+class IndiceMonetario(db.Model):
+    """Cadastro de ndices de correo monetria"""
+    __tablename__ = 'indices_monetarios'
+    
+    id_indice = Column(Integer, primary_key=True)
+    nome = Column(String(50), unique=True, nullable=False)
+    descricao = Column(Text)
+    fonte_oficial = Column(String(200))
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Relationships
+    historico = relationship('HistoricoIndice', back_populates='indice', cascade='all, delete-orphan')
+    atualizacoes = relationship('ProcessoAtualizacaoMonetaria', back_populates='indice')
+    
+    def __repr__(self):
+        return f'<IndiceMonetario {self.nome}>'
+
+
+class HistoricoIndice(db.Model):
+    """Histrico de valores dos ndices monetrios"""
+    __tablename__ = 'historico_indices'
+    
+    id_historico = Column(Integer, primary_key=True)
+    indice_id = Column(Integer, ForeignKey('indices_monetarios.id_indice'), nullable=False)
+    data_referencia = Column(DateTime, nullable=False)
+    valor = Column(Numeric(10, 6), nullable=False)
+    
+    data_importacao = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Relationships
+    indice = relationship('IndiceMonetario', back_populates='historico')
+    
+    __table_args__ = (
+        UniqueConstraint('indice_id', 'data_referencia', name='uk_indice_data'),
+        Index('idx_hist_indice', 'indice_id'),
+        Index('idx_hist_data', 'data_referencia'),
+    )
+
+
+class ProcessoAtualizacaoMonetaria(db.Model):
+    """Registro de atualizaes monetrias realizadas"""
+    __tablename__ = 'processo_atualizacao_monetaria'
+    
+    id_atualizacao = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo', ondelete='CASCADE'), nullable=False)
+    
+    # Configurao
+    indice_id = Column(Integer, ForeignKey('indices_monetarios.id_indice'), nullable=False)
+    data_base = Column(DateTime, nullable=False)
+    valor_base = Column(Numeric(18, 2), nullable=False)
+    
+    # Resultado
+    data_atualizacao = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    valor_atualizado = Column(Numeric(18, 2))
+    percentual_correcao = Column(Numeric(10, 6))
+    
+    calculado_em = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Relationships
+    processo = relationship('Processo', back_populates='atualizacoes_monetarias')
+    indice = relationship('IndiceMonetario', back_populates='atualizacoes')
+
+
+class ConfiguracaoFormulario(db.Model):
+    """Configurao dinmica de formulrios por natureza"""
+    __tablename__ = 'configuracao_formulario'
+    
+    id_configuracao = Column(Integer, primary_key=True)
+    tenant_id = Column(Integer)
+    natureza_id = Column(Integer)
+    
+    # Estrutura do formulrio em JSON
+    campos_obrigatorios = Column(JSONB, nullable=False, default=[])
+    campos_opcionais = Column(JSONB, nullable=False, default=[])
+    validacoes = Column(JSONB, nullable=False, default={})
+    layout = Column(JSONB, nullable=False, default={})
+    
+    # Verso
+    versao = Column(Integer, default=1)
+    ativo = Column(Boolean, default=True, nullable=False)
+    
+    # Auditoria
+    criado_por = Column(Integer)
+    data_criacao = Column(DateTime, default=datetime.datetime.utcnow)
+    data_atualizacao = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    __table_args__ = (
+        UniqueConstraint('tenant_id', 'natureza_id', 'versao', name='uk_tenant_natureza_versao'),
+    )
