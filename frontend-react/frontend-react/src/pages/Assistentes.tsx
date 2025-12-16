@@ -3,7 +3,7 @@
  * Features: Drag & Drop, Histórico, Salvar, Excluir
  */
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare, Upload, History, Save, Trash2, Download,
   Send, Paperclip, X, FileText, Clock, ChevronLeft
@@ -385,8 +385,8 @@ export default function Assistentes() {
             >
               <div
                 className={`max-w-[70%] rounded-xl p-4 ${mensagem.role === 'user'
-                    ? 'bg-primary text-white'
-                    : 'bg-card border border-border'
+                  ? 'bg-primary text-white'
+                  : 'bg-card border border-border'
                   }`}
               >
                 <p className="whitespace-pre-wrap">{mensagem.content}</p>
