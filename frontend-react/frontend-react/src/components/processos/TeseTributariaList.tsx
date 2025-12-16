@@ -12,6 +12,8 @@ export default function TeseTributariaList() {
     const [tributos, setTributos] = useState<Tributo[]>([]);
     const [loading, setLoading] = useState(true);
     const [filtros, setFiltros] = useState({ tributo_id: '', busca: '' });
+    const [showModal, setShowModal] = useState(false);
+    const [editingTese, setEditingTese] = useState<TeseTributaria | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -57,7 +59,13 @@ export default function TeseTributariaList() {
                     <p className="text-muted-foreground mt-1">Gestão de teses jurídicas</p>
                 </div>
 
-                <button className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg transition-colors font-medium">
+                <button
+                    onClick={() => {
+                        setEditingTese(null);
+                        setShowModal(true);
+                    }}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg transition-colors font-medium"
+                >
                     <Plus className="w-4 h-4" />
                     Nova Tese
                 </button>
@@ -131,7 +139,13 @@ export default function TeseTributariaList() {
                             )}
 
                             <div className="flex gap-2 pt-4 border-t border-border">
-                                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 rounded-lg transition-colors text-primary">
+                                <button
+                                    onClick={() => {
+                                        setEditingTese(tese);
+                                        setShowModal(true);
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 rounded-lg transition-colors text-primary"
+                                >
                                     <Edit className="w-4 h-4" />
                                     Editar
                                 </button>
@@ -147,6 +161,183 @@ export default function TeseTributariaList() {
                     ))}
                 </div>
             )}
+
+            {/* Modal Nova/Editar Tese */}
+            {showModal && (
+                <TeseModal
+                    tese={editingTese}
+                    tributos={tributos}
+                    onClose={() => {
+                        setShowModal(false);
+                        setEditingTese(null);
+                    }}
+                    onSave={() => {
+                        setShowModal(false);
+                        setEditingTese(null);
+                        fetchData();
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+// Modal Component
+function TeseModal({ tese, tributos, onClose, onSave }: {
+    tese: TeseTributaria | null;
+    tributos: Tributo[];
+    onClose: () => void;
+    onSave: () => void;
+}) {
+    const [formData, setFormData] = useState({
+        codigo: tese?.codigo || '',
+        titulo: tese?.titulo || '',
+        descricao: tese?.descricao || '',
+        tributo_id: tese?.tributo_id || '',
+        probabilidade_sucesso: tese?.probabilidade_sucesso || '',
+        fundamentacao_legal: tese?.fundamentacao_legal || '',
+        jurisprudencia: tese?.jurisprudencia || '',
+        ativo: tese?.ativo ?? true
+    });
+    const [saving, setSaving] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+
+        try {
+            if (tese) {
+                await api.put(`/api/tributario/teses/${tese.id_tese}`, formData);
+            } else {
+                await api.post('/api/tributario/teses', formData);
+            }
+            onSave();
+        } catch (error) {
+            console.error('Erro ao salvar tese:', error);
+            alert('Erro ao salvar tese');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-xl font-bold">{tese ? 'Editar Tese' : 'Nova Tese'}</h3>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Código</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.codigo}
+                                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                                className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Tributo</label>
+                            <select
+                                required
+                                value={formData.tributo_id}
+                                onChange={(e) => setFormData({ ...formData, tributo_id: e.target.value })}
+                                className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                            >
+                                <option value="">Selecione...</option>
+                                {tributos.map(t => (
+                                    <option key={t.id_tributo} value={t.id_tributo}>{t.nome}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Título</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.titulo}
+                            onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Descrição</label>
+                        <textarea
+                            rows={3}
+                            value={formData.descricao}
+                            onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Probabilidade Sucesso (%)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={formData.probabilidade_sucesso}
+                            onChange={(e) => setFormData({ ...formData, probabilidade_sucesso: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Fundamentação Legal</label>
+                        <textarea
+                            rows={2}
+                            value={formData.fundamentacao_legal}
+                            onChange={(e) => setFormData({ ...formData, fundamentacao_legal: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Jurisprudência</label>
+                        <textarea
+                            rows={2}
+                            value={formData.jurisprudencia}
+                            onChange={(e) => setFormData({ ...formData, jurisprudencia: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="ativo"
+                            checked={formData.ativo}
+                            onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
+                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="ativo" className="text-sm font-medium">Tese Ativa</label>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                            {saving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }
