@@ -14,13 +14,12 @@ import LandingPage from './pages/public/LandingPage'
 import PricingPage from './pages/public/PricingPage'
 import SignupPage from './pages/public/SignupPage'
 
-// Processos Pages
-import ProcessosList from './pages/processos/ProcessosList'
-import NovoProcesso from './pages/processos/NovoProcesso'
-import ProcessoDetails from './pages/processos/ProcessoDetails'
-import EditProcesso from './pages/processos/EditProcesso'
-import ProcessosEstatisticas from './pages/processos/ProcessosEstatisticas'
-import ProcessReports from './pages/processos/ProcessReports'
+// Processos Pages - NOVA ESTRUTURA MODERNA
+import ProcessosDinamicosList from './pages/processos/ProcessosDinamicosList'
+import ProcessoDetailsPage from './pages/processos/ProcessoDetailsPage'
+import ImportacaoPage from './pages/processos/ImportacaoPage'
+import TesesPage from './pages/processos/TesesPage'
+import IndicesPage from './pages/processos/IndicesPage'
 
 // Multi-Agente Pages
 import MultiAgenteDashboard from './pages/multiagente/MultiAgenteDashboard'
@@ -98,13 +97,14 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/home" element={<Home />} />
 
-            {/* Processos - Módulo Completo */}
-            <Route path="/processos" element={<ProcessosList />} />
-            <Route path="/processos/novo" element={<NovoProcesso />} />
-            <Route path="/processos/:id" element={<ProcessoDetails />} />
-            <Route path="/processos/:id/editar" element={<EditProcesso />} />
-            <Route path="/processos/estatisticas" element={<ProcessosEstatisticas />} />
-            <Route path="/processos/relatorios" element={<ProcessReports />} />
+            {/* Processos - NOVA ESTRUTURA */}
+            <Route path="/processos">
+              <Route index element={<ProcessosDinamicosList />} />
+              <Route path="importar" element={<ImportacaoPage />} />
+              <Route path="teses" element={<TesesPage />} />
+              <Route path="indices" element={<IndicesPage />} />
+              <Route path=":id" element={<ProcessoDetailsPage />} />
+            </Route>
 
             {/* Multi-Agente - Módulo Completo */}
             <Route path="/multi-agente" element={<MultiAgenteDashboard />} />
