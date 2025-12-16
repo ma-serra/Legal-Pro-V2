@@ -776,6 +776,10 @@ def create_app():
         # Registrar blueprint
         app.register_blueprint(assistentes_bp)
         
+        logger.info("✅ Módulos de Assistentes Jurídicos integrados com sucesso")
+    except Exception as e:
+        logger.error(f"Erro ao integrar assistentes jurídicos: {e}")
+    
     # ML Tributário
     try:
         from modules.ml_tributario.routes import ml_tributario_bp
@@ -783,10 +787,6 @@ def create_app():
         logger.info("✅ Módulo ML Tributário carregado")
     except ImportError as e:
         logger.warning(f"⚠️ ML Tributário indisponível: {e}")
-        
-        logger.info("✅ Módulos de Assistentes Jurídicos integrados com sucesso")
-    except Exception as e:
-        logger.error(f"Erro ao integrar assistentes jurídicos: {e}")
     
     # Registrar API Qdrant para Busca Vetorial
     try:
