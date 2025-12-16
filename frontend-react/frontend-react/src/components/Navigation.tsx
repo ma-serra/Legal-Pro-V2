@@ -1,7 +1,8 @@
+```javascript
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   LogOut, LayoutDashboard, Gavel, FileSearch, Users, Home,
-  FileUp, Scale, TrendingUp, Menu, X
+  FileUp, Scale, TrendingUp, Menu, X, Brain, Upload
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useState } from 'react'
@@ -15,8 +16,10 @@ const navItems = [
     subItems: [
       { path: '/processos', label: 'Lista de Processos' },
       { path: '/processos/importar', label: 'Importar Planilha', icon: FileUp },
+      { path: '/processos/importar-etl', label: 'Importador ETL', icon: Upload },
       { path: '/processos/teses', label: 'Teses Tributárias', icon: Scale },
-      { path: '/processos/indices', label: 'Índices Monetários', icon: TrendingUp }
+      { path: '/processos/indices', label: 'Índices Monetários', icon: TrendingUp },
+      { path: '/processos/ml-analise', label: 'Análise ML Tributário', icon: Brain }
     ]
   },
   { path: '/analises', label: 'Análises', icon: FileSearch },
@@ -65,10 +68,11 @@ export default function Navigation() {
                   <div key={item.path} className="relative group">
                     <Link
                       to={item.path}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-foreground hover:bg-accent hover:text-primary'
-                        }`}
+                      className={`flex items - center gap - 2 px - 3 py - 2 rounded - md transition ${
+  isActive
+    ? 'bg-primary/10 text-primary'
+    : 'text-foreground hover:bg-accent hover:text-primary'
+} `}
                     >
                       <Icon className="w-4 h-4" />
                       <span>{item.label}</span>
@@ -82,8 +86,9 @@ export default function Navigation() {
                           <Link
                             key={subItem.path}
                             to={subItem.path}
-                            className={`flex items-center gap-2 px-4 py-3 hover:bg-accent transition-colors first:rounded-t-lg last:rounded-b-lg ${location.pathname === subItem.path ? 'bg-primary/10 text-primary' : ''
-                              }`}
+                            className={`flex items - center gap - 2 px - 4 py - 3 hover: bg - accent transition - colors first: rounded - t - lg last: rounded - b - lg ${
+  location.pathname === subItem.path ? 'bg-primary/10 text-primary' : ''
+} `}
                           >
                             {SubIcon && <SubIcon className="w-4 h-4" />}
                             <span className="text-sm">{subItem.label}</span>
@@ -99,10 +104,11 @@ export default function Navigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-accent hover:text-primary'
-                    }`}
+                  className={`flex items - center gap - 2 px - 3 py - 2 rounded - md transition ${
+  isActive
+    ? 'bg-primary/10 text-primary'
+    : 'text-foreground hover:bg-accent hover:text-primary'
+} `}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
@@ -143,8 +149,9 @@ export default function Navigation() {
                   <div key={item.path}>
                     <button
                       onClick={() => setOpenSubmenu(openSubmenu === item.path ? null : item.path)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
-                        }`}
+                      className={`w - full flex items - center justify - between px - 3 py - 2 rounded - md transition ${
+  isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
+} `}
                     >
                       <div className="flex items-center gap-2">
                         <Icon className="w-4 h-4" />
@@ -162,10 +169,11 @@ export default function Navigation() {
                               key={subItem.path}
                               to={subItem.path}
                               onClick={() => setMobileMenuOpen(false)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition ${location.pathname === subItem.path
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'hover:bg-accent'
-                                }`}
+                              className={`flex items - center gap - 2 px - 3 py - 2 rounded - md text - sm transition ${
+  location.pathname === subItem.path
+    ? 'bg-primary/10 text-primary'
+    : 'hover:bg-accent'
+} `}
                             >
                               {SubIcon && <SubIcon className="w-4 h-4" />}
                               <span>{subItem.label}</span>
@@ -183,8 +191,9 @@ export default function Navigation() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
-                    }`}
+                  className={`flex items - center gap - 2 px - 3 py - 2 rounded - md transition ${
+  isActive ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
+} `}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
