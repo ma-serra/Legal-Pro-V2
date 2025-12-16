@@ -99,30 +99,13 @@ export default function LandingPage() {
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                            {/* Direito Empresarial */}
+                            {/* Tributário */}
                             <div className="text-center">
                                 <div className="mb-6">
                                     <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
                                 </div>
                                 <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
-                                    Direito Empresarial
-                                </h3>
-                                <ul className="space-y-3 text-slate-600 dark:text-slate-400">
-                                    <li>Negociações e disputas societárias</li>
-                                    <li>Fusões, aquisições e incorporações</li>
-                                    <li>Auditoria legal (due diligence)</li>
-                                    <li>Defesas de empresas em ações de consumidores</li>
-                                    <li>Negociação e elaboração de contratos</li>
-                                </ul>
-                            </div>
-
-                            {/* Direito Tributário */}
-                            <div className="text-center">
-                                <div className="mb-6">
-                                    <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
-                                </div>
-                                <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
-                                    Direito Tributário
+                                    Tributário
                                 </h3>
                                 <ul className="space-y-3 text-slate-600 dark:text-slate-400">
                                     <li>Planejamento e consultoria tributária</li>
@@ -133,13 +116,13 @@ export default function LandingPage() {
                                 </ul>
                             </div>
 
-                            {/* Direito do Trabalho */}
+                            {/* Trabalhista */}
                             <div className="text-center">
                                 <div className="mb-6">
                                     <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
                                 </div>
                                 <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
-                                    Direito do Trabalho
+                                    Trabalhista
                                 </h3>
                                 <ul className="space-y-3 text-slate-600 dark:text-slate-400">
                                     <li>Defesa em reclamações trabalhistas</li>
@@ -147,6 +130,23 @@ export default function LandingPage() {
                                     <li>Cursos e treinamentos in company</li>
                                     <li>Assessoria em relações trabalhistas</li>
                                     <li>Compliance trabalhista</li>
+                                </ul>
+                            </div>
+
+                            {/* Cível */}
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
+                                </div>
+                                <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
+                                    Cível
+                                </h3>
+                                <ul className="space-y-3 text-slate-600 dark:text-slate-400">
+                                    <li>Negociações e disputas societárias</li>
+                                    <li>Fusões, aquisições e incorporações</li>
+                                    <li>Defesas em ações de consumidores</li>
+                                    <li>Contratos e ações indenizatórias</li>
+                                    <li>Auditoria legal (due diligence)</li>
                                 </ul>
                             </div>
                         </div>
