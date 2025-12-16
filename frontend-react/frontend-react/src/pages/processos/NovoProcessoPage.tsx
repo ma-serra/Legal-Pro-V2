@@ -9,7 +9,7 @@ export default function NovoProcessoPage() {
     const navigate = useNavigate();
     const [salvando, setSalvando] = useState(false);
 
-    const handleSave = async (data: Processo FormData) => {
+    const handleSave = async (data: ProcessoFormData) => {
         setSalvando(true);
         try {
             await api.post('/api/processos', data);
