@@ -243,17 +243,76 @@ def obter_estatisticas():
     GET /api/processos/estatisticas
     """
     from models import Processo
+    from sqlalchemy import func, case
     
+    # Total de processos ativos
     total = Processo.query.filter_by(ativo=True).count()
-    por_natureza = {}
-    por_status = {}
     
-    # TODO: Implementar queries agregadas
+    # Estatísticas por natureza
+    por_natureza = db.session.query(
+        Processo.natureza_id,
+        func.count(Processo.id_processo).label('count')
+    ).filter_by(ativo=True)\
+     .group_by(Processo.natureza_id)\
+     .all()
+    
+    # Estatísticas por status
+    por_status = db.session.query(
+        Processo.status_id,
+        func.count(Processo.id_processo).label('count')
+    ).filter_by(ativo=True)\
+     .group_by(Processo.status_id)\
+     .all()
+    
+    # Estatísticas por risco
+    por_risco = db.session.query(
+        Processo.risco_id,
+        func.count(Processo.id_processo).label('count')
+    ).filter_by(ativo=True)\
+     .group_by(Processo.risco_id)\
+     .all()
+    
+    # Valores financeiros
+    valores = db.session.query(
+        func.sum(Processo.valor_causa).label('total_valor_causa'),
+        func.sum(Processo.valor_envolvido).label('total_valor_envolvido'),
+        func.sum(Processo.contingencia).label('total_contingencia'),
+        func.avg(Processo.valor_causa).label('media_valor_causa')
+    ).filter_by(ativo=True).first()
+    
+    # Processos por ano (data distribuição)
+    por_ano = db.session.query(
+        func.extract('year', Processo.data_distribuicao).label('ano'),
+        func.count(Processo.id_processo).label('count')
+    ).filter(Processo.ativo == True, Processo.data_distribuicao != None)\
+     .group_by('ano')\
+     .order_by('ano')\
+     .all()
     
     return jsonify({
         'total_processos': total,
-        'por_natureza': por_natureza,
-        'por_status': por_status
+        'por_natureza': {
+            int(nat_id) if nat_id else 0: count 
+            for nat_id, count in por_natureza
+        },
+        'por_status': {
+            int(status_id) if status_id else 0: count 
+            for status_id, count in por_status
+        },
+        'por_risco': {
+            int(risco_id) if risco_id else 0: count 
+            for risco_id, count in por_risco
+        },
+        'valores_financeiros': {
+            'total_valor_causa': float(valores.total_valor_causa or 0),
+            'total_valor_envolvido': float(valores.total_valor_envolvido or 0),
+            'total_contingencia': float(valores.total_contingencia or 0),
+            'media_valor_causa': float(valores.media_valor_causa or 0)
+        },
+        'por_ano': {
+            int(ano): count 
+            for ano, count in por_ano
+        }
     }), 200
 
 
