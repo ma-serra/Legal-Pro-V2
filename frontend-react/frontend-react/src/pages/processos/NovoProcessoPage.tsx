@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import ProcessoForm from '../../components/processos/ProcessoForm';
-import type { ProcessoFormData } from '../../types/processos';
 import api from '../../lib/api';
 import { useState } from 'react';
 
@@ -9,7 +8,7 @@ export default function NovoProcessoPage() {
     const navigate = useNavigate();
     const [salvando, setSalvando] = useState(false);
 
-    const handleSave = async (data: ProcessoFormData) => {
+    const handleSave = async (data: any) => {
         setSalvando(true);
         try {
             await api.post('/api/processos', data);
