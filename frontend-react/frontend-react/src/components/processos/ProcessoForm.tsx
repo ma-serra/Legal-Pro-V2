@@ -75,6 +75,12 @@ interface ProcessoFormData {
         tolerancia_acordo?: number;
         acordo_realizado?: number;
         data_acordo?: string;
+        tese_provavel?: string;
+        valor_provavel?: number;
+        tese_possivel?: string;
+        valor_possivel?: number;
+        tese_remota?: string;
+        valor_remoto?: number;
     };
 
     // CÍVEL
@@ -82,6 +88,12 @@ interface ProcessoFormData {
         tolerancia_acordo?: number;
         acordo_realizado?: number;
         data_acordo?: string;
+        tese_provavel?: string;
+        valor_provavel?: number;
+        tese_possivel?: string;
+        valor_possivel?: number;
+        tese_remota?: string;
+        valor_remoto?: number;
     };
 }
 
@@ -668,11 +680,110 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                             </div>
 
                             {/* Nota sobre Prognóstico */}
-                            <div className="mt-6 pt-6 border-t border-orange-500/20 bg-orange-500/5 rounded-lg p-4">
-                                <p className="text-sm text-muted-foreground">
-                                    ℹ️ <strong>Prognóstico de Êxito:</strong> Será calculado automaticamente pela ferramenta de análise estatística do sistema após o cadastro do processo.
-                                    Você poderá visualizar e ajustar o prognóstico na aba "Prognóstico" dos detalhes do processo.
+                            <div className="mt-6 pt-6 border-t border-orange-500/20">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-lg font-semibold text-orange-300">Prognóstico de Êxito</h4>
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
+                                        title="Calcular prognóstico automaticamente via análise estatística"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Calcular Automaticamente
+                                    </button>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    ℹ️ Os valores abaixo serão calculados automaticamente pela ferramenta de análise estatística do sistema.
+                                    Clique em "Calcular Automaticamente" após salvar o processo.
                                 </p>
+
+                                <div className="space-y-4 opacity-75">
+                                    {/* Êxito Provável */}
+                                    <div className="bg-background border border-green-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-green-400 mb-3">Êxito Provável ({">"}70%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('trabalhista.tese_provavel')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('trabalhista.valor_provavel', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Êxito Possível */}
+                                    <div className="bg-background border border-yellow-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-yellow-400 mb-3">Êxito Possível (50-70%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('trabalhista.tese_possivel')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('trabalhista.valor_possivel', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Êxito Remoto */}
+                                    <div className="bg-background border border-red-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-red-400 mb-3">Êxito Remoto ({"<"}50%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('trabalhista.tese_remota')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('trabalhista.valor_remoto', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -727,11 +838,110 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                             </div>
 
                             {/* Nota sobre Prognóstico */}
-                            <div className="mt-6 pt-6 border-t border-purple-500/20 bg-purple-500/5 rounded-lg p-4">
-                                <p className="text-sm text-muted-foreground">
-                                    ℹ️ <strong>Prognóstico de Êxito:</strong> Será calculado automaticamente pela ferramenta de análise estatística do sistema após o cadastro do processo.
-                                    Você poderá visualizar e ajustar o prognóstico na aba "Prognóstico" dos detalhes do processo.
+                            <div className="mt-6 pt-6 border-t border-purple-500/20">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-lg font-semibold text-purple-300">Prognóstico de Êxito</h4>
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
+                                        title="Calcular prognóstico automaticamente via análise estatística"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Calcular Automaticamente
+                                    </button>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    ℹ️ Os valores abaixo serão calculados automaticamente pela ferramenta de análise estatística do sistema.
+                                    Clique em "Calcular Automaticamente" após salvar o processo.
                                 </p>
+
+                                <div className="space-y-4 opacity-75">
+                                    {/* Êxito Provável */}
+                                    <div className="bg-background border border-green-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-green-400 mb-3">Êxito Provável ({">"}70%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('civel.tese_provavel')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('civel.valor_provavel', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Êxito Possível */}
+                                    <div className="bg-background border border-yellow-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-yellow-400 mb-3">Êxito Possível (50-70%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('civel.tese_possivel')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('civel.valor_possivel', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Êxito Remoto */}
+                                    <div className="bg-background border border-red-500/30 rounded-lg p-4">
+                                        <h5 className="text-md font-semibold text-red-400 mb-3">Êxito Remoto ({"<"}50%)</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Tese</label>
+                                                <textarea
+                                                    {...register('civel.tese_remota')}
+                                                    rows={2}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="Será calculado automaticamente..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Valor</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    {...register('civel.valor_remoto', { valueAsNumber: true })}
+                                                    disabled
+                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
