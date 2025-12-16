@@ -9,7 +9,7 @@ from datetime import datetime, date
 from decimal import Decimal
 import logging
 
-from main import db
+# Importações locais para evitar circular
 from models_processos import (
     Processo,
     ProcessoTributario,
@@ -75,6 +75,9 @@ class TributarioDatasetBuilder:
             DataFrame ou None se dados insuficientes
         """
         logger.info("Iniciando construção de dataset ML Tributário...")
+        
+        # Import local para evitar circular
+        from main import db
         
         # 1. Buscar processos tributários
         query = db.session.query(
@@ -162,6 +165,7 @@ class TributarioDatasetBuilder:
             }
             
             # Contar teses aplicadas
+            from main import db  # Import local
             teses_count = db.session.query(ProcessoTese).filter_by(
                 processo_id=processo.id_processo
             ).count()
@@ -315,6 +319,8 @@ def check_data_availability() -> Dict[str, int]:
     Returns:
         Dict com contagens
     """
+    from main import db  # Import local
+    
     total_processos = Processo.query.filter_by(
         natureza_id=1,  # Tributário
         ativo=True

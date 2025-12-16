@@ -9,7 +9,10 @@ from typing import Dict, Any, List, Optional
 import logging
 import os
 
-from main import db
+from flask import current_app
+from flask_sqlalchemy import SQLAlchemy
+
+# Não importar db diretamente - usar current_app
 from models_processos import (
     Processo,
     ProcessoTributario,
