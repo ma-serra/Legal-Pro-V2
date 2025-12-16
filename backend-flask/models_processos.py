@@ -1,3 +1,9 @@
+from main import db
+from sqlalchemy import Column, Integer, String, DateTime, Numeric, Boolean, Text, ForeignKey, JSONB, func, Date, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+import datetime
+import uuid
 
 # ============================================================================
 # SISTEMA DE PROCESSOS DINÂMICOS
