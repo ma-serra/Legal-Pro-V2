@@ -679,27 +679,47 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 </div>
                             </div>
 
-                            {/* Nota sobre Prognóstico */}
+                            {/* Prognóstico com Toggle Automático/Manual */}
                             <div className="mt-6 pt-6 border-t border-orange-500/20">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="text-lg font-semibold text-orange-300">Prognóstico de Êxito</h4>
-                                    <button
-                                        type="button"
-                                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
-                                        title="Calcular prognóstico automaticamente via análise estatística"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        Calcular Automaticamente
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        {/* Toggle Automático/Manual */}
+                                        <div className="flex items-center gap-2 bg-background border border-orange-500/30 rounded-lg px-3 py-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                    if (checkbox) checkbox.checked = !checkbox.checked;
+                                                }}
+                                                className="text-sm font-medium flex items-center gap-2"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    id="prognostico-trabalhista-manual"
+                                                    className="w-4 h-4 rounded border-border"
+                                                />
+                                                <span>Edição Manual</span>
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
+                                            title="Calcular prognóstico automaticamente via análise estatística"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                            Calcular Automaticamente
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    ℹ️ Os valores abaixo serão calculados automaticamente pela ferramenta de análise estatística do sistema.
-                                    Clique em "Calcular Automaticamente" após salvar o processo.
+                                    ℹ️ <strong>Automático:</strong> Calculado pela análise estatística. <strong>Manual:</strong> Preencha você mesmo.
                                 </p>
 
-                                <div className="space-y-4 opacity-75">
+                                <div className="space-y-4">
                                     {/* Êxito Provável */}
                                     <div className="bg-background border border-green-500/30 rounded-lg p-4">
                                         <h5 className="text-md font-semibold text-green-400 mb-3">Êxito Provável ({">"}70%)</h5>
@@ -709,9 +729,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                 <textarea
                                                     {...register('trabalhista.tese_provavel')}
                                                     rows={2}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
-                                                    placeholder="Será calculado automaticamente..."
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
+                                                    placeholder="Descreva a tese com alta probabilidade"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Marque 'Edição Manual' para preencher";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                             <div>
@@ -720,9 +746,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                     type="number"
                                                     step="0.01"
                                                     {...register('trabalhista.valor_provavel', { valueAsNumber: true })}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
                                                     placeholder="0.00"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Automático";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -737,9 +769,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                 <textarea
                                                     {...register('trabalhista.tese_possivel')}
                                                     rows={2}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
-                                                    placeholder="Será calculado automaticamente..."
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
+                                                    placeholder="Descreva a tese com probabilidade moderada"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Marque 'Edição Manual' para preencher";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                             <div>
@@ -748,9 +786,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                     type="number"
                                                     step="0.01"
                                                     {...register('trabalhista.valor_possivel', { valueAsNumber: true })}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
                                                     placeholder="0.00"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Automático";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -765,9 +809,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                 <textarea
                                                     {...register('trabalhista.tese_remota')}
                                                     rows={2}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
-                                                    placeholder="Será calculado automaticamente..."
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
+                                                    placeholder="Descreva a tese com baixa probabilidade"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Marque 'Edição Manual' para preencher";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                             <div>
@@ -776,9 +826,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                                     type="number"
                                                     step="0.01"
                                                     {...register('trabalhista.valor_remoto', { valueAsNumber: true })}
-                                                    disabled
-                                                    className="w-full bg-muted border border-border rounded-lg px-4 py-2.5 outline-none cursor-not-allowed"
+                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none disabled:bg-muted disabled:cursor-not-allowed"
                                                     placeholder="0.00"
+                                                    onFocus={(e) => {
+                                                        const checkbox = document.getElementById('prognostico-trabalhista-manual') as HTMLInputElement;
+                                                        if (checkbox && !checkbox.checked) {
+                                                            e.target.disabled = true;
+                                                            e.target.placeholder = "Automático";
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                         </div>
