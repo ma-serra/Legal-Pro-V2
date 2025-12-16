@@ -195,8 +195,7 @@ function TeseModal({ tese, tributos, onClose, onSave }: {
         descricao: tese?.descricao || '',
         tributo_id: tese?.tributo_id || '',
         probabilidade_sucesso: tese?.probabilidade_sucesso || '',
-        fundamentacao_legal: tese?.fundamentacao_legal || '',
-        jurisprudencia: tese?.jurisprudencia || '',
+        fundamentacao: tese?.fundamentacao || '',
         ativo: tese?.ativo ?? true
     });
     const [saving, setSaving] = useState(false);
@@ -292,20 +291,11 @@ function TeseModal({ tese, tributos, onClose, onSave }: {
                     <div>
                         <label className="block text-sm font-medium mb-2">Fundamentação Legal</label>
                         <textarea
-                            rows={2}
-                            value={formData.fundamentacao_legal}
-                            onChange={(e) => setFormData({ ...formData, fundamentacao_legal: e.target.value })}
+                            rows={4}
+                            value={formData.fundamentacao}
+                            onChange={(e) => setFormData({ ...formData, fundamentacao: e.target.value })}
                             className="w-full bg-background border border-border rounded-lg px-4 py-2"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Jurisprudência</label>
-                        <textarea
-                            rows={2}
-                            value={formData.jurisprudencia}
-                            onChange={(e) => setFormData({ ...formData, jurisprudencia: e.target.value })}
-                            className="w-full bg-background border border-border rounded-lg px-4 py-2"
+                            placeholder="Fundamentação, jurisprudência, teses relacionadas..."
                         />
                     </div>
 
