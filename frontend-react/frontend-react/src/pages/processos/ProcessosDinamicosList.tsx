@@ -3,6 +3,7 @@
  * Integração com 43 APIs REST (Fases 2-4)
  */
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Gavel, Plus, Filter, Download, RefreshCw,
     FileText, TrendingUp, AlertCircle, CheckCircle,
@@ -12,6 +13,7 @@ import { Processo, FiltroPesquisa } from '../../types/processos';
 import api from '../../lib/api';
 
 export default function ProcessosDinamicosList() {
+    const navigate = useNavigate();
     const [processos, setProcessos] = useState<Processo[]>([]);
     const [loading, setLoading] = useState(true);
     const [filtros, setFiltros] = useState<FiltroPesquisa>({
@@ -82,6 +84,34 @@ export default function ProcessosDinamicosList() {
         return new Date(dateString).toLocaleDateString('pt-BR');
     };
 
+    const handleExportar = () => {
+        // Exportar para CSV
+        const csvContent = [
+            ['Pasta', 'CNJ', 'Natureza', 'Valor', 'Data'].join(';'),
+            ...processos.map(p => [
+                p.pasta,
+                p.numero_cnj || '',
+                p.natureza_id === 1 ? 'Tributário' : p.natureza_id === 2 ? 'Trabalhista' : 'Cível',
+                p.valor_causa || 0,
+                formatDate(p.data_criacao)
+            ].join(';'))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `processos_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    };
+
+    const handleNovoProcesso = () => {
+        navigate('/processos/novo');
+    };
+
+    const handleVerDetalhes = (processoId: number) => {
+        navigate(`/processos/${processoId}`);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -116,12 +146,18 @@ export default function ProcessosDinamicosList() {
                         Atualizar
                     </button>
 
-                    <button className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors">
+                    <button
+                        onClick={handleExportar}
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                    >
                         <Download className="w-4 h-4" />
                         Exportar
                     </button>
 
-                    <button className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg transition-colors font-medium">
+                    <button
+                        onClick={handleNovoProcesso}
+                        className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg transition-colors font-medium"
+                    >
                         <Plus className="w-4 h-4" />
                         Novo Processo
                     </button>
@@ -227,6 +263,7 @@ export default function ProcessosDinamicosList() {
                     {processos.map((processo) => (
                         <div
                             key={processo.id_processo}
+                            onClick={() => handleVerDetalhes(processo.id_processo)}
                             className="bg-card border border-border rounded-xl p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
                         >
                             {/* Header do Card */}
@@ -273,9 +310,9 @@ export default function ProcessosDinamicosList() {
 
                             {/* Footer */}
                             <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                                <button className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                                <span className="text-xs text-primary font-medium group-hover:underline">
                                     Ver Detalhes →
-                                </button>
+                                </span>
                                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
                             </div>
                         </div>

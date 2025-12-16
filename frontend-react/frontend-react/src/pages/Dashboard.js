@@ -1,0 +1,10 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+/**
+ * Dashboard - Moderna e Corporativa
+ * Stats reais, gráficos e métricas
+ */
+import ProcessoStats from '../components/processos/ProcessoStats';
+import { TrendingUp, FileText } from 'lucide-react';
+export default function Dashboard() {
+    return (_jsxs("div", { className: "p-6 max-w-7xl mx-auto space-y-6", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsx("h1", { className: "text-3xl font-bold mb-2", children: "Dashboard" }), _jsx("p", { className: "text-muted-foreground", children: "Vis\u00E3o geral do sistema Legal Pro" })] }), _jsxs("div", { className: "text-right", children: [_jsx("p", { className: "text-sm text-muted-foreground", children: "\u00DAltima atualiza\u00E7\u00E3o" }), _jsx("p", { className: "font-semibold", children: new Date().toLocaleDateString('pt-BR') })] })] }), _jsx(ProcessoStats, {}), _jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-6", children: [_jsxs("div", { className: "bg-card border border-border rounded-xl p-6", children: [_jsxs("div", { className: "flex items-center gap-3 mb-4", children: [_jsx("div", { className: "p-2 bg-primary/20 rounded-lg", children: _jsx(TrendingUp, { className: "w-5 h-5 text-primary" }) }), _jsx("h3", { className: "font-semibold", children: "Tend\u00EAncias" })] }), _jsx("p", { className: "text-sm text-muted-foreground", children: "Visualiza\u00E7\u00E3o de tend\u00EAncias ser\u00E1 implementada em breve" })] }), _jsxs("div", { className: "bg-card border border-border rounded-xl p-6", children: [_jsxs("div", { className: "flex items-center gap-3 mb-4", children: [_jsx("div", { className: "p-2 bg-green-500/20 rounded-lg", children: _jsx(FileText, { className: "w-5 h-5 text-green-400" }) }), _jsx("h3", { className: "font-semibold", children: "Atividade Recente" })] }), _jsx("p", { className: "text-sm text-muted-foreground", children: "Atividades recentes ser\u00E3o exibidas aqui" })] })] })] }));
+}

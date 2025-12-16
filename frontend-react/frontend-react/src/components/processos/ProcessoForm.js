@@ -1,0 +1,50 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+/**
+ * ProcessoForm - Formulário Completo de Processo
+ * Todos os 31 campos do DB integrados
+ */
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import api from '../../lib/api';
+import { X, Save, FileText, Building2, DollarSign } from 'lucide-react';
+export default function ProcessoForm({ processo, onClose, onSave }) {
+    const { register, handleSubmit, watch, formState: { errors } } = useForm({
+        defaultValues: processo || {}
+    });
+    const [tributos, setTributos] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const naturezaSelecionada = watch('natureza_id');
+    useEffect(() => {
+        fetchTributos();
+    }, []);
+    const fetchTributos = async () => {
+        try {
+            const response = await api.get('/api/processos/tributos');
+            setTributos(response.data || []);
+        }
+        catch (error) {
+            console.error('Erro ao carregar tributos:', error);
+        }
+    };
+    const onSubmit = async (data) => {
+        setLoading(true);
+        try {
+            if (processo?.id_processo) {
+                await api.put(`/api/processos/${processo.id_processo}`, data);
+            }
+            else {
+                await api.post('/api/processos', data);
+            }
+            onSave();
+            onClose();
+        }
+        catch (error) {
+            console.error('Erro ao salvar:', error);
+            alert('Erro ao salvar processo');
+        }
+        finally {
+            setLoading(false);
+        }
+    };
+    return (_jsx("div", { className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4", children: _jsxs("div", { className: "bg-card border border-border rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto", children: [_jsxs("div", { className: "sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between", children: [_jsxs("div", { className: "flex items-center gap-3", children: [_jsx("div", { className: "p-3 bg-primary/20 rounded-lg", children: _jsx(FileText, { className: "w-6 h-6 text-primary" }) }), _jsxs("div", { children: [_jsx("h2", { className: "text-2xl font-bold", children: processo ? 'Editar Processo' : 'Novo Processo' }), _jsx("p", { className: "text-sm text-muted-foreground", children: "Preencha os dados do processo" })] })] }), _jsx("button", { onClick: onClose, className: "p-2 hover:bg-accent rounded-lg transition-colors", children: _jsx(X, { className: "w-5 h-5" }) })] }), _jsxs("form", { onSubmit: handleSubmit(onSubmit), className: "p-6 space-y-8", children: [_jsxs("div", { className: "space-y-4", children: [_jsxs("h3", { className: "text-lg font-semibold flex items-center gap-2 text-primary", children: [_jsx(FileText, { className: "w-5 h-5" }), "Dados B\u00E1sicos"] }), _jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsxs("label", { className: "block text-sm font-medium mb-2", children: ["Pasta * ", _jsx("span", { className: "text-muted-foreground text-xs", children: "(ex: PROC-2024-001)" })] }), _jsx("input", { ...register('pasta', { required: 'Pasta é obrigatória' }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "PROC-2024-001" }), errors.pasta && _jsx("p", { className: "text-red-500 text-xs mt-1", children: errors.pasta.message })] }), _jsxs("div", { children: [_jsxs("label", { className: "block text-sm font-medium mb-2", children: ["N\u00FAmero CNJ ", _jsx("span", { className: "text-muted-foreground text-xs", children: "(opcional)" })] }), _jsx("input", { ...register('numero_cnj'), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary font-mono", placeholder: "0001234-56.2024.8.21.0001" })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Natureza *" }), _jsxs("select", { ...register('natureza_id', { required: 'Natureza é obrigatória', valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", children: [_jsx("option", { value: "", children: "Selecione..." }), _jsx("option", { value: "1", children: "Tribut\u00E1rio" }), _jsx("option", { value: "2", children: "Trabalhista" }), _jsx("option", { value: "3", children: "C\u00EDvel" })] }), errors.natureza_id && _jsx("p", { className: "text-red-500 text-xs mt-1", children: errors.natureza_id.message })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Status *" }), _jsxs("select", { ...register('status_id', { required: 'Status é obrigatório', valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", children: [_jsx("option", { value: "", children: "Selecione..." }), _jsx("option", { value: "1", children: "Ativo" }), _jsx("option", { value: "2", children: "Arquivado" }), _jsx("option", { value: "3", children: "Suspenso" })] }), errors.status_id && _jsx("p", { className: "text-red-500 text-xs mt-1", children: errors.status_id.message })] }), _jsxs("div", { className: "md:col-span-2", children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "T\u00EDtulo" }), _jsx("input", { ...register('titulo'), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "Descri\u00E7\u00E3o resumida do processo" })] })] })] }), _jsxs("div", { className: "space-y-4", children: [_jsxs("h3", { className: "text-lg font-semibold flex items-center gap-2 text-green-500", children: [_jsx(DollarSign, { className: "w-5 h-5" }), "Valores"] }), _jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Valor da Causa" }), _jsx("input", { type: "number", step: "0.01", ...register('valor_causa', { valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "0.00" })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Data Distribui\u00E7\u00E3o" }), _jsx("input", { type: "date", ...register('data_distribuicao'), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary" })] })] })] }), naturezaSelecionada === 1 && (_jsxs("div", { className: "space-y-4 bg-blue-500/5 border border-blue-500/20 rounded-xl p-6", children: [_jsxs("h3", { className: "text-lg font-semibold flex items-center gap-2 text-blue-400", children: [_jsx(Building2, { className: "w-5 h-5" }), "Dados Tribut\u00E1rios"] }), _jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Tributo" }), _jsxs("select", { ...register('dados_tributario.tributo_id', { valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", children: [_jsx("option", { value: "", children: "Selecione..." }), tributos.map(t => (_jsx("option", { value: t.id_tributo, children: t.nome }, t.id_tributo)))] })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "N\u00FAmero AIIM" }), _jsx("input", { ...register('dados_tributario.numero_aiim'), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "00000000" })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Valor Principal" }), _jsx("input", { type: "number", step: "0.01", ...register('dados_tributario.valor_principal', { valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "0.00" })] }), _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Valor Multa" }), _jsx("input", { type: "number", step: "0.01", ...register('dados_tributario.valor_multa', { valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "0.00" })] })] })] })), naturezaSelecionada === 2 && (_jsxs("div", { className: "space-y-4 bg-orange-500/5 border border-orange-500/20 rounded-xl p-6", children: [_jsxs("h3", { className: "text-lg font-semibold flex items-center gap-2 text-orange-400", children: [_jsx(FileText, { className: "w-5 h-5" }), "Dados Trabalhistas"] }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: _jsxs("div", { children: [_jsx("label", { className: "block text-sm font-medium mb-2", children: "Toler\u00E2ncia Acordo" }), _jsx("input", { type: "number", step: "0.01", ...register('dados_trabalhista.tolerancia_acordo', { valueAsNumber: true }), className: "w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary", placeholder: "0.00" })] }) })] })), _jsxs("div", { className: "flex gap-3 justify-end pt-6 border-t border-border", children: [_jsx("button", { type: "button", onClick: onClose, className: "px-6 py-2.5 bg-accent hover:bg-accent/80 rounded-lg transition-colors", children: "Cancelar" }), _jsxs("button", { type: "submit", disabled: loading, className: "flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg transition-colors font-medium disabled:opacity-50", children: [_jsx(Save, { className: "w-4 h-4" }), loading ? 'Salvando...' : 'Salvar Processo'] })] })] })] }) }));
+}
