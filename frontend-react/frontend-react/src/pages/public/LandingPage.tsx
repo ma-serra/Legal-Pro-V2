@@ -1,270 +1,324 @@
 /**
- * LandingPage - Premium Corporativa
- * Inspirada em Rosenthal Advogados
- * Design clean, profissional e institucional
+ * LandingPage - Rosenthal Sarfatis Metta Advogados
+ * Design clean, elegante e profissional
+ * Estilo minimalista corporativo
  */
 import { Link } from 'react-router-dom';
-import {
-    Scale, CheckCircle, Users, Award, TrendingUp,
-    FileText, Shield, Briefcase, ArrowRight, Star
-} from 'lucide-react';
+import { Scale, Mail, Phone, MapPin, ChevronRight } from 'lucide-react';
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-background">
-            {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzMuNTQgMCA2LTIuNDYgNi02cy0yLjQ2LTYtNi02LTYgMi40Ni02IDYgMi40NiA2IDYgNnptMCAxMmMzLjU0IDAgNi0yLjQ2IDYtNnMtMi40Ni02LTYtNi02IDIuNDYtNiA2IDIuNDYgNiA2IDZ6bS0yNCAwYzMuNTQgMCA2LTIuNDYgNi02cy0yLjQ2LTYtNi02LTYgMi40Ni02IDYgMi40NiA2IDYgNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
-
-                <div className="container mx-auto px-6 py-24 relative z-10">
-                    <div className="max-w-4xl mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full mb-6">
-                            <Scale className="w-4 h-4" />
-                            <span className="text-sm font-medium">Excelência Jurídica</span>
+        <div className="min-h-screen bg-white dark:bg-slate-950">
+            {/* Header/Navigation */}
+            <header className="fixed top-0 w-full bg-slate-900 text-white z-50 shadow-lg">
+                <div className="container mx-auto px-6">
+                    <div className="flex items-center justify-between h-20">
+                        {/* Logo */}
+                        <div className="flex items-center">
+                            <img
+                                src="/rosenthal-logo.png"
+                                alt="Rosenthal Sarfatis Metta Advogados"
+                                className="h-12"
+                            />
                         </div>
 
-                        <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                            Gestão Inteligente de
-                            <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                                Processos Jurídicos
-                            </span>
+                        {/* Navigation */}
+                        <nav className="hidden md:flex items-center gap-8">
+                            <a href="#sobre" className="hover:text-slate-300 transition-colors text-sm uppercase tracking-wide">
+                                Sobre
+                            </a>
+                            <a href="#especialidades" className="hover:text-slate-300 transition-colors text-sm uppercase tracking-wide">
+                                Especialidades
+                            </a>
+                            <a href="#contato" className="hover:text-slate-300 transition-colors text-sm uppercase tracking-wide">
+                                Contato
+                            </a>
+                            <Link
+                                to="/login"
+                                className="px-6 py-2 bg-white text-slate-900 rounded hover:bg-slate-100 transition-colors text-sm font-semibold"
+                            >
+                                Acessar Sistema
+                            </Link>
+                        </nav>
+                    </div>
+                </div>
+            </header>
+
+            {/* Hero Section */}
+            <section className="pt-32 pb-20 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-4xl mx-auto text-center">
+                        <div className="mb-8">
+                            <div className="inline-block p-3 bg-slate-900 dark:bg-slate-800 rounded-lg mb-6">
+                                <Scale className="w-12 h-12 text-white" />
+                            </div>
+                        </div>
+
+                        <h1 className="text-5xl md:text-6xl font-light mb-6 text-slate-900 dark:text-white leading-tight">
+                            "A Rosenthal se diferencia de muitos escritórios de advocacia com os quais trabalhamos porque une a visão jurídica à visão 'de negócio'..."
                         </h1>
 
-                        <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-                            Plataforma completa para escritórios de advocacia que buscam eficiência,
-                            organização e resultados excepcionais
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link
-                                to="/signup"
-                                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-blue-600/50"
-                            >
-                                Começar Gratuitamente
-                                <ArrowRight className="w-5 h-5" />
-                            </Link>
-
-                            <Link
-                                to="/pricing"
-                                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg font-semibold backdrop-blur-sm transition-all"
-                            >
-                                Conhecer Planos
-                            </Link>
-                        </div>
-
-                        <div className="mt-12 flex items-center justify-center gap-8 text-sm">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-400" />
-                                <span>Teste grátis 30 dias</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-blue-400" />
-                                <span>Segurança garantida</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Features Section */}
-            <section className="py-20 bg-slate-50 dark:bg-slate-900/50">
-                <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4">Ferramentas Completas</h2>
-                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                            Tudo que seu escritório precisa em uma única plataforma moderna e intuitiva
+                        <p className="text-xl text-slate-600 dark:text-slate-400 mb-4">
+                            Rafael Campos, Bosch
                         </p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: FileText,
-                                title: 'Gestão de Processos',
-                                description: 'Controle completo de processos tributários, trabalhistas e cíveis com dashboards inteligentes'
-                            },
-                            {
-                                icon: TrendingUp,
-                                title: 'Atualização Monetária',
-                                description: 'Integração automática com BACEN para cálculos precisos de SELIC, IPCA e demais índices'
-                            },
-                            {
-                                icon: Users,
-                                title: 'Assistentes Jurídicos IA',
-                                description: 'Inteligência artificial para pesquisa jurídica, análise de documentos e elaboração de peças'
-                            },
-                            {
-                                icon: Briefcase,
-                                title: 'Teses Jurídicas',
-                                description: 'Biblioteca organizada de teses tributárias com probabilidades de sucesso e jurisprudência'
-                            },
-                            {
-                                icon: Award,
-                                title: 'Análises Avançadas',
-                                description: 'Relatórios detalhados, estatísticas em tempo real e insights estratégicos'
-                            },
-                            {
-                                icon: Shield,
-                                title: 'Segurança Total',
-                                description: 'Criptografia de ponta a ponta, backup automático e conformidade com LGPD'
-                            }
-                        ].map((feature, idx) => (
-                            <div
-                                key={idx}
-                                className="bg-white dark:bg-card border border-border rounded-2xl p-8 hover:shadow-xl transition-all hover:-translate-y-1"
-                            >
-                                <div className="p-3 bg-blue-500/10 rounded-xl w-fit mb-4">
-                                    <feature.icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="py-20 bg-gradient-to-br from-blue-600 to-cyan-600 text-white">
+            {/* Nosso Trabalho */}
+            <section id="sobre" className="py-20 bg-white dark:bg-slate-950">
                 <div className="container mx-auto px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        {[
-                            { value: '15+', label: 'Anos de Experiência' },
-                            { value: '500+', label: 'Escritórios Atendidos' },
-                            { value: '50k+', label: 'Processos Gerenciados' },
-                            { value: '98%', label: 'Satisfação Cliente' }
-                        ].map((stat, idx) => (
-                            <div key={idx} className="text-center">
-                                <div className="text-4xl md:text-5xl font-bold mb-2">{stat.value}</div>
-                                <div className="text-blue-100">{stat.label}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                    <div className="max-w-5xl mx-auto">
+                        <h2 className="text-4xl font-light text-center mb-12 text-slate-900 dark:text-white">
+                            Nosso Trabalho
+                        </h2>
 
-            {/* About Section - Inspirado em Rosenthal */}
-            <section className="py-20">
-                <div className="container mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <h2 className="text-4xl font-bold mb-6">
-                                Excelência e Compromisso com Resultados
-                            </h2>
-                            <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                                O Legal Pro nasceu da necessidade de modernizar a advocacia brasileira,
-                                combinando expertise jurídica com tecnologia de ponta.
-                            </p>
-                            <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                                Nossa plataforma é desenvolvida por advogados, para advogados,
-                                garantindo que cada funcionalidade atenda às reais demandas do dia a dia jurídico.
+                        <div className="prose prose-lg mx-auto text-center max-w-3xl">
+                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                                O foco da Rosenthal Sarfatis Metta Advogados é atuar preventivamente,
+                                proporcionando segurança jurídica aos nossos clientes, seja auxiliando-os
+                                em suas decisões, analisando riscos ou elaborando estratégias.
                             </p>
 
-                            <div className="space-y-4">
-                                {[
-                                    'Ferramenta criada por profissionais do Direito',
-                                    'Suporte especializado 24/7',
-                                    'Atualizações constantes com novas funcionalidades',
-                                    'Treinamento completo para toda equipe'
-                                ].map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <div className="p-1 bg-green-500/20 rounded-full">
-                                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <span className="text-muted-foreground">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed">
+                                Atuando tanto na área consultiva quanto na contenciosa, nossos clientes
+                                estão sempre bem informados. Sabemos que nosso futuro está intimamente
+                                ligado ao sucesso daqueles para os quais prestamos serviços.
+                            </p>
                         </div>
+                    </div>
+                </div>
+            </section>
 
-                        <div className="relative">
-                            <div className="aspect-square bg-gradient-to-br from-blue-600 to-cyan-600 rounded-3xl overflow-hidden shadow-2xl">
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Scale className="w-32 h-32 text-white/20" />
+            {/* Especialidades */}
+            <section id="especialidades" className="py-20 bg-slate-50 dark:bg-slate-900/50">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-6xl mx-auto">
+                        <h2 className="text-4xl font-light text-center mb-16 text-slate-900 dark:text-white">
+                            Especialidades
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                            {/* Direito Empresarial */}
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
                                 </div>
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-8">
-                                    <div className="flex items-center gap-3">
-                                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                                        <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                                    </div>
-                                    <p className="text-white mt-2 font-semibold">
-                                        Avaliação 5.0 - Escritórios Parceiros
-                                    </p>
+                                <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
+                                    Direito Empresarial
+                                </h3>
+                                <ul className="space-y-3 text-slate-600 dark:text-slate-400">
+                                    <li>Negociações e disputas societárias</li>
+                                    <li>Fusões, aquisições e incorporações</li>
+                                    <li>Auditoria legal (due diligence)</li>
+                                    <li>Defesas de empresas em ações de consumidores</li>
+                                    <li>Negociação e elaboração de contratos</li>
+                                </ul>
+                            </div>
+
+                            {/* Direito Tributário */}
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
                                 </div>
+                                <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
+                                    Direito Tributário
+                                </h3>
+                                <ul className="space-y-3 text-slate-600 dark:text-slate-400">
+                                    <li>Planejamento e consultoria tributária</li>
+                                    <li>Otimização da carga tributária</li>
+                                    <li>Atuação judicial e administrativa</li>
+                                    <li>Defesa dos interesses dos contribuintes</li>
+                                    <li>Gestão e reestruturação de passivo</li>
+                                </ul>
+                            </div>
+
+                            {/* Direito do Trabalho */}
+                            <div className="text-center">
+                                <div className="mb-6">
+                                    <div className="w-1 h-16 bg-slate-900 dark:bg-slate-700 mx-auto"></div>
+                                </div>
+                                <h3 className="text-2xl font-light mb-6 text-slate-900 dark:text-white">
+                                    Direito do Trabalho
+                                </h3>
+                                <ul className="space-y-3 text-slate-600 dark:text-slate-400">
+                                    <li>Defesa em reclamações trabalhistas</li>
+                                    <li>Consultoria para redução de passivo</li>
+                                    <li>Cursos e treinamentos in company</li>
+                                    <li>Assessoria em relações trabalhistas</li>
+                                    <li>Compliance trabalhista</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* CTA Section */}
+            {/* Nossos Valores */}
             <section className="py-20 bg-slate-900 text-white">
-                <div className="container mx-auto px-6 text-center">
-                    <h2 className="text-4xl font-bold mb-6">
-                        Pronto para Transformar seu Escritório?
-                    </h2>
-                    <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-                        Junte-se a centenas de escritórios que já modernizaram sua gestão jurídica
-                    </p>
+                <div className="container mx-auto px-6">
+                    <div className="max-w-5xl mx-auto">
+                        <h2 className="text-4xl font-light text-center mb-16">
+                            Nossos Valores
+                        </h2>
 
-                    <Link
-                        to="/signup"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-blue-600/50 text-lg"
-                    >
-                        Iniciar Teste Gratuito
-                        <ArrowRight className="w-5 h-5" />
-                    </Link>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                            <div className="text-center">
+                                <h3 className="text-2xl font-light mb-4">Conhecimento</h3>
+                                <p className="text-slate-300">
+                                    Do direito e da realidade empresarial de cada cliente.
+                                    Não existem soluções padronizadas.
+                                </p>
+                            </div>
 
-                    <p className="text-sm text-slate-400 mt-6">
-                        Não precisa cartão de crédito • Cancele quando quiser
-                    </p>
+                            <div className="text-center">
+                                <h3 className="text-2xl font-light mb-4">Eficiência</h3>
+                                <p className="text-slate-300">
+                                    Comunicação clara e objetiva com o cliente e com as autoridades.
+                                </p>
+                            </div>
+
+                            <div className="text-center">
+                                <h3 className="text-2xl font-light mb-4">Liderança</h3>
+                                <p className="text-slate-300">
+                                    Antecipar as necessidades dos clientes. Tomar a iniciativa.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Reconhecimentos */}
+            <section className="py-20 bg-white dark:bg-slate-950">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-4xl mx-auto text-center">
+                        <h2 className="text-4xl font-light mb-12 text-slate-900 dark:text-white">
+                            Reconhecimentos
+                        </h2>
+
+                        <blockquote className="text-2xl font-light text-slate-700 dark:text-slate-300 mb-6 italic">
+                            "O escritório se destaca pelo atendimento ágil, qualificado e sempre muito próximo,
+                            nos ajudando nas resoluções para nosso negócio."
+                        </blockquote>
+
+                        <p className="text-lg text-slate-600 dark:text-slate-400">
+                            João Campanha
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Contato */}
+            <section id="contato" className="py-20 bg-slate-50 dark:bg-slate-900/50">
+                <div className="container mx-auto px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-4xl font-light text-center mb-16 text-slate-900 dark:text-white">
+                            Contato
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center mb-12">
+                            <div className="space-y-3">
+                                <MapPin className="w-8 h-8 mx-auto text-slate-700 dark:text-slate-400" />
+                                <div className="text-slate-700 dark:text-slate-300">
+                                    <p>Rua Lisboa, nº 500</p>
+                                    <p>Cerqueira Cesar | 05413-000</p>
+                                    <p>São Paulo - SP | Brasil</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Phone className="w-8 h-8 mx-auto text-slate-700 dark:text-slate-400" />
+                                <a
+                                    href="tel:+551132594866"
+                                    className="block text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                >
+                                    +55 (11) 3259-4866
+                                </a>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Mail className="w-8 h-8 mx-auto text-slate-700 dark:text-slate-400" />
+                                <a
+                                    href="mailto:rosenthal@rosenthal.com.br"
+                                    className="block text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                >
+                                    rosenthal@rosenthal.com.br
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Newsletter */}
+                        <div className="bg-white dark:bg-slate-800 rounded-lg p-8 text-center">
+                            <h3 className="text-2xl font-light mb-4 text-slate-900 dark:text-white">
+                                Cadastre seu e-mail para receber nossos informativos
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 mb-6">
+                                Fique por dentro das novidades jurídicas importantes para sua empresa sem perder muito tempo.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                                <input
+                                    type="email"
+                                    placeholder="Seu e-mail"
+                                    className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-600"
+                                />
+                                <button className="px-6 py-3 bg-slate-900 dark:bg-slate-700 text-white rounded hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors font-semibold">
+                                    Cadastrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="bg-slate-950 text-slate-400 py-12">
+            <footer className="bg-slate-900 text-slate-400 py-12">
                 <div className="container mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                        <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                <Scale className="w-6 h-6 text-blue-400" />
-                                <span className="text-white font-bold text-lg">Legal Pro</span>
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                            <div>
+                                <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">
+                                    Escritório
+                                </h4>
+                                <ul className="space-y-2 text-sm">
+                                    <li><a href="#sobre" className="hover:text-white transition-colors">Sobre</a></li>
+                                    <li><a href="#especialidades" className="hover:text-white transition-colors">Especialidades</a></li>
+                                    <li><a href="#contato" className="hover:text-white transition-colors">Contato</a></li>
+                                </ul>
                             </div>
-                            <p className="text-sm">
-                                Plataforma completa de gestão jurídica para escritórios modernos
+
+                            <div>
+                                <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">
+                                    Sistema
+                                </h4>
+                                <ul className="space-y-2 text-sm">
+                                    <li><Link to="/login" className="hover:text-white transition-colors">Acessar Sistema</Link></li>
+                                    <li><Link to="/signup" className="hover:text-white transition-colors">Cadastrar</Link></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">
+                                    LGPD
+                                </h4>
+                                <ul className="space-y-2 text-sm">
+                                    <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors">Termos e Condições</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-slate-800 pt-8 text-center text-sm">
+                            <p>
+                                Atuando há mais de duas décadas, Rosenthal Sarfatis Metta Advogados consolidou
+                                sua atuação assessorando empresas no âmbito do Direito Empresarial,
+                                com destaque no Direito Tributário.
+                            </p>
+                            <p className="mt-4">
+                                Copyright © {new Date().getFullYear()} Rosenthal Sarfatis Metta Sociedade de Advogados | OAB-SP 6738
                             </p>
                         </div>
-
-                        <div>
-                            <h4 className="text-white font-semibold mb-4">Produto</h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><Link to="/pricing" className="hover:text-white transition-colors">Planos</Link></li>
-                                <li><Link to="/signup" className="hover:text-white transition-colors">Teste Grátis</Link></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-white font-semibold mb-4">Empresa</h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="hover:text-white transition-colors">Sobre</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-white font-semibold mb-4">Legal</h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
-                                <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-slate-800 mt-12 pt-8 text-center text-sm">
-                        <p>© 2025 Legal Pro. Todos os direitos reservados.</p>
                     </div>
                 </div>
             </footer>
