@@ -788,6 +788,22 @@ def create_app():
     except ImportError as e:
         logger.warning(f"⚠️ ML Tributário indisponível: {e}")
     
+    # Atualização Monetária (Índices Econômicos)
+    try:
+        from modules.atualizacao_monetaria.routes import atualizacao_bp
+        app.register_blueprint(atualizacao_bp)
+        logger.info("✅ Módulo Atualização Monetária carregado")
+    except ImportError as e:
+        logger.warning(f"⚠️ Atualização Monetária indisponível: {e}")
+    
+    # Processos Tributário (Teses, Tributos, etc)
+    try:
+        from modules.tributario.routes import tributario_bp
+        app.register_blueprint(tributario_bp)
+        logger.info("✅ Módulo Processos Tributário carregado")
+    except ImportError as e:
+        logger.warning(f"⚠️ Processos Tributário indisponível: {e}")
+    
     # Registrar API Qdrant para Busca Vetorial
     try:
         from scripts.apis.core.api_qdrant_integration import registrar_api_qdrant
