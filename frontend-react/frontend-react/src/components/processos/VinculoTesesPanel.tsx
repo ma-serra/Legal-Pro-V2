@@ -165,9 +165,9 @@ export default function VinculoTesesPanel({ processoId }: VinculoTesesPanelProps
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                            {tesesDisponiveis.filter(t =>
+                            {tesesDisponiveis.filter((t: TeseTributaria) =>
                                 !tesVinculadas.some(v => v.tese.id_tese === t.id_tese)
-                            ).map(tese => (
+                            ).map((tese: TeseTributaria) => (
                                 <div
                                     key={tese.id_tese}
                                     className="bg-background border border-border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer"
