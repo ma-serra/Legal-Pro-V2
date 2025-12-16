@@ -497,7 +497,7 @@ def create_app():
     
     # Configurar Flask-Login com bypass personalizado
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = 'auth_api.login'
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
     
@@ -798,7 +798,7 @@ def create_app():
     
     # Processos Tributário (Teses, Tributos, etc)
     try:
-        from modules.tributario.routes import tributario_bp
+        from modules.processos_tributario.routes import tributario_bp
         app.register_blueprint(tributario_bp)
         logger.info("✅ Módulo Processos Tributário carregado")
     except ImportError as e:
