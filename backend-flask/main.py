@@ -776,6 +776,14 @@ def create_app():
         # Registrar blueprint
         app.register_blueprint(assistentes_bp)
         
+    # ML Tributário
+    try:
+        from modules.ml_tributario.routes import ml_tributario_bp
+        app.register_blueprint(ml_tributario_bp)
+        logger.info("✅ Módulo ML Tributário carregado")
+    except ImportError as e:
+        logger.warning(f"⚠️ ML Tributário indisponível: {e}")
+        
         logger.info("✅ Módulos de Assistentes Jurídicos integrados com sucesso")
     except Exception as e:
         logger.error(f"Erro ao integrar assistentes jurídicos: {e}")
