@@ -13,7 +13,7 @@ interface VinculoTesesPanelProps {
 
 export default function VinculoTesesPanel({ processoId }: VinculoTesesPanelProps) {
     const [tesVinculadas, setTesesVinculadas] = useState<any[]>([]);
-    const [tesasDisponiveis, setTesesDisponiveis] = useState<TeseTributaria[]>([]);
+    const [tesesDisponiveis, setTesesDisponiveis] = useState<TeseTributaria[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(true);
 
