@@ -1,12 +1,10 @@
-"""
-Rotas API REST para Processos
-Fase 2 - Backend Core
-"""
+"""Rotas API para módulo de Processos"""
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from functools import wraps
 
 from .services import ProcessoService
+from .etl_service import ProcessoETLService
 from .schemas import (
     ProcessoSchema,
     ProcessoCreateSchema,
@@ -257,6 +255,46 @@ def obter_estatisticas():
         'por_natureza': por_natureza,
         'por_status': por_status
     }), 200
+
+
+# ============================================================================
+# IMPORTAÇÃO ETL
+# ============================================================================
+
+@processos_bp.route('/importar', methods=['POST'])
+@handle_errors
+def importar_planilha():
+    """
+    Importa planilha Excel/CSV com ETL automático
+    
+    POST /api/processos/importar
+   Content-Type: multipart/form-data
+    File: arquivo
+    """
+    if 'arquivo' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    arquivo = request.files['arquivo']
+    
+    if arquivo.filename == '':
+        return jsonify({'error': 'Nome de arquivo vazio'}), 400
+    
+    # Validar extensão
+    extensoes_permitidas = {'xlsx', 'xls', 'csv'}
+    ext = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
+    
+    if ext not in extensoes_permitidas:
+        return jsonify({'error': f'Formato não suportado. Use: {", ".join(extensoes_permitidas)}'}), 400
+    
+    # Ler bytes do arquivo
+    arquivo_bytes = arquivo.read()
+    
+    # Executar ETL
+    etl_service = ProcessoETLService()
+    resultado = etl_service.importar_planilha(arquivo_bytes, arquivo.filename)
+    
+    status_code = 200 if resultado.get('sucesso') else 400
+    return jsonify(resultado), status_code
 
 
 #============================================================================
