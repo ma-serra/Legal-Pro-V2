@@ -17,6 +17,7 @@ import SignupPage from './pages/public/SignupPage'
 // Processos Pages - NOVA ESTRUTURA MODERNA
 import ProcessosDinamicosList from './pages/processos/ProcessosDinamicosList'
 import ProcessoDetailsPage from './pages/processos/ProcessoDetailsPage'
+import NovoProcessoPage from './pages/processos/NovoProcessoPage'
 import ImportacaoPage from './pages/processos/ImportacaoPage'
 import TesesPage from './pages/processos/TesesPage'
 import IndicesPage from './pages/processos/IndicesPage'
@@ -100,6 +101,7 @@ export default function App() {
             {/* Processos - NOVA ESTRUTURA */}
             <Route path="/processos">
               <Route index element={<ProcessosDinamicosList />} />
+              <Route path="novo" element={<NovoProcessoPage />} />
               <Route path="importar" element={<ImportacaoPage />} />
               <Route path="teses" element={<TesesPage />} />
               <Route path="indices" element={<IndicesPage />} />
