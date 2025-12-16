@@ -75,12 +75,6 @@ interface ProcessoFormData {
         tolerancia_acordo?: number;
         acordo_realizado?: number;
         data_acordo?: string;
-        tese_provavel?: string;
-        valor_provavel?: number;
-        tese_possivel?: string;
-        valor_possivel?: number;
-        tese_remota?: string;
-        valor_remoto?: number;
     };
 
     // CÍVEL
@@ -88,12 +82,6 @@ interface ProcessoFormData {
         tolerancia_acordo?: number;
         acordo_realizado?: number;
         data_acordo?: string;
-        tese_provavel?: string;
-        valor_provavel?: number;
-        tese_possivel?: string;
-        valor_possivel?: number;
-        tese_remota?: string;
-        valor_remoto?: number;
     };
 }
 
@@ -679,92 +667,12 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 </div>
                             </div>
 
-                            {/* Prognóstico de Êxito Trabalhista */}
-                            <div className="mt-6 pt-6 border-t border-orange-500/20">
-                                <h4 className="text-lg font-semibold text-orange-300 mb-4">Prognóstico de Êxito</h4>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Indique a expectativa real de ganho considerando a probabilidade de êxito de cada tese.
+                            {/* Nota sobre Prognóstico */}
+                            <div className="mt-6 pt-6 border-t border-orange-500/20 bg-orange-500/5 rounded-lg p-4">
+                                <p className="text-sm text-muted-foreground">
+                                    ℹ️ <strong>Prognóstico de Êxito:</strong> Será calculado automaticamente pela ferramenta de análise estatística do sistema após o cadastro do processo.
+                                    Você poderá visualizar e ajustar o prognóstico na aba "Prognóstico" dos detalhes do processo.
                                 </p>
-
-                                <div className="space-y-4">
-                                    {/* Êxito Provável */}
-                                    <div className="bg-background border border-green-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-green-400 mb-3">Êxito Provável ({">"}70%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('trabalhista.tese_provavel')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none"
-                                                    placeholder="Descreva a tese com alta probabilidade"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('trabalhista.valor_provavel', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Êxito Possível */}
-                                    <div className="bg-background border border-yellow-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-yellow-400 mb-3">Êxito Possível (50-70%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('trabalhista.tese_possivel')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none"
-                                                    placeholder="Descreva a tese com probabilidade moderada"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('trabalhista.valor_possivel', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Êxito Remoto */}
-                                    <div className="bg-background border border-red-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-red-400 mb-3">Êxito Remoto ({"<"}50%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('trabalhista.tese_remota')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none"
-                                                    placeholder="Descreva a tese com baixa probabilidade"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('trabalhista.valor_remoto', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -818,92 +726,12 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 </div>
                             </div>
 
-                            {/* Prognóstico de Êxito Cível */}
-                            <div className="mt-6 pt-6 border-t border-purple-500/20">
-                                <h4 className="text-lg font-semibold text-purple-300 mb-4">Prognóstico de Êxito</h4>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Indique a expectativa real de ganho considerando a probabilidade de êxito de cada tese.
+                            {/* Nota sobre Prognóstico */}
+                            <div className="mt-6 pt-6 border-t border-purple-500/20 bg-purple-500/5 rounded-lg p-4">
+                                <p className="text-sm text-muted-foreground">
+                                    ℹ️ <strong>Prognóstico de Êxito:</strong> Será calculado automaticamente pela ferramenta de análise estatística do sistema após o cadastro do processo.
+                                    Você poderá visualizar e ajustar o prognóstico na aba "Prognóstico" dos detalhes do processo.
                                 </p>
-
-                                <div className="space-y-4">
-                                    {/* Êxito Provável */}
-                                    <div className="bg-background border border-green-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-green-400 mb-3">Êxito Provável ({">"}70%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('civel.tese_provavel')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none"
-                                                    placeholder="Descreva a tese com alta probabilidade"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('civel.valor_provavel', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-green-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Êxito Possível */}
-                                    <div className="bg-background border border-yellow-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-yellow-400 mb-3">Êxito Possível (50-70%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('civel.tese_possivel')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none"
-                                                    placeholder="Descreva a tese com probabilidade moderada"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('civel.valor_possivel', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-yellow-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Êxito Remoto */}
-                                    <div className="bg-background border border-red-500/30 rounded-lg p-4">
-                                        <h5 className="text-md font-semibold text-red-400 mb-3">Êxito Remoto ({"<"}50%)</h5>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Tese</label>
-                                                <textarea
-                                                    {...register('civel.tese_remota')}
-                                                    rows={2}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none"
-                                                    placeholder="Descreva a tese com baixa probabilidade"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Valor</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    {...register('civel.valor_remoto', { valueAsNumber: true })}
-                                                    className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-red-500 outline-none"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

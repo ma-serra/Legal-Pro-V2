@@ -53,6 +53,10 @@ class Processo(db.Model):
     tipo_probabilidade_id = Column(Integer)
     risco_id = Column(Integer)
     
+    # Partes (autor e réu)
+    autor = Column(String(255))
+    reu = Column(String(255))
+    
     # Metadados
     titulo = Column(Text)
     observacao_pasta = Column(Text)
