@@ -128,7 +128,7 @@ class TributarioPredictor:
         # 7. Criar resultado
         resultado = {
             'processo_id': processo_id,
-            'valor_contingencia_predito': float(valor predito),
+            'valor_contingencia_predito': float(valor_predito),
             'confianca': confianca,
             'modelo_versao': self.modelo_db.versao,
             'modelo_algoritmo': self.modelo_db.algoritmo,
