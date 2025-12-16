@@ -3,8 +3,8 @@
  * CRUD completo integrado com API
  */
 import { useState, useEffect } from 'react';
-import { TeseTributaria, Tributo } from '../../../types/processos';
-import api from '../../../lib/api';
+import { TeseTributaria, Tributo } from '../../types/processos';
+import api from '../../lib/api';
 import { Plus, Edit, Trash2, Search, FileText, CheckCircle } from 'lucide-react';
 
 export default function TeseTributariaList() {

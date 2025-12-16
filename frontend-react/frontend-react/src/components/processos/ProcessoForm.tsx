@@ -4,8 +4,8 @@
  */
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { ProcessoCreate, Tributo } from '../../../types/processos';
-import api from '../../../lib/api';
+import { ProcessoCreate, Tributo } from '../../types/processos';
+import api from '../../lib/api';
 import { X, Save, FileText, Building2, DollarSign, Calendar } from 'lucide-react';
 
 interface ProcessoFormProps {

@@ -3,8 +3,8 @@
  * Tabs: Geral, Específico, Prognóstico, Histórico
  */
 import { useState, useEffect } from 'react';
-import { Processo } from '../../../types/processos';
-import api from '../../../lib/api';
+import { Processo } from '../../types/processos';
+import api from '../../lib/api';
 import { FileText, DollarSign, Calendar, Building2, TrendingUp, History, X } from 'lucide-react';
 
 interface ProcessoDetailsProps {
@@ -97,8 +97,8 @@ export default function ProcessoDetails({ processoId, onClose }: ProcessoDetails
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id
-                                        ? 'border-primary text-primary font-medium'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                                    ? 'border-primary text-primary font-medium'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 <tab.icon className="w-4 h-4" />

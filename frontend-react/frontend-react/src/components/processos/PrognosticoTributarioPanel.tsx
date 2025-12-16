@@ -3,8 +3,8 @@
  * 3 Cenários: Provável, Possível, Remoto
  */
 import { useState, useEffect } from 'react';
-import { PrognosticoTributario } from '../../../types/processos';
-import api from '../../../lib/api';
+import { PrognosticoTributario } from '../../types/processos';
+import api from '../../lib/api';
 import { TrendingUp, DollarSign, Percent, Save } from 'lucide-react';
 
 interface PrognosticoTributarioPanelProps {

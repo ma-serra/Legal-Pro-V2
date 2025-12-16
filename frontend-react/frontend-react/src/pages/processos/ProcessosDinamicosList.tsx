@@ -8,8 +8,8 @@ import {
     FileText, TrendingUp, AlertCircle, CheckCircle,
     Calendar, DollarSign, Scale, Building2
 } from 'lucide-react';
-import { Processo, FiltroPesquisa } from '../../../types/processos';
-import api from '../../../lib/api';
+import { Processo, FiltroPesquisa } from '../../types/processos';
+import api from '../../lib/api';
 
 export default function ProcessosDinamicosList() {
     const [processos, setProcessos] = useState<Processo[]>([]);

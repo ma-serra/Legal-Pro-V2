@@ -3,8 +3,8 @@
  * Integra com API de Atualização Monetária
  */
 import { useState, useEffect } from 'react';
-import { IndiceMonetario } from '../../../types/processos';
-import api from '../../../lib/api';
+import { IndiceMonetario } from '../../types/processos';
+import api from '../../lib/api';
 import { Download, TrendingUp, Calendar, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ImportadorIndices() {
