@@ -19,6 +19,7 @@ interface ProcessoFormData {
     observacao_pasta?: string;
 
     // Partes
+    cliente_id?: number;
     autor?: string;
     reu?: string;
 
@@ -27,6 +28,7 @@ interface ProcessoFormData {
     valor_envolvido?: number;
     valor_causa_atualizado?: number;
     valor_envolvido_atualizado?: number;
+    contingencia?: number;
 
     // Data
     data_distribuicao?: string;
