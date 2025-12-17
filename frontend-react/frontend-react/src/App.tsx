@@ -23,6 +23,7 @@ import ImportadorETLPage from './pages/processos/ImportadorETLPage'
 import TesesPage from './pages/processos/TesesPage';
 import IndicesPage from './pages/processos/IndicesPage';
 import MLAnaliseTributarioPage from './pages/processos/MLAnaliseTributarioPage';
+import MLModelosDashboard from './pages/processos/MLModelosDashboard';
 
 
 // Multi-Agente Pages
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="teses" element={<TesesPage />} />
               <Route path="indices" element={<IndicesPage />} />
               <Route path="ml-analise" element={<MLAnaliseTributarioPage />} />
+              <Route path="ml-modelos" element={<MLModelosDashboard />} />
               <Route path=":id" element={<ProcessoDetailsPage />} />
             </Route>
 
