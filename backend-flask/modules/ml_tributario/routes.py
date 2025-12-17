@@ -150,6 +150,28 @@ def predict_batch():
     }), 200
 
 
+@ml_tributario_bp.route('/simular', methods=['POST'])
+@handle_errors
+def simular_cenario():
+    """
+    Simula predição com dados "What-If" (sem persistir)
+    
+    POST /api/ml/tributario/simular
+    Body:
+    {
+        "valor_causa": 100000,
+        "comarca_id": 5,
+        "tributo_id": 2
+    }
+    """
+    data = request.json
+    
+    predictor = TributarioPredictor()
+    resultado = predictor.predict_simulation(data)
+    
+    return jsonify(resultado), 200
+
+
 @ml_tributario_bp.route('/quick-predict/<int:processo_id>', methods=['GET'])
 @handle_errors
 def quick_predict_endpoint(processo_id: int):
