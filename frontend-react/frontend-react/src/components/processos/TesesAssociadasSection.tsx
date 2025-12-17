@@ -17,7 +17,7 @@ interface TributeResponse {
 
 interface Props {
     processoId: number;
-    tributoid?: number;
+    tributoId?: number;
 }
 
 export default function TesesAssociadasSection({ processoId, tributoId }: Props) {

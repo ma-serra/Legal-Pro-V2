@@ -165,7 +165,7 @@ export default function ProcessoDetails({ processoId, onClose }: ProcessoDetails
                             {processo.natureza_id === 1 && (
                                 <TesesAssociadasSection
                                     processoId={processoId}
-                                    tributoId={processo.tributario?.tributo_id}
+                                    tributoId={undefined}
                                 />
                             )}
                             {processo.natureza_id === 2 && (
