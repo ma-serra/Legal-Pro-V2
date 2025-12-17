@@ -317,6 +317,29 @@ def obter_estatisticas():
 
 
 # ============================================================================
+# IMPORTERS
+# ============================================================================
+
+@processos_bp.route('/importar-lote', methods=['POST'])
+@handle_errors
+def importar_lote():
+    """
+    Importa processos via JSON em lote (Frontend ETL)
+    
+    POST /api/processos/importar-lote
+    Body: { "processos": [...] }
+    """
+    data = request.json
+    lista = data.get('processos', [])
+    
+    if not lista:
+        return jsonify({'error': 'Lista de processos vazia'}), 400
+        
+    resultado = ProcessoService.criar_processo_lote(lista)
+    
+    return jsonify(resultado), 200
+
+# ============================================================================
 # IMPORTAÇÃO ETL
 # ============================================================================
 

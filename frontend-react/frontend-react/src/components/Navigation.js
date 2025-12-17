@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Gavel, FileSearch, Users, FileUp, Scale, TrendingUp, Menu, X, Brain, Upload } from 'lucide-react';
+import { LogOut, LayoutDashboard, Gavel, FileSearch, Users, FileUp, Scale, TrendingUp, Menu, X, Brain } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useState } from 'react';
 const navItems = [
@@ -12,7 +12,6 @@ const navItems = [
         subItems: [
             { path: '/processos', label: 'Lista de Processos' },
             { path: '/processos/importar', label: 'Importar Planilha', icon: FileUp },
-            { path: '/processos/importar-etl', label: 'Importador ETL', icon: Upload },
             { path: '/processos/teses', label: 'Teses Tributárias', icon: Scale },
             { path: '/processos/indices', label: 'Índices Monetários', icon: TrendingUp },
             { path: '/processos/ml-analise', label: 'Análise ML Tributário', icon: Brain }

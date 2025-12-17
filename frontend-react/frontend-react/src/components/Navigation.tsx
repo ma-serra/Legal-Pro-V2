@@ -15,7 +15,6 @@ const navItems = [
         subItems: [
             { path: '/processos', label: 'Lista de Processos' },
             { path: '/processos/importar', label: 'Importar Planilha', icon: FileUp },
-            { path: '/processos/importar-etl', label: 'Importador ETL', icon: Upload },
             { path: '/processos/teses', label: 'Teses Tributárias', icon: Scale },
             { path: '/processos/indices', label: 'Índices Monetários', icon: TrendingUp },
             { path: '/processos/ml-analise', label: 'Análise ML Tributário', icon: Brain }
@@ -66,8 +65,8 @@ export default function Navigation() {
                                         <Link
                                             to={item.path}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive
-                                                    ? 'bg-primary/10 text-primary'
-                                                    : 'text-foreground hover:bg-accent hover:text-primary'
+                                                ? 'bg-primary/10 text-primary'
+                                                : 'text-foreground hover:bg-accent hover:text-primary'
                                                 }`}
                                         >
                                             <Icon className="w-4 h-4" />
@@ -99,8 +98,8 @@ export default function Navigation() {
                                     key={item.path}
                                     to={item.path}
                                     className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${isActive
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'text-foreground hover:bg-accent hover:text-primary'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-foreground hover:bg-accent hover:text-primary'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -160,8 +159,8 @@ export default function Navigation() {
                                                             to={subItem.path}
                                                             onClick={() => setMobileMenuOpen(false)}
                                                             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition ${location.pathname === subItem.path
-                                                                    ? 'bg-primary/10 text-primary'
-                                                                    : 'hover:bg-accent'
+                                                                ? 'bg-primary/10 text-primary'
+                                                                : 'hover:bg-accent'
                                                                 }`}
                                                         >
                                                             {SubIcon && <SubIcon className="w-4 h-4" />}

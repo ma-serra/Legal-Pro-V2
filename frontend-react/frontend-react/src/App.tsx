@@ -106,8 +106,7 @@ export default function App() {
             <Route path="/processos">
               <Route index element={<ProcessosDinamicosList />} />
               <Route path="novo" element={<NovoProcessoPage />} />
-              <Route path="importar" element={<ImportacaoPage />} />
-              <Route path="importar-etl" element={<ImportadorETLPage />} />
+              <Route path="importar" element={<ImportadorETLPage />} />
               <Route path="teses" element={<TesesPage />} />
               <Route path="indices" element={<IndicesPage />} />
               <Route path="ml-analise" element={<MLAnaliseTributarioPage />} />

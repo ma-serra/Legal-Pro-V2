@@ -104,8 +104,7 @@ class ProcessoService:
                     processo.id_processo,
                     data['dados_trabalhista']
                 )
-            
-            elif natureza_nome == 'Cível' and 'dados_civel' in data:
+                        if natureza_nome == 'Cível' and 'dados_civel' in data:
                 ProcessoService._criar_processo_civel(
                     processo.id_processo,
                     data['dados_civel']
@@ -114,12 +113,86 @@ class ProcessoService:
             db.session.commit()
             return processo
             
-        except IntegrityError as e:
+        except IndentationError as e:
             db.session.rollback()
-            raise ValueError(f"Erro de integridade: {str(e)}")
+            raise e
         except Exception as e:
             db.session.rollback()
-            raise
+            raise e
+
+    @staticmethod
+    def criar_processo_lote(lista_dados: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Cria múltiplos processos em lote (transação única)
+        
+        Args:
+            lista_dados: Lista de dados dos processos
+            
+        Returns:
+            Review de sucesso com contagem
+        """
+        sucesso = 0
+        erros = 0
+        detalhes_erros = []
+        
+        try:
+            for i, data in enumerate(lista_dados):
+                try:
+                    # Criar processo principal sem commit individual
+                    # Precisamos adaptar criar_processo para aceitar parametro commit=False
+                    # Ou reimplementar lógica simplificada aqui
+                    
+                    # Vamos simplificar: chamar criar_processo que faz commit.
+                    # Idealmente refatoraríamos para commit único, mas para MVP ok.
+                    # Mas importar 1000 processos com 1000 commits é lento.
+                    
+                    # Melhor: Usar lógica de inserção direta aqui
+                    processo = Processo(
+                        numero_cnj=data.get('numero_cnj'),
+                        pasta=data.get('pasta'),
+                        natureza_id=data.get('natureza_id'),
+                        status_id=data.get('status_id') or 1, # Default Ativo
+                        cliente_id=data.get('cliente_id'),
+                        fase_id=data.get('fase_id'),
+                        risco_id=data.get('risco_id'),
+                        data_distribuicao=data.get('data_distribuicao'),
+                        valor_causa=data.get('valor_causa'),
+                        titulo=data.get('titulo')
+                    )
+                    db.session.add(processo)
+                    db.session.flush() # Obter ID
+                    
+                    # Dados específicos Tributário
+                    if data.get('natureza_id') == 1 and 'dados_tributario' in data:
+                        dt = data['dados_tributario']
+                        pt = ProcessoTributario(
+                            id_processo=processo.id_processo,
+                            tributo_id=dt.get('tributo_id'),
+                            numero_aiim=dt.get('numero_aiim'),
+                            numero_cda=dt.get('numero_cda'),
+                            valor_inscrito_cda=dt.get('valor_inscrito_cda'),
+                            valor_principal=dt.get('valor_principal'),
+                            valor_multa=dt.get('valor_multa'),
+                            valor_juros=dt.get('valor_juros')
+                        )
+                        db.session.add(pt)
+                    
+                    sucesso += 1
+                    
+                except Exception as e:
+                    erros += 1
+                    detalhes_erros.append(f"Linha {i+1}: {str(e)}")
+            
+            db.session.commit()
+            return {
+                'importados': sucesso,
+                'erros': erros,
+                'detalhes': detalhes_erros
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            raise e
     
     @staticmethod
     def listar_processos(
