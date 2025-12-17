@@ -6,6 +6,10 @@ import { useState, useEffect } from 'react';
 import { Processo } from '../../types/processos';
 import api from '../../lib/api';
 import { FileText, DollarSign, Calendar, Building2, TrendingUp, History, X } from 'lucide-react';
+import QuickPredictCard from './QuickPredictCard';
+import TesesAssociadasSection from './TesesAssociadasSection';
+import PrognosticoTab from './PrognosticoTab';
+
 
 interface ProcessoDetailsProps {
     processoId: number;
@@ -132,31 +136,65 @@ export default function ProcessoDetails({ processoId, onClose }: ProcessoDetails
                     )}
 
                     {activeTab === 'valores' && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-                                    <label className="text-sm text-muted-foreground">Valor da Causa</label>
-                                    <p className="text-2xl font-bold text-green-400">{formatCurrency(processo.valor_causa)}</p>
-                                </div>
-                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                                    <label className="text-sm text-muted-foreground">Contingência</label>
-                                    <p className="text-2xl font-bold text-blue-400">{formatCurrency(processo.contingencia)}</p>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                                        <label className="text-sm text-muted-foreground">Valor da Causa</label>
+                                        <p className="text-2xl font-bold text-green-400">{formatCurrency(processo.valor_causa)}</p>
+                                    </div>
+                                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                                        <label className="text-sm text-muted-foreground">Contingência</label>
+                                        <p className="text-2xl font-bold text-blue-400">{formatCurrency(processo.contingencia)}</p>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* QuickPredict ML - Sidebar */}
+                            {processo.natureza_id === 1 && (
+                                <div className="lg:col-span-1">
+                                    <QuickPredictCard processoId={processoId} />
+                                </div>
+                            )}
                         </div>
                     )}
+
 
                     {activeTab === 'especifico' && (
-                        <div className="text-center py-8 text-muted-foreground">
-                            Dados específicos por natureza aparecerão aqui
+                        <div>
+                            {processo.natureza_id === 1 && (
+                                <TesesAssociadasSection
+                                    processoId={processoId}
+                                    tributoId={processo.tributario?.tributo_id}
+                                />
+                            )}
+                            {processo.natureza_id === 2 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    Dados específicos trabalhistas aparecerão aqui
+                                </div>
+                            )}
+                            {processo.natureza_id === 3 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    Dados específicos cíveis aparecerão aqui
+                                </div>
+                            )}
                         </div>
                     )}
 
+
                     {activeTab === 'prognostico' && (
-                        <div className="text-center py-8 text-muted-foreground">
-                            Prognóstico do processo aparecerá aqui
+                        <div>
+                            {processo.natureza_id === 1 && (
+                                <PrognosticoTab processoId={processoId} />
+                            )}
+                            {processo.natureza_id !== 1 && (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    Prognóstico disponível apenas para processos tributários
+                                </div>
+                            )}
                         </div>
                     )}
+
                 </div>
             </div>
         </div>
