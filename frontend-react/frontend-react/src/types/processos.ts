@@ -16,6 +16,7 @@ export interface Processo {
 
     // Cliente
     cliente_id?: number;
+    cliente?: string; // Nome do cliente (join)
     posicao_cliente_id?: number;
 
     // Classificação
@@ -53,6 +54,9 @@ export interface Processo {
     titulo?: string;
     observacao_pasta?: string;
     ativo: boolean;
+
+    // Campos auxiliares (podem vir do backend)
+    cnj?: string; // Alias para numero_cnj
 }
 
 export interface ProcessoCreate {

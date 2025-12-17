@@ -1,6 +1,6 @@
 /**
  * Listagem de Processos Dinâmicos - UX Premium
- * Integração com 43 APIs REST (Fases 2-4)
+ * Features: Batch Predict ML, Busca Avançada, Seleção Múltipla
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -51,10 +51,10 @@ export default function ProcessosDinamicosList() {
                 setProcessos(response.data.processos || []);
                 setStats({
                     total: response.data.total || 0,
-                    tributario: response.data.processos?.filter((p: Processo) => p.natureza_id === 1).length || 0,
-                    trabalhista: response.data.processos?.filter((p: Processo) => p.natureza_id === 2).length || 0,
-                    civel: response.data.processos?.filter((p: Processo) => p.natureza_id === 3).length || 0,
-                    valorTotal: response.data.processos?.reduce((sum: number, p: Processo) => sum + (p.valor_causa || 0), 0) || 0
+                    tributario: response.data.tributario || 0,
+                    trabalhista: response.data.trabalhista || 0,
+                    civel: response.data.civel || 0,
+                    valorTotal: response.data.valorTotal || 0
                 });
             }
         } catch (error) {
@@ -64,44 +64,32 @@ export default function ProcessosDinamicosList() {
         }
     };
 
-    const getNaturezaBadge = (natureza_id: number) => {
-        const naturezas = {
+    const getNaturezaBadge = (naturezaId: number) => {
+        const badges: Record<number, { label: string; color: string }> = {
             1: { label: 'Tributário', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-            2: { label: 'Trabalhista', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-            3: { label: 'Cível', color: 'bg-purple-500/20 text- border-purple-500/30' }
+            2: { label: 'Trabalhista', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+            3: { label: 'Cível', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' }
         };
-
-        const natureza = naturezas[natureza_id as keyof typeof naturezas] || naturezas[3];
-
+        const badge = badges[naturezaId] || { label: 'Outro', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
         return (
-            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${natureza.color}`}>
-                {natureza.label}
+            <span className={`px-2 py-1 rounded text-xs font-medium border ${badge.color}`}>
+                {badge.label}
             </span>
         );
     };
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(value);
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('pt-BR');
-    };
-
     const handleExportar = () => {
-        // Exportar para CSV
         const csvContent = [
-            ['Pasta', 'CNJ', 'Natureza', 'Valor', 'Data'].join(';'),
+            ['CNJ', 'Pasta', 'Cliente', 'Natureza', 'Status', 'Valor Causa', 'Data Criação'].join(','),
             ...processos.map(p => [
-                p.pasta,
-                p.numero_cnj || '',
+                p.cnj || '',
+                p.pasta || '',
+                p.cliente || '',
                 p.natureza_id === 1 ? 'Tributário' : p.natureza_id === 2 ? 'Trabalhista' : 'Cível',
+                p.ativo ? 'Ativo' : 'Inativo',
                 p.valor_causa || 0,
-                formatDate(p.data_criacao)
-            ].join(';'))
+                new Date(p.data_criacao).toLocaleDateString('pt-BR')
+            ].join(','))
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -122,15 +110,15 @@ export default function ProcessosDinamicosList() {
     const handleToggleSelecao = (id: number, e: React.MouseEvent) => {
         e.stopPropagation();
         setSelecionados(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+            prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
         );
     };
 
     const handleToggleTodos = () => {
-        if (selecionados.length === processos.length && processos.length > 0) {
+        const tributarios = processos.filter(p => p.natureza_id === 1);
+        if (selecionados.length === tributarios.length && selecionados.length > 0) {
             setSelecionados([]);
         } else {
-            const tributarios = processos.filter(p => p.natureza_id === 1);
             setSelecionados(tributarios.map(p => p.id_processo));
         }
     };
@@ -215,8 +203,8 @@ export default function ProcessosDinamicosList() {
                             <button
                                 onClick={handleToggleTodos}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${selecionados.length === processos.filter(p => p.natureza_id === 1).length && selecionados.length > 0
-                                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                                    : 'bg-accent hover:bg-accent/80'
+                                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                        : 'bg-accent hover:bg-accent/80'
                                     }`}
                                 title="Selecionar todos tributários"
                             >
@@ -250,87 +238,45 @@ export default function ProcessosDinamicosList() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
-                    <div className="flex items-start justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Total de Processos</p>
-                            <p className="text-3xl font-bold text-blue-400">{stats.total}</p>
+                            <p className="text-sm text-muted-foreground">Total</p>
+                            <h3 className="text-2xl font-bold">{stats.total}</h3>
                         </div>
-                        <div className="p-3 bg-blue-500/20 rounded-lg">
-                            <Gavel className="w-6 h-6 text-blue-400" />
-                        </div>
+                        <FileText className="w-8 h-8 text-primary opacity-50" />
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
-                    <div className="flex items-start justify-between">
+                <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Tributário</p>
-                            <p className="text-3xl font-bold text-orange-400">{stats.tributario}</p>
+                            <p className="text-sm text-muted-foreground">Tributário</p>
+                            <h3 className="text-2xl font-bold">{stats.tributario}</h3>
                         </div>
-                        <div className="p-3 bg-orange-500/20 rounded-lg">
-                            <Building2 className="w-6 h-6 text-orange-400" />
-                        </div>
+                        <TrendingUp className="w-8 h-8 text-blue-500 opacity-50" />
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
-                    <div className="flex items-start justify-between">
+                <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Trabalhista + Cível</p>
-                            <p className="text-3xl font-bold text-purple-400">{stats.trabalhista + stats.civel}</p>
+                            <p className="text-sm text-muted-foreground">Trabalhista</p>
+                            <h3 className="text-2xl font-bold">{stats.trabalhista}</h3>
                         </div>
-                        <div className="p-3 bg-purple-500/20 rounded-lg">
-                            <FileText className="w-6 h-6 text purple-400" />
-                        </div>
+                        <Building2 className="w-8 h-8 text-green-500 opacity-50" />
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
-                    <div className="flex items-start justify-between">
+                <div className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Valor Total</p>
-                            <p className="text-2xl font-bold text-green-400">{formatCurrency(stats.valorTotal)}</p>
+                            <p className="text-sm text-muted-foreground">Cível</p>
+                            <h3 className="text-2xl font-bold">{stats.civel}</h3>
                         </div>
-                        <div className="p-3 bg-green-500/20 rounded-lg">
-                            <DollarSign className="w-6 h-6 text-green-400" />
-                        </div>
+                        <Gavel className="w-8 h-8 text-purple-500 opacity-50" />
                     </div>
-                </div>
-            </div>
-
-            {/* Filters Bar */}
-            <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex flex-wrap gap-3 items-center">
-                    <Filter className="w-5 h-5 text-muted-foreground" />
-
-                    <input
-                        type="text"
-                        placeholder="Buscar por CNJ, pasta, título..."
-                        className="flex-1 min-w-[200px] bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                        onChange={(e) => setFiltros({ ...filtros, busca: e.target.value, page: 1 })}
-                    />
-
-                    <select
-                        className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                        onChange={(e) => setFiltros({ ...filtros, natureza_id: e.target.value ? Number(e.target.value) : undefined, page: 1 })}
-                    >
-                        <option value="">Todas as Naturezas</option>
-                        <option value="1">Tributário</option>
-                        <option value="2">Trabalhista</option>
-                        <option value="3">Cível</option>
-                    </select>
-
-                    <select
-                        className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                        onChange={(e) => setFiltros({ ...filtros, status_id: e.target.value ? Number(e.target.value) : undefined, page: 1 })}
-                    >
-                        <option value="">Todos os Status</option>
-                        <option value="1">Ativo</option>
-                        <option value="2">Arquivado</option>
-                        <option value="3">Suspenso</option>
-                    </select>
                 </div>
             </div>
 
@@ -350,6 +296,7 @@ export default function ProcessosDinamicosList() {
                             key={processo.id_processo}
                             className="bg-card border border-border rounded-xl p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group relative"
                         >
+                            {/* CHECKBOX SELECTION */}
                             {processo.natureza_id === 1 && (
                                 <div
                                     className="absolute top-4 right-4 z-10"
@@ -373,7 +320,7 @@ export default function ProcessosDinamicosList() {
                                 onClick={() => handleVerDetalhes(processo.id_processo)}
                                 className="cursor-pointer"
                             >
-                                {/* Header do Card */}
+                                {/* Header */}
                                 <div className="flex items-start justify-between mb-4 pr-10">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
@@ -388,32 +335,28 @@ export default function ProcessosDinamicosList() {
                                     </div>
                                 </div>
 
-                                {/* Info */}
-                                <div className="space-y-3 text-sm">
-                                    {processo.numero_cnj && (
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <FileText className="w-4 h-4" />
-                                            <span className="font-mono">{processo.numero_cnj}</span>
+                                {/* Content */}
+                                <div className="space-y-2 text-sm">
+                                    {processo.cnj && (
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-muted-foreground" />
+                                            <span className="text-muted-foreground">{processo.cnj}</span>
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Scale className="w-4 h-4" />
-                                        <span>{processo.pasta}</span>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                                        <span>{new Date(processo.data_criacao).toLocaleDateString('pt-BR')}</span>
                                     </div>
 
                                     {processo.valor_causa && (
                                         <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-green-500" />
-                                            <span className="font-medium">{formatCurrency(processo.valor_causa)}</span>
+                                            <DollarSign className="w-4 h-4 text-muted-foreground" />
+                                            <span className="font-semibold text-primary">
+                                                R$ {processo.valor_causa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </span>
                                         </div>
                                     )}
-
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>{formatDate(processo.data_criacao)}</span>
-                                    </div>
-                                </div>
 
                                 {/* Footer */}
                                 <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
@@ -423,43 +366,52 @@ export default function ProcessosDinamicosList() {
                                     <TrendingUp className="w-4 h-4 text-muted-foreground" />
                                 </div>
                             </div>
+                        </div>
                     ))}
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {processos.length > 0 && (
-                        <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">
-                                Mostrando {processos.length} de {stats.total} processos
-                            </p>
-
-                            <div className="flex gap-2">
-                                <button
-                                    disabled={filtros.page === 1}
-                                    onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) - 1 })}
-                                    className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Anterior
-                                </button>
-
-                                <button
-                                    onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) + 1 })}
-                                    className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
-                                >
-                                    Próxima
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {showBatchModal && (
-                        <BatchPredictModal
-                            processoIds={selecionados}
-                            onClose={() => setShowBatchModal(false)}
-                            onSuccess={handleBatchSuccess}
-                        />
-                    )}
                 </div>
-            );
+            )}
+
+            {/* Pagination */}
+            {processos.length > 0 && (
+                <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+                    <p className="text-sm text-muted-foreground">
+                        Mostrando {processos.length} de {stats.total} processos
+                    </p>
+
+                    <div className="flex gap-2">
+                        <button
+                            disabled={filtros.page === 1}
+                            onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) - 1 })}
+                            className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Anterior
+                        </button>
+
+                        <button
+                            onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) + 1 })}
+                            className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+                        >
+                            Próxima
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modals */}
+            {showBatchModal && (
+                <BatchPredictModal
+                    processoIds={selecionados}
+                    onClose={() => setShowBatchModal(false)}
+                    onSuccess={handleBatchSuccess}
+                />
+            )}
+
+            {showBuscaAvancada && (
+                <ProcessosBuscaAvancada
+                    onClose={() => setShowBuscaAvancada(false)}
+                    onResultados={handleBuscaResultados}
+                />
+            )}
+        </div>
+    );
 }
