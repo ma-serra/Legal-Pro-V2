@@ -240,6 +240,11 @@ def get_model_info():
         'amostras_treino': modelo.total_amostras_treino,
         'amostras_teste': modelo.total_amostras_teste,
         'features': modelo.features_utilizadas,
+        # Adaptador para frontend que espera features_importantes
+        'features_importantes': [
+            {'nome': f, 'importancia': 1.0/len(modelo.features_utilizadas) if modelo.features_utilizadas else 0}
+            for f in (modelo.features_utilizadas or [])
+        ],
         'hiperparametros': modelo.hiperparametros,
         'ativo': modelo.ativo
     }), 200

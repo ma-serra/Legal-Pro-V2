@@ -238,6 +238,7 @@ class TributarioPredictor:
                 'fallback': True
             }
 
+    def predict_batch(
         self,
         processo_ids: List[int],
         save_to_db: bool = True
