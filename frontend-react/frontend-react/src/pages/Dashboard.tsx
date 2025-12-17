@@ -2,56 +2,32 @@
  * Dashboard - Moderna e Corporativa
  * Stats reais, gráficos e métricas
  */
-import ProcessoStats from '../components/processos/ProcessoStats';
-import { TrendingUp, Users, FileText, DollarSign } from 'lucide-react';
+import DashboardEstatisticas from '../components/processos/DashboardEstatisticas';
 
 export default function Dashboard() {
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-[1600px] mx-auto space-y-6">
       {/* Header Moderno */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Visão geral do sistema Legal Pro</p>
+          <h1 className="text-3xl font-bold mb-2 text-primary">Dashboard Executivo</h1>
+          <p className="text-muted-foreground">Visão holística e indicadores de performance jurídica</p>
         </div>
 
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Última atualização</p>
-          <p className="font-semibold">{new Date().toLocaleDateString('pt-BR')}</p>
+        <div className="text-right hidden sm:block">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Atualização em Tempo Real</p>
+          <div className="flex items-center gap-2 justify-end">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <p className="font-medium">{new Date().toLocaleDateString('pt-BR')} • {new Date().toLocaleTimeString('pt-BR')}</p>
+          </div>
         </div>
       </div>
 
-      {/* Stats de Processos */}
-      <ProcessoStats />
-
-      {/* Métricas Adicionais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="font-semibold">Tendências</h3>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            Visualização de tendências será implementada em breve
-          </p>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-green-500/20 rounded-lg">
-              <FileText className="w-5 h-5 text-green-400" />
-            </div>
-            <h3 className="font-semibold">Atividade Recente</h3>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            Atividades recentes serão exibidas aqui
-          </p>
-        </div>
-      </div>
+      {/* Analytics Completo */}
+      <DashboardEstatisticas />
     </div>
   );
 }
