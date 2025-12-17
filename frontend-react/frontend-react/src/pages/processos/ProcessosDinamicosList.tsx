@@ -7,11 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import {
     Gavel, Plus, Filter, Download, RefreshCw,
     FileText, TrendingUp, AlertCircle, CheckCircle,
-    Calendar, DollarSign, Scale, Building2, Brain
+    Calendar, DollarSign, Scale, Building2, Brain, Search
 } from 'lucide-react';
 import { Processo, FiltroPesquisa } from '../../types/processos';
 import api from '../../lib/api';
 import BatchPredictModal from '../../components/processos/BatchPredictModal';
+import ProcessosBuscaAvancada from '../../components/processos/ProcessosBuscaAvancada';
 
 export default function ProcessosDinamicosList() {
     const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function ProcessosDinamicosList() {
 
     const [selecionados, setSelecionados] = useState<number[]>([]);
     const [showBatchModal, setShowBatchModal] = useState(false);
+    const [showBuscaAvancada, setShowBuscaAvancada] = useState(false);
 
     useEffect(() => {
         fetchProcessos();
@@ -146,6 +148,18 @@ export default function ProcessosDinamicosList() {
         fetchProcessos();
     };
 
+    const handleBuscaResultados = (processos: Processo[]) => {
+        setProcessos(processos);
+        setStats({
+            total: processos.length,
+            tributario: processos.filter(p => p.natureza_id === 1).length,
+            trabalhista: processos.filter(p => p.natureza_id === 2).length,
+            civel: processos.filter(p => p.natureza_id === 3).length,
+            valorTotal: processos.reduce((sum, p) => sum + (p.valor_causa || 0), 0)
+        });
+        setShowBuscaAvancada(false);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -173,6 +187,14 @@ export default function ProcessosDinamicosList() {
 
                 <div className="flex gap-3">
                     <button
+                        onClick={() => setShowBuscaAvancada(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all font-medium shadow-md"
+                    >
+                        <Search className="w-4 h-4" />
+                        Busca Avançada
+                    </button>
+
+                    <button
                         onClick={fetchProcessos}
                         className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
                     >
@@ -193,8 +215,8 @@ export default function ProcessosDinamicosList() {
                             <button
                                 onClick={handleToggleTodos}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${selecionados.length === processos.filter(p => p.natureza_id === 1).length && selecionados.length > 0
-                                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                                        : 'bg-accent hover:bg-accent/80'
+                                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                    : 'bg-accent hover:bg-accent/80'
                                     }`}
                                 title="Selecionar todos tributários"
                             >
