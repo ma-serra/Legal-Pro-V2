@@ -7,10 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import {
     Gavel, Plus, Filter, Download, RefreshCw,
     FileText, TrendingUp, AlertCircle, CheckCircle,
-    Calendar, DollarSign, Scale, Building2
+    Calendar, DollarSign, Scale, Building2, Brain
 } from 'lucide-react';
 import { Processo, FiltroPesquisa } from '../../types/processos';
 import api from '../../lib/api';
+import BatchPredictModal from '../../components/processos/BatchPredictModal';
 
 export default function ProcessosDinamicosList() {
     const navigate = useNavigate();
@@ -31,8 +32,12 @@ export default function ProcessosDinamicosList() {
         valorTotal: 0
     });
 
+    const [selecionados, setSelecionados] = useState<number[]>([]);
+    const [showBatchModal, setShowBatchModal] = useState(false);
+
     useEffect(() => {
         fetchProcessos();
+        setSelecionados([]);
     }, [filtros]);
 
     const fetchProcessos = async () => {
@@ -112,6 +117,35 @@ export default function ProcessosDinamicosList() {
         navigate(`/processos/${processoId}`);
     };
 
+    const handleToggleSelecao = (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelecionados(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleToggleTodos = () => {
+        if (selecionados.length === processos.length && processos.length > 0) {
+            setSelecionados([]);
+        } else {
+            const tributarios = processos.filter(p => p.natureza_id === 1);
+            setSelecionados(tributarios.map(p => p.id_processo));
+        }
+    };
+
+    const handleBatchPredict = () => {
+        if (selecionados.length === 0) {
+            alert('Selecione pelo menos um processo tributário');
+            return;
+        }
+        setShowBatchModal(true);
+    };
+
+    const handleBatchSuccess = () => {
+        setSelecionados([]);
+        fetchProcessos();
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -153,6 +187,35 @@ export default function ProcessosDinamicosList() {
                         <Download className="w-4 h-4" />
                         Exportar
                     </button>
+
+                    {stats.tributario > 0 && (
+                        <>
+                            <button
+                                onClick={handleToggleTodos}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${selecionados.length === processos.filter(p => p.natureza_id === 1).length && selecionados.length > 0
+                                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                        : 'bg-accent hover:bg-accent/80'
+                                    }`}
+                                title="Selecionar todos tributários"
+                            >
+                                <CheckCircle className="w-4 h-4" />
+                                {selecionados.length === processos.filter(p => p.natureza_id === 1).length && selecionados.length > 0
+                                    ? 'Desmarcar'
+                                    : 'Selec. Tributários'
+                                }
+                            </button>
+
+                            {selecionados.length > 0 && (
+                                <button
+                                    onClick={handleBatchPredict}
+                                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition-all font-semibold shadow-lg animate-pulse"
+                                >
+                                    <Brain className="w-5 h-5" />
+                                    Analisar ML ({selecionados.length})
+                                </button>
+                            )}
+                        </>
+                    )}
 
                     <button
                         onClick={handleNovoProcesso}
@@ -263,88 +326,118 @@ export default function ProcessosDinamicosList() {
                     {processos.map((processo) => (
                         <div
                             key={processo.id_processo}
-                            onClick={() => handleVerDetalhes(processo.id_processo)}
-                            className="bg-card border border-border rounded-xl p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                            className="bg-card border border-border rounded-xl p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group relative"
                         >
-                            {/* Header do Card */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        {getNaturezaBadge(processo.natureza_id)}
-                                        {processo.ativo && (
-                                            <CheckCircle className="w-4 h-4 text-green-500" />
-                                        )}
-                                    </div>
-                                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                                        {processo.titulo || processo.pasta}
-                                    </h3>
+                            {processo.natureza_id === 1 && (
+                                <div
+                                    className="absolute top-4 right-4 z-10"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={selecionados.includes(processo.id_processo)}
+                                            onChange={(e) => handleToggleSelecao(processo.id_processo, e as any)}
+                                            className="w-5 h-5 rounded border-2 border-primary text-primary focus:ring-2 focus:ring-primary/50 cursor-pointer transition-all hover:scale-110"
+                                        />
+                                        <span className="text-xs text-muted-foreground hidden group-hover:inline">
+                                            ML
+                                        </span>
+                                    </label>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Info */}
-                            <div className="space-y-3 text-sm">
-                                {processo.numero_cnj && (
+                            <div
+                                onClick={() => handleVerDetalhes(processo.id_processo)}
+                                className="cursor-pointer"
+                            >
+                                {/* Header do Card */}
+                                <div className="flex items-start justify-between mb-4 pr-10">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {getNaturezaBadge(processo.natureza_id)}
+                                            {processo.ativo && (
+                                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                            )}
+                                        </div>
+                                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                                            {processo.titulo || processo.pasta}
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                {/* Info */}
+                                <div className="space-y-3 text-sm">
+                                    {processo.numero_cnj && (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <FileText className="w-4 h-4" />
+                                            <span className="font-mono">{processo.numero_cnj}</span>
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-2 text-muted-foreground">
-                                        <FileText className="w-4 h-4" />
-                                        <span className="font-mono">{processo.numero_cnj}</span>
+                                        <Scale className="w-4 h-4" />
+                                        <span>{processo.pasta}</span>
                                     </div>
-                                )}
 
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Scale className="w-4 h-4" />
-                                    <span>{processo.pasta}</span>
+                                    {processo.valor_causa && (
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign className="w-4 h-4 text-green-500" />
+                                            <span className="font-medium">{formatCurrency(processo.valor_causa)}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>{formatDate(processo.data_criacao)}</span>
+                                    </div>
                                 </div>
 
-                                {processo.valor_causa && (
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign className="w-4 h-4 text-green-500" />
-                                        <span className="font-medium">{formatCurrency(processo.valor_causa)}</span>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{formatDate(processo.data_criacao)}</span>
+                                {/* Footer */}
+                                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                                    <span className="text-xs text-primary font-medium group-hover:underline">
+                                        Ver Detalhes →
+                                    </span>
+                                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
                                 </div>
                             </div>
+                    ))}
+                        </div>
+                    )}
 
-                            {/* Footer */}
-                            <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                                <span className="text-xs text-primary font-medium group-hover:underline">
-                                    Ver Detalhes →
-                                </span>
-                                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                    {/* Pagination */}
+                    {processos.length > 0 && (
+                        <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+                            <p className="text-sm text-muted-foreground">
+                                Mostrando {processos.length} de {stats.total} processos
+                            </p>
+
+                            <div className="flex gap-2">
+                                <button
+                                    disabled={filtros.page === 1}
+                                    onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) - 1 })}
+                                    className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Anterior
+                                </button>
+
+                                <button
+                                    onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) + 1 })}
+                                    className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+                                >
+                                    Próxima
+                                </button>
                             </div>
                         </div>
-                    ))}
+                    )}
+
+                    {showBatchModal && (
+                        <BatchPredictModal
+                            processoIds={selecionados}
+                            onClose={() => setShowBatchModal(false)}
+                            onSuccess={handleBatchSuccess}
+                        />
+                    )}
                 </div>
-            )}
-
-            {/* Pagination */}
-            {processos.length > 0 && (
-                <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">
-                        Mostrando {processos.length} de {stats.total} processos
-                    </p>
-
-                    <div className="flex gap-2">
-                        <button
-                            disabled={filtros.page === 1}
-                            onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) - 1 })}
-                            className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            Anterior
-                        </button>
-
-                        <button
-                            onClick={() => setFiltros({ ...filtros, page: (filtros.page || 1) + 1 })}
-                            className="px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
-                        >
-                            Próxima
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+            );
 }
