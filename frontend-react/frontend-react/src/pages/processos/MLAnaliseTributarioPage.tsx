@@ -169,7 +169,7 @@ export default function MLAnaliseTributarioPage() {
 
             {/* Content Area */}
             <div className="min-h-[500px]">
-                {activeTab === 'analise' ? (
+                {activeTab === 'analise' && (
                     <div className="space-y-6 animate-in fade-in duration-300">
                         {/* Seção Análise de Processo (Existente) */}
                         <div className="bg-card border border-border rounded-xl p-6">
@@ -324,7 +324,9 @@ export default function MLAnaliseTributarioPage() {
                             </div>
                         )}
                     </div>
-                ) : (
+                )}
+
+                {activeTab === 'simulador' && (
                     <div className="animate-in fade-in duration-300 py-6">
                         {/* Seção Simulador (Novo) */}
                         <div className="mb-6">
