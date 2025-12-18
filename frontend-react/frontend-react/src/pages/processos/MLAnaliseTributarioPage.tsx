@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Brain, TrendingUp, Target, Clock, RefreshCw, AlertCircle, Calculator } from 'lucide-react';
+import { Brain, TrendingUp, Target, Clock, RefreshCw, AlertCircle, Calculator, BarChart3 } from 'lucide-react';
 import api from '../../lib/api';
 import SimuladorPreditivo from '../../components/ml/SimuladorPreditivo';
+import MLModelosDashboard from './MLModelosDashboard';
 
 interface Processo {
     id_processo: number;
@@ -21,7 +22,7 @@ interface PredicaoML {
 }
 
 export default function MLAnaliseTributarioPage() {
-    const [activeTab, setActiveTab] = useState<'analise' | 'simulador'>('analise');
+    const [activeTab, setActiveTab] = useState<'analise' | 'simulador' | 'dashboard'>('analise');
 
     // Estados Tab Análise
     const [processos, setProcessos] = useState<Processo[]>([]);
@@ -137,8 +138,8 @@ export default function MLAnaliseTributarioPage() {
                 <button
                     onClick={() => setActiveTab('analise')}
                     className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'analise'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                         }`}
                 >
                     <Target className="w-4 h-4" />
@@ -147,12 +148,22 @@ export default function MLAnaliseTributarioPage() {
                 <button
                     onClick={() => setActiveTab('simulador')}
                     className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'simulador'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                         }`}
                 >
                     <Calculator className="w-4 h-4" />
                     Simulador What-If
+                </button>
+                <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'dashboard'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                >
+                    <BarChart3 className="w-4 h-4" />
+                    Performance Visual
                 </button>
             </div>
 
@@ -324,6 +335,12 @@ export default function MLAnaliseTributarioPage() {
                             </p>
                         </div>
                         <SimuladorPreditivo />
+                    </div>
+                )}
+
+                {activeTab === 'dashboard' && (
+                    <div className="animate-in fade-in duration-300">
+                        <MLModelosDashboard />
                     </div>
                 )}
             </div>
