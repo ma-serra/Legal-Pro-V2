@@ -169,6 +169,9 @@ export interface FiltroPesquisa {
     data_inicio?: string;
     data_fim?: string;
     busca?: string;
+    advogado_id?: number;
+    fase_id?: number;
+    comarca_id?: number;
     page?: number;
     per_page?: number;
     ordenacao?: string;

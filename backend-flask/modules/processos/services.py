@@ -104,7 +104,7 @@ class ProcessoService:
                     processo.id_processo,
                     data['dados_trabalhista']
                 )
-                        if natureza_nome == 'Cível' and 'dados_civel' in data:
+            elif natureza_nome == 'Cível' and 'dados_civel' in data:
                 ProcessoService._criar_processo_civel(
                     processo.id_processo,
                     data['dados_civel']
@@ -249,6 +249,16 @@ class ProcessoService:
                         Processo.titulo.ilike(termo)
                     )
                 )
+            
+            # Novos filtros
+            if 'advogado_id' in filtros:
+                query = query.filter_by(advogado_id=filtros['advogado_id'])
+            
+            if 'fase_id' in filtros:
+                query = query.filter_by(fase_id=filtros['fase_id'])
+            
+            if 'comarca_id' in filtros:
+                query = query.filter_by(comarca_id=filtros['comarca_id'])
         
         # Ordenação
         if ordem == 'desc':

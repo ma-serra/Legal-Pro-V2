@@ -38,10 +38,31 @@ export default function ProcessosDinamicosList() {
     const [showBatchModal, setShowBatchModal] = useState(false);
     const [showBuscaAvancada, setShowBuscaAvancada] = useState(false);
 
+    // Dados auxiliares para filtros
+    const [advogados, setAdvogados] = useState<any[]>([]);
+    const [fases, setFases] = useState<any[]>([]);
+    const [comarcas, setComarcas] = useState<any[]>([]);
+
     useEffect(() => {
+        fetchAuxiliaryData();
         fetchProcessos();
         setSelecionados([]);
     }, [filtros]);
+
+    const fetchAuxiliaryData = async () => {
+        try {
+            const [advRes, faseRes, comarcaRes] = await Promise.all([
+                api.get('/api/processos/advogados'),
+                api.get('/api/processos/fases'),
+                api.get('/api/processos/comarcas')
+            ]);
+            setAdvogados(advRes.data || []);
+            setFases(faseRes.data || []);
+            setComarcas(comarcaRes.data || []);
+        } catch (error) {
+            console.error('Erro ao carregar filtros:', error);
+        }
+    };
 
     const fetchProcessos = async () => {
         setLoading(true);
@@ -240,11 +261,23 @@ export default function ProcessosDinamicosList() {
                 <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Trabalhista + Cível</p>
-                            <p className="text-3xl font-bold text-purple-400">{stats.trabalhista + stats.civel}</p>
+                            <p className="text-sm text-muted-foreground mb-1">Trabalhista</p>
+                            <p className="text-3xl font-bold text-purple-400">{stats.trabalhista}</p>
                         </div>
                         <div className="p-3 bg-purple-500/20 rounded-lg">
-                            <FileText className="w-6 h-6 text purple-400" />
+                            <FileText className="w-6 h-6 text-purple-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border border-indigo-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Cível</p>
+                            <p className="text-3xl font-bold text-indigo-400">{stats.civel}</p>
+                        </div>
+                        <div className="p-3 bg-indigo-500/20 rounded-lg">
+                            <Scale className="w-6 h-6 text-indigo-400" />
                         </div>
                     </div>
                 </div>
@@ -292,6 +325,36 @@ export default function ProcessosDinamicosList() {
                         <option value="1">Ativo</option>
                         <option value="2">Arquivado</option>
                         <option value="3">Suspenso</option>
+                    </select>
+
+                    <select
+                        className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        onChange={(e) => setFiltros({ ...filtros, fase_id: e.target.value ? Number(e.target.value) : undefined, page: 1 })}
+                    >
+                        <option value="">Todas as Fases</option>
+                        {fases.map(f => (
+                            <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        onChange={(e) => setFiltros({ ...filtros, comarca_id: e.target.value ? Number(e.target.value) : undefined, page: 1 })}
+                    >
+                        <option value="">Todas as Comarcas</option>
+                        {comarcas.map(c => (
+                            <option key={c.id} value={c.id}>{c.nome}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        className="bg-background border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        onChange={(e) => setFiltros({ ...filtros, advogado_id: e.target.value ? Number(e.target.value) : undefined, page: 1 })}
+                    >
+                        <option value="">Todos os Advogados</option>
+                        {advogados.map(a => (
+                            <option key={a.id} value={a.id}>{a.nome}</option>
+                        ))}
                     </select>
                 </div>
             </div>

@@ -14,7 +14,7 @@ from .schemas import (
     TeseTributariaSchema,
     IndiceMonetarioSchema
 )
-from models import Tributo, TeseTributaria, IndiceMonetario
+from models import Tributo, TeseTributaria, IndiceMonetario, Advogado, Fase, Comarca
 
 # Criar Blueprint
 processos_bp = Blueprint('processos', __name__, url_prefix='/api/processos')
@@ -206,6 +206,28 @@ def listar_indices_monetarios():
     
     schema = IndiceMonetarioSchema(many=True)
     return jsonify(schema.dump(indices)), 200
+
+
+@processos_bp.route('/advogados', methods=['GET'])
+@handle_errors
+def listar_advogados():
+    """Lista advogados ativos"""
+    advogados = Advogado.query.filter_by(ativo=True).all()
+    return jsonify([a.to_dict() for a in advogados]), 200
+
+@processos_bp.route('/fases', methods=['GET'])
+@handle_errors
+def listar_fases():
+    """Lista fases ativas"""
+    fases = Fase.query.filter_by(ativo=True).all()
+    return jsonify([f.to_dict() for f in fases]), 200
+
+@processos_bp.route('/comarcas', methods=['GET'])
+@handle_errors
+def listar_comarcas():
+    """Lista comarcas ativas"""
+    comarcas = Comarca.query.filter_by(ativo=True).all()
+    return jsonify([c.to_dict() for c in comarcas]), 200
 
 
 # ============================================================================
