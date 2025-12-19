@@ -44,21 +44,8 @@ export default function DashboardEstatisticas() {
             setStats(response.data);
         } catch (err) {
             console.error('Erro ao carregar estatísticas:', err);
-            // Mock data for development if endpoint fails or is not ready
-            setStats({
-                total_processos: 1250,
-                por_natureza: { '1': 450, '2': 300, '3': 500 },
-                por_status: { '1': 800, '2': 400, '3': 50 },
-                por_risco: { '1': 200, '2': 600, '3': 450 },
-                valores_financeiros: {
-                    total_valor_causa: 15400000.00,
-                    total_valor_envolvido: 22000000.00,
-                    total_contingencia: 8500000.00,
-                    media_valor_causa: 12320.00
-                },
-                por_ano: { '2020': 100, '2021': 250, '2022': 300, '2023': 400, '2024': 200 }
-            });
-            setError('Usando dados demonstrativos (API indisponível)');
+            console.error('Erro ao carregar estatísticas:', err);
+            setError('Erro ao carregar estatísticas. Verifique a conexão com o servidor.');
         } finally {
             setLoading(false);
         }
