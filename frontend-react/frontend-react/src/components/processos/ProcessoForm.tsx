@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { Save, X, FileText, Users, Building2, DollarSign, Scale, AlertTriangle } from 'lucide-react';
 import api from '../../lib/api';
 import TesesMultiSelect from './TesesMultiSelect';
+import AtualizacaoMonetariaSection from './AtualizacaoMonetariaSection';
 
 interface ProcessoFormData {
     // Dados Básicos OBRIGATÓRIOS
@@ -771,6 +772,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                         <p className="text-xs text-muted-foreground mt-1">*Turma que julgou/julgará em 2ª instância</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Atualização Monetária */}
+                            <div className="mt-6">
+                                <AtualizacaoMonetariaSection
+                                    valorOriginal={watch('tributario.valor_principal') || watch('valor_causa') || 0}
+                                    dataBase={watch('tributario.data_lancamento')}
+                                    onChange={(valor) => setValue('valor_causa_atualizado', valor)}
+                                />
                             </div>
                         </div>
                     </div>
