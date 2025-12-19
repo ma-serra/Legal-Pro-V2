@@ -14,26 +14,8 @@ os.environ['DATABASE_URL'] = DEFAULT_DB_URL
 # Adicionar diretório pai ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Imports de modelos - Cuidado com duplicidade
-from main import create_app, db
+# Imports de modelos movidos para dentro de run_import para evitar erro de inicialização prematura
 
-# Importar modelos principais de models.py
-from models import (
-    Processo, 
-    ProcessoTributario, 
-    ProcessoTrabalhista, 
-    ProcessoCivel
-)
-# Models SaaS
-from models_saas import Client, Tenancy
-
-# Imports de models_processos SOMENTE para tabelas que NÃO estão em models.py
-# Tributo e TeseTributaria devem vir de models_processos
-try:
-    from models_processos import Tributo, TeseTributaria
-except ImportError:
-    # Fallback ou definição dummy se falhar, mas deve existir
-    print("WARNING: Could not import Tributo/TeseTributaria from models_processos")
 
 # Configuração de Logging
 logging.basicConfig(
@@ -128,11 +110,26 @@ def run_import():
     df = pd.read_excel(excel_path)
     logger.info(f"Total de linhas encontradas: {len(df)}")
 
+    from main import create_app
     app = create_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = DEFAULT_DB_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     with app.app_context():
+        # Imports tardios para evitar problemas de contexto
+        from main import db
+        from models import (
+            Processo, 
+            ProcessoTributario, 
+            ProcessoTrabalhista, 
+            ProcessoCivel
+        )
+        from models_saas import Client, Tenancy
+        try:
+            from models_processos import Tributo, TeseTributaria
+        except ImportError:
+            print("WARNING: Could not import Tributo/TeseTributaria")
+
         # 1. Garantir Tenancy Principal
         tenancy = Tenancy.query.filter_by(slug='legal-pro-hub').first()
         if not tenancy:

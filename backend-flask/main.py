@@ -43,7 +43,7 @@ for verbose_logger in ['sqlalchemy.engine', 'urllib3', 'requests', 'httpx']:
     logging.getLogger(verbose_logger).setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
-print("🚀 Legal Pro - Fast Deploy Mode")  # Print direto sem logging
+print("[Legal Pro - Fast Deploy Mode]")  # Print direto sem logging
 
 # Lazy loading para BERT - evita blocking startup
 bert_inference = None
@@ -61,9 +61,9 @@ def _load_bert():
         try:
             from modules.bert_portuguese_inference import bert_inference as _bi, analyze_document_with_bert as _adb, get_bert_embeddings as _gbe
             bert_inference, analyze_document_with_bert, get_bert_embeddings = _bi, _adb, _gbe
-            print("🤖 Módulo BERT Português carregado")
+            print("Modulo BERT Portugues carregado")
         except ImportError as e:
-            print(f"⚠️ BERT Português indisponível: {e}")
+            print(f"BERT Portugues indisponivel: {e}")
             bert_inference = False
     return bert_inference
 
@@ -406,6 +406,7 @@ def create_app():
         logger.warning("Chave secreta gerada automaticamente. Configure SESSION_SECRET nas variáveis de ambiente para produção.")
     app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    print(f"[DEBUG] Configured DB URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -892,20 +893,21 @@ def create_app():
         logger.error(f"❌ Erro ao registrar API de Comparação: {e}")
     
     # Registrar API REST de Processos Dinâmicos (Fase 2)
-    try:
-        from modules.processos.routes import registrar_rotas
-        registrar_rotas(app)
-        logger.info("✅ API REST de Processos Dinâmicos registrada com sucesso (12 endpoints)")
-    except Exception as e:
-        logger.error(f"❌ Erro ao registrar API de Processos Dinâmicos: {e}")
+    # DESATIVADO: Já registrado anteriormente como 'Processos Principais System'
+    # try:
+    #     from modules.processos.routes import registrar_rotas
+    #     registrar_rotas(app)
+    #     logger.info("✅ API REST de Processos Dinâmicos registrada com sucesso (12 endpoints)")
+    # except Exception as e:
+    #     logger.error(f"❌ Erro ao registrar API de Processos Dinâmicos: {e}")
     
     # Registrar API REST de Processos Tributário (Fase 3)
-    try:
-        from modules.processos_tributario.routes import registrar_rotas as registrar_tributario
-        registrar_tributario(app)
-        logger.info("✅ API REST de Processos Tributário registrada com sucesso (15 endpoints)")
-    except Exception as e:
-        logger.error(f"❌ Erro ao registrar API de Processos Tributário: {e}")
+    # try:
+    #     from modules.processos_tributario.routes import registrar_rotas as registrar_tributario
+    #     registrar_tributario(app)
+    #     logger.info("✅ API REST de Processos Tributário registrada com sucesso (15 endpoints)")
+    # except Exception as e:
+    #     logger.error(f"❌ Erro ao registrar API de Processos Tributário: {e}")
     
     # Registrar API REST de Processos Trabalhista (Fase 3)
     try:
@@ -17829,22 +17831,22 @@ def bert_status():
 try:
     from api_database_system import register_database_apis
     register_database_apis(app)
-    print("✅ APIs de Database registradas com sucesso")
+    print("APIs de Database registradas com sucesso")
     print("   • /api/database/tabelas - Lista tabelas com modelos Python")
     print("   • /api/database/colunas/<tabela> - Colunas específicas")
     print("   • /api/database/preview/<tabela> - Preview dos dados")
     print("   • /api/database/update-system - Atualização sistêmica")
     print("   • /api/database/status - Status do sistema")
 except ImportError as e:
-    print(f"❌ Erro ao registrar APIs de Database: {e}")
+    print(f"Erro ao registrar APIs de Database: {e}")
 
 # ==================== FIX: REGISTRO GLOBAL DE PROCESSOS ====================
-try:
-    from modules.processos.routes import processos_bp
-    app.register_blueprint(processos_bp)
-    logger.info("✅ SUCCESS: Módulo de Processos (nova arquitetura) registrado globalmente em main.py")
-except Exception as e:
-    logger.error(f"❌ CRITICAL ERROR: Falha ao registrar processos_bp globalmente: {str(e)}")
+# try:
+#     from modules.processos.routes import processos_bp
+#     app.register_blueprint(processos_bp)
+#     logger.info("✅ SUCCESS: Módulo de Processos (nova arquitetura) registrado globalmente em main.py")
+# except Exception as e:
+#     logger.error(f"❌ CRITICAL ERROR: Falha ao registrar processos_bp globalmente: {str(e)}")
 
 
 # Aplicar configuração de timeout

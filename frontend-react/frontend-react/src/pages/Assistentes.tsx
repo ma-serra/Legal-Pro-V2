@@ -21,7 +21,7 @@ interface Mensagem {
 interface Conversa {
   id: string;
   titulo: string;
-  assistente_id: number;
+  assistente_id: string;
   mensagens: Mensagem[];
   criado_em: Date;
   atualizado_em: Date;
@@ -75,12 +75,13 @@ export default function Assistentes() {
     }
   };
 
-  const selecionarAssistente = (id: number) => {
-    setAssistenteSelecionado(id);
+  const selecionarAssistente = (id: string | number) => {
+    const idStr = String(id);
+    setAssistenteSelecionado(idStr);
     setConversaAtual({
       id: Date.now().toString(),
-      titulo: `Nova conversa - ${assistentes.find(a => a.id === id)?.nome}`,
-      assistente_id: id,
+      titulo: `Nova conversa - ${assistentes.find(a => a.id === idStr)?.nome}`,
+      assistente_id: idStr,
       mensagens: [],
       criado_em: new Date(),
       atualizado_em: new Date()
@@ -139,7 +140,7 @@ export default function Assistentes() {
     try {
       // Chamada real à API
       const response = await api.post('/api/assistentes/consultar', {
-        area: assistenteSelecionado.id.toString(), // Enviando ID da área (ex: 'direito_civil')
+        area: assistenteSelecionado, // Enviando ID da área (ex: 'direito_civil')
         pergunta: inputMensagem,
         contexto: '', // Contexto adicional se necessário
         modelo: 'gpt-4o' // Modelo padrão ou selecionado nas preferências

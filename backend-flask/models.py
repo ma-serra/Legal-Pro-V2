@@ -667,7 +667,8 @@ class AnaliseDocumento(db.Model):
     documento = relationship("Documento", back_populates="analises")
     versao = relationship("VersaoDocumento", backref="analises")
     agente = relationship("AgenteJuridico", backref="analises")
-    comparacoes = relationship("AnaliseComparativa", foreign_keys="[AnaliseComparativa.analise_principal_id]", back_populates="analise_principal")
+    comparacoes = relationship("AnaliseComparativa", foreign_keys="AnaliseComparativa.analise_principal_id", back_populates="analise_principal")
+
     
     def __repr__(self):
         return f'<AnaliseDocumento {self.id}: Doc {self.documento_id}>'

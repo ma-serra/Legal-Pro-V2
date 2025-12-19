@@ -343,6 +343,6 @@ class ProcessoETLService:
         """Cria dados específicos cível"""
         civel = ProcessoCivel(
             processo_id=processo_id,
-            valor_acordo=row.get('valor_acordo)
+            valor_acordo=row.get('valor_acordo')
         )
         db.session.add(civel)
