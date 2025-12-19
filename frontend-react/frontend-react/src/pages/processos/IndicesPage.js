@@ -93,10 +93,22 @@ export default function IndicesEconomicosPage() {
         return new Date(data).toLocaleDateString('pt-BR');
     };
     const formatarValor = (valor, indice) => {
-        if (indice.includes('Taxa') || indice.includes('SELIC') || indice.includes('CDI')) {
+        // SELIC e CDI vêm como taxa diária do BACEN - converter para anual aproximado
+        if (indice === 'SELIC' || indice === 'CDI' || indice === 'SELIC-EFETIVA') {
+            // Taxa diária * 252 dias úteis = taxa anual aproximada
+            const taxaAnual = valor * 252 / 100;
+            return `${taxaAnual.toFixed(2)}% a.a.`;
+        }
+        // TJLP já vem como taxa anual
+        if (indice === 'TJLP') {
             return `${valor.toFixed(2)}% a.a.`;
         }
-        return `${valor.toFixed(2)}%`;
+        // Câmbio - mostrar como moeda
+        if (indice.includes('DOLAR') || indice.includes('EURO')) {
+            return `R$ ${valor.toFixed(4)}`;
+        }
+        // Demais índices vêm como variação mensal
+        return `${valor.toFixed(2)}% mês`;
     };
     if (carregando) {
         return (_jsx("div", { className: "flex items-center justify-center min-h-screen", children: _jsx(RefreshCw, { className: "w-8 h-8 animate-spin text-primary" }) }));
