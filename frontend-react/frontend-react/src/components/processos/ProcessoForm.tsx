@@ -286,6 +286,69 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                             </div>
                         </div>
 
+                        {/* Classificação Jurídica */}
+                        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                            <h3 className="text-lg font-semibold flex items-center gap-2 text-indigo-500">
+                                <Scale className="w-5 h-5" />
+                                Classificação Jurídica
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Ação</label>
+                                    <select
+                                        {...register('acao_id', { valueAsNumber: true })}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                    >
+                                        <option value="">Selecione...</option>
+                                        <option value="1">Ação Anulatória</option>
+                                        <option value="2">Ação Declaratória</option>
+                                        <option value="3">Embargos à Execução</option>
+                                        <option value="4">Execução Fiscal</option>
+                                        <option value="5">Mandado de Segurança</option>
+                                        <option value="6">Reclamação Trabalhista</option>
+                                        <option value="7">Ação de Cobrança</option>
+                                        <option value="8">Ação Indenizatória</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Órgão</label>
+                                    <select
+                                        {...register('orgao_id', { valueAsNumber: true })}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                    >
+                                        <option value="">Selecione...</option>
+                                        <option value="1">Justiça Federal</option>
+                                        <option value="2">Justiça Estadual</option>
+                                        <option value="3">Justiça do Trabalho</option>
+                                        <option value="4">TRF</option>
+                                        <option value="5">STJ</option>
+                                        <option value="6">STF</option>
+                                        <option value="7">CARF</option>
+                                        <option value="8">TIT</option>
+                                    </select>
+                                </div>
+
+                                {/* Procedimento - oculto para Tributário */}
+                                {Number(naturezaSelecionada) !== 1 && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Procedimento</label>
+                                        <select
+                                            {...register('procedimento_id', { valueAsNumber: true })}
+                                            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                        >
+                                            <option value="">Selecione...</option>
+                                            <option value="1">Ordinário</option>
+                                            <option value="2">Sumário</option>
+                                            <option value="3">Sumaríssimo</option>
+                                            <option value="4">Especial</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Partes e Cliente */}
                         <div className="bg-card border border-border rounded-xl p-6 space-y-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2 text-blue-500">
@@ -343,7 +406,7 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 Valores e Data
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Valor da Causa</label>
                                     <input
@@ -356,11 +419,33 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-medium mb-2">Valor Causa Atualizado</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        {...register('valor_causa_atualizado', { valueAsNumber: true })}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium mb-2">Valor Envolvido</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         {...register('valor_envolvido', { valueAsNumber: true })}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Valor Envolvido Atualizado</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        {...register('valor_envolvido_atualizado', { valueAsNumber: true })}
                                         className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
                                         placeholder="0.00"
                                     />
