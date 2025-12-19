@@ -146,7 +146,7 @@ class TributoSchema(Schema):
     """Schema para Tributo"""
     id_tributo = fields.Int(dump_only=True)
     codigo = fields.Str(required=True)
-   nome = fields.Str(required=True)
+    nome = fields.Str(required=True)
     descricao = fields.Str()
     esfera = fields.Str()
     ativo = fields.Bool()
@@ -210,6 +210,11 @@ class FiltroPesquisaSchema(Schema):
     data_inicio = fields.DateTime()
     data_fim = fields.DateTime()
     busca = fields.Str()
+    
+    # Novos Filtros
+    advogado_id = fields.Int()
+    fase_id = fields.Int()
+    comarca_id = fields.Int()
     
     # Paginação
     page = fields.Int(missing=1)
