@@ -3834,3 +3834,66 @@ class ConfiguracaoFormulario(db.Model):
 
     )
 
+
+# ============================================================================
+# ML TRIBUTÁRIO (Adicionado para resolução de dependências)
+# ============================================================================
+
+class MLModeloTributario(db.Model):
+    """Modelo para versionamento de modelos ML Tributários"""
+    __tablename__ = 'ml_modelo_tributario'
+
+    id_modelo = Column(Integer, primary_key=True)
+    versao = Column(String(50), nullable=False)
+    tipo = Column(String(50))  # regressao, classificacao
+    algoritmo = Column(String(50))
+    
+    # Métricas
+    r2_score = Column(Float)
+    mae = Column(Float)
+    rmse = Column(Float)
+    
+    # Metadados
+    path_arquivo = Column(String(255))
+    features_utilizadas = Column(JSONB)
+    hiperparametros = Column(JSONB)
+    
+    total_amostras_treino = Column(Integer)
+    total_amostras_teste = Column(Integer)
+    
+    ativo = Column(Boolean, default=True)
+    data_treinamento = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id_modelo': self.id_modelo,
+            'versao': self.versao,
+            'tipo': self.tipo,
+            'algoritmo': self.algoritmo,
+            'metricas': {
+                'r2_score': self.r2_score,
+                'mae': self.mae,
+                'rmse': self.rmse
+            },
+            'ativo': self.ativo,
+            'data_treinamento': self.data_treinamento.isoformat() if self.data_treinamento else None
+        }
+
+class MLPredicaoTributario(db.Model):
+    """Registro de predições realizadas"""
+    __tablename__ = 'ml_predicao_tributario'
+
+    id_predicao = Column(Integer, primary_key=True)
+    processo_id = Column(Integer, ForeignKey('processos.id_processo'), nullable=False)
+    modelo_id = Column(Integer, ForeignKey('ml_modelo_tributario.id_modelo'), nullable=False)
+    
+    valor_contingencia_predito = Column(Numeric(18, 2))
+    valor_confianca = Column(Float)
+    features_snapshot = Column(JSONB)
+    
+    data_predicao = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # Relationships
+    processo = relationship('Processo', backref='predicoes_ml')
+    modelo = relationship('MLModeloTributario', backref='predicoes')
+

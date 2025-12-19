@@ -22,5 +22,8 @@ from models import (
     TeseTributaria,
     IndiceMonetario,
     HistoricoIndice,
-    ConfiguracaoFormulario
+    ConfiguracaoFormulario,
+    # ML
+    MLModeloTributario,
+    MLPredicaoTributario
 )
