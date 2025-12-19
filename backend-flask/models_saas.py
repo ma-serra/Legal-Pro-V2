@@ -150,7 +150,7 @@ class Client(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    user_accesses = db.relationship('UserClientAccess', back ref='client', lazy='dynamic', cascade='all, delete-orphan')
+    user_accesses = db.relationship('UserClientAccess', backref='client', lazy='dynamic', cascade='all, delete-orphan')
     
     def to_dict(self):
         return {
