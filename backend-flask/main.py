@@ -17161,6 +17161,16 @@ try:
 except Exception as e:
     logger.error(f"❌ Erro ao registrar integração Judit: {e}")
 
+# Registrar API BCB Olinda (PTAX, Expectativas)
+try:
+    from modules.atualizacao_monetaria.bcb_olinda_service import registrar_rotas_olinda
+    registrar_rotas_olinda(app)
+    logger.info("✅ API BCB Olinda registrada com sucesso")
+    logger.info("   • PTAX: Cotações de câmbio em tempo real")
+    logger.info("   • Expectativas Focus: Projeções de mercado")
+except Exception as e:
+    logger.error(f"❌ Erro ao registrar API BCB Olinda: {e}")
+
 # Registrar API de modelos estatísticos
 try:
     from api_modelos_estatisticos import register_modelos_api

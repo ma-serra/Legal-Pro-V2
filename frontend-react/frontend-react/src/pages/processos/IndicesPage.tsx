@@ -1,12 +1,15 @@
 /**
- * Dashboard Profissional - Índices Econômicos
- * Integração completa com API BACEN
- * Atualização diária automática
+ * Dashboard Completo - Índices Econômicos e Dados BCB
+ * Integração com APIs do Banco Central:
+ * - SGS: Séries Temporais (SELIC, IPCA, INPC, etc.)
+ * - Olinda PTAX: Cotações de Câmbio
+ * - Expectativas de Mercado (Focus)
  */
 import { useState, useEffect } from 'react';
 import {
     TrendingUp, TrendingDown, Calendar, RefreshCw,
-    DollarSign, Percent, BarChart3, Download, Clock
+    DollarSign, Percent, BarChart3, Download, Clock,
+    Globe, Target, ArrowRight
 } from 'lucide-react';
 import api from '../../lib/api';
 import IndicesChart from '../../components/processos/IndicesChart';
@@ -26,6 +29,23 @@ interface HistoricoItem {
     valor: number;
 }
 
+interface CotacaoPTAX {
+    moeda: string;
+    data: string;
+    cotacao_compra: number;
+    cotacao_venda: number;
+}
+
+interface Expectativa {
+    indicador: string;
+    data: string;
+    data_referencia: string;
+    media: number;
+    mediana: number;
+    minimo: number;
+    maximo: number;
+}
+
 export default function IndicesEconomicosPage() {
     const [indices, setIndices] = useState<Indice[]>([]);
     const [indiceSelecionado, setIndiceSelecionado] = useState<number | null>(null);
@@ -34,8 +54,19 @@ export default function IndicesEconomicosPage() {
     const [atualizando, setAtualizando] = useState(false);
     const [filtroTempo, setFiltroTempo] = useState<'30d' | '90d' | '1y' | 'all'>('30d');
 
+    // Novos estados para PTAX e Expectativas
+    const [ptaxUSD, setPtaxUSD] = useState<CotacaoPTAX | null>(null);
+    const [ptaxEUR, setPtaxEUR] = useState<CotacaoPTAX | null>(null);
+    const [expectativas, setExpectativas] = useState<{
+        selic: Expectativa[];
+        ipca: Expectativa[];
+        pib: Expectativa[];
+        cambio: Expectativa[];
+    }>({ selic: [], ipca: [], pib: [], cambio: [] });
+    const [abaAtiva, setAbaAtiva] = useState<'indices' | 'ptax' | 'expectativas'>('indices');
+
     useEffect(() => {
-        carregarIndices();
+        carregarTodosDados();
     }, []);
 
     useEffect(() => {
@@ -44,19 +75,33 @@ export default function IndicesEconomicosPage() {
         }
     }, [indiceSelecionado, filtroTempo]);
 
-    const carregarIndices = async () => {
+    const carregarTodosDados = async () => {
         setCarregando(true);
         try {
-            const response = await api.get('/api/atualizacao-monetaria/indices');
-            setIndices(response.data);
+            // Carregar em paralelo
+            const [indicesRes, ptaxUSDRes, ptaxEURRes, expectativasRes] = await Promise.allSettled([
+                api.get('/api/atualizacao-monetaria/indices'),
+                api.get('/api/bcb/ptax/hoje?moeda=USD'),
+                api.get('/api/bcb/ptax/hoje?moeda=EUR'),
+                api.get('/api/bcb/expectativas/resumo')
+            ]);
 
-            // Selecionar SELIC por padrão
-            const selic = response.data.find((i: Indice) => i.nome === 'SELIC');
-            if (selic) {
-                setIndiceSelecionado(selic.id);
+            if (indicesRes.status === 'fulfilled') {
+                setIndices(indicesRes.value.data);
+                const selic = indicesRes.value.data.find((i: Indice) => i.nome === 'SELIC');
+                if (selic) setIndiceSelecionado(selic.id);
+            }
+            if (ptaxUSDRes.status === 'fulfilled' && !ptaxUSDRes.value.data.erro) {
+                setPtaxUSD(ptaxUSDRes.value.data);
+            }
+            if (ptaxEURRes.status === 'fulfilled' && !ptaxEURRes.value.data.erro) {
+                setPtaxEUR(ptaxEURRes.value.data);
+            }
+            if (expectativasRes.status === 'fulfilled') {
+                setExpectativas(expectativasRes.value.data);
             }
         } catch (error) {
-            console.error('Erro ao carregar índices:', error);
+            console.error('Erro ao carregar dados:', error);
         } finally {
             setCarregando(false);
         }
@@ -65,18 +110,12 @@ export default function IndicesEconomicosPage() {
     const carregarHistorico = async (indiceId: number) => {
         try {
             const params: any = { limite: 365 };
-
-            // Filtrar por período
             const hoje = new Date();
             let dataInicio = new Date();
 
-            if (filtroTempo === '30d') {
-                dataInicio.setDate(dataInicio.getDate() - 30);
-            } else if (filtroTempo === '90d') {
-                dataInicio.setDate(dataInicio.getDate() - 90);
-            } else if (filtroTempo === '1y') {
-                dataInicio.setFullYear(dataInicio.getFullYear() - 1);
-            }
+            if (filtroTempo === '30d') dataInicio.setDate(dataInicio.getDate() - 30);
+            else if (filtroTempo === '90d') dataInicio.setDate(dataInicio.getDate() - 90);
+            else if (filtroTempo === '1y') dataInicio.setFullYear(dataInicio.getFullYear() - 1);
 
             if (filtroTempo !== 'all') {
                 params.data_inicio = dataInicio.toISOString().split('T')[0];
@@ -96,7 +135,7 @@ export default function IndicesEconomicosPage() {
         setAtualizando(true);
         try {
             await api.post('/api/atualizacao-monetaria/atualizar/recentes', { dias: 30 });
-            await carregarIndices();
+            await carregarTodosDados();
             alert('Índices atualizados com sucesso!');
         } catch (error) {
             console.error('Erro ao atualizar índices:', error);
@@ -106,44 +145,36 @@ export default function IndicesEconomicosPage() {
         }
     };
 
-    const calcularVariacao = (valores: HistoricoItem[]) => {
-        if (valores.length < 2) return null;
-        const atual = valores[0].valor;
-        const anterior = valores[1].valor;
-        const variacao = ((atual - anterior) / anterior) * 100;
-        return variacao;
+    // Formatadores padrão BCB
+    const formatarMoeda = (valor: number, casas: number = 4) => {
+        return valor.toLocaleString('pt-BR', {
+            minimumFractionDigits: casas,
+            maximumFractionDigits: casas
+        });
     };
 
     const formatarData = (data: string) => {
+        if (!data) return '-';
         return new Date(data).toLocaleDateString('pt-BR');
     };
 
     const formatarValor = (valor: number, indice: string) => {
-        // SELIC e CDI vêm como taxa diária do BACEN - converter para anual aproximado
         if (indice === 'SELIC' || indice === 'CDI' || indice === 'SELIC-EFETIVA') {
-            // Taxa diária * 252 dias úteis = taxa anual aproximada
-            const taxaAnual = valor * 252 / 100;
+            const taxaAnual = valor * 252;
             return `${taxaAnual.toFixed(2)}% a.a.`;
         }
-
-        // TJLP já vem como taxa anual
-        if (indice === 'TJLP') {
-            return `${valor.toFixed(2)}% a.a.`;
-        }
-
-        // Câmbio - mostrar como moeda
-        if (indice.includes('DOLAR') || indice.includes('EURO')) {
-            return `R$ ${valor.toFixed(4)}`;
-        }
-
-        // Demais índices vêm como variação mensal
+        if (indice === 'TJLP') return `${valor.toFixed(2)}% a.a.`;
+        if (indice.includes('DOLAR') || indice.includes('EURO')) return `R$ ${formatarMoeda(valor)}`;
         return `${valor.toFixed(2)}% mês`;
     };
 
     if (carregando) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+                <div className="text-center">
+                    <RefreshCw className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">Carregando dados do Banco Central...</p>
+                </div>
             </div>
         );
     }
@@ -153,108 +184,164 @@ export default function IndicesEconomicosPage() {
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
                         <BarChart3 className="w-8 h-8 text-primary" />
-                        Índices Econômicos
+                        Dados Monetários BCB
                     </h1>
-                    <p className="text-muted-foreground mt-2">
-                        Dados oficiais do Banco Central - Atualização diária automática
+                    <p className="text-muted-foreground mt-1">
+                        Dados oficiais do Banco Central do Brasil - Atualização em tempo real
                     </p>
                 </div>
 
                 <button
                     onClick={atualizarIndices}
                     disabled={atualizando}
-                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                    className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center gap-2 disabled:opacity-50"
                 >
                     <RefreshCw className={`w-4 h-4 ${atualizando ? 'animate-spin' : ''}`} />
-                    {atualizando ? 'Atualizando...' : 'Atualizar Índices'}
+                    {atualizando ? 'Atualizando...' : 'Atualizar Dados'}
                 </button>
             </div>
 
+            {/* Cotações PTAX - Destaque no topo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Dólar */}
+                <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/10 border border-green-500/30 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <DollarSign className="w-6 h-6 text-green-400" />
+                            <h2 className="font-bold">Dólar PTAX</h2>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {ptaxUSD ? formatarData(ptaxUSD.data) : '-'}
+                        </span>
+                    </div>
+                    {ptaxUSD ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <p className="text-xs text-muted-foreground">Compra</p>
+                                <p className="text-2xl font-bold text-green-400">R$ {formatarMoeda(ptaxUSD.cotacao_compra)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Venda</p>
+                                <p className="text-2xl font-bold">R$ {formatarMoeda(ptaxUSD.cotacao_venda)}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">Cotação não disponível</p>
+                    )}
+                </div>
+
+                {/* Euro */}
+                <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/10 border border-blue-500/30 rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Globe className="w-6 h-6 text-blue-400" />
+                            <h2 className="font-bold">Euro PTAX</h2>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {ptaxEUR ? formatarData(ptaxEUR.data) : '-'}
+                        </span>
+                    </div>
+                    {ptaxEUR ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <p className="text-xs text-muted-foreground">Compra</p>
+                                <p className="text-2xl font-bold text-blue-400">R$ {formatarMoeda(ptaxEUR.cotacao_compra)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Venda</p>
+                                <p className="text-2xl font-bold">R$ {formatarMoeda(ptaxEUR.cotacao_venda)}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">Cotação não disponível</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Expectativas de Mercado - Focus */}
+            <div className="bg-card border border-border rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                    <Target className="w-5 h-5 text-primary" />
+                    <h2 className="font-bold">Expectativas de Mercado (Focus)</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { key: 'selic', label: 'SELIC', cor: 'orange', sufixo: '% a.a.' },
+                        { key: 'ipca', label: 'IPCA', cor: 'red', sufixo: '%' },
+                        { key: 'pib', label: 'PIB', cor: 'green', sufixo: '%' },
+                        { key: 'cambio', label: 'Câmbio', cor: 'blue', prefixo: 'R$ ' }
+                    ].map(({ key, label, cor, sufixo, prefixo }) => {
+                        const dados = expectativas[key as keyof typeof expectativas]?.[0];
+                        return (
+                            <div key={key} className="bg-background border border-border rounded-lg p-3">
+                                <h3 className={`font-semibold text-${cor}-400 text-sm mb-2`}>{label}</h3>
+                                {dados ? (
+                                    <>
+                                        <p className="text-xl font-bold">
+                                            {prefixo || ''}{formatarMoeda(dados.mediana, 2)}{sufixo || ''}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{dados.data_referencia}</p>
+                                    </>
+                                ) : <p className="text-muted-foreground text-sm">Sem dados</p>}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Cards de Índices */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {indices.map((indice) => {
-                    const variacao = calcularVariacao(historico.filter(h => true));
-                    const estaEmAlta = variacao && variacao > 0;
-
-                    return (
-                        <button
-                            key={indice.id}
-                            onClick={() => setIndiceSelecionado(indice.id)}
-                            className={`bg-card border-2 rounded-xl p-4 text-left transition-all hover: shadow-lg ${indiceSelecionado === indice.id
-                                ? 'border-primary shadow-lg scale-105'
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {indices.map((indice) => (
+                    <button
+                        key={indice.id}
+                        onClick={() => setIndiceSelecionado(indice.id)}
+                        className={`bg-card border-2 rounded-xl p-4 text-left transition-all hover:shadow-lg ${indiceSelecionado === indice.id
+                                ? 'border-primary shadow-lg'
                                 : 'border-border hover:border-primary/50'
-                                }`}
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <h3 className="font-bold text-lg">{indice.nome}</h3>
-                                    <p className="text-xs text-muted-foreground">{indice.descricao}</p>
-                                </div>
-                                {indice.ultimo_valor && estaEmAlta !== null && (
-                                    estaEmAlta ? (
-                                        <TrendingUp className="w-5 h-5 text-green-500" />
-                                    ) : (
-                                        <TrendingDown className="w-5 h-5 text-red-500" />
-                                    )
-                                )}
-                            </div>
-
-                            {indice.ultimo_valor ? (
-                                <>
-                                    <div className="text-2xl font-bold text-primary mb-1">
-                                        {formatarValor(indice.ultimo_valor, indice.nome)}
-                                    </div>
-                                    {variacao !== null && (
-                                        <div className={`text-sm font-medium ${estaEmAlta ? 'text-green-500' : 'text-red-500'}`}>
-                                            {estaEmAlta ? '+' : ''}{variacao.toFixed(2)}% mês
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                                        <Clock className="w-3 h-3" />
-                                        {indice.ultima_atualizacao && formatarData(indice.ultima_atualizacao)}
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-sm text-muted-foreground">Sem dados</div>
-                            )}
-
-                            <div className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-                                {indice.total_registros} registros
-                            </div>
-                        </button>
-                    );
-                })}
+                            }`}
+                    >
+                        <h3 className="font-bold text-sm truncate">{indice.nome}</h3>
+                        <p className="text-xs text-muted-foreground truncate mb-2">{indice.descricao}</p>
+                        {indice.ultimo_valor ? (
+                            <>
+                                <p className="text-lg font-bold text-primary">
+                                    {formatarValor(indice.ultimo_valor, indice.nome)}
+                                </p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Clock className="w-3 h-3" />
+                                    {formatarData(indice.ultima_atualizacao || '')}
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Sem dados</p>
+                        )}
+                    </button>
+                ))}
             </div>
 
             {/* Gráfico detalhado */}
             {indiceInfo && (
                 <div className="bg-card border border-border rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold flex items-center gap-2">
-                                {indiceInfo.nome}
-                                <span className="text-sm font-normal text-muted-foreground">
-                                    {indiceInfo.descricao}
-                                </span>
-                            </h2>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <h2 className="text-xl font-bold">{indiceInfo.nome}</h2>
+                            <p className="text-sm text-muted-foreground">
                                 Fonte: {indiceInfo.fonte_oficial}
                             </p>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* Filtro de tempo */}
                             {['30d', '90d', '1y', 'all'].map((periodo) => (
                                 <button
                                     key={periodo}
                                     onClick={() => setFiltroTempo(periodo as any)}
                                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${filtroTempo === periodo
-                                        ? 'bg-primary text-white'
-                                        : 'bg-accent hover:bg-accent/80'
+                                            ? 'bg-primary text-white'
+                                            : 'bg-accent hover:bg-accent/80'
                                         }`}
                                 >
                                     {periodo === '30d' && '30 dias'}
@@ -263,26 +350,14 @@ export default function IndicesEconomicosPage() {
                                     {periodo === 'all' && 'Tudo'}
                                 </button>
                             ))}
-
-                            <button className="p-2 bg-accent hover:bg-accent/80 rounded-lg transition-colors">
-                                <Download className="w-4 h-4" />
-                            </button>
                         </div>
                     </div>
 
                     {/* Gráfico */}
-                    {historico.length > 0 ? (
-                        <div className="h-[400px]">
-                            <IndicesChart
-                                indiceId={indiceInfo.id}
-                                indiceName={indiceInfo.nome}
-                            />
-                        </div>
-                    ) : (
-                        <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-                            Sem dados disponíveis para o período selecionado
-                        </div>
-                    )}
+                    <IndicesChart
+                        indiceId={indiceInfo.id}
+                        indiceName={indiceInfo.nome}
+                    />
 
                     {/* Tabela de últimos valores */}
                     <div className="mt-6 pt-6 border-t border-border">
@@ -328,16 +403,15 @@ export default function IndicesEconomicosPage() {
                 </div>
             )}
 
-            {/* Info Footer */}
+            {/* Footer Info */}
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                     <Calendar className="w-5 h-5 text-blue-400 mt-0.5" />
                     <div className="text-sm">
-                        <p className="font-medium text-blue-300 mb-1">Atualização Automática Diária</p>
+                        <p className="font-medium text-blue-300 mb-1">Fonte: Banco Central do Brasil</p>
                         <p className="text-blue-200/80">
-                            Os índices são atualizados automaticamente todos os dias às 8h da manhã,
-                            buscando os dados mais recentes diretamente do Sistema Gerenciador de Séries
-                            Temporais (SGS) do Banco Central do Brasil.
+                            APIs: SGS (Séries Temporais), Olinda PTAX (Câmbio), Expectativas Focus.
+                            Dados atualizados diariamente às 8h ou sob demanda.
                         </p>
                     </div>
                 </div>
