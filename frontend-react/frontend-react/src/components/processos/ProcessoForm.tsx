@@ -20,8 +20,14 @@ interface ProcessoFormData {
 
     // Partes
     cliente_id?: number;
+    cliente_principal_nome?: string;
     autor?: string;
     reu?: string;
+
+    // Localização adicional
+    uf?: string;
+    cidade?: string;
+    uf_vara?: string;
 
     // Valores
     valor_causa?: number;
@@ -287,7 +293,7 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                 Cliente e Partes
                             </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Cliente</label>
                                     <select
@@ -299,6 +305,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                             <option key={c.id} value={c.id}>{c.nome}</option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Nome Cliente Principal</label>
+                                    <input
+                                        {...register('cliente_principal_nome')}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                        placeholder="Nome do cliente principal"
+                                    />
                                 </div>
 
                                 <div>
@@ -419,6 +434,37 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                         <option value="3">Execução</option>
                                         <option value="4">Cumprimento de Sentença</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">UF</label>
+                                    <input
+                                        {...register('uf')}
+                                        maxLength={2}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none uppercase"
+                                        placeholder="SP"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Cidade</label>
+                                    <input
+                                        {...register('cidade')}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none"
+                                        placeholder="São Paulo"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">UF Vara</label>
+                                    <input
+                                        {...register('uf_vara')}
+                                        maxLength={2}
+                                        className="w-full bg-background border border-border rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary outline-none uppercase"
+                                        placeholder="SP"
+                                    />
                                 </div>
                             </div>
                         </div>

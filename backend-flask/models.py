@@ -2995,6 +2995,15 @@ class Processo(db.Model):
     # Metadados
     titulo = Column(Text)
     observacao_pasta = Column(Text)
+    
+    # Campos adicionais ETL
+    cliente_principal_nome = Column(String(255))
+    uf = Column(String(2))
+    cidade = Column(String(100))
+    uf_vara = Column(String(2))
+    autor = Column(String(255))
+    reu = Column(String(255))
+    
     ativo = Column(Boolean, default=True, nullable=False)
     
     # Relationships
