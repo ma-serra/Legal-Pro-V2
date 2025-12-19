@@ -26,10 +26,10 @@ export default function EditProcesso() {
     useEffect(() => {
         fetchProcesso();
     }, [id]);
-    // Endpoint: GET /processos/:processo_id
+    // Endpoint: GET /api/processos/:processo_id
     const fetchProcesso = async () => {
         try {
-            const response = await api.get(`/processos/${id}`);
+            const response = await api.get(`/api/processos/${id}`);
             setFormData(response.data);
         }
         catch (error) {
@@ -45,12 +45,15 @@ export default function EditProcesso() {
             [e.target.name]: e.target.value
         }));
     };
-    // Endpoint: POST /processos/:processo_id/editar
+    // Endpoint: POST /api/processos/:processo_id/editar
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
-            await api.post(`/processos/${id}/editar`, {
+            const endpoint = `/api/processos/${id}`; // Flask/REST standard often uses PUT on ID for update
+            // But looking at backend routes might be specific... 
+            // processes/routes.py uses @processos_bp.route('/<int:processo_id>', methods=['PUT'])
+            await api.put(endpoint, {
                 ...formData,
                 valor_causa: formData.valor_causa ? parseFloat(formData.valor_causa) : null
             });

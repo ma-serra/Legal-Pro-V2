@@ -31,8 +31,26 @@ export default function ConfigureAssistant() {
     }, [id]);
     const fetchConfig = async () => {
         try {
-            const response = await api.get(`/admin/assistentes/${id}/configurar`);
-            setConfig(response.data);
+            // GET /api/assistentes/:id
+            const response = await api.get(`/api/assistentes/${id}`);
+            const data = response.data;
+            // Adapt Backend (Nested) -> Frontend (Flat)
+            setConfig({
+                id: data.id,
+                nome: data.nome,
+                area_juridica: data.area_juridica || '',
+                // Map legacy/nested fields
+                model: data.configuracoes?.llm_model || data.modelo_ai || 'gpt-4-turbo-preview',
+                temperature: data.configuracoes?.temperatura ?? data.temperatura ?? 0.7,
+                max_tokens: data.configuracoes?.max_tokens ?? data.max_tokens ?? 2000,
+                // Extra fields stored in configuracoes
+                top_p: data.configuracoes?.top_p ?? 1.0,
+                frequency_penalty: data.configuracoes?.frequency_penalty ?? 0.0,
+                presence_penalty: data.configuracoes?.presence_penalty ?? 0.0,
+                context_window: data.configuracoes?.context_window ?? 8000,
+                response_format: data.configuracoes?.response_format || 'text',
+                system_prompt: data.prompt_template || data.template_prompt || ''
+            });
         }
         catch (error) {
             console.error('Error fetching config:', error);
@@ -45,7 +63,23 @@ export default function ConfigureAssistant() {
         e.preventDefault();
         setSaving(true);
         try {
-            await api.post(`/admin/assistentes/${id}/configurar`, config);
+            // Adapt Frontend (Flat) -> Backend (Nested)
+            // PUT /api/assistentes/:id
+            const payload = {
+                prompt_template: config.system_prompt,
+                configuracoes: {
+                    llm_model: config.model,
+                    temperatura: config.temperature,
+                    max_tokens: config.max_tokens,
+                    top_p: config.top_p,
+                    frequency_penalty: config.frequency_penalty,
+                    presence_penalty: config.presence_penalty,
+                    context_window: config.context_window,
+                    response_format: config.response_format,
+                    // Preserve other keys if needed? For now replace.
+                }
+            };
+            await api.put(`/api/assistentes/${id}`, payload);
             alert('Configuração salva com sucesso!');
             navigate('/assistentes');
         }

@@ -267,31 +267,28 @@ def obter_estatisticas():
     from models import Processo
     from sqlalchemy import func, case
     
-    # Total de processos ativos
-    total = Processo.query.filter_by(ativo=True).count()
+    # Total de processos
+    total = Processo.query.count()
     
     # Estatísticas por natureza
     por_natureza = db.session.query(
         Processo.natureza_id,
         func.count(Processo.id_processo).label('count')
-    ).filter_by(ativo=True)\
-     .group_by(Processo.natureza_id)\
+    ).group_by(Processo.natureza_id)\
      .all()
     
     # Estatísticas por status
     por_status = db.session.query(
         Processo.status_id,
         func.count(Processo.id_processo).label('count')
-    ).filter_by(ativo=True)\
-     .group_by(Processo.status_id)\
+    ).group_by(Processo.status_id)\
      .all()
     
     # Estatísticas por risco
     por_risco = db.session.query(
         Processo.risco_id,
         func.count(Processo.id_processo).label('count')
-    ).filter_by(ativo=True)\
-     .group_by(Processo.risco_id)\
+    ).group_by(Processo.risco_id)\
      .all()
     
     # Valores financeiros
@@ -300,13 +297,13 @@ def obter_estatisticas():
         func.sum(Processo.valor_envolvido).label('total_valor_envolvido'),
         func.sum(Processo.contingencia).label('total_contingencia'),
         func.avg(Processo.valor_causa).label('media_valor_causa')
-    ).filter_by(ativo=True).first()
+    ).first()
     
     # Processos por ano (data distribuição)
     por_ano = db.session.query(
         func.extract('year', Processo.data_distribuicao).label('ano'),
         func.count(Processo.id_processo).label('count')
-    ).filter(Processo.ativo == True, Processo.data_distribuicao != None)\
+    ).filter(Processo.data_distribuicao != None)\
      .group_by('ano')\
      .order_by('ano')\
      .all()

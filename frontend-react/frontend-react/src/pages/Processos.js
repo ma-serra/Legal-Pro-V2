@@ -44,36 +44,31 @@ export default function Processos() {
         setIsLoading(true);
         try {
             const [processosRes, statsRes] = await Promise.all([
-                api.get('/processos-juridicos/processos').catch(() => ({ data: { processos: [] } })),
-                api.get('/processos-juridicos/estatisticas').catch(() => ({ data: null }))
+                api.get('/api/processos').catch(() => ({ data: { items: [], processos: [] } })),
+                api.get('/api/processos/estatisticas').catch(() => ({ data: null }))
             ]);
             if (processosRes.data?.processos) {
                 setProcessos(processosRes.data.processos);
             }
             else {
-                setProcessos(mockProcessos);
+                setProcessos([]);
             }
             if (statsRes.data) {
                 setEstatisticas(statsRes.data);
             }
             else {
                 setEstatisticas({
-                    total_processos: mockProcessos.length,
-                    areas_diferentes: 12,
-                    valor_total_causas: 15750000,
-                    processos_alto_risco: 5
+                    total_processos: 0,
+                    areas_diferentes: 0,
+                    valor_total_causas: 0,
+                    processos_alto_risco: 0
                 });
             }
         }
         catch (error) {
             console.error('Error fetching processos:', error);
-            setProcessos(mockProcessos);
-            setEstatisticas({
-                total_processos: mockProcessos.length,
-                areas_diferentes: 12,
-                valor_total_causas: 15750000,
-                processos_alto_risco: 5
-            });
+            setProcessos([]);
+            setEstatisticas(null);
         }
         finally {
             setIsLoading(false);
@@ -140,13 +135,3 @@ export default function Processos() {
                     }
                 ], searchValue: busca, onSearchChange: setBusca, searchPlaceholder: "Buscar por CNJ, cliente..." }), _jsx("div", { className: "bg-card rounded-xl border border-border", children: _jsx(DataTable, { data: filteredProcessos, columns: columns, emptyMessage: "Nenhum processo encontrado", onRowClick: (item) => console.log('Clicked:', item) }) })] }));
 }
-const mockProcessos = [
-    { id: 1, numero_cnj: '0001234-56.2024.8.26.0100', cliente: 'Empresa ABC Ltda', area_juridica: 'Direito Empresarial', valor_causa: 250000, nivel_risco: 'Médio', status: 'Ativo', data_cadastro: '2024-01-15' },
-    { id: 2, numero_cnj: '0002345-67.2024.8.26.0100', cliente: 'João Silva', area_juridica: 'Direito Trabalhista', valor_causa: 75000, nivel_risco: 'Baixo', status: 'Ativo', data_cadastro: '2024-02-10' },
-    { id: 3, numero_cnj: '0003456-78.2024.8.26.0100', cliente: 'Maria Santos', area_juridica: 'Direito de Família', valor_causa: 150000, nivel_risco: 'Alto', status: 'Em análise', data_cadastro: '2024-03-05' },
-    { id: 4, numero_cnj: '0004567-89.2024.8.26.0100', cliente: 'Tech Solutions SA', area_juridica: 'Direito Digital', valor_causa: 500000, nivel_risco: 'Alto', status: 'Ativo', data_cadastro: '2024-03-20' },
-    { id: 5, numero_cnj: '0005678-90.2024.8.26.0100', cliente: 'Construtora XYZ', area_juridica: 'Direito Imobiliário', valor_causa: 1200000, nivel_risco: 'Médio', status: 'Ativo', data_cadastro: '2024-04-01' },
-    { id: 6, numero_cnj: '0006789-01.2024.8.26.0100', cliente: 'Pedro Oliveira', area_juridica: 'Direito do Consumidor', valor_causa: 25000, nivel_risco: 'Baixo', status: 'Arquivado', data_cadastro: '2024-04-15' },
-    { id: 7, numero_cnj: '0007890-12.2024.8.26.0100', cliente: 'Banco Nacional', area_juridica: 'Direito Bancário', valor_causa: 800000, nivel_risco: 'Alto', status: 'Ativo', data_cadastro: '2024-05-01' },
-    { id: 8, numero_cnj: '0008901-23.2024.8.26.0100', cliente: 'Ana Costa', area_juridica: 'Direito Previdenciário', valor_causa: 180000, nivel_risco: 'Baixo', status: 'Ativo', data_cadastro: '2024-05-10' }
-];

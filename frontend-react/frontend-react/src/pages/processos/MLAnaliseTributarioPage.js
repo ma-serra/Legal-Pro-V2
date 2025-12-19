@@ -64,18 +64,8 @@ export default function MLAnaliseTributarioPage() {
         }
         catch (error) {
             console.error('Erro na análise ML:', error);
-            // Fallback para demo se backend falhar
-            alert('Aviso: Backend indisponível, simulando resposta.');
-            const mock = {
-                processo_id: processoSelecionado,
-                valor_contingencia_predito: Math.random() * 500000,
-                confianca: 0.85,
-                modelo_versao: "v2.0-fallback",
-                modelo_algoritmo: "xgboost",
-                risco_predito: "Médio",
-                data_predicao: new Date().toISOString()
-            };
-            setPredicao(mock);
+            console.error('Erro na análise ML:', error);
+            alert('Erro ao realizar análise. Verifique a conexão com o servidor.');
         }
         finally {
             setAnalisando(false);

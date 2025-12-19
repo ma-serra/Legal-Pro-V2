@@ -6,15 +6,16 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Upload, History, Save, Trash2, Download, Send, Paperclip, X, FileText, Clock, ChevronLeft } from 'lucide-react';
+import api from '../lib/api';
 const assistentes = [
-    { id: 1, nome: 'Assistente Cível', descricao: 'Direito Cível', cor: 'blue' },
-    { id: 2, nome: 'Assistente Trabalhista', descricao: 'Direito Trabalhista', cor: 'green' },
-    { id: 3, nome: 'Assistente Empresarial', descricao: 'Direito Empresarial', cor: 'purple' },
-    { id: 4, nome: 'Assistente Tributário', descricao: 'Direito Tributário', cor: 'orange' },
-    { id: 5, nome: 'Assistente Previdenciário', descricao: 'Direito Previdenciário', cor: 'red' },
-    { id: 6, nome: 'Assistente Penal', descricao: 'Direito Penal', cor: 'red' },
-    { id: 7, nome: 'Assistente Imobiliário', descricao: 'Direito Imobiliário', cor: 'cyan' },
-    { id: 8, nome: 'Assistente Consumidor', descricao: 'Direito do Consumidor', cor: 'pink' }
+    { id: 'direito_civil', nome: 'Assistente Cível', descricao: 'Direito Cível', cor: 'blue' },
+    { id: 'direito_trabalhista', nome: 'Assistente Trabalhista', descricao: 'Direito Trabalhista', cor: 'green' },
+    { id: 'direito_empresarial', nome: 'Assistente Empresarial', descricao: 'Direito Empresarial', cor: 'purple' },
+    { id: 'direito_tributario', nome: 'Assistente Tributário', descricao: 'Direito Tributário', cor: 'orange' },
+    { id: 'direito_previdenciario', nome: 'Assistente Previdenciário', descricao: 'Direito Previdenciário', cor: 'red' },
+    { id: 'direito_penal', nome: 'Assistente Penal', descricao: 'Direito Penal', cor: 'red' },
+    { id: 'direito_administrativo', nome: 'Assistente Administrativo', descricao: 'Direito Administrativo', cor: 'teal' },
+    { id: 'direito_constitucional', nome: 'Assistente Constitucional', descricao: 'Direito Constitucional', cor: 'indigo' }
 ];
 export default function Assistentes() {
     const navigate = useNavigate();
@@ -50,11 +51,12 @@ export default function Assistentes() {
         }
     };
     const selecionarAssistente = (id) => {
-        setAssistenteSelecionado(id);
+        const idStr = String(id);
+        setAssistenteSelecionado(idStr);
         setConversaAtual({
             id: Date.now().toString(),
-            titulo: `Nova conversa - ${assistentes.find(a => a.id === id)?.nome}`,
-            assistente_id: id,
+            titulo: `Nova conversa - ${assistentes.find(a => a.id === idStr)?.nome}`,
+            assistente_id: idStr,
             mensagens: [],
             criado_em: new Date(),
             atualizado_em: new Date()
@@ -102,12 +104,18 @@ export default function Assistentes() {
         const arquivosTemp = [...arquivosSelecionados];
         setArquivosSelecionados([]);
         try {
-            // Simular resposta do assistente (substituir por API real)
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Chamada real à API
+            const response = await api.post('/api/assistentes/consultar', {
+                area: assistenteSelecionado, // Enviando ID da área (ex: 'direito_civil')
+                pergunta: inputMensagem,
+                contexto: '', // Contexto adicional se necessário
+                modelo: 'gpt-4o' // Modelo padrão ou selecionado nas preferências
+            });
+            const respostaTexto = response.data.resposta || response.data.content || "Não foi possível obter resposta.";
             const respostaAssistente = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: `Entendi sua solicitação sobre "${inputMensagem.substring(0, 50)}...". ${arquivosTemp.length > 0 ? `Analisei ${arquivosTemp.length} arquivo(s). ` : ''}Como assistente jurídico, posso ajudá-lo com análise detalhada e orientações específicas.`,
+                content: respostaTexto,
                 timestamp: new Date()
             };
             setMensagens(prev => [...prev, respostaAssistente]);
