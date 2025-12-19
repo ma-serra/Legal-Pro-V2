@@ -34,8 +34,8 @@ const assistentes = [
   { id: 4, nome: 'Assistente Tributário', descricao: 'Direito Tributário', cor: 'orange' },
   { id: 5, nome: 'Assistente Previdenciário', descricao: 'Direito Previdenciário', cor: 'red' },
   { id: 6, nome: 'Assistente Penal', descricao: 'Direito Penal', cor: 'red' },
-  { id: 7, nome: 'Assistente Imobiliário', descricao: 'Direito Imobiliário', cor: 'cyan' },
-  { id: 8, nome: 'Assistente Consumidor', descricao: 'Direito do Consumidor', cor: 'pink' }
+  { id: 9, nome: 'Assistente Administrativo', descricao: 'Direito Administrativo', cor: 'teal' },
+  { id: 10, nome: 'Assistente Constitucional', descricao: 'Direito Constitucional', cor: 'indigo' }
 ];
 
 export default function Assistentes() {
