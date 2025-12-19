@@ -508,6 +508,16 @@ def create_app():
     # def bypass_auth_global_demo():
     #     # DESATIVADO: Bypass removido para habilitar autenticação real
     #     pass
+
+    @app.before_request
+    def handle_options_requests():
+        """Bypass global de auth para requisições OPTIONS (CORS)"""
+        if request.method == 'OPTIONS':
+            response = make_response()
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add("Access-Control-Allow-Headers", "*")
+            response.headers.add("Access-Control-Allow-Methods", "*")
+            return response
     
     # Lista de rotas que não requerem autenticação (usada para referência)
     # As rotas /transcription/* agora funcionam sem autenticação
@@ -10350,51 +10360,52 @@ def processos_buscar_post():
         flash(f'Erro na busca: {str(e)}', 'error')
         return redirect(url_for('processos_buscar'))
 
-@app.route('/api/processos', methods=['GET'])
-@login_required
-def api_processos_lista():
-    """API para listar processos (JSON)"""
-    try:
-        from models import ProcessoJuridico
-        
-        # Parâmetros de filtro
-        area = request.args.get('area')
-        risco = request.args.get('risco')
-        limite = int(request.args.get('limite', 50))
-        
-        query = ProcessoJuridico.query
-        
-        if area:
-            query = query.filter_by(area_juridica=area)
-        if risco:
-            query = query.filter_by(risco=risco)
-        
-        processos = query.order_by(ProcessoJuridico.data_registro.desc()).limit(limite).all()
-        
-        processos_json = []
-        for processo in processos:
-            processos_json.append({
-                'id': processo.id,
-                'numero_cnj': processo.numero_processo_cnj,
-                'area_juridica': processo.area_juridica,
-                'cliente': processo.cliente,
-                'valor_causa': processo.valor_da_causa,
-                'fase_processual': processo.fase_processual,
-                'risco': processo.risco,
-                'data_distribuicao': processo.data_distribuicao.strftime('%d/%m/%Y') if processo.data_distribuicao else '',
-                'comarca': processo.comarca,
-                'estado': processo.estado
-            })
-        
-        return jsonify({
-            'success': True,
-            'total': len(processos_json),
-            'processos': processos_json
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro na API de processos: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# @app.route('/api/processos', methods=['GET'])
+# @login_required
+# def api_processos_lista():
+#     """API para listar processos (JSON) - DESATIVADA: Usar modules/processos/routes.py"""
+#     try:
+#         from models import ProcessoJuridico
+#         
+#         # Parâmetros de filtro
+#         area = request.args.get('area')
+#         risco = request.args.get('risco')
+#         limite = int(request.args.get('limite', 50))
+#         
+#         query = ProcessoJuridico.query
+#         
+#         if area:
+#             query = query.filter_by(area_juridica=area)
+#         if risco:
+#             query = query.filter_by(risco=risco)
+#         
+#         processos = query.order_by(ProcessoJuridico.data_distribuicao.desc()).limit(limite).all()
+#         
+#         processos_json = []
+#         for processo in processos:
+#             processos_json.append({
+#                 'id': processo.id,
+#                 'numero_processo': processo.numero_processo_cnj,
+#                 'cliente': processo.cliente,
+#                 'parte_adversa': processo.parte_adversa,
+#                 'valor_causa': float(processo.valor_da_causa or 0),
+#                 'status': processo.situacao.nome if processo.situacao else 'Em Andamento',
+#                 'area': processo.area_juridica,
+#                 'risco': processo.risco,
+#                 'data_distribuicao': processo.data_distribuicao.strftime('%d/%m/%Y') if processo.data_distribuicao else '',
+#                 'comarca': processo.comarca,
+#                 'estado': processo.estado
+#             })
+#         
+#         return jsonify({
+#             'success': True,
+#             'total': len(processos_json),
+#             'processos': processos_json
+#         })
+#         
+#     except Exception as e:
+#         logger.error(f"Erro na API de processos: {str(e)}")
+#         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/processos/estatisticas-detalhadas')
 @cache.cached(timeout=600, key_prefix='stats_detalhadas')
