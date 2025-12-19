@@ -120,9 +120,9 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
     // Definir abas baseado na natureza
     const tabs = [
         { id: 0, label: 'Dados Básicos', icon: FileText, visible: true },
-        { id: 1, label: 'Tributário', icon: Scale, visible: naturezaSelecionada === 1 },
-        { id: 2, label: 'Trabalhista', icon: Users, visible: naturezaSelecionada === 2 },
-        { id: 3, label: 'Cível', icon: Building2, visible: naturezaSelecionada === 3 }
+        { id: 1, label: 'Tributário', icon: Scale, visible: Number(naturezaSelecionada) === 1 },
+        { id: 2, label: 'Trabalhista', icon: Users, visible: Number(naturezaSelecionada) === 2 },
+        { id: 3, label: 'Cível', icon: Building2, visible: Number(naturezaSelecionada) === 3 }
     ].filter(tab => tab.visible);
 
     useEffect(() => {
@@ -131,10 +131,12 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
 
     // Ajustar tab ativa quando natureza muda
     useEffect(() => {
-        if (activeTab > 0 && !tabs.find(t => t.id === activeTab)) {
+        // Se a tab atual não estiver mais visível, voltar para a 0
+        const currentTabVisible = tabs.find(t => t.id === activeTab);
+        if (activeTab > 0 && !currentTabVisible) {
             setActiveTab(0);
         }
-    }, [naturezaSelecionada]);
+    }, [naturezaSelecionada, tabs]);
 
     const carregarDependencias = async () => {
         try {
@@ -461,7 +463,7 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                 )}
 
                 {/* ========== TAB 1: TRIBUTÁRIO ========== */}
-                {activeTab === 1 && naturezaSelecionada === 1 && (
+                {activeTab === 1 && Number(naturezaSelecionada) === 1 && (
                     <div className="space-y-6 max-w-5xl">
                         <div className="bg-blue-500/5 border-2 border-blue-500/30 rounded-xl p-6 space-y-4">
                             <h3 className="text-2xl font-semibold flex items-center gap-2 text-blue-400">
@@ -632,7 +634,7 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                 )}
 
                 {/* ========== TAB 2: TRABALHISTA ========== */}
-                {activeTab === 2 && naturezaSelecionada === 2 && (
+                {activeTab === 2 && Number(naturezaSelecionada) === 2 && (
                     <div className="space-y-6 max-w-5xl">
                         <div className="bg-orange-500/5 border-2 border-orange-500/30 rounded-xl p-6 space-y-6">
                             <h3 className="text-2xl font-semibold flex items-center gap-2 text-orange-400">
@@ -846,7 +848,7 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                 )}
 
                 {/* ========== TAB 3: CÍVEL ========== */}
-                {activeTab === 3 && naturezaSelecionada === 3 && (
+                {activeTab === 3 && Number(naturezaSelecionada) === 3 && (
                     <div className="space-y-6 max-w-5xl">
                         <div className="bg-purple-500/5 border-2 border-purple-500/30 rounded-xl p-6 space-y-6">
                             <h3 className="text-2xl font-semibold flex items-center gap-2 text-purple-400">
