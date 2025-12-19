@@ -14,6 +14,9 @@ os.environ['DATABASE_URL'] = DEFAULT_DB_URL
 # Adicionar diretório pai ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+print("DEBUG: STARTING IMPORT V2...")
+
+
 # Imports de modelos movidos para dentro de run_import para evitar erro de inicialização prematura
 
 

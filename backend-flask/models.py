@@ -258,6 +258,7 @@ class User(UserMixin, db.Model):
     updated_at = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
     
     role_id = Column(Integer, ForeignKey('role.id'), nullable=True)
+    tenancy_id = Column(Integer, ForeignKey('tenancy.id'), nullable=True)
     role = relationship("Role", backref="users")
     
     def set_password(self, password):
@@ -445,10 +446,7 @@ class AgenteJuridico(db.Model):
     # Relacionamentos
     categoria = relationship("CategoriaJuridica", back_populates="agentes")
     avaliacoes = relationship("AvaliacaoAgente", back_populates="agente")
-    # Relações para segunda opinião separadas por papel (original ou revisor)
-    revisoes_realizadas = relationship("SegundaOpiniao", 
-                                      foreign_keys="SegundaOpiniao.agente_revisor_id",
-                                      back_populates="agente_revisor")
+    # Relações para segunda opinião separadas por papel (via backref em SegundaOpiniao)
     # Relacionamento com documentos carregados para especialização
     documentos_carregados = relationship("DocumentoCarregado", back_populates="agente", cascade="all, delete-orphan")
     
@@ -548,7 +546,7 @@ class SegundaOpiniao(db.Model):
     
     # Relacionamentos
     agente_original = relationship("AgenteJuridico", foreign_keys=[agente_original_id], backref="analises_revisadas")
-    agente_revisor = relationship("AgenteJuridico", foreign_keys=[agente_revisor_id], back_populates="revisoes_realizadas")
+    agente_revisor = relationship("AgenteJuridico", foreign_keys=[agente_revisor_id], backref="revisoes_realizadas")
     
     def __repr__(self):
         return f'<SegundaOpiniao {self.id}>'
@@ -667,7 +665,7 @@ class AnaliseDocumento(db.Model):
     documento = relationship("Documento", back_populates="analises")
     versao = relationship("VersaoDocumento", backref="analises")
     agente = relationship("AgenteJuridico", backref="analises")
-    comparacoes = relationship("AnaliseComparativa", foreign_keys="AnaliseComparativa.analise_principal_id", back_populates="analise_principal")
+
 
     
     def __repr__(self):
@@ -693,8 +691,8 @@ class AnaliseComparativa(db.Model):
     usuario_id = Column(Integer, ForeignKey('user.id'), nullable=True)  # Usuário que solicitou a comparação
     
     # Relacionamentos
-    analise_principal = relationship("AnaliseDocumento", foreign_keys=[analise_principal_id], back_populates="comparacoes")
-    analise_comparada = relationship("AnaliseDocumento", foreign_keys=[analise_comparada_id], backref="comparacoes_como_secundaria")
+    analise_principal = relationship("AnaliseDocumento", foreign_keys=[analise_principal_id], backref="comparacoes_principal")
+    analise_comparada = relationship("AnaliseDocumento", foreign_keys=[analise_comparada_id], backref="comparacoes_secundaria")
     usuario = relationship("User", backref="comparacoes_solicitadas")
     
     def __repr__(self):
