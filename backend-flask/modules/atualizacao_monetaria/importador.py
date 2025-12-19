@@ -24,11 +24,31 @@ class ImportadorIndices:
     
     # Códigos dos índices no Sistema Gerenciador de Séries Temporais (SGS) do BACEN
     CODIGOS_BACEN = {
-        'SELIC': 11,       # Taxa SELIC
-        'IPCA': 433,       # IPCA
-        'INPC': 188,       # INPC
-        'IGP-M': 189,      # IGP-M (FGV)
-        'CDI': 12,         # Taxa CDI
+        # Taxas de Juros
+        'SELIC': 11,           # Taxa SELIC - Meta
+        'SELIC-EFETIVA': 1178, # Taxa SELIC Efetiva
+        'CDI': 12,             # Taxa CDI
+        'TJLP': 256,           # Taxa de Juros de Longo Prazo
+        'TR': 226,             # Taxa Referencial
+        
+        # Índices de Preços
+        'IPCA': 433,           # IPCA - IBGE
+        'IPCA-E': 10764,       # IPCA-E (Especial)
+        'INPC': 188,           # INPC - IBGE
+        'IGP-M': 189,          # IGP-M - FGV
+        'IGP-DI': 190,         # IGP-DI - FGV
+        'IPC-FIPE': 193,       # IPC-FIPE
+        
+        # Poupança
+        'POUPANCA': 196,       # Poupança - Rentabilidade mensal
+        'POUPANCA-NOVA': 195,  # Poupança nova regra
+        
+        # Câmbio
+        'DOLAR-PTAX': 1,       # Dólar PTAX (compra)
+        'EURO-PTAX': 21619,    # Euro PTAX
+        
+        # Especiais Tributários
+        'UFIR': 17,            # UFIR (antiga, até 2000)
     }
     
     @staticmethod
