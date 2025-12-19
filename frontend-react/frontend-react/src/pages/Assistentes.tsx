@@ -28,19 +28,19 @@ interface Conversa {
 }
 
 const assistentes = [
-  { id: 1, nome: 'Assistente Cível', descricao: 'Direito Cível', cor: 'blue' },
-  { id: 2, nome: 'Assistente Trabalhista', descricao: 'Direito Trabalhista', cor: 'green' },
-  { id: 3, nome: 'Assistente Empresarial', descricao: 'Direito Empresarial', cor: 'purple' },
-  { id: 4, nome: 'Assistente Tributário', descricao: 'Direito Tributário', cor: 'orange' },
-  { id: 5, nome: 'Assistente Previdenciário', descricao: 'Direito Previdenciário', cor: 'red' },
-  { id: 6, nome: 'Assistente Penal', descricao: 'Direito Penal', cor: 'red' },
-  { id: 9, nome: 'Assistente Administrativo', descricao: 'Direito Administrativo', cor: 'teal' },
-  { id: 10, nome: 'Assistente Constitucional', descricao: 'Direito Constitucional', cor: 'indigo' }
+  { id: 'direito_civil', nome: 'Assistente Cível', descricao: 'Direito Cível', cor: 'blue' },
+  { id: 'direito_trabalhista', nome: 'Assistente Trabalhista', descricao: 'Direito Trabalhista', cor: 'green' },
+  { id: 'direito_empresarial', nome: 'Assistente Empresarial', descricao: 'Direito Empresarial', cor: 'purple' },
+  { id: 'direito_tributario', nome: 'Assistente Tributário', descricao: 'Direito Tributário', cor: 'orange' },
+  { id: 'direito_previdenciario', nome: 'Assistente Previdenciário', descricao: 'Direito Previdenciário', cor: 'red' },
+  { id: 'direito_penal', nome: 'Assistente Penal', descricao: 'Direito Penal', cor: 'red' },
+  { id: 'direito_administrativo', nome: 'Assistente Administrativo', descricao: 'Direito Administrativo', cor: 'teal' },
+  { id: 'direito_constitucional', nome: 'Assistente Constitucional', descricao: 'Direito Constitucional', cor: 'indigo' }
 ];
 
 export default function Assistentes() {
   const navigate = useNavigate();
-  const [assistenteSelecionado, setAssistenteSelecionado] = useState<number | null>(null);
+  const [assistenteSelecionado, setAssistenteSelecionado] = useState<string | null>(null);
   const [conversaAtual, setConversaAtual] = useState<Conversa | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [inputMensagem, setInputMensagem] = useState('');
@@ -137,13 +137,20 @@ export default function Assistentes() {
     setArquivosSelecionados([]);
 
     try {
-      // Simular resposta do assistente (substituir por API real)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Chamada real à API
+      const response = await api.post('/assistentes/consultar', {
+        area: assistenteSelecionado.id.toString(), // Enviando ID da área (ex: 'direito_civil')
+        pergunta: inputMensagem,
+        contexto: '', // Contexto adicional se necessário
+        modelo: 'gpt-4o' // Modelo padrão ou selecionado nas preferências
+      });
+
+      const respostaTexto = response.data.resposta || response.data.content || "Não foi possível obter resposta.";
 
       const respostaAssistente: Mensagem = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Entendi sua solicitação sobre "${inputMensagem.substring(0, 50)}...". ${arquivosTemp.length > 0 ? `Analisei ${arquivosTemp.length} arquivo(s). ` : ''}Como assistente jurídico, posso ajudá-lo com análise detalhada e orientações específicas.`,
+        content: respostaTexto,
         timestamp: new Date()
       };
 
