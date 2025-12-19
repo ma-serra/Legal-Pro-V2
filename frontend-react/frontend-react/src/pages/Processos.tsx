@@ -66,8 +66,8 @@ export default function Processos() {
     setIsLoading(true)
     try {
       const [processosRes, statsRes] = await Promise.all([
-        api.get('/processos-juridicos/processos').catch(() => ({ data: { processos: [] } })),
-        api.get('/processos-juridicos/estatisticas').catch(() => ({ data: null }))
+        api.get('/api/processos').catch(() => ({ data: { items: [], processos: [] } })),
+        api.get('/api/processos/estatisticas').catch(() => ({ data: null }))
       ])
 
       if (processosRes.data?.processos) {

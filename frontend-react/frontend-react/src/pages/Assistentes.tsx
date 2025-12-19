@@ -138,7 +138,7 @@ export default function Assistentes() {
 
     try {
       // Chamada real à API
-      const response = await api.post('/assistentes/consultar', {
+      const response = await api.post('/api/assistentes/consultar', {
         area: assistenteSelecionado.id.toString(), // Enviando ID da área (ex: 'direito_civil')
         pergunta: inputMensagem,
         contexto: '', // Contexto adicional se necessário
