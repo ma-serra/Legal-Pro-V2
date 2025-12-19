@@ -17838,6 +17838,15 @@ try:
 except ImportError as e:
     print(f"❌ Erro ao registrar APIs de Database: {e}")
 
+# ==================== FIX: REGISTRO GLOBAL DE PROCESSOS ====================
+try:
+    from modules.processos.routes import processos_bp
+    app.register_blueprint(processos_bp)
+    logger.info("✅ SUCCESS: Módulo de Processos (nova arquitetura) registrado globalmente em main.py")
+except Exception as e:
+    logger.error(f"❌ CRITICAL ERROR: Falha ao registrar processos_bp globalmente: {str(e)}")
+
+
 # Aplicar configuração de timeout
 configure_timeout()
 
