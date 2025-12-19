@@ -813,6 +813,14 @@ def create_app():
         logger.info("✅ Módulo Processos Tributário carregado")
     except ImportError as e:
         logger.warning(f"⚠️ Processos Tributário indisponível: {e}")
+        
+    # Processos Principais System (Novo)
+    try:
+        from modules.processos.routes import processos_bp
+        app.register_blueprint(processos_bp)
+        logger.info("✅ Módulo de Processos Principais carregado")
+    except Exception as e:
+        logger.error(f"❌ Erro ao registrar Módulo de Processos Principais: {e}")
     
     # Registrar API Qdrant para Busca Vetorial
     try:
