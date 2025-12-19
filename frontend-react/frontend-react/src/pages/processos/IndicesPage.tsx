@@ -119,10 +119,25 @@ export default function IndicesEconomicosPage() {
     };
 
     const formatarValor = (valor: number, indice: string) => {
-        if (indice.includes('Taxa') || indice.includes('SELIC') || indice.includes('CDI')) {
+        // SELIC e CDI vêm como taxa diária do BACEN - converter para anual aproximado
+        if (indice === 'SELIC' || indice === 'CDI' || indice === 'SELIC-EFETIVA') {
+            // Taxa diária * 252 dias úteis = taxa anual aproximada
+            const taxaAnual = valor * 252 / 100;
+            return `${taxaAnual.toFixed(2)}% a.a.`;
+        }
+
+        // TJLP já vem como taxa anual
+        if (indice === 'TJLP') {
             return `${valor.toFixed(2)}% a.a.`;
         }
-        return `${valor.toFixed(2)}%`;
+
+        // Câmbio - mostrar como moeda
+        if (indice.includes('DOLAR') || indice.includes('EURO')) {
+            return `R$ ${valor.toFixed(4)}`;
+        }
+
+        // Demais índices vêm como variação mensal
+        return `${valor.toFixed(2)}% mês`;
     };
 
     if (carregando) {
@@ -170,8 +185,8 @@ export default function IndicesEconomicosPage() {
                             key={indice.id}
                             onClick={() => setIndiceSelecionado(indice.id)}
                             className={`bg-card border-2 rounded-xl p-4 text-left transition-all hover: shadow-lg ${indiceSelecionado === indice.id
-                                    ? 'border-primary shadow-lg scale-105'
-                                    : 'border-border hover:border-primary/50'
+                                ? 'border-primary shadow-lg scale-105'
+                                : 'border-border hover:border-primary/50'
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-3">
@@ -238,8 +253,8 @@ export default function IndicesEconomicosPage() {
                                     key={periodo}
                                     onClick={() => setFiltroTempo(periodo as any)}
                                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${filtroTempo === periodo
-                                            ? 'bg-primary text-white'
-                                            : 'bg-accent hover:bg-accent/80'
+                                        ? 'bg-primary text-white'
+                                        : 'bg-accent hover:bg-accent/80'
                                         }`}
                                 >
                                     {periodo === '30d' && '30 dias'}
