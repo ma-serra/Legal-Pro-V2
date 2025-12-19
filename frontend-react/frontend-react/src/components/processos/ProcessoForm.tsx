@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Save, X, FileText, Users, Building2, DollarSign, Scale, AlertTriangle } from 'lucide-react';
 import api from '../../lib/api';
+import TesesMultiSelect from './TesesMultiSelect';
 
 interface ProcessoFormData {
     // Dados Básicos OBRIGATÓRIOS
@@ -120,8 +121,10 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
     const [clientes, setClientes] = useState<any[]>([]);
     const [comarcas, setComarcas] = useState<any[]>([]);
     const [varas, setVaras] = useState<any[]>([]);
+    const [selectedTeses, setSelectedTeses] = useState<number[]>([]);
 
     const naturezaSelecionada = watch('natureza_id');
+    const tributoSelecionado = watch('tributario.tributo_id');
 
     // Definir abas baseado na natureza
     const tabs = [
@@ -614,6 +617,15 @@ export default function ProcessoFormComAbas({ processo, onSave, onCancel, saving
                                             <option key={t.id_tributo} value={t.id_tributo}>{t.nome} ({t.codigo})</option>
                                         ))}
                                     </select>
+                                </div>
+
+                                {/* Teses Multi-Select - Ocupa toda a linha */}
+                                <div className="md:col-span-3">
+                                    <TesesMultiSelect
+                                        tributoId={tributoSelecionado}
+                                        selectedTeses={selectedTeses}
+                                        onChange={setSelectedTeses}
+                                    />
                                 </div>
 
                                 <div>

@@ -74,7 +74,7 @@ class ProcessoService:
                 contingencia=data.get('contingencia'),
                 tipo_probabilidade_id=data.get('tipo_probabilidade_id'),
                 risco_id=data.get('risco_id'),
-                titulo=data.get('titulo'),
+                titulo=ProcessoService._gerar_titulo_automatico(data),
                 observacao_pasta=data.get('observacao_pasta'),
                 tenant_id=data.get('tenant_id')
             )
@@ -510,3 +510,38 @@ class ProcessoService:
             3: 'Cível'
         }
         return naturezas.get(natureza_id)
+
+    @staticmethod
+    def _gerar_titulo_automatico(data: Dict[str, Any]) -> Optional[str]:
+        """
+        Gera título automático para o processo
+        
+        Para Tributário: "Autor - Tese/Tema"
+        Para outros: "Autor x Réu" ou título manual
+        """
+        # Se título foi fornecido manualmente, usa ele
+        titulo_manual = data.get('titulo')
+        if titulo_manual:
+            return titulo_manual
+        
+        natureza_id = data.get('natureza_id')
+        autor = data.get('autor') or data.get('cliente_principal_nome') or 'N/I'
+        
+        # Tributário: formato "Autor - Tese/Tema"
+        if natureza_id == 1:
+            # Tentar obter nome da tese do dados_tributario
+            dados_trib = data.get('tributario') or data.get('dados_tributario') or {}
+            tributo_id = dados_trib.get('tributo_id')
+            
+            if tributo_id:
+                # Buscar nome do tributo
+                tributo = Tributo.query.get(tributo_id)
+                if tributo:
+                    return f"{autor} - {tributo.nome}"
+            
+            return f"{autor} - Processo Tributário"
+        
+        # Trabalhista e Cível: formato "Autor x Réu"
+        reu = data.get('reu') or 'N/I'
+        return f"{autor} x {reu}"
+
