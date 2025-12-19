@@ -15,7 +15,7 @@ from .services import (
 )
 
 # Criar Blueprint
-tributario_bp = Blueprint('tributario', __name__, url_prefix='/api/tributario')
+tributario_bp = Blueprint('processos_tributario', __name__, url_prefix='/api/tributario')
 
 
 def handle_errors(f):

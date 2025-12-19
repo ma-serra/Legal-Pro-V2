@@ -217,7 +217,7 @@ class FiltroPesquisaSchema(Schema):
     comarca_id = fields.Int()
     
     # Paginação
-    page = fields.Int(missing=1)
-    per_page = fields.Int(missing=20)
-    ordenacao = fields.Str(missing='data_criacao')
-    ordem = fields.Str(missing='desc')
+    page = fields.Int(load_default=1)
+    per_page = fields.Int(load_default=20)
+    ordenacao = fields.Str(load_default='data_criacao')
+    ordem = fields.Str(load_default='desc')

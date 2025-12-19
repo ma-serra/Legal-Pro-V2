@@ -144,7 +144,7 @@ class Client(db.Model):
     status = db.Column(db.String(50), default='active')  # active, inactive, suspended
     
     # Metadata
-    metadata = db.Column(JSONB, default={})
+    client_metadata = db.Column(JSONB, default={})
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -175,7 +175,7 @@ class Client(db.Model):
             'industry': self.industry,
             'size': self.size,
             'status': self.status,
-            'metadata': self.metadata,
+            'metadata': self.client_metadata,
             'created_at': self.created_at.isoformat()
         }
 
