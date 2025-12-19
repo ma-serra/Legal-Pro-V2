@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from functools import wraps
 
+from main import db
 from .services import ProcessoService
 from .etl_service import ProcessoETLService
 from .schemas import (
@@ -329,8 +330,8 @@ def obter_estatisticas():
             'media_valor_causa': float(valores.media_valor_causa or 0)
         },
         'por_ano': {
-            int(ano): count 
-            for ano, count in por_ano
+            int(ano) if ano else 0: count 
+            for ano, count in por_ano if ano is not None
         }
     }), 200
 
