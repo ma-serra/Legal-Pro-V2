@@ -22,6 +22,7 @@ import ImportacaoPage from './pages/processos/ImportacaoPage'
 import ImportadorETLPage from './pages/processos/ImportadorETLPage'
 import TesesPage from './pages/processos/TesesPage';
 import IndicesPage from './pages/processos/IndicesPage';
+import CalculosTributariosPage from './pages/processos/CalculosTributariosPage';
 import MLAnaliseTributarioPage from './pages/processos/MLAnaliseTributarioPage';
 import MLModelosDashboard from './pages/processos/MLModelosDashboard';
 
@@ -109,6 +110,7 @@ export default function App() {
               <Route path="importar" element={<ImportadorETLPage />} />
               <Route path="teses" element={<TesesPage />} />
               <Route path="indices" element={<IndicesPage />} />
+              <Route path="calculos-tributarios" element={<CalculosTributariosPage />} />
               <Route path="ml-analise" element={<MLAnaliseTributarioPage />} />
               <Route path="ml-modelos" element={<MLModelosDashboard />} />
               <Route path=":id" element={<ProcessoDetailsPage />} />

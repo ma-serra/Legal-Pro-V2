@@ -17171,6 +17171,14 @@ try:
 except Exception as e:
     logger.error(f"❌ Erro ao registrar API BCB Olinda: {e}")
 
+# Registrar API de Cálculos Tributários
+try:
+    from modules.calculos_tributarios.routes import registrar_rotas_calculos
+    registrar_rotas_calculos(app)
+    logger.info("✅ API Cálculos Tributários registrada com sucesso")
+except Exception as e:
+    logger.error(f"❌ Erro ao registrar API Cálculos Tributários: {e}")
+
 # Registrar API de modelos estatísticos
 try:
     from api_modelos_estatisticos import register_modelos_api
