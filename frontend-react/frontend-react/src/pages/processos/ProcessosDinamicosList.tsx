@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Gavel, Plus, Filter, Download, RefreshCw,
     FileText, TrendingUp, AlertCircle, CheckCircle,
-    Calendar, DollarSign, Scale, Building2, Brain, Search
+    Calendar, DollarSign, Scale, Building2, Brain, Search, AlertTriangle, Users
 } from 'lucide-react';
 import { Processo, FiltroPesquisa } from '../../types/processos';
 import api from '../../lib/api';
@@ -30,6 +30,10 @@ export default function ProcessosDinamicosList() {
         tributario: 0,
         trabalhista: 0,
         civel: 0,
+        previdenciario: 0,
+        penal: 0,
+        administrativo: 0,
+        constitucional: 0,
         valorTotal: 0
     });
 
@@ -76,6 +80,10 @@ export default function ProcessosDinamicosList() {
                     tributario: response.data.processos?.filter((p: Processo) => p.natureza_id === 1).length || 0,
                     trabalhista: response.data.processos?.filter((p: Processo) => p.natureza_id === 2).length || 0,
                     civel: response.data.processos?.filter((p: Processo) => p.natureza_id === 3).length || 0,
+                    previdenciario: response.data.processos?.filter((p: Processo) => p.natureza_id === 4).length || 0,
+                    penal: response.data.processos?.filter((p: Processo) => p.natureza_id === 10).length || 0,
+                    administrativo: response.data.processos?.filter((p: Processo) => p.natureza_id === 14).length || 0,
+                    constitucional: response.data.processos?.filter((p: Processo) => p.natureza_id === 15).length || 0,
                     valorTotal: response.data.processos?.reduce((sum: number, p: Processo) => sum + (p.valor_causa || 0), 0) || 0
                 });
             }
@@ -90,7 +98,11 @@ export default function ProcessosDinamicosList() {
         const badges: Record<number, { label: string; color: string }> = {
             1: { label: 'Tributário', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
             2: { label: 'Trabalhista', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-            3: { label: 'Cível', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' }
+            3: { label: 'Cível', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+            4: { label: 'Previdenciário', color: 'bg-teal-500/20 text-teal-400 border-teal-500/30' },
+            10: { label: 'Penal', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+            14: { label: 'Administrativo', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+            15: { label: 'Constitucional', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' }
         };
         const badge = badges[natureza_id] || { label: 'Outro', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
 
@@ -118,7 +130,7 @@ export default function ProcessosDinamicosList() {
             ...processos.map(p => [
                 p.pasta,
                 p.numero_cnj || '',
-                p.natureza_id === 1 ? 'Tributário' : p.natureza_id === 2 ? 'Trabalhista' : 'Cível',
+                { 1: 'Tributário', 2: 'Trabalhista', 3: 'Cível', 4: 'Previdenciário', 10: 'Penal', 14: 'Administrativo', 15: 'Constitucional' }[p.natureza_id] || 'Outro',
                 p.valor_causa || 0,
                 formatDate(p.data_criacao)
             ].join(';'))
@@ -282,6 +294,54 @@ export default function ProcessosDinamicosList() {
                     </div>
                 </div>
 
+                <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Administrativo</p>
+                            <p className="text-3xl font-bold text-yellow-400">{stats.administrativo}</p>
+                        </div>
+                        <div className="p-3 bg-yellow-500/20 rounded-lg">
+                            <Building2 className="w-6 h-6 text-yellow-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Penal</p>
+                            <p className="text-3xl font-bold text-red-400">{stats.penal}</p>
+                        </div>
+                        <div className="p-3 bg-red-500/20 rounded-lg">
+                            <AlertTriangle className="w-6 h-6 text-red-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-teal-500/10 to-teal-600/5 border border-teal-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Previdenciário</p>
+                            <p className="text-3xl font-bold text-teal-400">{stats.previdenciario}</p>
+                        </div>
+                        <div className="p-3 bg-teal-500/20 rounded-lg">
+                            <Users className="w-6 h-6 text-teal-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <p className="text-sm text-muted-foreground mb-1">Constitucional</p>
+                            <p className="text-3xl font-bold text-pink-400">{stats.constitucional}</p>
+                        </div>
+                        <div className="p-3 bg-pink-500/20 rounded-lg">
+                            <FileText className="w-6 h-6 text-pink-400" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-xl p-6 hover:shadow-lg hover:scale-105 transition-all duration-300">
                     <div className="flex items-start justify-between">
                         <div>
@@ -315,6 +375,10 @@ export default function ProcessosDinamicosList() {
                         <option value="1">Tributário</option>
                         <option value="2">Trabalhista</option>
                         <option value="3">Cível</option>
+                        <option value="4">Previdenciário</option>
+                        <option value="10">Penal</option>
+                        <option value="14">Administrativo</option>
+                        <option value="15">Constitucional</option>
                     </select>
 
                     <select
