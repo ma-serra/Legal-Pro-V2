@@ -1,5 +1,5 @@
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from .service import CalculadoraTributariaService
 
 def registrar_rotas_calculos(app):
@@ -42,5 +42,40 @@ def registrar_rotas_calculos(app):
             'atividades_presumido': list(CalculadoraTributariaService.PRESUNCAO_IRPJ.keys()),
             'anexos_simples': list(CalculadoraTributariaService.TABELAS_SIMPLES.keys())
         })
+
+    # === NOVAS ROTAS (Persistência) ===
+
+    @calc_bp.route('/simulacoes', methods=['POST'])
+    def salvar_simulacao():
+        data = request.json
+        try:
+            nova_sim = CalculadoraTributariaService.salvar_simulacao(
+                cliente_nome=data.get('cliente_nome'),
+                tipo=data.get('tipo_simulacao'),
+                parametros=data.get('parametros_input'),
+                resultado=data.get('resultado_output')
+            )
+            return jsonify({'success': True, 'id': str(nova_sim.id)}), 201
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @calc_bp.route('/simulacoes', methods=['GET'])
+    def listar_simulacoes():
+        cliente = request.args.get('cliente')
+        simulacoes = CalculadoraTributariaService.listar_simulacoes(cliente)
+        return jsonify([s.to_dict() for s in simulacoes])
+
+    @calc_bp.route('/simulacoes/<id>/pdf', methods=['GET'])
+    def baixar_pdf(id):
+        try:
+            pdf_buffer = CalculadoraTributariaService.gerar_pdf_simulacao(id)
+            return send_file(
+                pdf_buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'simulacao_tributaria_{id}.pdf'
+            )
+        except Exception as e:
+            return jsonify({'error': str(e)}), 404
 
     app.register_blueprint(calc_bp)

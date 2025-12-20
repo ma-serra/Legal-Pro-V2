@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import {
     Calculator, TrendingUp, Scale, BookOpen, AlertTriangle, Check,
     PieChart, BarChart3, Building2, Landmark, RefreshCw, FileText,
-    DollarSign, ArrowRight, Percent, Clock
+    DollarSign, ArrowRight, Percent, Clock, History, Download, Printer, Save
 } from 'lucide-react';
 import api from '../../lib/api';
 import {
@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 export default function CalculosTributariosPage() {
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'simulador' | 'recuperacao' | 'legislacao'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'simulador' | 'recuperacao' | 'legislacao' | 'historico'>('dashboard');
 
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6">
@@ -33,14 +33,15 @@ export default function CalculosTributariosPage() {
                     { id: 'dashboard', label: 'Panorama Geral', icon: BarChart3 },
                     { id: 'simulador', label: 'Simulador de Regime', icon: Scale },
                     { id: 'recuperacao', label: 'Recuperação de Créditos', icon: TrendingUp },
+                    { id: 'historico', label: 'Histórico & Relatórios', icon: History },
                     { id: 'legislacao', label: 'Dados Legislativos', icon: BookOpen },
                 ].map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                            ? 'border-primary text-primary font-medium'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                                ? 'border-primary text-primary font-medium'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <tab.icon className="w-4 h-4" />
@@ -54,6 +55,7 @@ export default function CalculosTributariosPage() {
                 {activeTab === 'dashboard' && <DashboardTributario />}
                 {activeTab === 'simulador' && <SimuladorRegime />}
                 {activeTab === 'recuperacao' && <RecuperacaoCredito />}
+                {activeTab === 'historico' && <HistoricoSimulacoes />}
                 {activeTab === 'legislacao' && <LegislacaoDados />}
             </div>
         </div>
@@ -86,13 +88,6 @@ function DashboardTributario() {
                                 <p className="text-sm text-muted-foreground">Período de transição iniciando em 2026. Necessário revisar cadastros de produtos (NCM).</p>
                             </div>
                         </li>
-                        <li className="flex items-start gap-3 p-3 bg-yellow-900/10 rounded-lg border border-yellow-900/20">
-                            <ClockIcon className="w-5 h-5 text-yellow-500 mt-0.5" />
-                            <div>
-                                <h4 className="font-semibold text-yellow-400">Exclusão ICMS Base PIS/COFINS</h4>
-                                <p className="text-sm text-muted-foreground">Prazo prescricional de 5 anos para recuperação administrativa.</p>
-                            </div>
-                        </li>
                     </ul>
                 </div>
 
@@ -106,10 +101,6 @@ function DashboardTributario() {
                             <span className="font-medium">Simulador Lucro Real vs Presumido</span>
                             <ArrowRight className="w-4 h-4 text-primary" />
                         </li>
-                        <li className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:border-primary transition-colors cursor-pointer">
-                            <span className="font-medium">Cálculo Tese do Século (ICMS na Base PIS/COFINS)</span>
-                            <ArrowRight className="w-4 h-4 text-primary" />
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -121,19 +112,20 @@ function SimuladorRegime() {
     const [receita, setReceita] = useState(300000); // 100k/mês
     const [folha, setFolha] = useState(84000);    // 28k/mês (28%)
     const [atividade, setAtividade] = useState('servicos');
+    const [clienteNome, setClienteNome] = useState('');
     const [resultado, setResultado] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const [salvando, setSalvando] = useState(false);
 
     const calcular = async () => {
         setLoading(true);
         try {
-            // Paralelo: Simples e Presumido
             const [resSimples, resPresumido] = await Promise.all([
                 api.post('/api/calculos-tributarios/simular/simples', {
-                    receita_mensal: receita / 3, // Estima mensal
-                    receita_bruta_12_meses: receita * 4, // Estima anual (4 tri)
+                    receita_mensal: receita / 3,
+                    receita_bruta_12_meses: receita * 4,
                     folha_12_meses: folha * 4,
-                    anexo: 'ANEXO_III' // Simplificado
+                    anexo: 'ANEXO_III'
                 }),
                 api.post('/api/calculos-tributarios/simular/presumido', {
                     receita_trimestral: receita,
@@ -153,10 +145,40 @@ function SimuladorRegime() {
         }
     };
 
+    const salvarSimulacao = async () => {
+        if (!resultado) return;
+        setSalvando(true);
+        try {
+            await api.post('/api/calculos-tributarios/simulacoes', {
+                cliente_nome: clienteNome || 'Cliente Não Identificado',
+                tipo_simulacao: 'COMPARATIVO_REGIME',
+                parametros_input: { receita, folha, atividade },
+                resultado_output: resultado
+            });
+            alert('Simulação salva com sucesso! Consulte na aba Histórico.');
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao salvar simulação.');
+        } finally {
+            setSalvando(false);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 bg-card border border-border rounded-xl p-6 space-y-4">
                 <h3 className="font-bold mb-4">Parâmetros de Simulação (Trimestral)</h3>
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Nome do Cliente (Opcional)</label>
+                    <input
+                        type="text"
+                        value={clienteNome}
+                        onChange={(e) => setClienteNome(e.target.value)}
+                        placeholder="Ex: Empresa ABC Ltda"
+                        className="w-full p-2 bg-background border border-border rounded-md"
+                    />
+                </div>
 
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Receita Trimestral (R$)</label>
@@ -201,7 +223,20 @@ function SimuladorRegime() {
             </div>
 
             <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
-                <h3 className="font-bold mb-4">Resultados Comparativos</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold">Resultados Comparativos</h3>
+                    {resultado && (
+                        <button
+                            onClick={salvarSimulacao}
+                            disabled={salvando}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
+                        >
+                            <Save className="w-4 h-4" />
+                            {salvando ? 'Salvando...' : 'Salvar Simulação'}
+                        </button>
+                    )}
+                </div>
+
                 {resultado ? (
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
@@ -250,7 +285,9 @@ function SimuladorRegime() {
 function RecuperacaoCredito() {
     const [faturamento, setFaturamento] = useState(1000000);
     const [icms, setIcms] = useState(18);
+    const [clienteNome, setClienteNome] = useState('');
     const [resultado, setResultado] = useState<any>(null);
+    const [salvando, setSalvando] = useState(false);
 
     const calcular = async () => {
         try {
@@ -265,16 +302,41 @@ function RecuperacaoCredito() {
         }
     };
 
+    const salvarSimulacao = async () => {
+        if (!resultado) return;
+        setSalvando(true);
+        try {
+            await api.post('/api/calculos-tributarios/simulacoes', {
+                cliente_nome: clienteNome || 'Cliente Não Identificado',
+                tipo_simulacao: 'RECUPERACAO_ICMS',
+                parametros_input: { faturamento, icms },
+                resultado_output: resultado
+            });
+            alert('Simulação salva com sucesso! Consulte na aba Histórico.');
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao salvar simulação.');
+        } finally {
+            setSalvando(false);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
                 <div className="bg-card border border-border rounded-xl p-6">
                     <h3 className="font-bold mb-4">Calculadora "Tese do Século"</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                        Estimativa de recuperação da exclusão do ICMS da base de cálculo do PIS/COFINS (Tema 69 STF).
-                    </p>
 
                     <div className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium">Nome do Cliente (Opcional)</label>
+                            <input
+                                type="text"
+                                value={clienteNome}
+                                onChange={(e) => setClienteNome(e.target.value)}
+                                className="w-full p-2 bg-background border border-border rounded-md"
+                            />
+                        </div>
                         <div>
                             <label className="text-sm font-medium">Faturamento Médio Mensal (R$)</label>
                             <input
@@ -306,22 +368,19 @@ function RecuperacaoCredito() {
                         <div>
                             <h4 className="text-muted-foreground font-medium uppercase tracking-wider text-xs">Potencial Total Recuperável (5 Anos)</h4>
                             <p className="text-4xl font-bold text-green-400 mt-2">
-                                R$ {resultado.total_final_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Inclui Principal + Atualização SELIC Estimada (~40%)
-                            </p>
+                                R$ {resultado.total_final_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="text-sm text-muted-foreground mt-1">Inclui Principal + Atualização SELIC Estimada (~40%)</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-left border-t border-border pt-4">
-                            <div>
-                                <p className="text-xs text-muted-foreground">Economia Mensal</p>
-                                <p className="font-bold">R$ {resultado.economia_mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Valor Principal (5 Anos)</p>
-                                <p className="font-bold">R$ {resultado.total_periodo_principal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                            </div>
+                        <div className="flex justify-center pt-4">
+                            <button
+                                onClick={salvarSimulacao}
+                                disabled={salvando}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                            >
+                                <Save className="w-4 h-4" />
+                                {salvando ? 'Salvando...' : 'Salvar Estimativa e Gerar PDF'}
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -330,6 +389,101 @@ function RecuperacaoCredito() {
                         <p>Simule o potencial de recuperação tributária</p>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function HistoricoSimulacoes() {
+    const [simulacoes, setSimulacoes] = useState<any[]>([]);
+
+    useEffect(() => {
+        carregarHistorico();
+    }, []);
+
+    const carregarHistorico = async () => {
+        try {
+            const res = await api.get('/api/calculos-tributarios/simulacoes');
+            setSimulacoes(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const downloadPDF = async (id: string) => {
+        try {
+            const response = await api.get(`/api/calculos-tributarios/simulacoes/${id}/pdf`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `simulacao_${id.substring(0, 8)}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Erro ao baixar PDF:', error);
+            alert('Erro ao gerar PDF');
+        }
+    };
+
+    return (
+        <div className="bg-card border border-border rounded-xl p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-xl">Histórico de Simulações</h3>
+                <button onClick={carregarHistorico} className="p-2 bg-background border border-border rounded-lg hover:border-primary">
+                    <RefreshCw className="w-4 h-4" />
+                </button>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead>
+                        <tr className="border-b border-border text-left">
+                            <th className="py-3 px-4 font-medium text-muted-foreground">Data</th>
+                            <th className="py-3 px-4 font-medium text-muted-foreground">Cliente</th>
+                            <th className="py-3 px-4 font-medium text-muted-foreground">Tipo</th>
+                            <th className="py-3 px-4 font-medium text-muted-foreground">Parâmetros Principais</th>
+                            <th className="py-3 px-4 font-medium text-muted-foreground text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {simulacoes.map((sim: any) => (
+                            <tr key={sim.id} className="border-b border-border/50 hover:bg-accent/50">
+                                <td className="py-3 px-4 text-sm">{new Date(sim.data_criacao).toLocaleString('pt-BR')}</td>
+                                <td className="py-3 px-4 text-sm font-medium">{sim.cliente_nome || '-'}</td>
+                                <td className="py-3 px-4 text-sm">
+                                    <span className={`px-2 py-1 rounded text-xs ${sim.tipo_simulacao === 'COMPARATIVO_REGIME'
+                                            ? 'bg-blue-500/10 text-blue-400'
+                                            : 'bg-green-500/10 text-green-400'
+                                        }`}>
+                                        {sim.tipo_simulacao.replace('_', ' ')}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">
+                                    {Object.entries(sim.parametros_input).slice(0, 2).map(([k, v]) => `${k}: ${v}`).join(', ')}...
+                                </td>
+                                <td className="py-3 px-4 text-sm text-right">
+                                    <button
+                                        onClick={() => downloadPDF(sim.id)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-md text-xs font-medium transition-colors"
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        PDF
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {simulacoes.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                                    Nenhuma simulação salva.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
