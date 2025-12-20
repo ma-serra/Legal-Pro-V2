@@ -65,14 +65,13 @@ class BCBOlindaService:
     def buscar_expectativa_generica(endpoint: str, indicador: str, top: int = 10) -> List[Dict]:
         """
         Busca expectativas genéricas usando endpoint especificado.
-        Removemos $orderby da query para evitar erros de sintaxe OData e ordenamos no Python.
+        Removemos $filter OData (causa erro de tipo no BCB) e filtramos no Python.
         """
         url = f"{BCBOlindaService.EXPECTATIVAS_BASE}/{endpoint}"
         
-        # Filtro simples
+        # Buscar sem filtro OData - filtramos no Python
         params = {
-            '$filter': f"Indicador eq '{indicador}'",
-            '$top': top * 2, # Busca um pouco mais para garantir após ordenação
+            '$top': 500,  # Buscar mais para garantir após filtragem
             '$format': 'json'
         }
         
@@ -82,15 +81,21 @@ class BCBOlindaService:
             dados = response.json()
             items = dados.get('value', [])
             
+            # Filtrar no Python por indicador (case-insensitive partial match)
+            indicador_lower = indicador.lower()
+            items_filtrados = [
+                item for item in items 
+                if indicador_lower in str(item.get('Indicador', '')).lower()
+            ]
+            
             # Ordenar por data decrescente (mais recente primeiro)
-            # Campo data geralmente é "dyyyy-MM-dd"
-            items.sort(key=lambda x: x.get('Data', ''), reverse=True)
+            items_filtrados.sort(key=lambda x: x.get('Data', ''), reverse=True)
             
             # Limitar ao top solicitado
-            items = items[:top]
+            items_filtrados = items_filtrados[:top]
             
             resultado = []
-            for item in items:
+            for item in items_filtrados:
                 resultado.append({
                     'indicador': item.get('Indicador'),
                     'data': item.get('Data'),
