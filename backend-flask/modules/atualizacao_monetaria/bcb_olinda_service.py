@@ -107,7 +107,54 @@ class BCBOlindaService:
             logger.error(f"Erro ao buscar expectativas {indicador} em {endpoint}: {e}")
             return []
     
-    @staticmethod  
+    @staticmethod
+    def buscar_historico_expectativas(indicador: str, dias: int = 90) -> Dict[str, List]:
+        """
+        Busca histórico comparativo de expectativas (Mercado Geral vs Top 5)
+        """
+        data_limite = (date.today() - timedelta(days=dias)).strftime('%Y-%m-%d')
+        
+        # 1. Mercado Geral
+        url_geral = f"{BCBOlindaService.EXPECTATIVAS_BASE}/ExpectativasMercadoAnuais"
+        params_geral = {
+            '$filter': f"Indicador eq '{indicador}' and Data gt '{data_limite}'",
+            '$format': 'json'
+        }
+        
+        # 2. Top 5
+        url_top5 = f"{BCBOlindaService.EXPECTATIVAS_BASE}/ExpectativasMercadoTop5Anuais"
+        params_top5 = {
+            '$filter': f"Indicador eq '{indicador}' and Data gt '{data_limite}' and tipoCalculo eq 'C'",
+            '$format': 'json'
+        }
+        
+        resultado = {'geral': [], 'top5': []}
+        
+        try:
+            # Busca Geral
+            resp_geral = requests.get(url_geral, params=params_geral, timeout=10)
+            if resp_geral.ok:
+                data = resp_geral.json().get('value', [])
+                # Filtrar para pegar apenas a expectativa para o ano corrente/próximo ano relevante
+                # Geralmente queremos a expectativa para o ano calendário atual + 1
+                ano_ref = date.today().year
+                data_filtrada = [x for x in data if x.get('DataReferencia') == str(ano_ref)]
+                resultado['geral'] = sorted(data_filtrada, key=lambda x: x['Data'])
+            
+            # Busca Top 5
+            resp_top5 = requests.get(url_top5, params=params_top5, timeout=10)
+            if resp_top5.ok:
+                data = resp_top5.json().get('value', [])
+                ano_ref = date.today().year
+                data_filtrada = [x for x in data if x.get('DataReferencia') == str(ano_ref)]
+                resultado['top5'] = sorted(data_filtrada, key=lambda x: x['Data'])
+                
+        except Exception as e:
+            logger.error(f"Erro ao buscar histórico expectativas: {e}")
+            
+        return resultado
+
+    @staticmethod
     def buscar_expectativas_selic() -> List[Dict]:
         return BCBOlindaService.buscar_expectativa_generica('ExpectativasMercadoAnuais', 'Selic')
     
@@ -152,6 +199,11 @@ def registrar_rotas_olinda(app):
             'pib': BCBOlindaService.buscar_expectativas_pib(),
             'cambio': BCBOlindaService.buscar_expectativas_cambio()
         })
+
+    @olinda_bp.route('/expectativas/historico/<indicador>', methods=['GET'])
+    def expectativas_historico(indicador):
+        dias = request.args.get('dias', 90, type=int)
+        return jsonify(BCBOlindaService.buscar_historico_expectativas(indicador, dias))
     
     app.register_blueprint(olinda_bp)
     return olinda_bp

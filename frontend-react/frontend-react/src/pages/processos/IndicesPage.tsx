@@ -9,10 +9,11 @@ import { useState, useEffect } from 'react';
 import {
     TrendingUp, TrendingDown, Calendar, RefreshCw,
     DollarSign, Percent, BarChart3, Download, Clock,
-    Globe, Target, ArrowRight
+    Globe, Target, ArrowRight, LineChart as LineIcon
 } from 'lucide-react';
 import api from '../../lib/api';
 import IndicesChart from '../../components/processos/IndicesChart';
+import ExpectativasChart from '../../components/processos/ExpectativasChart';
 
 interface Indice {
     id: number;
@@ -63,7 +64,9 @@ export default function IndicesEconomicosPage() {
         pib: Expectativa[];
         cambio: Expectativa[];
     }>({ selic: [], ipca: [], pib: [], cambio: [] });
-    const [abaAtiva, setAbaAtiva] = useState<'indices' | 'ptax' | 'expectativas'>('indices');
+
+    // Estado para detalhe de expectativa (histórico Top 5)
+    const [expectativaDetalhe, setExpectativaDetalhe] = useState<{ key: string, label: string } | null>(null);
 
     useEffect(() => {
         carregarTodosDados();
@@ -264,21 +267,35 @@ export default function IndicesEconomicosPage() {
 
             {/* Expectativas de Mercado - Focus */}
             <div className="bg-card border border-border rounded-xl p-5">
-                <div className="flex items-center gap-2 mb-4">
-                    <Target className="w-5 h-5 text-primary" />
-                    <h2 className="font-bold">Expectativas de Mercado (Focus)</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Target className="w-5 h-5 text-primary" />
+                        <h2 className="font-bold">Expectativas de Mercado (Focus)</h2>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Clique para ver histórico</span>
                 </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
-                        { key: 'selic', label: 'SELIC', cor: 'orange', sufixo: '% a.a.' },
-                        { key: 'ipca', label: 'IPCA', cor: 'red', sufixo: '%' },
-                        { key: 'pib', label: 'PIB', cor: 'green', sufixo: '%' },
-                        { key: 'cambio', label: 'Câmbio', cor: 'blue', prefixo: 'R$ ' }
-                    ].map(({ key, label, cor, sufixo, prefixo }) => {
+                        { key: 'selic', label: 'SELIC', cor: 'orange', sufixo: '% a.a.', api_indicador: 'Selic' },
+                        { key: 'ipca', label: 'IPCA', cor: 'red', sufixo: '%', api_indicador: 'IPCA' },
+                        { key: 'pib', label: 'PIB', cor: 'green', sufixo: '%', api_indicador: 'PIB Total' },
+                        { key: 'cambio', label: 'Câmbio', cor: 'blue', prefixo: 'R$ ', api_indicador: 'Câmbio' }
+                    ].map(({ key, label, cor, sufixo, prefixo, api_indicador }) => {
                         const dados = expectativas[key as keyof typeof expectativas]?.[0];
+                        const isSelected = expectativaDetalhe?.key === key;
+
                         return (
-                            <div key={key} className="bg-background border border-border rounded-lg p-3">
-                                <h3 className={`font-semibold text-${cor}-400 text-sm mb-2`}>{label}</h3>
+                            <button
+                                key={key}
+                                onClick={() => setExpectativaDetalhe(isSelected ? null : { key, label: api_indicador })}
+                                className={`bg-background border rounded-lg p-3 text-left transition-all hover:shadow-md ${isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
+                                    }`}
+                            >
+                                <h3 className={`font-semibold text-${cor}-400 text-sm mb-2 flex items-center justify-between`}>
+                                    {label}
+                                    {isSelected && <LineIcon className="w-3 h-3 text-primary" />}
+                                </h3>
                                 {dados ? (
                                     <>
                                         <p className="text-xl font-bold">
@@ -287,10 +304,18 @@ export default function IndicesEconomicosPage() {
                                         <p className="text-xs text-muted-foreground">{dados.data_referencia}</p>
                                     </>
                                 ) : <p className="text-muted-foreground text-sm">Sem dados</p>}
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
+
+                {/* Gráfico Histórico Focus (Condicional) */}
+                {expectativaDetalhe && (
+                    <ExpectativasChart
+                        indicador={expectativaDetalhe.label}
+                        titulo={expectativaDetalhe.label}
+                    />
+                )}
             </div>
 
             {/* Cards de Índices */}
@@ -410,7 +435,7 @@ export default function IndicesEconomicosPage() {
                     <div className="text-sm">
                         <p className="font-medium text-blue-300 mb-1">Fonte: Banco Central do Brasil</p>
                         <p className="text-blue-200/80">
-                            APIs: SGS (Séries Temporais), Olinda PTAX (Câmbio), Expectativas Focus.
+                            APIs: SGS (Séries Temporais), Olinda PTAX (Câmbio), Expectativas Focus (Top 5 e Média Mercado).
                             Dados atualizados diariamente às 8h ou sob demanda.
                         </p>
                     </div>
