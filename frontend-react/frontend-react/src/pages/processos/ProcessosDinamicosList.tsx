@@ -55,14 +55,31 @@ export default function ProcessosDinamicosList() {
 
     const fetchAuxiliaryData = async () => {
         try {
-            const [advRes, faseRes, comarcaRes] = await Promise.all([
+            const [advRes, faseRes, comarcaRes, statsRes] = await Promise.all([
                 api.get('/api/processos/advogados'),
                 api.get('/api/processos/fases'),
-                api.get('/api/processos/comarcas')
+                api.get('/api/processos/comarcas'),
+                api.get('/api/processos/estatisticas')
             ]);
             setAdvogados(advRes.data || []);
             setFases(faseRes.data || []);
             setComarcas(comarcaRes.data || []);
+
+            // Stats from /api/processos/estatisticas - use real database totals
+            if (statsRes.data) {
+                const porNatureza = statsRes.data.por_natureza || {};
+                setStats({
+                    total: statsRes.data.total_processos || 0,
+                    tributario: porNatureza['1'] || 0,
+                    trabalhista: porNatureza['2'] || 0,
+                    civel: porNatureza['3'] || 0,
+                    previdenciario: porNatureza['4'] || 0,
+                    penal: porNatureza['10'] || 0,
+                    administrativo: porNatureza['14'] || 0,
+                    constitucional: porNatureza['15'] || 0,
+                    valorTotal: statsRes.data.valores_financeiros?.total_valor_causa || 0
+                });
+            }
         } catch (error) {
             console.error('Erro ao carregar filtros:', error);
         }
@@ -75,17 +92,7 @@ export default function ProcessosDinamicosList() {
 
             if (response.data) {
                 setProcessos(response.data.processos || []);
-                setStats({
-                    total: response.data.total || 0,
-                    tributario: response.data.processos?.filter((p: Processo) => p.natureza_id === 1).length || 0,
-                    trabalhista: response.data.processos?.filter((p: Processo) => p.natureza_id === 2).length || 0,
-                    civel: response.data.processos?.filter((p: Processo) => p.natureza_id === 3).length || 0,
-                    previdenciario: response.data.processos?.filter((p: Processo) => p.natureza_id === 4).length || 0,
-                    penal: response.data.processos?.filter((p: Processo) => p.natureza_id === 10).length || 0,
-                    administrativo: response.data.processos?.filter((p: Processo) => p.natureza_id === 14).length || 0,
-                    constitucional: response.data.processos?.filter((p: Processo) => p.natureza_id === 15).length || 0,
-                    valorTotal: response.data.processos?.reduce((sum: number, p: Processo) => sum + (p.valor_causa || 0), 0) || 0
-                });
+                // Stats are loaded separately from /api/processos/estatisticas in fetchAuxiliaryData
             }
         } catch (error) {
             console.error('Erro ao carregar processos:', error);
