@@ -8,11 +8,25 @@ import {
 import api from '../../lib/api';
 
 // Cores do Sistema
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-const NATUREZA_COLORS = {
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ef4444'];
+const NATUREZA_COLORS: Record<string, string> = {
     '1': '#3b82f6', // Tributário - Azul
     '2': '#f97316', // Trabalhista - Laranja
     '3': '#a855f7', // Cível - Roxo
+    '4': '#14b8a6', // Previdenciário - Teal
+    '10': '#ef4444', // Penal - Vermelho
+    '14': '#eab308', // Administrativo - Amarelo
+    '15': '#6366f1', // Constitucional - Indigo
+};
+
+const NATUREZA_NAMES: Record<string, string> = {
+    '1': 'Tributário',
+    '2': 'Trabalhista',
+    '3': 'Cível',
+    '4': 'Previdenciário',
+    '10': 'Penal',
+    '14': 'Administrativo',
+    '15': 'Constitucional',
 };
 
 interface Estatisticas {
@@ -72,7 +86,7 @@ export default function DashboardEstatisticas() {
 
     // Transformação de dados para Recharts
     const dataNatureza = Object.entries(stats.por_natureza).map(([key, value]) => ({
-        name: key === '1' ? 'Tributário' : key === '2' ? 'Trabalhista' : 'Cível',
+        name: NATUREZA_NAMES[key] || `Natureza ${key}`,
         value: value,
         key: key
     }));
