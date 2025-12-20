@@ -142,7 +142,13 @@ class ImportadorIndices:
         if not data_fim:
             data_fim = date.today()
         if not data_inicio:
-            data_inicio = data_fim - timedelta(days=365)
+            # Se não passar data, tenta buscar último registro do banco
+            ultimo = HistoricoIndice.query.filter_by(indice_id=indice.id_indice).order_by(HistoricoIndice.data_referencia.desc()).first()
+            if ultimo:
+                 data_inicio = ultimo.data_referencia + timedelta(days=1)
+            else:
+                 # Sem dados: importar últimos 5 anos por padrão
+                 data_inicio = data_fim - timedelta(days=1825)
         
         # Buscar dados do BACEN
         dados = ImportadorIndices.buscar_dados_bacen(indice_nome, data_inicio, data_fim)
