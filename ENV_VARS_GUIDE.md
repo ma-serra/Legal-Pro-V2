@@ -225,6 +225,9 @@ After setting environment variables:
 ### For Railway (Raw Editor)
 
 ```
+# ⚠️ REPLACE ALL VALUES BELOW WITH YOUR ACTUAL CREDENTIALS
+# These are examples only - do not use as-is
+
 DATABASE_URL=postgresql://username:password@host:port/database
 SECRET_KEY=your-generated-secret-key-here
 SESSION_SECRET=your-different-session-secret-here

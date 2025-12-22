@@ -8,7 +8,7 @@ The `.env` file containing sensitive credentials was tracked in git history. Thi
 The following credentials were exposed in the git history:
 
 1. **Qdrant Database**
-   - URL: `https://c21e6a5b-298d-483b-82f4-00aeff5edabe.us-east4-0.gcp.cloud.qdrant.io:6333`
+   - URL: `https://your-cluster-id.region.gcp.cloud.qdrant.io:6333` (specific cluster ID exposed)
    - API Key: Exposed in git history
 
 2. **PostgreSQL Database (Railway)**
