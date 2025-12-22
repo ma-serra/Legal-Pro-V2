@@ -11,6 +11,18 @@
 
 ---
 
+## 🚀 DEPLOYMENT STATUS
+
+✅ **System is 95% Ready for Deployment**
+
+**Quick Start:** See [QUICK_START.md](./QUICK_START.md) for deployment in ~1 hour
+
+⚠️ **CRITICAL:** Before deploying, read [SECURITY_ALERT.md](./SECURITY_ALERT.md) - credentials must be rotated
+
+📋 **Full Guide:** [DEPLOYMENT_READY.md](./DEPLOYMENT_READY.md) - Complete deployment checklist
+
+---
+
 ## 📚 ÍNDICE
 
 1. [Visão Geral do Sistema](#visão-geral-do-sistema)
