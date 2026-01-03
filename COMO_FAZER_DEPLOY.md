@@ -1,40 +1,51 @@
-# ⚡ DEPLOY EM 1 COMANDO
+# ⚡ DEPLOY - 3 OPÇÕES
 
-Copie e cole isto no terminal:
+## 🥇 Opção 1: GitHub Actions (RECOMENDADO)
 
-```bash
-cd frontend-react/frontend-react && npm install -g vercel && ./deploy-vercel.sh
-```
+**ZERO comandos. Deploy automático.**
 
-Ou ainda mais simples:
+1. Configure secrets no GitHub (só uma vez):
+   - VERCEL_TOKEN
+   - VERCEL_ORG_ID  
+   - VERCEL_PROJECT_ID
 
-```bash
-./frontend-react/frontend-react/setup-and-deploy.sh
-```
+2. Pronto! Todo push faz deploy automaticamente.
 
-**Pronto!** 🎉
+**Ver instruções completas:** `DEPLOY_GITHUB_ACTIONS.md`
 
 ---
 
-## Se não funcionar
-
-**Opção 1:** Use o GitHub Codespace
-
-1. Vá no GitHub → Code → Codespaces
-2. Create codespace
-3. Quando abrir, cole no terminal:
-```bash
-cd frontend-react/frontend-react && ./deploy-vercel.sh
-```
-
-**Opção 2:** Deploy manual no site
+## 🥈 Opção 2: Site do Vercel (FÁCIL)
 
 1. https://vercel.com
-2. New Project
-3. Import: Legal-Pro-V2
-4. Root Directory: `frontend-react/frontend-react`
-5. Deploy
+2. Login com GitHub
+3. "Add New" → "Project"
+4. Import: Legal-Pro-V2
+5. Root Directory: `frontend-react/frontend-react`
+6. Deploy!
 
 ---
 
-Veja `DEPLOY_RAPIDO.md` para mais detalhes.
+## 🥉 Opção 3: Vercel CLI (Manual)
+
+```bash
+cd frontend-react/frontend-react
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
+---
+
+## ❌ Scripts .sh NÃO FUNCIONAM BEM
+
+Os scripts `deploy-vercel.sh` e similares podem dar erro de:
+- Permissão
+- Node.js não instalado
+- Vercel CLI com problemas
+
+**Use GitHub Actions ou o site do Vercel.**
+
+---
+
+Veja `DEPLOY_GITHUB_ACTIONS.md` para detalhes completos.
