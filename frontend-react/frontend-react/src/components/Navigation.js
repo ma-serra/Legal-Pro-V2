@@ -14,7 +14,8 @@ const navItems = [
             { path: '/processos/importar', label: 'Importar Planilha', icon: FileUp },
             { path: '/processos/teses', label: 'Teses Tributárias', icon: Scale },
             { path: '/processos/indices', label: 'Índices Monetários', icon: TrendingUp },
-            { path: '/processos/ml-analise', label: 'Análise ML Tributário', icon: Brain }
+            { path: '/processos/ml-analise', label: 'Análise ML Tributário', icon: Brain },
+            { path: '/processos/ml-modelos', label: 'Inteligência Tributária', icon: Brain }
         ]
     },
     { path: '/analises', label: 'Análises', icon: FileSearch },
